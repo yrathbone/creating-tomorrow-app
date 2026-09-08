@@ -704,6 +704,15 @@ footer {
   z-index: 0;
 }
 
+.hero-people {
+  position: absolute;
+  z-index: 1;
+  bottom: 0;
+  left: 0;
+  width: min(38%, 190px);
+  height: auto;
+}
+
 .hero-side-labels {
   position: absolute;
   right: -0.5rem;
@@ -820,13 +829,14 @@ footer {
 .script-accent {
   font-family: "Caveat", cursive;
   color: var(--gold-ink);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   position: absolute;
   z-index: 1;
-  bottom: -1.75rem;
-  left: 0.5rem;
+  top: 0.25rem;
+  left: 42%;
+  max-width: 11rem;
   transform: rotate(-3deg);
-  opacity: 0.85;
+  opacity: 0.9;
   display: none;
 }
 
