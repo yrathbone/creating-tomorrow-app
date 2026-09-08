@@ -716,11 +716,11 @@ footer {
 
 .hero-art {
   position: relative;
-  min-height: 320px;
+  min-height: 400px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.5rem;
 }
 
 .hero-art-blob {
