@@ -720,7 +720,7 @@ footer {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: 1.5rem;
+  padding-bottom: 0.25rem;
 }
 
 .hero-art-blob {
@@ -749,101 +749,79 @@ footer {
   display: block;
 }
 
-.hero-side-labels {
-  position: absolute;
-  right: -0.5rem;
-  top: 0.5rem;
-  writing-mode: vertical-rl;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 3px;
-  line-height: 1.9;
-  opacity: 0.75;
-  z-index: 1;
-  display: none;
-}
-
-@media (min-width: 860px) {
-  .hero-side-labels { display: block; }
-}
-
 .floating-card {
   position: relative;
   z-index: 2;
-  background: var(--card-bg);
-  border-radius: 16px;
-  box-shadow: 0 20px 45px rgba(15, 42, 82, 0.18);
-  padding: 1.25rem 1.4rem;
-  width: 15rem;
+  width: 272px;
+  max-width: 78%;
+  margin-left: 12%;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(9, 35, 75, 0.14);
+  padding: 1.5rem 1.6rem;
 }
 
-.floating-card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+.floating-card-accent {
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gold);
   margin-bottom: 0.9rem;
 }
 
-.floating-card-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--blue), var(--gold));
-  flex-shrink: 0;
+.floating-card-eyebrow {
+  margin: 0 0 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue);
 }
-
-.floating-card-lines {
-  flex: 1;
-}
-
-.floating-card-lines span {
-  display: block;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--border);
-  margin-bottom: 5px;
-}
-
-.floating-card-lines span:last-child { width: 60%; margin-bottom: 0; }
 
 .resume-checklist {
   list-style: none;
   padding: 0;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
 }
 
 .resume-checklist li {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
+  gap: 0.6rem;
+  padding: 0.45rem 0;
   color: var(--ink);
 }
 
 .resume-checklist li::before {
   content: "✓";
-  color: #2e9e5b;
+  color: var(--blue);
   font-weight: 800;
 }
 
 .floating-card-secondary {
   position: absolute;
   z-index: 3;
-  right: -0.5rem;
-  bottom: -1.25rem;
-  background: var(--card-bg);
-  border-radius: 14px;
-  box-shadow: 0 16px 35px rgba(15, 42, 82, 0.16);
-  padding: 0.9rem 1.1rem;
+  right: -0.75rem;
+  bottom: -1rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  box-shadow: 0 16px 35px rgba(9, 35, 75, 0.12);
+  padding: 0.85rem 1.05rem;
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  font-size: 0.8rem;
+  gap: 0.65rem;
+  font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.3;
   color: var(--ink);
-  max-width: 11rem;
+  max-width: 10rem;
 }
 
 @media (max-width: 859px) {
@@ -851,33 +829,9 @@ footer {
 }
 
 .floating-card-secondary-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: var(--blue-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
-}
-
-.script-accent {
-  font-family: "Caveat", cursive;
-  color: var(--gold-ink);
-  font-size: 1.2rem;
-  position: absolute;
-  z-index: 1;
-  top: 0.25rem;
-  left: 42%;
-  max-width: 11rem;
-  transform: rotate(-3deg);
-  opacity: 0.9;
-  display: none;
-}
-
-@media (min-width: 860px) {
-  .script-accent { display: block; }
 }
 
 /* Value prop cards with icon circles */
