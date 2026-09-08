@@ -898,14 +898,6 @@ footer {
   }
 }
 
-.value-card-number {
-  display: block;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #e2a126;
-  margin-bottom: 1rem;
-}
-
 .value-card-label {
   margin: 0 0 0.6rem;
   font-size: 0.72rem;
