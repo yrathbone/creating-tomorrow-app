@@ -2,7 +2,7 @@
 
 **Total runtime:** ~85 seconds
 **Format:** scene-by-scene for Animaker's scene panel — one row = one scene/slide.
-**Note:** this is the video most likely to set WrenPath apart from keyword-matching tools — keep the "honest coach" tone front and center, not preachy.
+**Note:** this is the video most likely to set Creating Tomorrow apart from keyword-matching tools — keep the "honest coach" tone front and center, not preachy.
 
 **Style notes for Animaker:**
 - Recurring visual thread: one resume document character/prop that changes state across scenes (red flag → graduation cap → checkmark) — reuse the same asset instance if Animaker allows carrying a character across scenes, for visual continuity
@@ -14,5 +14,5 @@
 | 2 | 0:14–0:30 | The red flag fades out; the skill word on the resume fades to gray/ghosted. A small graduation cap icon appears next to it. | — | "The real fix takes longer, but it's not out of reach." |
 | 3 | 0:30–0:50 | Three quick icon call-outs in sequence: a laptop with a course-platform-style play button, a library card, a community college building icon. | "Coursera · edX · LinkedIn Learning · Community college" | "Sites like Coursera, edX, and LinkedIn Learning have real courses — often free, or free with a library card. Your local community college likely has affordable continuing-education classes, some just a few weeks long." |
 | 4 | 0:50–0:66 | A calendar flips forward a few weeks/pages. The graduation cap icon settles next to the skill word, which turns from gray back to full color — now "earned." | "A few weeks later..." | "Put the skill on your resume once it's actually true — and it'll hold up in the interview, not just get you past the ATS." |
-| 5 | 0:66–0:76 | WrenPath logo animates in. | — | "That gap you're looking at right now? It's not a lie you need to tell. It's a next step you haven't taken yet." |
+| 5 | 0:66–0:76 | Creating Tomorrow logo animates in. | — | "That gap you're looking at right now? It's not a lie you need to tell. It's a next step you haven't taken yet." |
 | 6 | 0:76–0:85 | End card: logo + tagline, calm hold. | "Build it. Then claim it." + site URL | (no narration) |

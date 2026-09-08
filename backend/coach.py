@@ -1,5 +1,5 @@
 """
-The core of WrenPath: takes raw extracted text from someone's old resume
+The core of Creating Tomorrow: takes raw extracted text from someone's old resume
 plus a target job posting, and produces (1) their resume restructured into
 our clean schema, (2) an honest A-F match report, and (3) a short list of
 reflective yes/no questions aimed at surfacing real experience they didn't
@@ -15,9 +15,9 @@ import anthropic
 
 from llm_utils import extract_final_text, extract_json_object
 
-MODEL = os.environ.get("WRENPATH_MODEL", "claude-sonnet-5")
+MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
-SYSTEM_PROMPT = """You are Wren, a career coach helping a job seeker \
+SYSTEM_PROMPT = """You are Nova, a career coach helping a job seeker \
 honestly rebuild their resume for a specific job posting. You are given \
 raw text extracted from someone's OLD resume (it may be in any order or \
 layout - it's just extracted text) and the text of a job posting they \

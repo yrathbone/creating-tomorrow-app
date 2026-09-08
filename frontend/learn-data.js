@@ -24,7 +24,7 @@ const ARTICLES = [
   },
   {
     slug: "how-we-grade",
-    title: "How WrenPath Grades Your Resume (And Why We Don't Inflate It)",
+    title: "How Creating Tomorrow Grades Your Resume (And Why We Don't Inflate It)",
     summary: "A look inside our own methodology — because a coaching tool that isn't transparent about itself isn't much of a coach.",
     video_youtube_id: null,
   },

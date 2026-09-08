@@ -1,4 +1,4 @@
-# WrenPath
+# Creating Tomorrow
 
 The public web app: upload your old resume + paste a job posting, get an
 honest A-F match report, answer a few reflective yes/no questions about
@@ -44,12 +44,12 @@ directly, so there's nothing separate to run.
 
 ### Push this folder to GitHub
 
-From this folder (`wrenpath-app`):
+From this folder (`creating-tomorrow-app`):
 
 ```
 git init
 git add .
-git commit -m "Initial WrenPath web app"
+git commit -m "Initial Creating Tomorrow web app"
 ```
 
 Then on GitHub: create a new repository (no README/license — this folder
@@ -57,7 +57,7 @@ already has one), and follow the "push an existing repository" instructions
 it shows you, e.g.:
 
 ```
-git remote add origin https://github.com/YOUR-USERNAME/wrenpath-app.git
+git remote add origin https://github.com/YOUR-USERNAME/creating-tomorrow-app.git
 git branch -M main
 git push -u origin main
 ```
@@ -65,7 +65,7 @@ git push -u origin main
 ### Connect Render
 
 1. In the Render dashboard: **New > Blueprint**.
-2. Pick the `wrenpath-app` GitHub repo. Render reads `render.yaml`
+2. Pick the `creating-tomorrow-app` GitHub repo. Render reads `render.yaml`
    automatically and configures the service.
 3. It will ask you to set `ANTHROPIC_API_KEY` — paste your key directly
    into the Render dashboard field (never into a chat, a commit, or this

@@ -1,5 +1,5 @@
 """
-WrenPath backend - FastAPI app serving both the API and the static frontend.
+Creating Tomorrow backend - FastAPI app serving both the API and the static frontend.
 
 Endpoints:
   POST /api/analyze  - old resume file + job posting text -> resume_data,
@@ -31,7 +31,7 @@ from builder import build, BuilderError
 from scratch import draft_entry, finalize, ScratchError
 from resume_builder import build_resume_bytes
 
-app = FastAPI(title="WrenPath API")
+app = FastAPI(title="Creating Tomorrow API")
 
 # Only needed if the frontend is ever served from a different origin than
 # the API (e.g. local dev with a separate dev server). Same-origin

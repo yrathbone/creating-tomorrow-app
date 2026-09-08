@@ -1,47 +1,39 @@
-<svg viewBox="0 0 620 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-<title id="title">WrenPath</title>
-<desc id="desc">A geometric wren perched on a branch, its cocked tail rendered as a trail of connected glowing nodes symbolizing AI, next to the wordmark WrenPath.</desc>
+<svg viewBox="0 0 820 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<title id="title">Creating Tomorrow</title>
+<desc id="desc">A path rendered as a trail of connected glowing nodes symbolizing AI, climbing from the ground toward a rising sun, next to the wordmark Creating Tomorrow.</desc>
 
 <!-- ICON -->
 <g transform="translate(20,20)">
-  <!-- perch / branch (ties to "Path") -->
-  <line x1="30" y1="190" x2="210" y2="190" stroke="#a98f73" stroke-width="7" stroke-linecap="round"/>
+  <!-- horizon -->
+  <line x1="20" y1="195" x2="220" y2="195" stroke="#a98f73" stroke-width="7" stroke-linecap="round"/>
 
-  <!-- legs -->
-  <line x1="122" y1="176" x2="117" y2="190" stroke="#8a6a48" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="152" y1="176" x2="158" y2="190" stroke="#8a6a48" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- grounded start of the path -->
+  <line x1="35" y1="193" x2="78" y2="158" stroke="#8a6a48" stroke-width="5.5" stroke-linecap="round"/>
 
-  <!-- AI tail: a trail of connected glowing nodes in place of feathers -->
-  <g stroke="#f0ac3f" stroke-width="3" fill="none" opacity="0.9">
-    <line x1="95" y1="148" x2="72" y2="112"/>
-    <line x1="72" y1="112" x2="54" y2="76"/>
-    <line x1="54" y1="76" x2="42" y2="42"/>
+  <!-- path lifts into a trail of connected glowing nodes, climbing toward the sun -->
+  <g stroke="#f0ac3f" stroke-width="3.5" fill="none" opacity="0.9">
+    <line x1="78" y1="158" x2="108" y2="128"/>
+    <line x1="108" y1="128" x2="133" y2="104"/>
+    <line x1="133" y1="104" x2="155" y2="84"/>
   </g>
-  <circle cx="95" cy="148" r="7" fill="#f0ac3f"/>
-  <circle cx="72" cy="112" r="6" fill="#f0ac3f"/>
-  <circle cx="54" cy="76" r="5.2" fill="#f0ac3f"/>
-  <circle cx="42" cy="42" r="8" fill="#fbd490"/>
-  <circle cx="42" cy="42" r="4" fill="#fff3da"/>
+  <circle cx="78" cy="158" r="7" fill="#f0ac3f"/>
+  <circle cx="108" cy="128" r="7.5" fill="#f0ac3f"/>
+  <circle cx="133" cy="104" r="8.2" fill="#fbd490"/>
+  <circle cx="155" cy="84" r="9.5" fill="#fff3da"/>
 
-  <!-- body -->
-  <ellipse cx="140" cy="140" rx="52" ry="42" fill="#0047ab"/>
-
-  <!-- wing -->
-  <path d="M 108 122 Q 138 104 158 130 Q 136 152 108 146 Z" fill="#003580"/>
-
-  <!-- head -->
-  <circle cx="186" cy="103" r="29" fill="#3d74d6"/>
-
-  <!-- beak -->
-  <polygon points="211,98 233,106 211,116" fill="#e0965a"/>
-
-  <!-- eye -->
-  <circle cx="193" cy="96" r="5.5" fill="#fdfdfd"/>
-  <circle cx="194.5" cy="96" r="2.6" fill="#22292f"/>
+  <!-- rising sun -->
+  <circle cx="178" cy="62" r="46" fill="#fbd490" opacity="0.25"/>
+  <circle cx="178" cy="62" r="32" fill="#f0ac3f"/>
+  <circle cx="171" cy="55" r="13" fill="#fff3da" opacity="0.85"/>
+  <g stroke="#f0ac3f" stroke-width="4" stroke-linecap="round">
+    <line x1="178" y1="18" x2="178" y2="6"/>
+    <line x1="152" y1="27" x2="143" y2="17"/>
+    <line x1="204" y1="27" x2="213" y2="17"/>
+  </g>
 </g>
 
 <!-- WORDMARK -->
-<g transform="translate(300,148)" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="64">
-  <text x="0" y="0" fill="#0047ab">Wren<tspan fill="#e0a641">Path</tspan></text>
+<g transform="translate(270,152)" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="50">
+  <text x="0" y="0" fill="#0047ab">Creating <tspan fill="#e0a641">Tomorrow</tspan></text>
 </g>
 </svg>

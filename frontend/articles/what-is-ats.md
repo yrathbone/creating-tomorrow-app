@@ -26,13 +26,13 @@ Formatting choices that commonly confuse parsers:
 - Unusual fonts or heavy graphics replacing plain text
 - Dates or job titles in inconsistent formats
 
-If a parser can't correctly extract your job titles and dates, it doesn't matter how qualified you are — that information effectively doesn't exist to the system. This is why WrenPath includes a single-column ATS mode: not because two columns are wrong, but because some parsers still read them incorrectly, and a resume that a human finds a little less visually interesting is better than one a machine can't read at all.
+If a parser can't correctly extract your job titles and dates, it doesn't matter how qualified you are — that information effectively doesn't exist to the system. This is why Creating Tomorrow includes a single-column ATS mode: not because two columns are wrong, but because some parsers still read them incorrectly, and a resume that a human finds a little less visually interesting is better than one a machine can't read at all.
 
 ## What it doesn't do
 
 An ATS doesn't understand nuance. It doesn't know that "cash management" on a bank teller's resume means something different from "cash management" on a corporate treasury analyst's resume — it just sees a match. It doesn't know if you're exaggerating or underselling. It doesn't care about your career story.
 
-That's exactly the gap WrenPath is built to fill. Getting past the parser is table stakes. What actually gets you hired is a resume that's both machine-readable *and* honestly represents what you've done — which is a human problem, not a formatting problem.
+That's exactly the gap Creating Tomorrow is built to fill. Getting past the parser is table stakes. What actually gets you hired is a resume that's both machine-readable *and* honestly represents what you've done — which is a human problem, not a formatting problem.
 
 ## The real takeaway
 

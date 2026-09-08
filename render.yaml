@@ -4,7 +4,7 @@
 
 services:
   - type: web
-    name: wrenpath
+    name: creating-tomorrow
     runtime: python
     plan: free
     buildCommand: "pip install -r backend/requirements.txt"
@@ -12,5 +12,5 @@ services:
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false   # set manually in the Render dashboard - never in this repo
-      - key: WRENPATH_MODEL
+      - key: CT_MODEL
         value: claude-sonnet-5

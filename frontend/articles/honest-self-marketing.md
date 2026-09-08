@@ -1,6 +1,6 @@
 # Honest Self-Marketing: Talking About What You've Actually Done
 
-There are two common ways people get their resume wrong, and they're opposites. One is inflating — claiming skills or scope you don't really have, hoping no one checks. The other is underselling — doing real, valuable work and describing it so flatly that it disappears on the page. WrenPath exists mostly to fix the second problem, but it's worth understanding both.
+There are two common ways people get their resume wrong, and they're opposites. One is inflating — claiming skills or scope you don't really have, hoping no one checks. The other is underselling — doing real, valuable work and describing it so flatly that it disappears on the page. Creating Tomorrow exists mostly to fix the second problem, but it's worth understanding both.
 
 ## Inflating doesn't actually work
 
@@ -16,7 +16,7 @@ This is the one worth focusing on, because it's sneaky. It doesn't feel like a m
 
 ## How to catch this in your own resume
 
-The reflective questions WrenPath asks are built around a simple idea: most job titles come with a cluster of responsibilities that are common but not universal, and people often did more of that cluster than they wrote down. Being asked directly — "did you do X?" — surfaces things that "just describe your job" doesn't.
+The reflective questions Creating Tomorrow asks are built around a simple idea: most job titles come with a cluster of responsibilities that are common but not universal, and people often did more of that cluster than they wrote down. Being asked directly — "did you do X?" — surfaces things that "just describe your job" doesn't.
 
 You can do a version of this yourself without any tool: for each bullet point on your resume, ask "would a coworker who watched me do this every day agree this is an accurate, complete description?" Often the honest answer is "accurate, but incomplete" — and that gap is where real experience is hiding.
 

@@ -15,10 +15,10 @@ import anthropic
 
 from llm_utils import extract_final_text, extract_json_object
 
-MODEL = os.environ.get("WRENPATH_MODEL", "claude-sonnet-5")
-MAX_SEARCHES = int(os.environ.get("WRENPATH_MAX_SEARCHES", "5"))
+MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
+MAX_SEARCHES = int(os.environ.get("CT_MAX_SEARCHES", "5"))
 
-SYSTEM_PROMPT = """You are Wren, a career coach helping a job seeker \
+SYSTEM_PROMPT = """You are Nova, a career coach helping a job seeker \
 honestly rebuild their resume. You are given raw text extracted from \
 someone's OLD resume (it may be in any order or layout - it's just \
 extracted text).

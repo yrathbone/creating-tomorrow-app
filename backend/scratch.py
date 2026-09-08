@@ -19,10 +19,10 @@ import anthropic
 
 from llm_utils import extract_final_text, extract_json_object
 
-MODEL = os.environ.get("WRENPATH_MODEL", "claude-sonnet-5")
-MAX_SEARCHES = int(os.environ.get("WRENPATH_SCRATCH_MAX_SEARCHES", "3"))
+MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
+MAX_SEARCHES = int(os.environ.get("CT_SCRATCH_MAX_SEARCHES", "3"))
 
-ENTRY_SYSTEM_PROMPT = """You are Wren, helping someone build their very \
+ENTRY_SYSTEM_PROMPT = """You are Nova, helping someone build their very \
 first resume from scratch. This person likely has little or no resume-\
 writing experience - possibly a teen or someone entering the workforce \
 for the first time. Be warm, plain-spoken, and encouraging. Never sound \
@@ -68,7 +68,7 @@ WHAT THEY SAID THEY DID (in their own words):
 
 Produce the analysis as specified in the system prompt."""
 
-FINALIZE_SYSTEM_PROMPT = """You are Wren, helping someone finish building \
+FINALIZE_SYSTEM_PROMPT = """You are Nova, helping someone finish building \
 their very first resume. You're given their name, every experience entry \
 they've built so far (with finalized bullets), their education, and any \
 skills they typed in themselves.

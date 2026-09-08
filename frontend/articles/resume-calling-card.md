@@ -18,7 +18,7 @@ You don't need to rewrite your resume every month. A few small habits do most of
 
 ## Why this connects to being honest on paper
 
-There's a second, quieter benefit to keeping a resume current: it keeps you honest with yourself about what you're actually doing at work. When you sit down periodically and ask "what did I do that's worth noting," you start noticing your own growth in real time instead of trying to reconstruct it later — which is exactly the kind of honest self-assessment WrenPath's reflective questions are designed to prompt. The habit of noticing is the same skill either way.
+There's a second, quieter benefit to keeping a resume current: it keeps you honest with yourself about what you're actually doing at work. When you sit down periodically and ask "what did I do that's worth noting," you start noticing your own growth in real time instead of trying to reconstruct it later — which is exactly the kind of honest self-assessment Creating Tomorrow's reflective questions are designed to prompt. The habit of noticing is the same skill either way.
 
 ## The takeaway
 

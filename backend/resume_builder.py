@@ -1,5 +1,5 @@
 """
-Builds a .docx resume matching the WrenPath template layout, in memory
+Builds a .docx resume matching the Creating Tomorrow template layout, in memory
 (returns bytes rather than writing to disk, since this runs inside a web
 request):
 
