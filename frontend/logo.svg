@@ -1,46 +1,61 @@
-<svg viewBox="0 -10 480 114" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg viewBox="0 -18 480 122" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
 <title id="title">Creating Tomorrow</title>
-<desc id="desc">A road curving up to a full rising sun with radiating light, next to the wordmark Creating Tomorrow and the tagline Real Skills. Brighter Tomorrows.</desc>
+<desc id="desc">A road flowing up into a full, radiant rising sun, next to the wordmark Creating Tomorrow and the tagline Real Skills. Brighter Tomorrows.</desc>
 <defs>
-  <linearGradient id="road" x1="10" y1="100" x2="86" y2="34" gradientUnits="userSpaceOnUse">
+  <linearGradient id="road" x1="8" y1="104" x2="80" y2="30" gradientUnits="userSpaceOnUse">
     <stop offset="0" stop-color="#0a3f8f"/>
     <stop offset="0.55" stop-color="#1f5fc4"/>
-    <stop offset="1" stop-color="#7fb3ff"/>
+    <stop offset="1" stop-color="#8fbeff"/>
   </linearGradient>
-  <radialGradient id="sun" cx="0.38" cy="0.35" r="0.7">
-    <stop offset="0" stop-color="#fff6de"/>
-    <stop offset="0.45" stop-color="#fbc94a"/>
+  <linearGradient id="sheen" x1="20" y1="90" x2="70" y2="38" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+    <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.75"/>
+    <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+  </linearGradient>
+  <radialGradient id="sun" cx="0.36" cy="0.32" r="0.75">
+    <stop offset="0" stop-color="#fffaf0"/>
+    <stop offset="0.4" stop-color="#ffcf5c"/>
     <stop offset="1" stop-color="#e8962a"/>
   </radialGradient>
-  <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
-    <stop offset="0" stop-color="#ffdf94" stop-opacity="0.65"/>
+  <radialGradient id="glowOuter" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#ffdf94" stop-opacity="0.55"/>
     <stop offset="1" stop-color="#ffdf94" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="glowInner" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#fff3d2" stop-opacity="0.85"/>
+    <stop offset="1" stop-color="#fff3d2" stop-opacity="0"/>
   </radialGradient>
 </defs>
 
 <g>
-  <circle cx="86" cy="30" r="34" fill="url(#glow)"/>
+  <circle cx="82" cy="26" r="52" fill="url(#glowOuter)"/>
+  <circle cx="82" cy="26" r="32" fill="url(#glowInner)"/>
 
-  <g stroke="#f0ac3f" stroke-width="2.4" stroke-linecap="round" opacity="0.9">
-    <line x1="86" y1="-4" x2="86" y2="4"/>
-    <line x1="63" y1="3" x2="67" y2="9"/>
-    <line x1="109" y1="3" x2="105" y2="9"/>
-    <line x1="47" y1="18" x2="54" y2="21"/>
-    <line x1="125" y1="18" x2="118" y2="21"/>
-    <line x1="41" y1="38" x2="49" y2="37"/>
-    <line x1="131" y1="38" x2="123" y2="37"/>
-  </g>
-
-  <circle cx="86" cy="30" r="17" fill="url(#sun)"/>
-
-  <path d="M10,100 C 24,80 36,54 86,30 C 62,48 38,72 46,100 Z" fill="url(#road)"/>
-  <path d="M10,100 C 24,80 36,54 86,30" fill="none" stroke="#f0ac3f" stroke-width="2.6" stroke-linecap="round"/>
-
+  <path d="M8,104 C 22,84 34,58 78,30 C 54,50 32,74 42,104 Z" fill="url(#road)"/>
+  <path d="M8,104 C 22,84 34,58 78,30" fill="none" stroke="#f0ac3f" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M18,92 C 30,74 44,56 64,40" fill="none" stroke="url(#sheen)" stroke-width="4" stroke-linecap="round"/>
   <g fill="#fbd490" opacity="0.85">
-    <ellipse cx="24" cy="93" rx="2.6" ry="1.4" transform="rotate(-32 24 93)"/>
-    <ellipse cx="36" cy="76" rx="2.2" ry="1.2" transform="rotate(-40 36 76)"/>
-    <ellipse cx="52" cy="58" rx="1.8" ry="1" transform="rotate(-48 52 58)"/>
+    <ellipse cx="22" cy="97" rx="2.6" ry="1.4" transform="rotate(-32 22 97)"/>
+    <ellipse cx="34" cy="79" rx="2.2" ry="1.2" transform="rotate(-40 34 79)"/>
+    <ellipse cx="50" cy="60" rx="1.8" ry="1" transform="rotate(-48 50 60)"/>
   </g>
+
+  <g stroke="#f7b53f" stroke-linecap="round">
+    <line x1="82" y1="-15" x2="82" y2="-4" stroke-width="3"/>
+    <line x1="55" y1="-8" x2="61" y2="1" stroke-width="2.6"/>
+    <line x1="109" y1="-8" x2="103" y2="1" stroke-width="2.6"/>
+    <line x1="33" y1="6" x2="41" y2="12" stroke-width="2.6"/>
+    <line x1="131" y1="6" x2="123" y2="12" stroke-width="2.6"/>
+    <line x1="20" y1="26" x2="30" y2="26" stroke-width="2.6"/>
+    <line x1="144" y1="26" x2="134" y2="26" stroke-width="2.6"/>
+    <line x1="24" y1="46" x2="33" y2="41" stroke-width="2.2"/>
+    <line x1="140" y1="46" x2="131" y2="41" stroke-width="2.2"/>
+    <line x1="66" y1="-14" x2="69" y2="-5" stroke-width="2"/>
+    <line x1="98" y1="-14" x2="95" y2="-5" stroke-width="2"/>
+  </g>
+
+  <circle cx="82" cy="26" r="21" fill="url(#sun)"/>
+  <circle cx="75" cy="19" r="6" fill="#fffdf6" opacity="0.75"/>
 </g>
 
 <g font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
