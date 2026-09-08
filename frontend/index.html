@@ -126,48 +126,58 @@
       </div>
     </section>
 
-    <section class="card">
-      <h2>From the Learn Section</h2>
-      <p class="hint">A few things worth understanding before you touch a resume template.</p>
-      <div id="learn-teaser" class="learn-teaser-grid"></div>
-      <a href="learn.html" class="btn-secondary">See all articles</a>
+    <section class="learn-section-v2">
+      <div class="learn-section-header">
+        <h2>From the Learn Section</h2>
+        <p class="learn-section-sub">Start with the basics.</p>
+      </div>
+      <div class="learn-teaser-grid">
+        <a href="article.html?slug=what-is-ats" class="learn-teaser-card">
+          <span class="learn-teaser-accent"></span>
+          <p class="learn-teaser-label">ATS Basics</p>
+          <h3>What Is an ATS, Really?</h3>
+          <p class="learn-teaser-desc">Understand what happens after you submit a resume.</p>
+          <span class="learn-teaser-read">Read <span class="learn-teaser-arrow">→</span></span>
+        </a>
+        <a href="article.html?slug=resume-calling-card" class="learn-teaser-card">
+          <span class="learn-teaser-accent"></span>
+          <p class="learn-teaser-label">Resume Basics</p>
+          <h3>Your Resume Is a Calling Card</h3>
+          <p class="learn-teaser-desc">Why keeping it ready matters.</p>
+          <span class="learn-teaser-read">Read <span class="learn-teaser-arrow">→</span></span>
+        </a>
+        <a href="article.html?slug=honest-self-marketing" class="learn-teaser-card">
+          <span class="learn-teaser-accent"></span>
+          <p class="learn-teaser-label">Skills &amp; Growth</p>
+          <h3>Talk About What You've Actually Done</h3>
+          <p class="learn-teaser-desc">Learn to describe your skills without inventing them.</p>
+          <span class="learn-teaser-read">Read <span class="learn-teaser-arrow">→</span></span>
+        </a>
+      </div>
+      <a href="learn.html" class="learn-see-all">See all articles →</a>
     </section>
 
-    <div class="cta-banner">
-      <div class="cta-banner-left">
-        <img src="logo-icon.png" alt="" />
-        <div>
-          <h2>Brighter Careers Are Possible</h2>
-          <p>You have more to offer than you think. Let's build what's next — together.</p>
+    <section class="final-cta">
+      <div class="final-cta-inner">
+        <div class="final-cta-text">
+          <span class="final-cta-accent"></span>
+          <h2>Your next step can start here.</h2>
+          <p>Free tools. Clear guidance. No paywall.</p>
+        </div>
+        <div class="hero-ctas">
+          <a href="tool.html" class="btn-primary">Use Free Resume Tools →</a>
+          <a href="videos.html" class="btn-secondary">Watch Career Videos →</a>
         </div>
       </div>
-      <a href="tool.html" class="btn-primary">Build or Check Your Resume →</a>
-    </div>
+    </section>
   </main>
 
-  <footer>
-    <p>Creating Tomorrow is a non-profit tool. We don't store your resume or job posting after your session ends.</p>
+  <footer class="site-footer-v2">
+    <div class="site-footer-inner">
+      <p class="site-footer-brand">Creating Tomorrow</p>
+      <p class="site-footer-tagline">Free career education and tools.</p>
+      <p class="site-footer-privacy">We don't store your resume or job posting after your session ends.</p>
+    </div>
   </footer>
-
-  <script src="learn-data.js"></script>
-  <script>
-    const teaser = document.getElementById("learn-teaser");
-    const thumbClasses = ["thumb-1", "thumb-2", "thumb-3"];
-    ARTICLES.slice(0, 3).forEach((a, i) => {
-      const div = document.createElement("a");
-      div.className = "learn-teaser-card";
-      div.href = `article.html?slug=${a.slug}`;
-      div.innerHTML = `
-        <div class="learn-thumb ${thumbClasses[i % thumbClasses.length]}">
-          <span class="tag-pill">${a.category || "Learn"}</span>
-        </div>
-        <div class="learn-teaser-body">
-          <h3>${a.title}</h3>
-          <p>${a.summary}</p>
-          <span class="learn-teaser-link">Read the Guide →</span>
-        </div>`;
-      teaser.appendChild(div);
-    });
-  </script>
 </body>
 </html>
