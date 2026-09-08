@@ -6,6 +6,8 @@ disk paths, since this runs inside a web request.
 """
 import io
 
+import ftfy
+
 
 def extract_docx_text(file_obj: io.BytesIO) -> str:
     from docx import Document
@@ -44,10 +46,16 @@ def extract_text(filename: str, content: bytes) -> str:
     file_obj = io.BytesIO(content)
 
     if suffix == "docx":
-        return extract_docx_text(file_obj)
+        text = extract_docx_text(file_obj)
     elif suffix == "pdf":
-        return extract_pdf_text(file_obj)
+        text = extract_pdf_text(file_obj)
     elif suffix == "txt":
-        return content.decode("utf-8", errors="replace")
+        text = content.decode("utf-8", errors="replace")
     else:
         raise ValueError(f"Unsupported file type: .{suffix} (expected .docx, .pdf, or .txt)")
+
+    # Some PDF generators embed dashes/curly quotes as UTF-8 bytes run through
+    # a Latin-1 font encoding, so extracted text can come out as mojibake
+    # (e.g. an em-dash becomes "â€"") even though pypdf itself decoded the
+    # PDF correctly - ftfy detects and reverses this encoding mismatch.
+    return ftfy.fix_text(text)
