@@ -919,8 +919,21 @@ footer.site-footer-v2 {
 /* "Why Creating Tomorrow Is Different" - minimal, premium, no icons */
 
 .value-section {
+  background: #fffdf8;
+  padding: 3rem 0 80px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .value-section { background: var(--bg); }
+}
+
+@media (max-width: 719px) {
+  .value-section { padding-bottom: 56px; }
+}
+
+.value-section-inner {
   max-width: 1120px;
-  margin: 0 auto 3rem;
+  margin: 0 auto;
   padding: 0 1.5rem;
 }
 
@@ -973,41 +986,57 @@ footer.site-footer-v2 {
   color: #0847c7;
 }
 
-.value-cards {
+.principles-row {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
 }
 
 @media (min-width: 720px) {
-  .value-cards { flex-direction: row; }
+  .principles-row { flex-direction: row; }
 }
 
-.value-card {
+.principle {
   flex: 1;
-  background: var(--card-bg);
-  border: 1px solid #e3e7ee;
-  border-radius: 18px;
-  padding: 32px;
-  box-shadow: 0 12px 35px rgba(15, 32, 60, 0.06);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 32px 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  .value-card { border-color: var(--border); }
-}
-
-@media (hover: hover) {
-  .value-card:hover {
-    transform: translateY(-3px);
-    border-color: #0847c7;
-    box-shadow: 0 16px 40px rgba(15, 32, 60, 0.1);
+@media (min-width: 720px) {
+  .principle {
+    padding: 0 40px;
+    border-left: 1px solid #e4e8ef;
+  }
+  .principle:first-child {
+    padding-left: 0;
+    border-left: none;
   }
 }
 
-.value-card-label {
-  margin: 0 0 15px;
-  font-size: 13.5px;
+@media (prefers-color-scheme: dark) {
+  .principle { border-left-color: var(--border); }
+}
+
+@media (max-width: 719px) {
+  .principle {
+    border-top: 1px solid #e4e8ef;
+  }
+  .principle:first-child { border-top: none; padding-top: 0; }
+}
+
+@media (max-width: 719px) and (prefers-color-scheme: dark) {
+  .principle { border-top-color: var(--border); }
+}
+
+.principle-number {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 21px;
+  font-weight: 600;
+  color: #e2a126;
+}
+
+.principle-label {
+  margin: 0 0 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1015,38 +1044,44 @@ footer.site-footer-v2 {
 }
 
 @media (max-width: 719px) {
-  .value-card-label { font-size: 12.5px; }
+  .principle-label { font-size: 12.5px; }
 }
 
-.value-card h3 {
-  margin: 0 0 15px;
-  font-size: 23px;
+.principle h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
   color: #101318;
 }
 
 @media (max-width: 719px) {
-  .value-card h3 { font-size: 21px; }
+  .principle h3 { font-size: 21px; }
 }
 
-.value-card-body {
+.principle-desc {
   margin: 0;
-  font-size: 16.5px;
+  max-width: 300px;
+  font-size: 15.5px;
   font-weight: 400;
-  line-height: 1.6;
-  color: #303844;
-}
-
-@media (max-width: 719px) {
-  .value-card-body { font-size: 16px; }
+  line-height: 1.55;
+  color: #4d5663;
 }
 
 /* Learn section teaser - minimal, no thumbnails/color blocks */
 
 .learn-section-v2 {
+  background: #ffffff;
+  padding: 3rem 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .learn-section-v2 { background: var(--card-bg); }
+}
+
+.learn-section-inner {
   max-width: 1120px;
-  margin: 0 auto 3rem;
+  margin: 0 auto;
   padding: 0 1.5rem;
 }
 
@@ -1082,15 +1117,25 @@ footer.site-footer-v2 {
   flex-direction: column;
   text-decoration: none;
   color: inherit;
+  cursor: pointer;
   background: #ffffff;
-  border: 1px solid #e3e7ee;
+  border: 1px solid #e1e6ee;
   border-radius: 18px;
   padding: 28px;
   box-shadow: 0 10px 30px rgba(15, 32, 60, 0.05);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 @media (prefers-color-scheme: dark) {
   .learn-teaser-card { background: var(--card-bg); border-color: var(--border); }
+}
+
+@media (hover: hover) {
+  .learn-teaser-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(8, 71, 199, 0.35);
+    box-shadow: 0 16px 38px rgba(15, 32, 60, 0.1);
+  }
 }
 
 .learn-teaser-accent {
@@ -1099,6 +1144,15 @@ footer.site-footer-v2 {
   height: 2px;
   background: #e2a126;
   margin-bottom: 12px;
+}
+
+.learn-teaser-kicker {
+  margin: 0 0 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #747d89;
 }
 
 .learn-teaser-label {
