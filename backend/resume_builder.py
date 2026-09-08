@@ -105,23 +105,25 @@ def build_resume_bytes(data: dict, ats_mode: bool = False) -> bytes:
     contact_run = p.add_run(data["contact"])
     style_run(contact_run)
 
-    add_heading_bar(doc, "PROFESSIONAL SUMMARY")
+    if data.get("summary"):
+        add_heading_bar(doc, "PROFESSIONAL SUMMARY")
 
-    summary = data["summary"]
-    paragraphs = summary if isinstance(summary, list) else [summary]
-    p = doc.add_paragraph()
-    for i, para_text in enumerate(paragraphs):
-        if i > 0:
-            p.add_run().add_break()
-            p.add_run().add_break()
-        run = p.add_run(para_text)
-        style_run(run)
+        summary = data["summary"]
+        paragraphs = summary if isinstance(summary, list) else [summary]
+        p = doc.add_paragraph()
+        for i, para_text in enumerate(paragraphs):
+            if i > 0:
+                p.add_run().add_break()
+                p.add_run().add_break()
+            run = p.add_run(para_text)
+            style_run(run)
 
-    # Skills, experience, and education sections only render if there's
-    # actual content - an empty list used to still print the heading bar
-    # with nothing underneath it (e.g. someone using the start-from-scratch
-    # wizard who added zero experience entries got an orphaned
-    # "PROFESSIONAL EXPERIENCE" heading followed immediately by EDUCATION).
+    # Summary, skills, experience, and education sections only render if
+    # there's actual content - an empty list/missing field used to still
+    # print the heading bar with nothing underneath it (e.g. someone using
+    # the start-from-scratch wizard who added zero experience entries got
+    # an orphaned "PROFESSIONAL EXPERIENCE" heading followed immediately by
+    # EDUCATION, or a resume with no source summary got an empty one).
     if data["skills"]:
         doc.add_section(WD_SECTION.CONTINUOUS)
         set_page_geometry(doc.sections[-1])

@@ -163,7 +163,7 @@ class GenerateRequest(BaseModel):
 
 @app.post("/api/generate")
 async def api_generate(req: GenerateRequest):
-    required_fields = ["name", "contact", "summary", "skills", "experience", "education"]
+    required_fields = ["name", "contact", "skills", "experience", "education"]
     missing = [f for f in required_fields if f not in req.resume_data]
     if missing:
         raise HTTPException(status_code=400, detail=f"resume_data missing fields: {missing}")
