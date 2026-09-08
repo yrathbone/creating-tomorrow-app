@@ -1252,3 +1252,342 @@ footer.site-footer-v2 {
   margin-top: 0;
   flex: 0 0 auto;
 }
+
+/* ===== "What Is an ATS, Really?" custom article template ===== */
+/* Scoped entirely under .ats-* classes - only used on this one article. */
+
+.ats-article {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 2rem;
+}
+
+.ats-back-link {
+  display: inline-block;
+  margin-bottom: 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0847c7;
+  text-decoration: none;
+}
+
+.ats-header { margin-bottom: 40px; }
+
+.ats-category {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0847c7;
+}
+
+.ats-header-accent {
+  display: block;
+  width: 32px;
+  height: 3px;
+  background: #e2a126;
+  margin-bottom: 18px;
+}
+
+.ats-header h1 {
+  margin: 0 0 18px;
+  font-size: 36px;
+  font-weight: 750;
+  line-height: 1.05;
+  color: #101318;
+}
+
+@media (min-width: 640px) {
+  .ats-header h1 { font-size: 52px; }
+}
+
+.ats-subtitle {
+  margin: 0 0 12px;
+  font-size: 21px;
+  line-height: 1.5;
+  color: #404957;
+}
+
+.ats-readtime {
+  margin: 0;
+  font-size: 13.5px;
+  color: #8a92a0;
+}
+
+.ats-body {
+  font-size: 17px;
+  line-height: 1.75;
+  color: #303844;
+}
+
+@media (min-width: 640px) {
+  .ats-body { font-size: 17.5px; }
+}
+
+.ats-body > p { margin: 0 0 24px; }
+
+.ats-body h2 {
+  margin: 54px 0 22px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #101318;
+}
+
+@media (min-width: 640px) {
+  .ats-body h2 { font-size: 30px; margin-top: 60px; }
+}
+
+.ats-body h3 {
+  margin: 34px 0 14px;
+  font-size: 21px;
+  font-weight: 700;
+  color: #063594;
+}
+
+.ats-body ul {
+  margin: 0 0 24px;
+  padding-left: 1.3rem;
+}
+
+.ats-body li { margin-bottom: 8px; }
+
+.ats-body em {
+  font-style: normal;
+  color: #626b78;
+  font-size: 0.92em;
+}
+
+.ats-body a { color: #0847c7; }
+
+/* Opening summary card */
+.ats-callout-summary {
+  background: #eef1f6;
+  border-left: 3px solid #0847c7;
+  border-radius: 12px;
+  padding: 24px 26px;
+  margin: 8px 0 32px;
+}
+
+.ats-callout-summary p {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: #101318;
+}
+
+.ats-callout-summary p + p { margin-top: 4px; }
+
+/* Key takeaway callouts - lighter than the opening summary card */
+.ats-callout {
+  background: #fbfcfe;
+  border-left: 3px solid #e2a126;
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin: 8px 0 32px;
+}
+
+.ats-callout p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #101318;
+}
+
+/* Unclear / Clearer comparison blocks */
+.ats-compare {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 8px 0 24px;
+}
+
+@media (min-width: 560px) {
+  .ats-compare { grid-template-columns: 1fr 1fr; }
+}
+
+.ats-compare-col { border-radius: 12px; padding: 18px 20px; }
+.ats-compare-unclear { background: #f2f3f5; }
+.ats-compare-clear { background: #fdf6e8; }
+
+.ats-compare-label {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ats-compare-unclear .ats-compare-label { color: #8a92a0; }
+.ats-compare-clear .ats-compare-label { color: #0847c7; }
+
+.ats-compare-col p:last-child {
+  margin: 0;
+  font-size: 16px;
+  color: #101318;
+}
+
+/* Checklist with cobalt checkmarks */
+.ats-checklist { list-style: none; padding: 0; }
+
+.ats-checklist li {
+  padding-left: 1.6rem;
+  position: relative;
+}
+
+.ats-checklist li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #0847c7;
+  font-weight: 700;
+}
+
+/* Final takeaway section */
+.ats-takeaway {
+  max-width: 780px;
+  margin: 0 auto 3rem;
+  padding: 40px 24px;
+  background: linear-gradient(135deg, #f7f9fc, #fff9ee);
+  border-radius: 18px;
+}
+
+@media (min-width: 640px) {
+  .ats-takeaway { padding: 48px 44px; }
+}
+
+.ats-takeaway h2 {
+  margin: 0 0 16px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #101318;
+}
+
+@media (min-width: 640px) {
+  .ats-takeaway h2 { font-size: 28px; }
+}
+
+.ats-takeaway > p {
+  margin: 0 0 24px;
+  font-size: 17.5px;
+  line-height: 1.6;
+  color: #303844;
+}
+
+.ats-takeaway-list { list-style: none; padding: 0; margin: 0 0 32px; }
+
+.ats-takeaway-list li {
+  padding: 10px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #101318;
+  border-top: 1px solid rgba(16, 19, 24, 0.08);
+}
+
+@media (min-width: 640px) {
+  .ats-takeaway-list li { font-size: 19px; }
+}
+
+.ats-takeaway-list li:first-child { border-top: none; }
+
+.ats-takeaway-final {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 750;
+}
+
+@media (min-width: 640px) {
+  .ats-takeaway-final { font-size: 26px; }
+}
+
+.ats-cobalt { color: #0847c7; }
+.ats-gold { color: #e2a126; }
+.ats-ink { color: #101318; }
+
+/* Sources accordion - native <details>, no custom JS needed for a11y */
+.ats-sources {
+  border-top: 1px solid #e4e8ef;
+  border-bottom: 1px solid #e4e8ef;
+  padding: 4px 0;
+  margin: 0 0 2rem;
+}
+
+.ats-sources summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 20px 4px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ats-sources summary::-webkit-details-marker { display: none; }
+
+.ats-sources-title {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #101318;
+}
+
+.ats-sources-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  color: #626b78;
+}
+
+.ats-chevron {
+  flex-shrink: 0;
+  color: #0847c7;
+  transition: transform 0.2s ease;
+}
+
+.ats-sources[open] .ats-chevron { transform: rotate(180deg); }
+
+.ats-sources-body {
+  padding: 4px 4px 22px;
+  font-size: 14.5px;
+  color: #404957;
+}
+
+.ats-sources-body h3 {
+  margin: 20px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0847c7;
+}
+
+.ats-sources-body h3:first-child { margin-top: 0; }
+
+.ats-sources-body ul { margin: 0 0 4px; padding-left: 1.2rem; }
+.ats-sources-body li { margin-bottom: 8px; line-height: 1.5; }
+.ats-sources-body a { color: #0847c7; }
+
+/* Footer CTA reuses .final-cta/.hero-ctas from the homepage, just narrower */
+.ats-final-cta {
+  max-width: 780px;
+  margin: 0 auto 2.5rem;
+  padding: 0 1.5rem;
+}
+
+.ats-next-link {
+  display: block;
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 3rem;
+  padding: 0 1.5rem;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0847c7;
+  text-decoration: none;
+}
+
+@media (max-width: 639px) {
+  .ats-article { padding: 2rem 1.25rem 1.5rem; }
+}

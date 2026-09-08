@@ -18,7 +18,7 @@
     </div>
   </nav>
 
-  <main>
+  <main id="generic-article-main">
     <section class="card">
       <div id="video-slot"></div>
       <div id="article-body" class="article-body">
@@ -26,6 +26,198 @@
       </div>
       <a href="learn.html" class="btn-secondary">&larr; Back to Learn</a>
     </section>
+  </main>
+
+  <main id="ats-article-main" class="ats-article" hidden>
+    <a href="learn.html" class="ats-back-link">&larr; Back to Learn</a>
+
+    <header class="ats-header">
+      <p class="ats-category">ATS Basics</p>
+      <span class="ats-header-accent"></span>
+      <h1>What Is an ATS, Really?</h1>
+      <p class="ats-subtitle">The software behind online job applications &mdash; without the mythology.</p>
+      <p class="ats-readtime">6&ndash;8 minute read</p>
+    </header>
+
+    <div class="ats-body">
+      <p>If you've applied for a job online, there's a good chance your application entered an Applicant Tracking System, or ATS.</p>
+      <p>You may have heard that an ATS is a robot that reads your resume, gives it a score, and decides whether a human will ever see it. Sometimes software does screen, rank, or match candidates. But that's only part of the story.</p>
+      <p>An ATS is better understood as a recruiting system that helps employers collect, organize, search, and manage applications. Different ATS products &mdash; and different employers using those products &mdash; can behave very differently.</p>
+
+      <div class="ats-callout ats-callout-summary">
+        <p>ATS &ne; one mysterious robot.</p>
+        <p>ATS = software used to help manage recruiting.</p>
+      </div>
+
+      <h2>First, Think of It as an Organized Filing System</h2>
+      <p>Imagine a company receives hundreds of applications. Without software, recruiters would need to manually download resumes, keep track of applicants, record interview stages, and organize everything themselves. An ATS helps manage that process.</p>
+      <p>Depending on the system, an ATS may:</p>
+      <ul>
+        <li>Store resumes and applications</li>
+        <li>Extract information from resumes into structured fields</li>
+        <li>Help recruiters search or filter candidates</li>
+        <li>Track applicants through interviews and hiring stages</li>
+        <li>Support recruiting communication and scheduling</li>
+        <li>Apply employer-defined screening criteria</li>
+        <li>In some systems, calculate candidate-match scores or recommendations</li>
+      </ul>
+      <p>Recruiting platforms including Workday and Lever document resume-parsing features that can extract information such as candidate names, contact details, employers, job titles, schools, and dates <em>(Source: Workday, Lever)</em>.</p>
+      <p>So the ATS isn't one single robot. It is an environment in which recruiting happens.</p>
+
+      <h2>What Does &ldquo;Parsing&rdquo; a Resume Mean?</h2>
+      <p>A resume is designed for a person to look at. Computers often need something more structured. Resume parsing is the process of taking resume content and trying to identify pieces of information such as:</p>
+      <ul>
+        <li>Name</li>
+        <li>Email</li>
+        <li>Employer</li>
+        <li>Job title</li>
+        <li>Employment dates</li>
+        <li>Education</li>
+      </ul>
+      <p>Modern resume-parsing technology can use techniques such as optical character recognition, natural-language processing, and machine learning to identify these fields. But parsing is not perfect.</p>
+      <p>Workday's own documentation notes that parsing results can vary depending on resume format and word order <em>(Source: Workday)</em>. Greenhouse's support documentation similarly identifies non-standard formatting and embedded images as things that can prevent a resume from being successfully parsed, meaning a recruiter would need to enter that candidate's details by hand <em>(Source: Greenhouse)</em>.</p>
+      <p>It would be an overstatement to say &ldquo;two-column resumes don't work.&rdquo; What's more accurate: different systems read documents differently. If maximum compatibility matters, simpler formatting reduces the number of things that can go wrong.</p>
+
+      <h3>More predictable to parse</h3>
+      <ul>
+        <li>Clear headings</li>
+        <li>Consistent dates</li>
+        <li>Simple structure</li>
+        <li>Important information written as text</li>
+      </ul>
+      <h3>Less predictable to parse</h3>
+      <ul>
+        <li>Complex text boxes</li>
+        <li>Information embedded in graphics</li>
+        <li>Highly unusual layouts</li>
+        <li>Important content inside decorative elements</li>
+      </ul>
+      <p>None of this means the second list is forbidden &mdash; only that it introduces more that can go wrong.</p>
+
+      <h2>What About Keywords?</h2>
+      <p>Keywords matter because recruiters and recruiting systems can search and filter candidate information. If an employer is searching for experience involving Python, project management, commercial lending, or Spanish, clearly describing that real experience makes it easier for recruiters &mdash; or software &mdash; to identify it. Some systems now go beyond literal keyword searching and use candidate matching, recommendation systems, or semantic comparisons.</p>
+      <p>Here's the key distinction: the useful strategy is not to copy every word from a job posting. The useful strategy is to use the employer's language when it truthfully describes your experience.</p>
+
+      <div class="ats-callout">
+        <p>If you performed project management, say project management. If you didn't, don't add it because a scanner told you the phrase was missing.</p>
+      </div>
+
+      <h2>Can You &ldquo;Beat&rdquo; an ATS With Keywords?</h2>
+      <p>Researchers have demonstrated that automated ranking systems based on textual similarity can, in some cases, be manipulated through strategic text changes. Academic work by Anahita Samadi, Debapriya Banerjee, and Shirin Nilizadeh &mdash; <a href="https://arxiv.org/abs/2108.05490" target="_blank" rel="noopener">&ldquo;Attacks against Ranking Algorithms with Text Embeddings: A Case Study on Recruitment Algorithms&rdquo;</a>, presented at the 2021 BlackboxNLP workshop &mdash; examined attacks against ranking algorithms that use text embeddings to compare resumes with job descriptions <em>(Source: Samadi, Banerjee &amp; Nilizadeh, 2021)</em>.</p>
+      <p>This research does not prove that every commercial ATS works this way, and it does not mean candidates should keyword-stuff resumes. What it demonstrates is that automated ranking systems can have real limitations. Meanwhile, modern candidate-matching research increasingly leans on contextual language models and semantic relationships rather than only counting exact words &mdash; which makes crude keyword-stuffing less reliable, not more.</p>
+      <p>A better strategy is not keyword stuffing. It is <strong>truthful alignment.</strong></p>
+
+      <h2>Can an ATS Automatically Reject Someone?</h2>
+      <p>Sometimes. Employers may configure screening questions, filters, knockout criteria, assessments, automated matching, or candidate scoring. It isn't accurate to say ATS platforms never reject candidates automatically &mdash; and it's equally inaccurate to say every ATS automatically rejects anyone below some secret score. The amount of automation depends on the employer, the software being used, and how that employer configured the hiring process.</p>
+      <p>This isn't just a hypothetical concern. The U.S. government has taken a direct interest: official guidance from the Americans with Disabilities Act notes that algorithmic hiring tools &mdash; including resume-screening software &mdash; can screen out qualified people with disabilities, even unintentionally, and that employers remain responsible for those outcomes regardless of which vendor built the tool <em>(Source: <a href="https://www.ada.gov/resources/ai-guidance/" target="_blank" rel="noopener">ADA.gov, &ldquo;Algorithms, Artificial Intelligence, and Disability Discrimination in Hiring&rdquo;</a>)</em>.</p>
+
+      <div class="ats-callout">
+        <p>Technology can help organize hiring. It does not make hiring infallible.</p>
+      </div>
+
+      <h2>Can Software Understand Everything You've Done?</h2>
+      <p>Modern systems are considerably more sophisticated than basic keyword matching, but understanding human career experience remains technically difficult. Here's the practical version: neither software nor a recruiter can understand experience that the resume doesn't explain clearly.</p>
+
+      <div class="ats-compare">
+        <div class="ats-compare-col ats-compare-unclear">
+          <p class="ats-compare-label">Unclear</p>
+          <p>Helped with reports.</p>
+        </div>
+        <div class="ats-compare-col ats-compare-clear">
+          <p class="ats-compare-label">Clearer</p>
+          <p>Prepared monthly financial reporting for senior management.</p>
+        </div>
+      </div>
+
+      <div class="ats-compare">
+        <div class="ats-compare-col ats-compare-unclear">
+          <p class="ats-compare-label">Unclear</p>
+          <p>Worked with customers.</p>
+        </div>
+        <div class="ats-compare-col ats-compare-clear">
+          <p class="ats-compare-label">Clearer</p>
+          <p>Resolved customer account issues and coordinated with operations teams to complete service requests.</p>
+        </div>
+      </div>
+
+      <p>The purpose isn't to make simple work sound grandiose. The purpose is to tell the reader what actually happened.</p>
+      <p>Clear writing helps technology understand your resume. More importantly, it helps people understand you.</p>
+
+      <h2>So What Does an ATS-Friendly Resume Look Like?</h2>
+      <p>You do not need a secret formula.</p>
+      <ul class="ats-checklist">
+        <li>Clear section headings such as Experience, Education, and Skills</li>
+        <li>Recognizable job titles and employment dates</li>
+        <li>Straightforward formatting</li>
+        <li>Important information written as text rather than embedded entirely inside graphics</li>
+        <li>Consistent dates and employment structure</li>
+        <li>Relevant skills described naturally within actual experience</li>
+        <li>Job-description language when that language honestly matches your experience</li>
+      </ul>
+      <p>If maximum parsing compatibility is the goal, a simple single-column resume remains a reasonable choice, since major ATS vendors' own documentation warns that complex layouts can affect parsing. That's exactly why Creating Tomorrow includes an ATS-focused single-column option &mdash; not because a visually distinctive resume is bad, but because clarity should come first.</p>
+    </div>
+
+    <section class="ats-takeaway">
+      <h2>The Real Takeaway</h2>
+      <p>Don't build your resume around defeating a machine. Build it around making your experience easy to understand.</p>
+      <ul class="ats-takeaway-list">
+        <li>Keep the formatting clear.</li>
+        <li>Use recognizable professional language.</li>
+        <li>Describe what you actually did.</li>
+        <li>Use job-specific terminology when it is true.</li>
+        <li>Write something a human will want to read.</li>
+      </ul>
+      <p class="ats-takeaway-final"><span class="ats-cobalt">Clarity</span> <span class="ats-ink">+</span> <span class="ats-gold">Relevance</span> <span class="ats-ink">+</span> <span class="ats-cobalt">Truth</span></p>
+    </section>
+
+    <div class="ats-body">
+      <details class="ats-sources">
+        <summary>
+          <span class="ats-sources-heading">
+            <span class="ats-sources-title">Sources &amp; Further Reading</span>
+            <span class="ats-sources-sub">Research and documentation behind this guide.</span>
+          </span>
+          <svg class="ats-chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <div class="ats-sources-body">
+          <h3>Official Documentation</h3>
+          <ul>
+            <li>Workday &mdash; <em>Resume Parsing</em>, Recruiting admin documentation (doc.workday.com)</li>
+            <li>Greenhouse &mdash; <a href="https://support.greenhouse.io/hc/en-us/articles/200989175-Unsuccessful-resume-parse" target="_blank" rel="noopener">&ldquo;Unsuccessful resume parse&rdquo;</a>, Greenhouse Support Center</li>
+            <li>Lever &mdash; resume parsing and candidate-profile documentation, referenced via Lever's published product documentation</li>
+          </ul>
+          <h3>Professional HR Guidance</h3>
+          <ul>
+            <li>SHRM &mdash; general guidance describing applicant tracking systems and resume screening</li>
+          </ul>
+          <h3>Government Guidance</h3>
+          <ul>
+            <li>U.S. Equal Employment Opportunity Commission &mdash; technical assistance on artificial intelligence and algorithmic decision-making tools in employment</li>
+            <li><a href="https://www.ada.gov/resources/ai-guidance/" target="_blank" rel="noopener">ADA.gov &mdash; &ldquo;Algorithms, Artificial Intelligence, and Disability Discrimination in Hiring&rdquo;</a></li>
+          </ul>
+          <h3>Academic Research</h3>
+          <ul>
+            <li>Samadi, A., Banerjee, D., &amp; Nilizadeh, S. (2021). <a href="https://arxiv.org/abs/2108.05490" target="_blank" rel="noopener">&ldquo;Attacks against Ranking Algorithms with Text Embeddings: A Case Study on Recruitment Algorithms.&rdquo;</a> Proceedings of the Fourth BlackboxNLP Workshop on Analyzing and Interpreting Neural Networks for NLP.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+
+    <section class="final-cta ats-final-cta">
+      <div class="final-cta-inner">
+        <div class="final-cta-text">
+          <span class="final-cta-accent"></span>
+          <h2>Ready to work on your resume?</h2>
+          <p>Use what you've learned with Creating Tomorrow's free tools.</p>
+        </div>
+        <div class="hero-ctas">
+          <a href="tool.html" class="btn-primary">Use Free Resume Tools →</a>
+          <a href="learn.html" class="btn-secondary">Learn Another Topic →</a>
+        </div>
+      </div>
+    </section>
+
+    <a href="article.html?slug=resume-calling-card" class="ats-next-link">Next: Your Resume Is a Calling Card →</a>
   </main>
 
   <footer>
@@ -42,7 +234,13 @@
 
     const meta = ARTICLES.find((a) => a.slug === slug);
 
-    if (!slug || !meta) {
+    if (slug === "what-is-ats") {
+      // This one article has a fully custom rich template instead of the
+      // generic markdown render - every other slug is unaffected below.
+      document.getElementById("generic-article-main").hidden = true;
+      document.getElementById("ats-article-main").hidden = false;
+      document.title = "What Is an ATS, Really? — Creating Tomorrow";
+    } else if (!slug || !meta) {
       bodyEl.innerHTML = "<p>That article doesn't exist. <a href=\"learn.html\">Back to Learn</a>.</p>";
     } else {
       document.title = `${meta.title} — Creating Tomorrow`;
