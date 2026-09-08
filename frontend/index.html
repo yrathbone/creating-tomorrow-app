@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Creating Tomorrow — Honest resume coaching</title>
+  <title>Creating Tomorrow — Build a resume that reflects what you've actually done</title>
   <meta name="description" content="A free, non-profit tool that helps you build an ATS-friendly resume honestly — no keyword games, just real reflection on skills you already have." />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,37 +17,85 @@
       <a href="index.html" class="nav-active">Home</a>
       <a href="learn.html">Learn</a>
       <a href="videos.html">Videos</a>
-      <a href="tool.html" class="nav-cta">Free Tools</a>
+      <a href="tool.html" class="nav-cta">Build Your Resume →</a>
     </div>
   </nav>
 
-  <section class="hero">
-    <img src="logo.svg" alt="Creating Tomorrow" class="hero-logo" />
-    <p class="hero-tagline">Yes, you can. Let's find the proof that's already on your resume.</p>
-    <p class="hero-sub">
-      A free, non-profit tool that helps you build a resume that gets past automated
-      screening <em>and</em> reads well to a human — by teaching you to recognize the
-      skills you already have, honestly, instead of just telling you which keywords to add.
-    </p>
-    <a href="tool.html" class="btn-primary">Build or check your resume</a>
+  <section class="home-hero">
+    <div class="home-hero-inner">
+      <div>
+        <p class="eyebrow">Real people. Real skills. Brighter tomorrows.</p>
+        <h1>Build a Resume That Reflects What You've <span class="gold-text">Actually Done</span></h1>
+        <p class="home-hero-sub">
+          Honest resume guidance, ATS education, and free non-profit career tools — so you
+          can show your true skills, open new opportunities, and create a brighter tomorrow.
+        </p>
+        <div class="hero-ctas">
+          <a href="tool.html" class="btn-primary">Build or Check Your Resume →</a>
+          <a href="tool.html" class="btn-secondary">Explore Free Tools</a>
+        </div>
+        <div class="trust-badges">
+          <div class="trust-badge">
+            <span class="trust-badge-icon">🎓</span>
+            <span><strong>100% Free</strong><span>Always</span></span>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-badge-icon">🤝</span>
+            <span><strong>Nonprofit</strong><span>Mission-Driven</span></span>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-badge-icon">💛</span>
+            <span><strong>Real People</strong><span>Real Support</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <div class="hero-art-blob"></div>
+        <p class="hero-side-labels">PEOPLE&nbsp;&nbsp;&nbsp;SKILLS&nbsp;&nbsp;&nbsp;OPPORTUNITIES&nbsp;&nbsp;&nbsp;BRIGHTER TOMORROWS</p>
+        <div class="floating-card">
+          <div class="floating-card-header">
+            <div class="floating-card-avatar"></div>
+            <div class="floating-card-lines">
+              <span style="width: 80%;"></span>
+              <span></span>
+            </div>
+          </div>
+          <ul class="resume-checklist">
+            <li>Real Experience</li>
+            <li>Clear Skills</li>
+            <li>ATS Ready</li>
+            <li>More Opportunities</li>
+          </ul>
+        </div>
+        <div class="floating-card-secondary">
+          <span class="floating-card-secondary-icon">📈</span>
+          <span>Your Potential Belongs Here</span>
+        </div>
+        <p class="script-accent">A brighter tomorrow<br />is a skill you can build.</p>
+      </div>
+    </div>
   </section>
 
-  <main>
+  <main class="home-main">
     <section class="card">
-      <h2>Why Creating Tomorrow is different</h2>
-      <div class="value-props">
-        <div class="value-prop">
-          <h3>Not a keyword game</h3>
-          <p>We don't just tell you which words are missing. We ask whether you actually
-          have the experience behind them — and only add what you confirm.</p>
+      <h2>Why Creating Tomorrow is Different</h2>
+      <div class="value-cards">
+        <div class="value-card">
+          <div class="value-icon icon-gold">🛡️</div>
+          <h3>Honest Skill Proof</h3>
+          <p>We don't just tell you which words are missing. We ask what you actually have —
+          and help you put it into words.</p>
         </div>
-        <div class="value-prop">
-          <h3>An honest coach, not a scorer</h3>
-          <p>Grades are calibrated, not inflated. A stretch role gets an honest grade and
-          real growth suggestions, not a false sense of readiness.</p>
+        <div class="value-card">
+          <div class="value-icon icon-blue">👥</div>
+          <h3>Human-Friendly ATS Guidance</h3>
+          <p>Learn how the software works, not just how to "beat" it. Real explanations and
+          examples, in plain language.</p>
         </div>
-        <div class="value-prop">
-          <h3>Free, because it should be</h3>
+        <div class="value-card">
+          <div class="value-icon icon-gold">💛</div>
+          <h3>Free Nonprofit Support</h3>
           <p>Creating Tomorrow is a non-profit. Career tools that gatekeep behind a paywall are
           part of the problem — this one isn't.</p>
         </div>
@@ -53,11 +103,22 @@
     </section>
 
     <section class="card">
-      <h2>From the Learn section</h2>
+      <h2>From the Learn Section</h2>
       <p class="hint">A few things worth understanding before you touch a resume template.</p>
-      <div id="learn-teaser" class="article-list"></div>
+      <div id="learn-teaser" class="learn-teaser-grid"></div>
       <a href="learn.html" class="btn-secondary">See all articles</a>
     </section>
+
+    <div class="cta-banner">
+      <div class="cta-banner-left">
+        <img src="favicon.svg" alt="" />
+        <div>
+          <h2>Brighter Careers Are Possible</h2>
+          <p>You have more to offer than you think. Let's build what's next — together.</p>
+        </div>
+      </div>
+      <a href="tool.html" class="btn-primary">Build or Check Your Resume →</a>
+    </div>
   </main>
 
   <footer>
@@ -67,11 +128,20 @@
   <script src="learn-data.js"></script>
   <script>
     const teaser = document.getElementById("learn-teaser");
-    ARTICLES.slice(0, 3).forEach((a) => {
+    const thumbClasses = ["thumb-1", "thumb-2", "thumb-3"];
+    ARTICLES.slice(0, 3).forEach((a, i) => {
       const div = document.createElement("a");
-      div.className = "article-card";
+      div.className = "learn-teaser-card";
       div.href = `article.html?slug=${a.slug}`;
-      div.innerHTML = `<strong>${a.title}</strong><span>${a.summary}</span>`;
+      div.innerHTML = `
+        <div class="learn-thumb ${thumbClasses[i % thumbClasses.length]}">
+          <span class="tag-pill">${a.category || "Learn"}</span>
+        </div>
+        <div class="learn-teaser-body">
+          <h3>${a.title}</h3>
+          <p>${a.summary}</p>
+          <span class="learn-teaser-link">Read the Guide →</span>
+        </div>`;
       teaser.appendChild(div);
     });
   </script>

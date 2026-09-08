@@ -1,39 +1,23 @@
-<svg viewBox="0 0 820 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg viewBox="0 0 350 62" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
 <title id="title">Creating Tomorrow</title>
-<desc id="desc">A path rendered as a trail of connected glowing nodes symbolizing AI, climbing from the ground toward a rising sun, next to the wordmark Creating Tomorrow.</desc>
+<desc id="desc">A rising wave brightening from blue to gold, next to the wordmark Creating Tomorrow and the tagline Real Skills. Brighter Tomorrows.</desc>
+<defs>
+  <linearGradient id="wave" x1="4" y1="52" x2="54" y2="10" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#0047ab"/>
+    <stop offset="0.6" stop-color="#2f6fd6"/>
+    <stop offset="1" stop-color="#f0ac3f"/>
+  </linearGradient>
+</defs>
 
-<!-- ICON -->
-<g transform="translate(20,20)">
-  <!-- horizon -->
-  <line x1="20" y1="195" x2="220" y2="195" stroke="#a98f73" stroke-width="7" stroke-linecap="round"/>
-
-  <!-- grounded start of the path -->
-  <line x1="35" y1="193" x2="78" y2="158" stroke="#8a6a48" stroke-width="5.5" stroke-linecap="round"/>
-
-  <!-- path lifts into a trail of connected glowing nodes, climbing toward the sun -->
-  <g stroke="#f0ac3f" stroke-width="3.5" fill="none" opacity="0.9">
-    <line x1="78" y1="158" x2="108" y2="128"/>
-    <line x1="108" y1="128" x2="133" y2="104"/>
-    <line x1="133" y1="104" x2="155" y2="84"/>
-  </g>
-  <circle cx="78" cy="158" r="7" fill="#f0ac3f"/>
-  <circle cx="108" cy="128" r="7.5" fill="#f0ac3f"/>
-  <circle cx="133" cy="104" r="8.2" fill="#fbd490"/>
-  <circle cx="155" cy="84" r="9.5" fill="#fff3da"/>
-
-  <!-- rising sun -->
-  <circle cx="178" cy="62" r="46" fill="#fbd490" opacity="0.25"/>
-  <circle cx="178" cy="62" r="32" fill="#f0ac3f"/>
-  <circle cx="171" cy="55" r="13" fill="#fff3da" opacity="0.85"/>
-  <g stroke="#f0ac3f" stroke-width="4" stroke-linecap="round">
-    <line x1="178" y1="18" x2="178" y2="6"/>
-    <line x1="152" y1="27" x2="143" y2="17"/>
-    <line x1="204" y1="27" x2="213" y2="17"/>
-  </g>
+<g transform="translate(2,0)">
+  <circle cx="50" cy="12" r="15" fill="#fbd490" opacity="0.28"/>
+  <path d="M6,50 C 16,50 24,36 30,28 C 37,18 42,14 50,12" fill="none" stroke="url(#wave)" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="50" cy="12" r="6.5" fill="#f0ac3f"/>
+  <circle cx="48" cy="10" r="2.6" fill="#fff3da"/>
 </g>
 
-<!-- WORDMARK -->
-<g transform="translate(270,152)" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="50">
-  <text x="0" y="0" fill="#0047ab">Creating <tspan fill="#e0a641">Tomorrow</tspan></text>
+<g font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <text x="70" y="32" font-weight="800" font-size="25" fill="#0047ab">Creating <tspan fill="#e0a641">Tomorrow</tspan></text>
+  <text x="71" y="47" font-weight="700" font-size="8" letter-spacing="1.3" fill="#7c8794">REAL SKILLS. BRIGHTER TOMORROWS.</text>
 </g>
 </svg>
