@@ -29,7 +29,10 @@ Do four things:
 all real content faithfully. Do not invent, embellish, or infer anything \
 that isn't actually in the source text. If contact info is incomplete, \
 leave it out rather than guessing. Keep bullet points close to their \
-original wording, but you may tighten grammar/phrasing for clarity.
+original wording, but you may tighten grammar/phrasing for clarity. \
+Write every job's date range in numeric MM/YY format (e.g. "07/21 – \
+09/23"), converting from whatever format the source uses; keep "Present" \
+or "Current" as-is (do not turn it into a date) for an ongoing role.
 
 2. IDENTIFY the person's current or most recent job title from the resume.
 
@@ -60,7 +63,7 @@ nothing before or after it - in this exact shape:
     "summary": "one paragraph, or omit if none existed in the source",
     "skills": ["skill one", "skill two"],
     "experience": [
-      {"title": "Job Title", "subtitle": "Company, City, ST — Start – End", "bullets": ["...", "..."]}
+      {"title": "Job Title", "subtitle": "Company, City, ST — MM/YY – MM/YY", "bullets": ["...", "..."]}
     ],
     "education": ["Degree – School, City, ST"]
   },
