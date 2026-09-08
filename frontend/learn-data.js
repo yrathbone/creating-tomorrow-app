@@ -7,7 +7,7 @@ const ARTICLES = [
   {
     slug: "what-is-ats",
     title: "What Is an ATS, Really?",
-    summary: "Demystifying the software that screens your resume before a human ever sees it — what it actually does, and what it doesn't.",
+    summary: "The software behind online job applications — without the mythology.",
     category: "ATS Basics",
     video_youtube_id: null,
   },
