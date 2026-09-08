@@ -39,6 +39,10 @@
           <strong>Landing Spot</strong>
           <span>Check your fit for a job — you've found a specific opening. Upload your resume and paste the posting for an honest match report.</span>
         </button>
+        <button type="button" class="mode-btn" id="mode-upgrade" data-mode="upgrade">
+          <strong>Summit</strong>
+          <span>Polish what you've already got — upload your resume and we'll rewrite it in sharper, more professional language. Nothing new added, nothing invented.</span>
+        </button>
       </div>
     </section>
 
@@ -64,7 +68,7 @@
     </section>
 
     <section id="step-results" class="card" hidden>
-      <h2>2. Your honest report</h2>
+      <h2 id="results-heading">2. Your honest report</h2>
 
       <div id="match-mode-results">
         <div id="grade-badge"></div>
@@ -98,11 +102,17 @@
         <h3>What we found</h3>
         <p id="role-research-summary"></p>
       </div>
+
+      <div id="upgrade-mode-results" class="report-block" hidden>
+        <h3>Your rewritten summary</h3>
+        <p id="upgrade-summary-preview"></p>
+        <p class="hint">Your skills and experience bullets have been rewritten the same way — download below to see the full resume.</p>
+      </div>
     </section>
 
     <section id="step-questions" class="card" hidden>
-      <h2>3. Be honest with yourself</h2>
-      <p class="hint">
+      <h2 id="questions-heading">3. Be honest with yourself</h2>
+      <p class="hint" id="questions-hint">
         Based on what this kind of role usually involves, here are a few things
         to check against your real experience. Only say yes if it's true —
         we never add anything you don't confirm.

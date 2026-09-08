@@ -3,7 +3,7 @@
 // want a resume + job posting sitting in a database).
 let resumeData = null;
 let reflectiveQuestions = [];
-let currentMode = null; // "build" or "analyze"
+let currentMode = null; // "build", "analyze", or "upgrade"
 
 const stepMode = document.getElementById("step-mode");
 const stepUpload = document.getElementById("step-upload");
@@ -21,8 +21,13 @@ const analyzeForm = document.getElementById("analyze-form");
 const analyzeBtn = document.getElementById("analyze-btn");
 const analyzeError = document.getElementById("analyze-error");
 
+const resultsHeading = document.getElementById("results-heading");
 const matchModeResults = document.getElementById("match-mode-results");
 const buildModeResults = document.getElementById("build-mode-results");
+const upgradeModeResults = document.getElementById("upgrade-mode-results");
+
+const questionsHeading = document.getElementById("questions-heading");
+const questionsHint = document.getElementById("questions-hint");
 
 const generateBtn = document.getElementById("generate-btn");
 const generateError = document.getElementById("generate-error");
@@ -34,6 +39,7 @@ const MODE_CONFIG = {
     uploadHint: "Upload your current resume. We'll research what your role typically involves today and help you rebuild it honestly — no job posting required.",
     loadingText: 'Reading your resume and researching your role — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
     needsJobPosting: false,
+    resultsHeading: "2. Your honest report",
   },
   analyze: {
     endpoint: "/api/analyze",
@@ -41,6 +47,15 @@ const MODE_CONFIG = {
     uploadHint: "Upload your current resume and paste in the job posting you're aiming for. We'll compare them honestly — not just by counting keywords.",
     loadingText: 'Reading your resume and comparing it to the posting — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
     needsJobPosting: true,
+    resultsHeading: "2. Your honest report",
+  },
+  upgrade: {
+    endpoint: "/api/upgrade",
+    uploadHeading: "1. Summit: Tell us about you",
+    uploadHint: "Upload your current resume. We'll rewrite it in polished, professional language — no job posting needed, and we won't add anything that isn't already true on your resume.",
+    loadingText: 'Reading your resume and rewriting it in sharper language — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
+    needsJobPosting: false,
+    resultsHeading: "2. Your rewritten resume",
   },
 };
 
@@ -57,6 +72,7 @@ function selectMode(mode) {
   jobPostingField.hidden = !config.needsJobPosting;
   jobPostingInput.required = config.needsJobPosting;
   loadingText.innerHTML = config.loadingText;
+  resultsHeading.textContent = config.resultsHeading;
 
   stepMode.hidden = true;
   stepUpload.hidden = false;
@@ -99,16 +115,26 @@ analyzeForm.addEventListener("submit", async (e) => {
     resumeData = data.resume_data;
     reflectiveQuestions = data.reflective_questions || [];
 
+    matchModeResults.hidden = currentMode !== "analyze";
+    buildModeResults.hidden = currentMode !== "build";
+    upgradeModeResults.hidden = currentMode !== "upgrade";
+
     if (currentMode === "analyze") {
-      matchModeResults.hidden = false;
-      buildModeResults.hidden = true;
       renderMatchReport(data.match_report);
-    } else {
-      matchModeResults.hidden = true;
-      buildModeResults.hidden = false;
+    } else if (currentMode === "build") {
       document.getElementById("role-research-summary").textContent = data.role_research_summary || "";
+    } else if (currentMode === "upgrade") {
+      document.getElementById("upgrade-summary-preview").textContent = resumeData.summary || "";
     }
+
     renderQuestions(reflectiveQuestions);
+    if (reflectiveQuestions.length) {
+      questionsHeading.textContent = "3. Be honest with yourself";
+      questionsHint.hidden = false;
+    } else {
+      questionsHeading.textContent = "3. Review & download";
+      questionsHint.hidden = true;
+    }
 
     stepLoading.hidden = true;
     stepResults.hidden = false;

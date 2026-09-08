@@ -12,9 +12,10 @@ Endpoints:
                         tool, per entry)
   POST /api/scratch-finalize - full assembled experience/education/skills
                         -> suggested summary + suggested skills
-  POST /api/upgrade  - existing resume_data -> resume_data rewritten in
-                        polished executive-resume-writer language (content
-                        enhancement only, no new facts; no web search)
+  POST /api/upgrade  - old resume file only -> resume_data rewritten in
+                        polished executive-resume-writer language (Summit
+                        tool; content enhancement only, no new facts, no
+                        web search, no reflective questions)
   POST /api/generate - final resume_data + ats_mode -> .docx file
 
 Run locally:
@@ -118,14 +119,22 @@ async def api_build(resume_file: UploadFile = File(...)):
     return result
 
 
-class UpgradeRequest(BaseModel):
-    resume_data: dict
-
-
 @app.post("/api/upgrade")
-async def api_upgrade(req: UpgradeRequest):
+async def api_upgrade(resume_file: UploadFile = File(...)):
+    content = await resume_file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (5 MB max).")
+
     try:
-        result = upgrade(req.resume_data)
+        resume_text = extract_text(resume_file.filename, content)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not resume_text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract any text from that file.")
+
+    try:
+        result = upgrade(resume_text)
     except UpgradeError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
