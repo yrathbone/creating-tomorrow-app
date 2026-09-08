@@ -12,6 +12,9 @@ Endpoints:
                         tool, per entry)
   POST /api/scratch-finalize - full assembled experience/education/skills
                         -> suggested summary + suggested skills
+  POST /api/upgrade  - existing resume_data -> resume_data rewritten in
+                        polished executive-resume-writer language (content
+                        enhancement only, no new facts; no web search)
   POST /api/generate - final resume_data + ats_mode -> .docx file
 
 Run locally:
@@ -29,6 +32,7 @@ from extractor import extract_text
 from coach import analyze, CoachError
 from builder import build, BuilderError
 from scratch import draft_entry, finalize, ScratchError
+from upgrade import upgrade, UpgradeError
 from resume_builder import build_resume_bytes
 
 app = FastAPI(title="Creating Tomorrow API")
@@ -112,6 +116,22 @@ async def api_build(resume_file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
     return result
+
+
+class UpgradeRequest(BaseModel):
+    resume_data: dict
+
+
+@app.post("/api/upgrade")
+async def api_upgrade(req: UpgradeRequest):
+    try:
+        result = upgrade(req.resume_data)
+    except UpgradeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return {"resume_data": result}
 
 
 class ScratchEntryRequest(BaseModel):
