@@ -61,12 +61,39 @@ body {
   text-decoration: none;
   display: flex;
   align-items: center;
+  gap: 0.6rem;
 }
 
 .nav-logo img {
-  height: 42px;
+  height: 44px;
   width: auto;
   display: block;
+}
+
+.nav-wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.nav-wordmark-gold {
+  color: #d9922a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav-wordmark-gold { color: var(--gold); }
+}
+
+.nav-wordmark small {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.2rem;
 }
 
 .nav-links {
