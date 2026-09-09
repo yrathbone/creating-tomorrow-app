@@ -27,9 +27,9 @@ const ARTICLES = [
   },
   {
     slug: "how-we-grade",
-    title: "How Creating Tomorrow Grades Your Resume (And Why We Don't Inflate It)",
-    summary: "A look inside our own methodology — because a coaching tool that isn't transparent about itself isn't much of a coach.",
-    category: "Transparency",
+    title: "Prepare Stories, Not Perfect Answers",
+    summary: "Learn how to research the role, organize your experience, and walk into an interview prepared — not scripted.",
+    category: "Interview Basics",
     video_youtube_id: null,
   },
 ];
