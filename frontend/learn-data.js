@@ -20,9 +20,9 @@ const ARTICLES = [
   },
   {
     slug: "honest-self-marketing",
-    title: "Honest Self-Marketing: Talking About What You've Actually Done",
-    summary: "How to recognize and describe skills you already have without underselling them — or inventing ones you don't.",
-    category: "Skills & Growth",
+    title: "Your LinkedIn Profile Is Your Professional Story",
+    summary: "Learn to market your experience clearly — without exaggerating it.",
+    category: "LinkedIn Basics",
     video_youtube_id: null,
   },
   {
