@@ -13,9 +13,9 @@ const ARTICLES = [
   },
   {
     slug: "resume-calling-card",
-    title: "Your Resume Is a Calling Card — Keep It Ready",
-    summary: "Why the best time to update your resume isn't when you need it — it's always.",
-    category: "Resume Tips",
+    title: "Your Resume Is Your Calling Card",
+    summary: "Keep it ready before you need it.",
+    category: "Resume Basics",
     video_youtube_id: null,
   },
   {

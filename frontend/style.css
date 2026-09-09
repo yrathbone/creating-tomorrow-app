@@ -1253,8 +1253,8 @@ footer.site-footer-v2 {
   flex: 0 0 auto;
 }
 
-/* ===== "What Is an ATS, Really?" custom article template ===== */
-/* Scoped entirely under .ats-* classes - only used on this one article. */
+/* ===== Rich article template ("What Is an ATS, Really?" and other Learn ===== */
+/* ===== articles that use the custom .ats-* layout instead of markdown.) ===== */
 
 .ats-article {
   max-width: 780px;
@@ -1590,4 +1590,193 @@ footer.site-footer-v2 {
 
 @media (max-width: 639px) {
   .ats-article { padding: 2rem 1.25rem 1.5rem; }
+}
+
+/* ===== Additional shared components (used by the calling-card article) ===== */
+
+/* Reflection mini-prompt cards */
+.ats-prompts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 8px 0 28px;
+}
+
+@media (min-width: 560px) {
+  .ats-prompts { grid-template-columns: 1fr 1fr; }
+}
+
+.ats-prompt { background: #f7f9fc; border-radius: 12px; padding: 18px 20px; }
+
+.ats-prompt-q {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0847c7;
+}
+
+.ats-prompt p:last-child { margin: 0; font-size: 15.5px; color: #404957; }
+
+/* Scannable category grid ("What Should You Actually Keep Track Of?") */
+.ats-track-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 8px 0 28px;
+}
+
+@media (min-width: 560px) {
+  .ats-track-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.ats-track-item { background: #f2f3f5; border-radius: 12px; padding: 16px 18px; }
+
+.ats-track-label {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #063594;
+}
+
+.ats-track-item p:last-child { margin: 0; font-size: 15px; color: #404957; }
+
+/* 3-step process (Capture / Review / Refresh) */
+.ats-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 8px 0 28px;
+}
+
+@media (min-width: 640px) {
+  .ats-steps { flex-direction: row; }
+}
+
+.ats-step {
+  flex: 1;
+  background: #fbfcfe;
+  border-radius: 14px;
+  padding: 22px 22px 24px;
+  border-top: 3px solid #0847c7;
+}
+
+.ats-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0847c7;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.ats-step-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #101318;
+}
+
+.ats-step p { margin: 0 0 10px; font-size: 15.5px; line-height: 1.6; color: #404957; }
+.ats-step p:last-child { margin-bottom: 0; }
+
+.ats-step-example {
+  background: #eef1f6;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14.5px;
+  font-style: italic;
+  color: #303844;
+}
+
+/* Career archive -> application resume flow */
+.ats-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 20px 0 28px;
+  text-align: center;
+}
+
+.ats-flow-box {
+  width: 100%;
+  max-width: 420px;
+  background: #f7f9fc;
+  border-radius: 12px;
+  padding: 16px 20px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: #101318;
+}
+
+.ats-flow-box.ats-flow-highlight { background: #fdf6e8; color: #063594; }
+
+.ats-flow-arrow { color: #0847c7; font-size: 20px; line-height: 1.4; }
+
+/* Research / practice / folklore credibility spectrum */
+.ats-spectrum {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 20px 0 8px;
+}
+
+@media (min-width: 560px) {
+  .ats-spectrum { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+.ats-spectrum-item {
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ats-spectrum-research { background: #eef1f6; color: #0847c7; }
+.ats-spectrum-practice { background: #fdf6e8; color: #101318; }
+.ats-spectrum-folklore { background: #f2f3f5; color: #8a92a0; }
+
+/* Interactive (unsaved) resume-check checklist */
+.ats-check {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 20px;
+  background: #eef1f6;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ats-check li { border-bottom: 1px solid rgba(16, 19, 24, 0.06); }
+.ats-check li:last-child { border-bottom: none; }
+
+.ats-check label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  font-size: 15.5px;
+  color: #101318;
+  cursor: pointer;
+}
+
+.ats-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #0847c7;
+  flex-shrink: 0;
 }
