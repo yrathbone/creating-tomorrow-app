@@ -1108,8 +1108,8 @@ footer.site-footer-v2 {
   margin-top: 28px;
 }
 
-@media (min-width: 720px) {
-  .learn-teaser-grid { grid-template-columns: repeat(3, 1fr); }
+@media (min-width: 560px) {
+  .learn-teaser-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .learn-teaser-card {
@@ -1144,15 +1144,6 @@ footer.site-footer-v2 {
   height: 2px;
   background: #e2a126;
   margin-bottom: 12px;
-}
-
-.learn-teaser-kicker {
-  margin: 0 0 6px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: #747d89;
 }
 
 .learn-teaser-label {
