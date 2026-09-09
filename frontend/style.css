@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --blue: #0047ab; /* Cobalt Blue */
   --navy: #0f2a52; /* deep headline blue */
   --blue-light: #d3e0f5;
@@ -14,22 +15,17 @@
   --gold-ink: #4a3200;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --blue: #5087e0; /* brighter cobalt for legibility against near-black */
-    --navy: #cddcf5;
-    --blue-light: #23375c;
-    --sky-top: #17253d;
-    --sky-bottom: #14181b;
-    --ink: #e8ecef;
-    --muted: #a7b0b8;
-    --bg: #14181b;
-    --card-bg: #1c2226;
-    --border: #2b3338;
-    --gold: #fbd490;
-    --gold-ink: #2c1f00;
-  }
-}
+/* Site is designed as a single light theme - the brand system built across
+   the whole redesign (homepage sections, all Learn articles, Learn hub,
+   About page) uses fixed hex text colors, not these CSS variables. Letting
+   only *some* older components flip their background/border to dark via
+   prefers-color-scheme while their text stayed hardcoded-dark made large
+   amounts of text unreadable (near-black on near-black) for visitors with
+   a dark OS/browser theme. color-scheme: light above, plus intentionally
+   NOT reintroducing a dark @media override, keeps every page consistently
+   light regardless of device theme - do not add prefers-color-scheme dark
+   overrides back without also auditing every hardcoded text color in the
+   sections added this session. */
 
 * { box-sizing: border-box; }
 
@@ -81,10 +77,6 @@ body {
 
 .nav-wordmark-gold {
   color: #d9922a;
-}
-
-@media (prefers-color-scheme: dark) {
-  .nav-wordmark-gold { color: var(--gold); }
 }
 
 .nav-wordmark small {
@@ -510,10 +502,6 @@ footer.site-footer-v2 {
   padding: 3rem 1.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  footer.site-footer-v2 { border-top-color: var(--border); }
-}
-
 .site-footer-inner {
   max-width: 560px;
   margin: 0 auto;
@@ -923,10 +911,6 @@ footer.site-footer-v2 {
   padding: 3rem 0 80px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .value-section { background: var(--bg); }
-}
-
 @media (max-width: 719px) {
   .value-section { padding-bottom: 56px; }
 }
@@ -1011,19 +995,11 @@ footer.site-footer-v2 {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .principle { border-left-color: var(--border); }
-}
-
 @media (max-width: 719px) {
   .principle {
     border-top: 1px solid #e4e8ef;
   }
   .principle:first-child { border-top: none; padding-top: 0; }
-}
-
-@media (max-width: 719px) and (prefers-color-scheme: dark) {
-  .principle { border-top-color: var(--border); }
 }
 
 .principle-number {
@@ -1075,10 +1051,6 @@ footer.site-footer-v2 {
   padding: 3rem 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  .learn-section-v2 { background: var(--card-bg); }
-}
-
 .learn-section-inner {
   max-width: 1120px;
   margin: 0 auto;
@@ -1124,10 +1096,6 @@ footer.site-footer-v2 {
   padding: 28px;
   box-shadow: 0 10px 30px rgba(15, 32, 60, 0.05);
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-}
-
-@media (prefers-color-scheme: dark) {
-  .learn-teaser-card { background: var(--card-bg); border-color: var(--border); }
 }
 
 @media (hover: hover) {
