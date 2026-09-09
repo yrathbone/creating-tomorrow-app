@@ -503,7 +503,7 @@ footer {
   padding: 1.5rem 1rem 2.5rem;
 }
 
-/* Homepage-only minimal footer (other pages keep the plain footer above) */
+/* Minimal footer used on the homepage and Learn hub (other pages keep the plain footer above) */
 footer.site-footer-v2 {
   background: var(--card-bg);
   border-top: 1px solid #e8ebf0;
@@ -1875,4 +1875,161 @@ footer.site-footer-v2 {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #8a92a0;
+}
+
+/* ===== Learn hub (learn.html) - premium resource-library redesign ===== */
+
+.learn-hub-hero {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 72px 1.5rem 8px;
+  text-align: center;
+}
+
+.learn-hub-hero h1 {
+  margin: 0 0 16px;
+  font-size: 42px;
+  font-weight: 700;
+  color: #101318;
+}
+
+@media (min-width: 640px) {
+  .learn-hub-hero h1 { font-size: 48px; }
+}
+
+.learn-hub-subtitle {
+  max-width: 620px;
+  margin: 0 auto;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #4d5663;
+}
+
+.learn-hub-main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+.learn-hub-intro {
+  text-align: center;
+  margin: 40px 0 40px;
+}
+
+.learn-hub-intro-accent {
+  display: block;
+  width: 30px;
+  height: 2px;
+  background: #e2a126;
+  margin: 0 auto 14px;
+}
+
+.learn-hub-kicker {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0847c7;
+}
+
+.learn-hub-intro-sub {
+  margin: 0;
+  font-size: 15.5px;
+  color: #626b78;
+}
+
+.learn-hub-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+
+@media (min-width: 640px) {
+  .learn-hub-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.learn-hub-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #e1e6ee;
+  border-radius: 18px;
+  padding: 32px;
+  min-height: 220px;
+  box-shadow: 0 10px 30px rgba(15, 32, 60, 0.05);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.learn-hub-card:focus-visible {
+  outline: 2px solid #0847c7;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .learn-hub-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(8, 71, 199, 0.3);
+    box-shadow: 0 16px 38px rgba(15, 32, 60, 0.1);
+  }
+}
+
+.learn-hub-card-accent {
+  display: block;
+  width: 26px;
+  height: 2px;
+  background: #e2a126;
+  margin-bottom: 14px;
+}
+
+.learn-hub-card-category {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0847c7;
+}
+
+.learn-hub-card h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #101318;
+}
+
+.learn-hub-card-desc {
+  margin: 0 0 20px;
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: #4d5663;
+  flex: 1;
+}
+
+.learn-hub-card-read {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0847c7;
+}
+
+.learn-hub-card-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.learn-hub-card:hover .learn-hub-card-arrow {
+  transform: translateX(3px);
+}
+
+@media (max-width: 639px) {
+  .learn-hub-hero { padding: 40px 20px 4px; }
+  .learn-hub-hero h1 { font-size: 38px; }
+  .learn-hub-main { padding: 0 20px 3rem; }
+  .learn-hub-card { padding: 28px; }
 }

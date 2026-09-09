@@ -18,31 +18,59 @@
     </div>
   </nav>
 
-  <header class="page-header">
+  <header class="learn-hub-hero">
     <h1>Learn</h1>
-    <p class="tagline">Understand your resume before you touch a template.</p>
+    <p class="learn-hub-subtitle">Understand how hiring works &mdash; and how to explain what you can do.</p>
   </header>
 
-  <main>
-    <section class="card">
-      <div id="article-list" class="article-list"></div>
-    </section>
+  <main class="learn-hub-main">
+    <div class="learn-hub-intro">
+      <span class="learn-hub-intro-accent"></span>
+      <p class="learn-hub-kicker">Career Basics</p>
+      <p class="learn-hub-intro-sub">Four simple lessons. Start anywhere.</p>
+    </div>
+
+    <div class="learn-hub-grid">
+      <a href="article.html?slug=what-is-ats" class="learn-hub-card">
+        <span class="learn-hub-card-accent"></span>
+        <p class="learn-hub-card-category">ATS Basics</p>
+        <h2>What Is an ATS, Really?</h2>
+        <p class="learn-hub-card-desc">Understand what happens after you submit a resume.</p>
+        <span class="learn-hub-card-read">Read <span class="learn-hub-card-arrow">→</span></span>
+      </a>
+
+      <a href="article.html?slug=resume-calling-card" class="learn-hub-card">
+        <span class="learn-hub-card-accent"></span>
+        <p class="learn-hub-card-category">Resume Basics</p>
+        <h2>Your Resume Is Your Calling Card</h2>
+        <p class="learn-hub-card-desc">Keep your career story ready before you need it.</p>
+        <span class="learn-hub-card-read">Read <span class="learn-hub-card-arrow">→</span></span>
+      </a>
+
+      <a href="article.html?slug=honest-self-marketing" class="learn-hub-card">
+        <span class="learn-hub-card-accent"></span>
+        <p class="learn-hub-card-category">LinkedIn Basics</p>
+        <h2>Your LinkedIn Profile Is Your Professional Story</h2>
+        <p class="learn-hub-card-desc">Learn to present your experience clearly &mdash; without exaggerating it.</p>
+        <span class="learn-hub-card-read">Read <span class="learn-hub-card-arrow">→</span></span>
+      </a>
+
+      <a href="article.html?slug=how-we-grade" class="learn-hub-card">
+        <span class="learn-hub-card-accent"></span>
+        <p class="learn-hub-card-category">Interview Basics</p>
+        <h2>Prepare Stories, Not Perfect Answers</h2>
+        <p class="learn-hub-card-desc">Research the role, organize your experience, and walk in prepared &mdash; not scripted.</p>
+        <span class="learn-hub-card-read">Read <span class="learn-hub-card-arrow">→</span></span>
+      </a>
+    </div>
   </main>
 
-  <footer>
-    <p>Creating Tomorrow is a non-profit tool. We don't store your resume or job posting after your session ends.</p>
+  <footer class="site-footer-v2">
+    <div class="site-footer-inner">
+      <p class="site-footer-brand">Creating Tomorrow</p>
+      <p class="site-footer-tagline">Free career education and tools.</p>
+      <p class="site-footer-privacy">We don't store your resume or job posting after your session ends.</p>
+    </div>
   </footer>
-
-  <script src="learn-data.js"></script>
-  <script>
-    const list = document.getElementById("article-list");
-    ARTICLES.forEach((a) => {
-      const div = document.createElement("a");
-      div.className = "article-card";
-      div.href = `article.html?slug=${a.slug}`;
-      div.innerHTML = `<strong>${a.title}</strong><span>${a.summary}</span>`;
-      list.appendChild(div);
-    });
-  </script>
 </body>
 </html>
