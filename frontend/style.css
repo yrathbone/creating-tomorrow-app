@@ -1505,6 +1505,7 @@ footer.site-footer-v2 {
 .ats-cobalt { color: #0847c7; }
 .ats-gold { color: #e2a126; }
 .ats-ink { color: #101318; }
+.ats-muted { color: #8a92a0; }
 
 /* Sources accordion - native <details>, no custom JS needed for a11y */
 .ats-sources {
@@ -1594,11 +1595,11 @@ footer.site-footer-v2 {
 
 /* ===== Additional shared components (used by the calling-card article) ===== */
 
-/* Reflection mini-prompt cards */
+/* Reflection mini-prompts - light editorial layout, no cards */
 .ats-prompts {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 22px 32px;
   margin: 8px 0 28px;
 }
 
@@ -1606,7 +1607,14 @@ footer.site-footer-v2 {
   .ats-prompts { grid-template-columns: 1fr 1fr; }
 }
 
-.ats-prompt { background: #f7f9fc; border-radius: 12px; padding: 18px 20px; }
+.ats-prompt-num {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #e2a126;
+}
 
 .ats-prompt-q {
   margin: 0 0 6px;
@@ -1644,51 +1652,45 @@ footer.site-footer-v2 {
 
 .ats-track-item p:last-child { margin: 0; font-size: 15px; color: #404957; }
 
-/* 3-step process (Capture / Review / Refresh) */
-.ats-steps {
+/* 3-step process (Capture / Review / Refresh) - minimal typographic progression */
+.ats-progression {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  margin: 8px 0 28px;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 0 32px;
 }
 
 @media (min-width: 640px) {
-  .ats-steps { flex-direction: row; }
+  .ats-progression { flex-direction: row; justify-content: center; gap: 16px; }
 }
 
-.ats-step {
-  flex: 1;
-  background: #fbfcfe;
-  border-radius: 14px;
-  padding: 22px 22px 24px;
-  border-top: 3px solid #0847c7;
-}
-
-.ats-step-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #0847c7;
-  color: #fff;
-  font-weight: 700;
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-.ats-step-title {
-  margin: 0 0 10px;
+.ats-progression-step {
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #101318;
+  color: #0847c7;
 }
 
-.ats-step p { margin: 0 0 10px; font-size: 15.5px; line-height: 1.6; color: #404957; }
-.ats-step p:last-child { margin-bottom: 0; }
+.ats-progression-connector {
+  width: 2px;
+  height: 20px;
+  background: #e2a126;
+}
+
+@media (min-width: 640px) {
+  .ats-progression-connector { width: 32px; height: 2px; }
+}
+
+.ats-progression-label {
+  margin: 32px 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0847c7;
+}
 
 .ats-step-example {
   background: #eef1f6;
@@ -1756,8 +1758,9 @@ footer.site-footer-v2 {
   list-style: none;
   padding: 0;
   margin: 8px 0 20px;
-  background: #eef1f6;
-  border-radius: 14px;
+  background: #fff9ee;
+  border: 1px solid #e8e2d5;
+  border-radius: 16px;
   overflow: hidden;
 }
 
