@@ -21,6 +21,14 @@ Tomorrow template layout:
 build_match_recap_bytes() produces a one-page downloadable recap of a
 Right Fit comparison (match level, rationale, strengths, gaps, flags,
 growth suggestions) using the same visual style.
+
+build_resume_bytes() also recognizes a few optional keys used by Elevate
+but harmless to every other tool (absent for them, so nothing changes):
+  data["headline"]        - centered bold positioning line under contact
+  data["skills_heading"]  - overrides the "CORE SKILLS & EXPERTISE" heading
+                             text (Elevate uses "CORE EXPERTISE")
+  data["certifications"]  - bulleted section rendered after Education, only
+                             if non-empty
 """
 import io
 
@@ -111,6 +119,13 @@ def build_resume_bytes(data: dict, ats_mode: bool = False) -> bytes:
     contact_run = p.add_run(data["contact"])
     style_run(contact_run)
 
+    if data.get("headline"):
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(4)
+        headline_run = p.add_run(data["headline"])
+        style_run(headline_run, bold=True)
+
     if data.get("summary"):
         add_heading_bar(doc, "PROFESSIONAL SUMMARY")
 
@@ -133,7 +148,7 @@ def build_resume_bytes(data: dict, ats_mode: bool = False) -> bytes:
     if data["skills"]:
         doc.add_section(WD_SECTION.CONTINUOUS)
         set_page_geometry(doc.sections[-1])
-        add_heading_bar(doc, "CORE SKILLS & EXPERTISE")
+        add_heading_bar(doc, data.get("skills_heading", "CORE SKILLS & EXPERTISE"))
 
         doc.add_section(WD_SECTION.CONTINUOUS)
         set_page_geometry(doc.sections[-1])
@@ -167,6 +182,13 @@ def build_resume_bytes(data: dict, ats_mode: bool = False) -> bytes:
         edu_heading = add_heading_bar(doc, "EDUCATION")
         edu_heading.paragraph_format.space_before = Pt(6)
         for entry in data["education"]:
+            add_bullet(doc, entry)
+
+    certifications = data.get("certifications") or []
+    if certifications:
+        cert_heading = add_heading_bar(doc, "CERTIFICATIONS")
+        cert_heading.paragraph_format.space_before = Pt(6)
+        for entry in certifications:
             add_bullet(doc, entry)
 
     buffer = io.BytesIO()

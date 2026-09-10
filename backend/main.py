@@ -1,7 +1,7 @@
 """
 Creating Tomorrow backend - FastAPI app serving both the API and the static frontend.
 
-Three tools, front-end names in parentheses:
+Four tools, front-end names in parentheses:
   POST /api/analyze  - old resume file + job posting text -> resume_data,
                         match_report (Low/Average/High), reflective_questions
                         (Right Fit)
@@ -16,6 +16,18 @@ Three tools, front-end names in parentheses:
                         executive-resume-writer language (Refine; content
                         enhancement only, no new facts, no web search, no
                         reflective questions)
+  POST /api/elevate-start    - old resume file only -> restructured
+                        resume_data, a short analysis, discovery categories,
+                        and the first batch of discovery questions (Elevate)
+  POST /api/elevate-discover - resume_data + categories + full Q&A history
+                        so far -> either another batch of questions, or (once
+                        enough is gathered) discovered_facts for the
+                        candidate to confirm/edit/remove (Elevate, repeated)
+  POST /api/elevate-finalize - resume_data + confirmed_facts -> final
+                        elevated resume_data (headline, rewritten summary,
+                        core expertise, confirmed facts folded into
+                        experience) plus what-we-uncovered/changed/verify
+                        summaries (Elevate)
   POST /api/generate - final resume_data + ats_mode -> .docx file
 
 Run locally:
@@ -33,6 +45,7 @@ from extractor import extract_text
 from coach import analyze, CoachError
 from scratch import draft_entry, finalize, ScratchError
 from upgrade import upgrade, UpgradeError
+from elevate import analyze_for_discovery, discover, finalize_elevate, ElevateError
 from resume_builder import build_resume_bytes, build_match_recap_bytes
 
 app = FastAPI(title="Creating Tomorrow API")
@@ -141,6 +154,67 @@ async def api_refine(resume_file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
     return {"resume_data": result}
+
+
+@app.post("/api/elevate-start")
+async def api_elevate_start(resume_file: UploadFile = File(...)):
+    content = await resume_file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (5 MB max).")
+
+    try:
+        resume_text = extract_text(resume_file.filename, content)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not resume_text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract any text from that file.")
+
+    try:
+        result = analyze_for_discovery(resume_text)
+    except ElevateError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result
+
+
+class ElevateDiscoverRequest(BaseModel):
+    resume_data: dict
+    categories: list = []
+    history: list = []
+    force_finish: bool = False
+    round_number: int = 1
+
+
+@app.post("/api/elevate-discover")
+async def api_elevate_discover(req: ElevateDiscoverRequest):
+    try:
+        result = discover(req.resume_data, req.categories, req.history, req.force_finish, req.round_number)
+    except ElevateError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result
+
+
+class ElevateFinalizeRequest(BaseModel):
+    resume_data: dict
+    confirmed_facts: list = []
+
+
+@app.post("/api/elevate-finalize")
+async def api_elevate_finalize(req: ElevateFinalizeRequest):
+    try:
+        result = finalize_elevate(req.resume_data, req.confirmed_facts)
+    except ElevateError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result
 
 
 class ScratchEntryRequest(BaseModel):

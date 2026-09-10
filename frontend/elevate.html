@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Elevate: Discover your experience — Creating Tomorrow</title>
+  <link rel="icon" type="image/png" href="logo-icon.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span><small>Real Skills. Brighter Tomorrows.</small></span></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="learn.html">Learn</a>
+      <a href="videos.html">Videos</a>
+      <a href="about.html">About</a>
+      <a href="tool.html" class="nav-cta nav-active">Build Your Resume →</a>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <h1>Elevate</h1>
+    <p class="tagline">Refine fixes the document. Elevate discovers the person — let's find the experience your resume doesn't say yet.</p>
+  </header>
+
+  <main>
+    <div class="wizard-progress" id="wizard-progress">
+      <span class="wizard-step-label active" data-step="upload">1. Upload</span>
+      <span class="wizard-step-label" data-step="analysis">2. Analysis</span>
+      <span class="wizard-step-label" data-step="questions">3. Discovery</span>
+      <span class="wizard-step-label" data-step="confirm">4. Confirm</span>
+      <span class="wizard-step-label" data-step="results">5. Results</span>
+    </div>
+
+    <!-- Step 1: Upload -->
+    <section class="card wizard-step" id="step-upload">
+      <h2>Upload your current resume</h2>
+      <p class="hint">We'll start with what's already there, then ask you some questions to find what's missing.</p>
+      <form id="upload-form">
+        <label class="field">
+          <span>Your current resume (.docx, .pdf, or .txt)</span>
+          <input type="file" id="resume-file" accept=".docx,.pdf,.txt" required />
+        </label>
+        <button type="submit" id="upload-btn">Start my Elevate interview</button>
+      </form>
+      <div id="upload-error" class="error" hidden></div>
+      <div id="upload-loading" class="hint" hidden>Reading your resume and thinking about what to ask — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don't refresh or close this page while we work.</div>
+    </section>
+
+    <!-- Step 2: Analysis -->
+    <section class="card wizard-step" id="step-analysis" hidden>
+      <h2>Here's what we see so far</h2>
+      <p id="analysis-summary"></p>
+      <p class="hint">Next, a few quick yes/no questions based on your specific background — only say yes if it's true for you.</p>
+      <button type="button" id="analysis-continue-btn">Continue to questions &rarr;</button>
+    </section>
+
+    <!-- Step 3: Discovery questions (repeating loop) -->
+    <section class="card wizard-step" id="step-questions" hidden>
+      <h2>A few questions about your experience</h2>
+      <p class="hint">Answer honestly — we only add what you confirm. Nothing here becomes part of your resume yet.</p>
+
+      <div id="questions-loading" class="hint" hidden>Thinking about your answers — this takes about <span class="loading-emphasis">20-40 seconds</span>. Please don't refresh or close this page while we work.</div>
+
+      <div id="questions-form-wrap">
+        <div id="discovery-questions-list"></div>
+        <div class="button-row">
+          <button type="button" id="questions-submit-btn">Submit these answers</button>
+          <button type="button" id="questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
+        </div>
+      </div>
+      <div id="questions-error" class="error" hidden></div>
+    </section>
+
+    <!-- Step 4: Confirm discovered facts -->
+    <section class="card wizard-step" id="step-confirm" hidden>
+      <h2>Here's what we'd add</h2>
+      <p class="hint" id="confirm-hint">Based on your answers, here's the experience we'd add to your resume. Edit any wording, or remove anything that isn't quite right — nothing here is final until you build your resume below.</p>
+      <div id="discovered-facts-list"></div>
+      <p class="hint" id="confirm-empty-hint" hidden>You didn't confirm any new experience during the interview — that's completely fine. We'll still refine and polish what's already on your resume.</p>
+      <button type="button" id="confirm-continue-btn">Build my elevated resume &rarr;</button>
+    </section>
+
+    <!-- Step 5: Results -->
+    <section class="card wizard-step" id="step-results" hidden>
+      <h2>Your elevated resume</h2>
+      <div id="results-loading" class="hint">Rewriting your resume with everything you confirmed — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don't refresh or close this page while we work.</div>
+
+      <div id="results-content" hidden>
+        <div class="report-block" id="uncovered-block" hidden>
+          <h3>What we uncovered</h3>
+          <ul id="uncovered-list"></ul>
+        </div>
+
+        <div class="report-block">
+          <h3>What we changed</h3>
+          <ul id="changes-list"></ul>
+        </div>
+
+        <div class="report-block">
+          <h3>Please verify</h3>
+          <ul id="verify-list"></ul>
+        </div>
+
+        <label class="field checkbox-field">
+          <input type="checkbox" id="ats-mode" />
+          <span>Use single-column layout (safer for automated ATS scanners)</span>
+        </label>
+
+        <button type="button" id="generate-btn">Download my elevated resume</button>
+        <div id="generate-error" class="error" hidden></div>
+        <div id="generate-success" class="success" hidden></div>
+        <button type="button" id="finish-btn" class="btn-finish" hidden>I'm done — back to homepage</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Creating Tomorrow is a non-profit tool. We don't store your information after your session ends.</p>
+  </footer>
+
+  <script src="elevate.js"></script>
+</body>
+</html>
