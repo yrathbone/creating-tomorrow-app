@@ -1,9 +1,9 @@
 """
-The core of Creating Tomorrow: takes raw extracted text from someone's old resume
-plus a target job posting, and produces (1) their resume restructured into
-our clean schema, (2) an honest A-F match report, and (3) a short list of
-reflective yes/no questions aimed at surfacing real experience they didn't
-think to write down.
+Right Fit: the core comparison tool. Takes raw extracted text from someone's
+old resume plus a target job posting, and produces (1) their resume
+restructured into our clean schema, (2) an honest Low/Average/High match
+assessment, and (3) a short list of reflective yes/no questions aimed at
+surfacing real experience they didn't think to write down.
 
 Deliberately NOT keyword matching - this calls the Claude API to reason
 about the comparison the way a human career coach would.
@@ -34,15 +34,18 @@ Write every job's date range in numeric MM/YY format (e.g. "07/21 – \
 09/23"), converting from whatever format the source uses; keep "Present" \
 or "Current" as-is (do not turn it into a date) for an ongoing role.
 
-2. GRADE how well this resume matches the job posting, honestly, on an \
-A-F scale, the way a discerning human recruiter would - NOT by counting \
-keyword overlap. Call out cases where a word or phrase appears on both \
-the resume and the posting but means something different in context \
-(e.g. "cash management" at a retail bank branch vs. as a corporate \
-treasury product) - these are the traps that make keyword-matching tools \
-misleading. Be calibrated: most real comparisons land in the B/C/D range. \
-Reserve A for a genuinely strong match and F for a fundamentally \
-different field. Be encouraging in TONE, never by inflating the SCORE.
+2. ASSESS how well this resume matches the job posting, honestly, as \
+"Low", "Average", or "High", the way a discerning human recruiter would - \
+NOT by counting keyword overlap and NOT with a letter grade or numeric \
+score. Call out cases where a word or phrase appears on both the resume \
+and the posting but means something different in context (e.g. "cash \
+management" at a retail bank branch vs. as a corporate treasury product) \
+- these are the traps that make keyword-matching tools misleading. Be \
+calibrated: most real comparisons should land as "Average". Reserve \
+"High" for a genuinely strong match against the posting's actual \
+requirements, and "Low" for a fundamentally different field or missing \
+multiple required qualifications. Be encouraging in TONE, never by \
+inflating the ASSESSMENT.
 
 3. Based on the gaps you found, write 3-6 REFLECTIVE QUESTIONS a coach \
 would ask the candidate to find out if they have relevant unlisted \
@@ -68,8 +71,8 @@ markdown code fence:
     "education": ["Degree – School, City, ST"]
   },
   "match_report": {
-    "grade": "A" | "B" | "C" | "D" | "F",
-    "grade_rationale": "1-2 sentences",
+    "match_level": "Low" | "Average" | "High",
+    "match_rationale": "1-2 sentences",
     "strengths": ["specific resume evidence that matches posting requirements"],
     "required_qualification_gaps": [
       {"requirement": "quote or paraphrase from the posting", "status": "missing" | "partial", "explanation": "why, specifically"}

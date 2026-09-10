@@ -1,21 +1,21 @@
 """
 Creating Tomorrow backend - FastAPI app serving both the API and the static frontend.
 
-Endpoints:
+Three tools, front-end names in parentheses:
   POST /api/analyze  - old resume file + job posting text -> resume_data,
-                        match_report, reflective_questions (comparison tool)
-  POST /api/build     - old resume file only -> resume_data,
-                        role_research_summary, reflective_questions
-                        (resume-builder tool, uses live web search)
+                        match_report (Low/Average/High), reflective_questions
+                        (Right Fit)
+  POST /api/recap    - a match_report + candidate name -> one-page .docx
+                        recap of that comparison (Right Fit, download)
   POST /api/scratch-entry    - one experience entry's raw facts -> drafted
-                        bullets + reflective questions (start-from-scratch
-                        tool, per entry)
+                        bullets + reflective questions (Beginning, per entry)
   POST /api/scratch-finalize - full assembled experience/education/skills
-                        -> suggested summary + suggested skills
-  POST /api/upgrade  - old resume file only -> resume_data rewritten in
-                        polished executive-resume-writer language (Summit
-                        tool; content enhancement only, no new facts, no
-                        web search, no reflective questions)
+                        -> suggested summary + suggested skills (Beginning)
+  POST /api/elevate  - old resume file only -> resume_data restructured into
+                        ATS-friendly format and rewritten in polished
+                        executive-resume-writer language (Elevate; content
+                        enhancement only, no new facts, no web search, no
+                        reflective questions)
   POST /api/generate - final resume_data + ats_mode -> .docx file
 
 Run locally:
@@ -31,10 +31,9 @@ from pydantic import BaseModel
 
 from extractor import extract_text
 from coach import analyze, CoachError
-from builder import build, BuilderError
 from scratch import draft_entry, finalize, ScratchError
 from upgrade import upgrade, UpgradeError
-from resume_builder import build_resume_bytes
+from resume_builder import build_resume_bytes, build_match_recap_bytes
 
 app = FastAPI(title="Creating Tomorrow API")
 
@@ -95,32 +94,33 @@ async def api_analyze(
     return result
 
 
-@app.post("/api/build")
-async def api_build(resume_file: UploadFile = File(...)):
-    content = await resume_file.read()
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="File too large (5 MB max).")
+class RecapRequest(BaseModel):
+    match_report: dict
+    candidate_name: str = "Candidate"
+
+
+@app.post("/api/recap")
+async def api_recap(req: RecapRequest):
+    required_fields = ["match_level", "match_rationale"]
+    missing = [f for f in required_fields if f not in req.match_report]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"match_report missing fields: {missing}")
 
     try:
-        resume_text = extract_text(resume_file.filename, content)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    if not resume_text.strip():
-        raise HTTPException(status_code=400, detail="Could not extract any text from that file.")
-
-    try:
-        result = build(resume_text)
-    except BuilderError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        docx_bytes = build_match_recap_bytes(req.match_report, req.candidate_name)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to build recap: {e}")
 
-    return result
+    filename = req.candidate_name.replace(" ", "_") + "_Right_Fit_Recap.docx"
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
-@app.post("/api/upgrade")
-async def api_upgrade(resume_file: UploadFile = File(...)):
+@app.post("/api/elevate")
+async def api_elevate(resume_file: UploadFile = File(...)):
     content = await resume_file.read()
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="File too large (5 MB max).")

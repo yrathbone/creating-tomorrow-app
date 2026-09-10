@@ -1,9 +1,13 @@
 """
-Summit: the "Executive Upgrade" tool. Takes raw text extracted from
-someone's existing resume, restructures it, and rewrites its language
-into polished, high-end executive-resume-writer-quality prose - a pure
-content-enhancement pass, not a gap-analysis or role-research exercise
-(no web search, no reflective questions).
+Elevate: transforms an existing resume into a stronger professional
+version using only real experience. Takes raw text extracted from
+someone's existing resume and, in one pass, (1) restructures it into a
+clean, ATS-friendly format, then (2) rewrites its language into polished,
+high-end executive-resume-writer-quality prose - a pure content-
+enhancement pass, not a gap-analysis or role-research exercise (no web
+search, no reflective questions). This is the merged replacement for the
+former separate "Waypoint" (rebuild) and "Summit" (executive upgrade)
+tools.
 
 The original resume is the sole source of truth: no new skills,
 technologies, certifications, employers, dates, or metrics may be

@@ -1,7 +1,9 @@
 """
-Builds a .docx resume matching the Creating Tomorrow template layout, in memory
-(returns bytes rather than writing to disk, since this runs inside a web
-request):
+Builds .docx files in memory (returns bytes rather than writing to disk,
+since this runs inside a web request).
+
+build_resume_bytes() produces the main resume, matching the Creating
+Tomorrow template layout:
 
   NAME (bold, centered)
   Location | Phone | Email | LinkedIn   (centered)
@@ -15,6 +17,10 @@ request):
   ... (repeat per job)
   [shaded bar] EDUCATION
   Bulleted degree/school lines
+
+build_match_recap_bytes() produces a one-page downloadable recap of a
+Right Fit comparison (match level, rationale, strengths, gaps, flags,
+growth suggestions) using the same visual style.
 """
 import io
 
@@ -162,6 +168,71 @@ def build_resume_bytes(data: dict, ats_mode: bool = False) -> bytes:
         edu_heading.paragraph_format.space_before = Pt(6)
         for entry in data["education"]:
             add_bullet(doc, entry)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    return buffer.getvalue()
+
+
+def build_match_recap_bytes(match_report: dict, candidate_name: str) -> bytes:
+    """One-page .docx recap of a Right Fit comparison: match level, the
+    rationale, strengths, gaps, any "same word, different job" flags, and
+    growth suggestions - a downloadable summary of what's shown on screen.
+    """
+    doc = Document()
+
+    normal = doc.styles["Normal"]
+    normal.font.name = FONT_NAME
+    normal.font.size = FONT_SIZE
+
+    set_page_geometry(doc.sections[0])
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    name_run = p.add_run(f"{candidate_name} — Right Fit Recap")
+    style_run(name_run, bold=True)
+
+    add_heading_bar(doc, "MATCH LEVEL")
+    p = doc.add_paragraph()
+    level_run = p.add_run(match_report.get("match_level", ""))
+    style_run(level_run, bold=True)
+    if match_report.get("match_rationale"):
+        p = doc.add_paragraph()
+        style_run(p.add_run(match_report["match_rationale"]))
+
+    strengths = match_report.get("strengths") or []
+    if strengths:
+        add_heading_bar(doc, "WHAT'S ALREADY STRONG")
+        for item in strengths:
+            add_bullet(doc, item)
+
+    gaps = match_report.get("required_qualification_gaps") or []
+    if gaps:
+        add_heading_bar(doc, "GAPS AGAINST WHAT THIS ROLE USUALLY REQUIRES")
+        for gap in gaps:
+            text = f"[{gap.get('status', '')}] {gap.get('requirement', '')} — {gap.get('explanation', '')}"
+            add_bullet(doc, text)
+
+    flags = match_report.get("same_word_different_job_flags") or []
+    if flags:
+        add_heading_bar(doc, '"SAME WORD, DIFFERENT JOB" FLAGS')
+        for flag in flags:
+            text = (
+                f"“{flag.get('term', '')}” — on the resume: {flag.get('resume_meaning', '')}. "
+                f"In the posting: {flag.get('posting_meaning', '')}. {flag.get('why_it_matters', '')}"
+            )
+            add_bullet(doc, text)
+
+    growth = match_report.get("growth_suggestions") or []
+    if growth:
+        add_heading_bar(doc, "HOW TO GENUINELY GROW TOWARD THIS ROLE")
+        for item in growth:
+            add_bullet(doc, item)
+
+    if match_report.get("note_on_better_fit_roles"):
+        add_heading_bar(doc, "A NOTE ON FIT")
+        p = doc.add_paragraph()
+        style_run(p.add_run(match_report["note_on_better_fit_roles"]))
 
     buffer = io.BytesIO()
     doc.save(buffer)

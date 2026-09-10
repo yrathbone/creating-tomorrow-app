@@ -29,20 +29,16 @@
       <h2>Which do you need?</h2>
       <div class="mode-choices">
         <a href="scratch.html" class="mode-btn">
-          <strong>Trailhead</strong>
-          <span>Start from scratch — no resume yet? Answer a few simple questions and we'll help you build your first one, step by step.</span>
+          <strong>Beginning</strong>
+          <span>Build a resume from scratch — no resume yet? Answer a few simple questions and we'll help you build your first one, step by step.</span>
         </a>
-        <button type="button" class="mode-btn" id="mode-build" data-mode="build">
-          <strong>Waypoint</strong>
-          <span>Rebuild your resume — upload your old one and we'll research what your role typically involves today, no job posting needed.</span>
+        <button type="button" class="mode-btn" id="mode-elevate" data-mode="elevate">
+          <strong>Elevate</strong>
+          <span>Transform an existing resume into a stronger professional version, using only your real experience — upload your resume and we'll format it for ATS and rewrite it in sharper, more polished language. Nothing new added, nothing invented.</span>
         </button>
         <button type="button" class="mode-btn" id="mode-analyze" data-mode="analyze">
-          <strong>Landing Spot</strong>
-          <span>Check your fit for a job — you've found a specific opening. Upload your resume and paste the posting for an honest match report.</span>
-        </button>
-        <button type="button" class="mode-btn" id="mode-upgrade" data-mode="upgrade">
-          <strong>Summit</strong>
-          <span>Polish what you've already got — upload your resume and we'll rewrite it in sharper, more professional language. Nothing new added, nothing invented.</span>
+          <strong>Right Fit</strong>
+          <span>Compare a resume to a specific job and see how well it aligns — upload your resume and paste the posting for an honest match assessment.</span>
         </button>
       </div>
     </section>
@@ -72,8 +68,8 @@
       <h2 id="results-heading">2. Your honest report</h2>
 
       <div id="match-mode-results">
-        <div id="grade-badge"></div>
-        <p id="grade-rationale"></p>
+        <div id="match-level-badge"></div>
+        <p id="match-rationale"></p>
 
         <div class="report-block">
           <h3>What's already strong</h3>
@@ -97,16 +93,14 @@
         </div>
 
         <p id="fit-note" class="hint"></p>
+
+        <button type="button" id="download-recap-btn" class="btn-secondary">Download recap →</button>
+        <div id="recap-error" class="error" hidden></div>
       </div>
 
-      <div id="build-mode-results" class="report-block" hidden>
-        <h3>What we found</h3>
-        <p id="role-research-summary"></p>
-      </div>
-
-      <div id="upgrade-mode-results" class="report-block" hidden>
+      <div id="elevate-mode-results" class="report-block" hidden>
         <h3>Your rewritten summary</h3>
-        <p id="upgrade-summary-preview"></p>
+        <p id="elevate-summary-preview"></p>
         <p class="hint">Your skills and experience bullets have been rewritten the same way — download below to see the full resume.</p>
       </div>
     </section>

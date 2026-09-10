@@ -3,7 +3,8 @@
 // want a resume + job posting sitting in a database).
 let resumeData = null;
 let reflectiveQuestions = [];
-let currentMode = null; // "build", "analyze", or "upgrade"
+let lastMatchReport = null;
+let currentMode = null; // "elevate" or "analyze"
 
 const stepMode = document.getElementById("step-mode");
 const stepUpload = document.getElementById("step-upload");
@@ -23,8 +24,9 @@ const analyzeError = document.getElementById("analyze-error");
 
 const resultsHeading = document.getElementById("results-heading");
 const matchModeResults = document.getElementById("match-mode-results");
-const buildModeResults = document.getElementById("build-mode-results");
-const upgradeModeResults = document.getElementById("upgrade-mode-results");
+const elevateModeResults = document.getElementById("elevate-mode-results");
+const downloadRecapBtn = document.getElementById("download-recap-btn");
+const recapError = document.getElementById("recap-error");
 
 const questionsHeading = document.getElementById("questions-heading");
 const questionsHint = document.getElementById("questions-hint");
@@ -33,29 +35,21 @@ const generateBtn = document.getElementById("generate-btn");
 const generateError = document.getElementById("generate-error");
 
 const MODE_CONFIG = {
-  build: {
-    endpoint: "/api/build",
-    uploadHeading: "1. Waypoint: Tell us about you",
-    uploadHint: "Upload your current resume. We'll research what your role typically involves today and help you rebuild it honestly — no job posting required.",
-    loadingText: 'Reading your resume and researching your role — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
+  elevate: {
+    endpoint: "/api/elevate",
+    uploadHeading: "1. Elevate: Tell us about you",
+    uploadHint: "Upload your current resume. We'll format it for ATS and rewrite it in polished, professional language — no job posting needed, and we won't add anything that isn't already true on your resume.",
+    loadingText: 'Reading your resume and elevating it — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
     needsJobPosting: false,
-    resultsHeading: "2. Your honest report",
+    resultsHeading: "2. Your elevated resume",
   },
   analyze: {
     endpoint: "/api/analyze",
-    uploadHeading: "1. Landing Spot: Tell us about the role",
+    uploadHeading: "1. Right Fit: Tell us about the role",
     uploadHint: "Upload your current resume and paste in the job posting you're aiming for. We'll compare them honestly — not just by counting keywords.",
     loadingText: 'Reading your resume and comparing it to the posting — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
     needsJobPosting: true,
     resultsHeading: "2. Your honest report",
-  },
-  upgrade: {
-    endpoint: "/api/upgrade",
-    uploadHeading: "1. Summit: Tell us about you",
-    uploadHint: "Upload your current resume. We'll rewrite it in polished, professional language — no job posting needed, and we won't add anything that isn't already true on your resume.",
-    loadingText: 'Reading your resume and rewriting it in sharper language — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
-    needsJobPosting: false,
-    resultsHeading: "2. Your rewritten resume",
   },
 };
 
@@ -116,15 +110,13 @@ analyzeForm.addEventListener("submit", async (e) => {
     reflectiveQuestions = data.reflective_questions || [];
 
     matchModeResults.hidden = currentMode !== "analyze";
-    buildModeResults.hidden = currentMode !== "build";
-    upgradeModeResults.hidden = currentMode !== "upgrade";
+    elevateModeResults.hidden = currentMode !== "elevate";
 
     if (currentMode === "analyze") {
+      lastMatchReport = data.match_report;
       renderMatchReport(data.match_report);
-    } else if (currentMode === "build") {
-      document.getElementById("role-research-summary").textContent = data.role_research_summary || "";
-    } else if (currentMode === "upgrade") {
-      document.getElementById("upgrade-summary-preview").textContent = resumeData.summary || "";
+    } else if (currentMode === "elevate") {
+      document.getElementById("elevate-summary-preview").textContent = resumeData.summary || "";
     }
 
     renderQuestions(reflectiveQuestions);
@@ -149,8 +141,8 @@ analyzeForm.addEventListener("submit", async (e) => {
 });
 
 function renderMatchReport(report) {
-  document.getElementById("grade-badge").textContent = "Grade: " + report.grade;
-  document.getElementById("grade-rationale").textContent = report.grade_rationale || "";
+  document.getElementById("match-level-badge").textContent = "Match: " + report.match_level;
+  document.getElementById("match-rationale").textContent = report.match_rationale || "";
 
   fillList("strengths-list", report.strengths, (s) => s);
 
@@ -267,6 +259,40 @@ generateBtn.addEventListener("click", async () => {
 
 document.getElementById("finish-btn").addEventListener("click", () => {
   window.location.href = "index.html";
+});
+
+downloadRecapBtn.addEventListener("click", async () => {
+  recapError.hidden = true;
+  if (!lastMatchReport) return;
+
+  downloadRecapBtn.disabled = true;
+  try {
+    const res = await fetch("/api/recap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        match_report: lastMatchReport,
+        candidate_name: (resumeData && resumeData.name) || "Candidate",
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Request failed (${res.status})`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = ((resumeData && resumeData.name) || "Candidate").replace(/\s+/g, "_") + "_Right_Fit_Recap.docx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    showError(recapError, err.message || "Something went wrong generating your recap.");
+  } finally {
+    downloadRecapBtn.disabled = false;
+  }
 });
 
 function showError(el, message) {
