@@ -1017,11 +1017,11 @@ footer.site-footer-v2 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1.25rem;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  gap: 1.5rem;
+  background: linear-gradient(135deg, var(--sky-top) 0%, #f4f8fd 100%);
+  border: 1px solid var(--blue-light);
   border-radius: 16px;
-  padding: 1.5rem 1.75rem;
+  padding: 1.75rem 2rem;
 }
 
 .guide-icon {
@@ -1041,13 +1041,36 @@ footer.site-footer-v2 {
   display: block;
 }
 
+/* Larger variant, scoped to the homepage teaser only - the same icon in
+   Guide's modal header stays at its original size. */
+.guide-icon-lg {
+  width: 72px;
+  height: 72px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(8, 71, 199, 0.12);
+}
+
+.guide-icon-lg svg {
+  width: 38px;
+  height: 38px;
+}
+
+.guide-eyebrow {
+  margin: 0 0 0.3rem;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
 .guide-teaser-text {
   flex: 1 1 320px;
 }
 
 .guide-teaser-text h2 {
-  margin: 0 0 0.2rem;
-  font-size: 1.25rem;
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
   color: var(--navy);
 }
 
@@ -1056,14 +1079,20 @@ footer.site-footer-v2 {
   color: var(--muted);
 }
 
-.guide-teaser-desc {
-  margin-top: 0.15rem;
-  font-size: 0.85rem;
-}
-
-#guide-open-btn {
+.guide-cta {
   margin-top: 0;
   flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .guide-teaser-inner {
+    padding: 1.5rem;
+  }
+
+  .guide-cta {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .guide-modal-overlay {
