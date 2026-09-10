@@ -1082,6 +1082,12 @@ footer.site-footer-v2 {
 .guide-cta {
   margin-top: 0;
   flex-shrink: 0;
+  background: #0e7c72;
+}
+
+.guide-cta:hover {
+  background: #0b6259;
+  opacity: 1;
 }
 
 @media (max-width: 640px) {
