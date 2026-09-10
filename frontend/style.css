@@ -1031,6 +1031,12 @@ footer.site-footer-v2 {
   margin-top: 1rem;
 }
 
+.guide-option-btn {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 1rem 1.25rem;
+}
+
 #guide-step-recommendation h3 {
   margin: 0 0 0.5rem;
   color: var(--blue);
