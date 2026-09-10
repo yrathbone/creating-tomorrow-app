@@ -435,6 +435,21 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   margin-bottom: 0.5rem;
 }
 
+#match-level-badge.match-level-low {
+  background: #fbe4e2;
+  color: #8a241c;
+}
+
+#match-level-badge.match-level-average {
+  background: #fbe8c8;
+  color: var(--gold-ink);
+}
+
+#match-level-badge.match-level-high {
+  background: #d7f0da;
+  color: #1b5e28;
+}
+
 .report-block {
   margin-top: 1.5rem;
 }

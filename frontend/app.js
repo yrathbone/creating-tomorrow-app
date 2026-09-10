@@ -154,7 +154,16 @@ analyzeForm.addEventListener("submit", async (e) => {
 });
 
 function renderMatchReport(report) {
-  document.getElementById("match-level-badge").textContent = "Match: " + report.match_level;
+  const badge = document.getElementById("match-level-badge");
+  badge.textContent = "Match: " + report.match_level;
+  badge.classList.remove("match-level-low", "match-level-average", "match-level-high");
+  const levelClass = {
+    low: "match-level-low",
+    average: "match-level-average",
+    high: "match-level-high",
+  }[(report.match_level || "").toLowerCase()];
+  if (levelClass) badge.classList.add(levelClass);
+
   document.getElementById("match-rationale").textContent = report.match_rationale || "";
 
   fillList("strengths-list", report.strengths, (s) => s);
