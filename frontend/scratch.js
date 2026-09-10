@@ -82,6 +82,11 @@ entryForm.addEventListener("submit", async (e) => {
 
   entryFormWrap.hidden = true;
   entryLoading.hidden = false;
+  startProcessingState(entryLoading, [
+    "Reading what you told us...",
+    "Turning it into resume bullets...",
+    "Looking up what this role typically involves...",
+  ]);
 
   try {
     const res = await fetch("/api/scratch-entry", {
@@ -106,9 +111,11 @@ entryForm.addEventListener("submit", async (e) => {
     };
 
     renderEntryReview(pendingEntry);
+    stopProcessingState(entryLoading);
     entryLoading.hidden = true;
     entryReview.hidden = false;
   } catch (err) {
+    stopProcessingState(entryLoading);
     entryLoading.hidden = true;
     entryFormWrap.hidden = false;
     showError(entryError, err.message || "Something went wrong. Please try again.");
@@ -304,6 +311,11 @@ async function runFinalize() {
   const reviewContent = document.getElementById("review-content");
   reviewLoading.hidden = false;
   reviewContent.hidden = true;
+  startProcessingState(reviewLoading, [
+    "Reviewing your experience...",
+    "Drafting your summary...",
+    "Suggesting a few more skills...",
+  ]);
 
   try {
     const res = await fetch("/api/scratch-finalize", {
@@ -326,9 +338,11 @@ async function runFinalize() {
     suggestedSkills = data.suggested_skills || [];
     renderSuggestedSkills();
 
+    stopProcessingState(reviewLoading);
     reviewLoading.hidden = true;
     reviewContent.hidden = false;
   } catch (err) {
+    stopProcessingState(reviewLoading);
     reviewLoading.hidden = true;
     reviewContent.hidden = false;
     document.getElementById("review-summary").value = "";

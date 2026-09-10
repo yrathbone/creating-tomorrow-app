@@ -60,6 +60,11 @@ uploadForm.addEventListener("submit", async (e) => {
   uploadBtn.disabled = true;
   uploadForm.hidden = true;
   uploadLoading.hidden = false;
+  startProcessingState(uploadLoading, [
+    "Reading your resume...",
+    "Identifying your career areas...",
+    "Preparing a few questions...",
+  ]);
 
   try {
     const res = await fetch("/api/elevate-start", { method: "POST", body: formData });
@@ -75,9 +80,11 @@ uploadForm.addEventListener("submit", async (e) => {
 
     document.getElementById("analysis-summary").textContent = data.analysis_summary || "";
 
+    stopProcessingState(uploadLoading);
     uploadLoading.hidden = true;
     goToStep("analysis");
   } catch (err) {
+    stopProcessingState(uploadLoading);
     uploadLoading.hidden = true;
     uploadForm.hidden = false;
     showError(uploadError, err.message || "Something went wrong. Please try again.");
@@ -162,6 +169,10 @@ async function submitAnswers(forceFinish) {
 
   questionsFormWrap.hidden = true;
   questionsLoading.hidden = false;
+  startProcessingState(questionsLoading, [
+    "Reviewing your answers...",
+    "Deciding what to ask next...",
+  ]);
 
   const effectiveForceFinish = forceFinish || state.roundNumber >= MAX_ROUNDS;
 
@@ -183,6 +194,7 @@ async function submitAnswers(forceFinish) {
     }
     const data = await res.json();
 
+    stopProcessingState(questionsLoading);
     if (data.stage === "confirm") {
       state.discoveredFacts = data.discovered_facts || [];
       renderDiscoveredFacts();
@@ -196,6 +208,7 @@ async function submitAnswers(forceFinish) {
       questionsFormWrap.hidden = false;
     }
   } catch (err) {
+    stopProcessingState(questionsLoading);
     questionsLoading.hidden = true;
     questionsFormWrap.hidden = false;
     showError(questionsError, err.message || "Something went wrong. Please try again.");
@@ -265,6 +278,11 @@ async function runFinalize() {
   const resultsContent = document.getElementById("results-content");
   resultsLoading.hidden = false;
   resultsContent.hidden = true;
+  startProcessingState(resultsLoading, [
+    "Reviewing everything you confirmed...",
+    "Rewriting your resume...",
+    "Preparing your results...",
+  ]);
 
   try {
     const res = await fetch("/api/elevate-finalize", {
@@ -293,9 +311,11 @@ async function runFinalize() {
     fillList("changes-list", data.changes);
     fillList("verify-list", data.verify);
 
+    stopProcessingState(resultsLoading);
     resultsLoading.hidden = true;
     resultsContent.hidden = false;
   } catch (err) {
+    stopProcessingState(resultsLoading);
     resultsLoading.hidden = true;
     showError(document.getElementById("generate-error"), err.message || "Something went wrong building your resume. Please try again.");
     document.getElementById("results-content").hidden = false;

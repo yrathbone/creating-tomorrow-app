@@ -16,7 +16,6 @@ const uploadHeading = document.getElementById("upload-heading");
 const uploadHint = document.getElementById("upload-hint");
 const jobPostingField = document.getElementById("job-posting-field");
 const jobPostingInput = document.getElementById("job-posting");
-const loadingText = document.getElementById("loading-text");
 
 const analyzeForm = document.getElementById("analyze-form");
 const analyzeBtn = document.getElementById("analyze-btn");
@@ -39,7 +38,13 @@ const MODE_CONFIG = {
     endpoint: "/api/refine",
     uploadHeading: "1. Refine: Tell us about you",
     uploadHint: "Upload your current resume. We'll format it for ATS and rewrite it in polished, professional language — no job posting needed, and we won't add anything that isn't already true on your resume.",
-    loadingText: 'Reading your resume and refining it — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
+    messages: [
+      "Reading your resume...",
+      "Reviewing your experience...",
+      "Improving structure and wording...",
+      "Organizing your strongest qualifications...",
+      "Preparing your refined resume...",
+    ],
     needsJobPosting: false,
     resultsHeading: "2. Your refined resume",
   },
@@ -47,7 +52,13 @@ const MODE_CONFIG = {
     endpoint: "/api/analyze",
     uploadHeading: "1. Right Fit: Tell us about the role",
     uploadHint: "Upload your current resume and paste in the job posting you're aiming for. We'll compare them honestly — not just by counting keywords.",
-    loadingText: 'Reading your resume and comparing it to the posting — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
+    messages: [
+      "Reading your resume...",
+      "Reviewing the job posting...",
+      "Comparing your experience to the role...",
+      "Identifying strengths and gaps...",
+      "Preparing your results...",
+    ],
     needsJobPosting: true,
     resultsHeading: "2. Your honest report",
   },
@@ -76,7 +87,6 @@ function selectMode(mode) {
   uploadHint.textContent = config.uploadHint;
   jobPostingField.hidden = !config.needsJobPosting;
   jobPostingInput.required = config.needsJobPosting;
-  loadingText.innerHTML = config.loadingText;
   resultsHeading.textContent = config.resultsHeading;
 
   stepMode.hidden = true;
@@ -109,6 +119,7 @@ analyzeForm.addEventListener("submit", async (e) => {
   analyzeBtn.disabled = true;
   stepUpload.hidden = true;
   stepLoading.hidden = false;
+  startProcessingState(stepLoading, config.messages);
 
   try {
     const res = await fetch(config.endpoint, { method: "POST", body: formData });
@@ -141,10 +152,12 @@ analyzeForm.addEventListener("submit", async (e) => {
       questionsHint.hidden = true;
     }
 
+    stopProcessingState(stepLoading);
     stepLoading.hidden = true;
     stepResults.hidden = false;
     stepQuestions.hidden = false;
   } catch (err) {
+    stopProcessingState(stepLoading);
     stepLoading.hidden = true;
     stepUpload.hidden = false;
     showError(analyzeError, err.message || "Something went wrong. Please try again.");
