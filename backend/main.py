@@ -13,9 +13,10 @@ Four tools, front-end names in parentheses:
                         -> suggested summary + suggested skills (Beginning)
   POST /api/refine   - old resume file only -> resume_data restructured into
                         ATS-friendly format and rewritten in polished
-                        executive-resume-writer language (Refine; content
-                        enhancement only, no new facts, no web search, no
-                        reflective questions)
+                        executive-resume-writer language, with a positioning
+                        headline and a fixed what-changed/please-verify
+                        summary (Refine; content enhancement only, no new
+                        facts, no web search, no reflective questions)
   POST /api/elevate-start    - old resume file only -> restructured
                         resume_data, a short analysis, discovery categories,
                         and the first batch of discovery questions (Elevate)
@@ -153,7 +154,7 @@ async def api_refine(resume_file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
-    return {"resume_data": result}
+    return result
 
 
 @app.post("/api/elevate-start")

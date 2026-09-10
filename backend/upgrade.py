@@ -3,15 +3,25 @@ Refine: transforms an existing resume into a stronger professional
 version using only real experience. Takes raw text extracted from
 someone's existing resume and, in one pass, (1) restructures it into a
 clean, ATS-friendly format, then (2) rewrites its language into polished,
-high-end executive-resume-writer-quality prose - a pure content-
-enhancement pass, not a gap-analysis or role-research exercise (no web
-search, no reflective questions). This is the merged replacement for the
-former separate "Waypoint" (rebuild) and "Summit" (executive upgrade)
-tools.
+high-end executive-resume-writer-quality prose, adding a positioning
+headline and a "Core Expertise" section built only from demonstrated
+work - a pure content-enhancement pass, not a gap-analysis, discovery
+interview, or role-research exercise (no web search, no reflective
+questions, no candidate-confirmed additions the way Elevate has). This
+is the merged replacement for the former separate "Waypoint" (rebuild)
+and "Summit" (executive upgrade) tools.
 
 The original resume is the sole source of truth: no new skills,
 technologies, certifications, employers, dates, or metrics may be
 introduced. Only the writing improves, not the candidate's history.
+Refine's inference tolerance is intentionally lower than Elevate's,
+since nothing here is ever confirmed by the candidate beyond what they
+already wrote.
+
+upgrade() returns resume_data plus a fixed "what changed" / "please
+verify" summary (not model-generated - these are the same two lists on
+every run, so they're plain Python constants rather than something
+worth spending a model call on).
 """
 import json
 import os
@@ -79,25 +89,34 @@ Do not manufacture an outcome when one is not documented.
 If an actual metric exists in the original resume, preserve and prominently use it. Examples include: Revenue, Client satisfaction, Case volume, Sales performance, Cost reductions, Time savings, Productivity gains, Team size, Project volume, Portfolio size, SLA performance.
 Never create a metric that does not exist.
 
+POSITIONING HEADLINE
+Write a short professional positioning line to appear directly under the candidate's name and contact information: 2-4 capitalized professional themes separated by " | ", e.g. "OPERATIONAL RISK & CONTROLS | BUSINESS OPERATIONS | TREASURY GOVERNANCE" or "COMMERCIAL BANKING | CLIENT SERVICE | LENDING & COMPLIANCE". Every theme must be a field the resume actually demonstrates - never include a theme the candidate hasn't shown evidence of.
+
 PROFESSIONAL SUMMARY
-Rewrite the Professional Summary completely. The summary should:
+Rewrite the Professional Summary completely, following this structure: professional identity -> career scope -> strongest demonstrated capabilities -> professional value. The summary should:
 1. Immediately establish the candidate's professional identity.
 2. Communicate approximate career depth when supported.
 3. Highlight the strongest documented areas of expertise.
 4. Communicate business value.
 5. Position the candidate appropriately for the next stage of their career.
-6. Avoid generic statements such as "hardworking professional seeking an opportunity."
+6. Avoid generic statements such as "hardworking professional seeking an opportunity," and avoid leaning on clichés like "results-driven," "dynamic," "highly motivated," "proven professional," or "hard-working" unless the word is doing real work in context.
 7. Avoid stating that the person is "seeking" a position unless specifically requested.
 Target approximately 3-5 concise lines.
 The tone should communicate: "This person already knows how to do valuable work."
 Do not exaggerate the person's level of seniority.
+Example - instead of "Results-driven professional with strong communication and problem-solving skills," prefer "Commercial banking and client service professional with more than a decade of experience spanning relationship support, lending operations, investment services, and regulatory compliance."
 
-CORE SKILLS / AREAS OF EXPERTISE
-Rebuild the skills section based ONLY on demonstrated experience contained in the original resume.
-Prioritize professional capabilities over personality traits. For example, instead of: Hardworking, Communication, Team Player, Organized - prefer evidence-based capabilities such as: Client Relationship Management, Operational Risk & Controls, Treasury Management, Process Improvement, Project Coordination, Financial Analysis, Stakeholder Management, Regulatory Compliance, Vendor Management, Business Development.
-ONLY include these types of skills when supported by the candidate's actual experience.
+CAREER NARRATIVE
+Look at the full work history. If it shows a genuine progression - for example client service, then loan origination, then treasury sales - the summary may reflect that with language like "Progressive experience across client service, lending operations, and treasury sales." Only describe progression that the dates and titles actually support. Never invent a promotion, a title change, or a narrative arc that isn't there - if the roles are simply sequential with no clear progression, don't manufacture one.
+
+CORE EXPERTISE
+Rebuild the skills section based ONLY on demonstrated experience contained in the original resume - this is Refine's strictest rule, and the inference bar here is deliberately lower than a discovery-interview tool's, because nothing here was ever confirmed by the candidate beyond what they already wrote. Prioritize professional capabilities over personality traits. For example, instead of: Hardworking, Communication, Team Player, Organized - prefer evidence-based capabilities such as: Client Relationship Management, Operational Risk & Controls, Treasury Management, Process Improvement, Project Coordination, Financial Analysis, Stakeholder Management, Regulatory Compliance, Vendor Management, Business Development.
+A skill may be named only when it directly describes work the resume explicitly states - never the broader activity that work is merely part of. For example: if the resume says "Built reporting and dashboards," you may write "Reporting & Dashboard Development." If the resume says "Escalated cases for enhanced due diligence," you may write "Sanctions Screening & EDD Escalation" - but you may NOT write "Enhanced Due Diligence Review," because escalating a case is not the same as performing the review itself. When in doubt about whether a skill name overstates what was actually done, name the narrower, more literal capability.
 Separate technology/platform skills from professional capabilities when appropriate.
 Do not add software simply because it is commonly used in the candidate's profession.
+
+FACTUAL CONSERVATISM
+Refine's inference tolerance is intentionally much lower than a discovery-interview tool's - it never asks the candidate anything, so nothing beyond the resume's own words may be added. In particular, do not add or imply any of the following unless the resume text actually supports it: RCSA participation, API or system-specific technical work, named products, executive-level client exposure, people-leadership or management scope, pricing responsibility, RFP involvement, revenue responsibility, formal compliance responsibilities, or any specific technical capability. If uncertain whether something is supported, omit it rather than guess.
 
 PROFESSIONAL EXPERIENCE
 For every position:
@@ -143,6 +162,7 @@ Respond ONLY with a JSON object in this exact shape, no other text, no markdown 
   "resume_data": {
     "name": "FULL NAME",
     "contact": "City, ST | Phone | Email | LinkedIn (omit parts not found)",
+    "headline": "POSITIONING HEADLINE",
     "summary": "rewritten 3-5 line professional summary",
     "skills": ["rebuilt skill", "..."],
     "experience": [
@@ -161,6 +181,26 @@ Restructure and apply the executive upgrade as specified in the system prompt.""
 
 class UpgradeError(Exception):
     pass
+
+
+# Fixed, not model-generated: true of every Refine run, so there's no reason
+# to spend a model call (or risk any drift in wording) generating these.
+REFINE_CHANGES = [
+    "Improved professional summary",
+    "Added a professional positioning headline",
+    "Strengthened resume language",
+    "Organized demonstrated expertise",
+    "Improved ATS readability",
+    "Preserved original facts, employers, titles, dates, and metrics",
+]
+
+REFINE_VERIFY = [
+    "Dates",
+    "Titles",
+    "Metrics",
+    "Contact information",
+    "Derived expertise",
+]
 
 
 def upgrade(resume_text: str) -> dict:
@@ -187,4 +227,7 @@ def upgrade(resume_text: str) -> dict:
     except (ValueError, json.JSONDecodeError) as e:
         raise UpgradeError(f"Could not parse model response as JSON: {e}") from e
 
-    return parsed["resume_data"]
+    resume_data = parsed["resume_data"]
+    resume_data["skills_heading"] = "CORE EXPERTISE"
+
+    return {"resume_data": resume_data, "changes": REFINE_CHANGES, "verify": REFINE_VERIFY}

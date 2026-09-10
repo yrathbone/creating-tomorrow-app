@@ -120,6 +120,8 @@ analyzeForm.addEventListener("submit", async (e) => {
       renderMatchReport(data.match_report);
     } else if (currentMode === "refine") {
       document.getElementById("refine-summary-preview").textContent = resumeData.summary || "";
+      fillList("refine-changes-list", data.changes, (s) => s);
+      fillList("refine-verify-list", data.verify, (s) => s);
     }
 
     renderQuestions(reflectiveQuestions);
