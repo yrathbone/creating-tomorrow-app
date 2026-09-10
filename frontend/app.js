@@ -4,7 +4,7 @@
 let resumeData = null;
 let reflectiveQuestions = [];
 let lastMatchReport = null;
-let currentMode = null; // "elevate" or "analyze"
+let currentMode = null; // "refine" or "analyze"
 
 const stepMode = document.getElementById("step-mode");
 const stepUpload = document.getElementById("step-upload");
@@ -24,7 +24,7 @@ const analyzeError = document.getElementById("analyze-error");
 
 const resultsHeading = document.getElementById("results-heading");
 const matchModeResults = document.getElementById("match-mode-results");
-const elevateModeResults = document.getElementById("elevate-mode-results");
+const refineModeResults = document.getElementById("refine-mode-results");
 const downloadRecapBtn = document.getElementById("download-recap-btn");
 const recapError = document.getElementById("recap-error");
 
@@ -35,13 +35,13 @@ const generateBtn = document.getElementById("generate-btn");
 const generateError = document.getElementById("generate-error");
 
 const MODE_CONFIG = {
-  elevate: {
-    endpoint: "/api/elevate",
-    uploadHeading: "1. Elevate: Tell us about you",
+  refine: {
+    endpoint: "/api/refine",
+    uploadHeading: "1. Refine: Tell us about you",
     uploadHint: "Upload your current resume. We'll format it for ATS and rewrite it in polished, professional language — no job posting needed, and we won't add anything that isn't already true on your resume.",
-    loadingText: 'Reading your resume and elevating it — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
+    loadingText: 'Reading your resume and refining it — this takes about <span class="loading-emphasis">30-60 seconds</span>. Please don\'t refresh or close this page while we work.',
     needsJobPosting: false,
-    resultsHeading: "2. Your elevated resume",
+    resultsHeading: "2. Your refined resume",
   },
   analyze: {
     endpoint: "/api/analyze",
@@ -110,13 +110,13 @@ analyzeForm.addEventListener("submit", async (e) => {
     reflectiveQuestions = data.reflective_questions || [];
 
     matchModeResults.hidden = currentMode !== "analyze";
-    elevateModeResults.hidden = currentMode !== "elevate";
+    refineModeResults.hidden = currentMode !== "refine";
 
     if (currentMode === "analyze") {
       lastMatchReport = data.match_report;
       renderMatchReport(data.match_report);
-    } else if (currentMode === "elevate") {
-      document.getElementById("elevate-summary-preview").textContent = resumeData.summary || "";
+    } else if (currentMode === "refine") {
+      document.getElementById("refine-summary-preview").textContent = resumeData.summary || "";
     }
 
     renderQuestions(reflectiveQuestions);

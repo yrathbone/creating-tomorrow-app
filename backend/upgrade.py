@@ -1,5 +1,5 @@
 """
-Elevate: transforms an existing resume into a stronger professional
+Refine: transforms an existing resume into a stronger professional
 version using only real experience. Takes raw text extracted from
 someone's existing resume and, in one pass, (1) restructures it into a
 clean, ATS-friendly format, then (2) rewrites its language into polished,

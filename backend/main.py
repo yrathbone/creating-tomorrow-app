@@ -11,9 +11,9 @@ Three tools, front-end names in parentheses:
                         bullets + reflective questions (Beginning, per entry)
   POST /api/scratch-finalize - full assembled experience/education/skills
                         -> suggested summary + suggested skills (Beginning)
-  POST /api/elevate  - old resume file only -> resume_data restructured into
+  POST /api/refine   - old resume file only -> resume_data restructured into
                         ATS-friendly format and rewritten in polished
-                        executive-resume-writer language (Elevate; content
+                        executive-resume-writer language (Refine; content
                         enhancement only, no new facts, no web search, no
                         reflective questions)
   POST /api/generate - final resume_data + ats_mode -> .docx file
@@ -119,8 +119,8 @@ async def api_recap(req: RecapRequest):
     )
 
 
-@app.post("/api/elevate")
-async def api_elevate(resume_file: UploadFile = File(...)):
+@app.post("/api/refine")
+async def api_refine(resume_file: UploadFile = File(...)):
     content = await resume_file.read()
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="File too large (5 MB max).")
