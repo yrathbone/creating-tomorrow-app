@@ -98,6 +98,55 @@
     </div>
   </section>
 
+  <section class="guide-teaser">
+    <div class="guide-teaser-inner">
+      <span class="guide-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="#0847C7" stroke-width="1.8"/>
+          <path d="M15.5 8.5L13 13L8.5 15.5L11 11L15.5 8.5Z" fill="#E2A126"/>
+        </svg>
+      </span>
+      <div class="guide-teaser-text">
+        <h2>Not sure where to start?</h2>
+        <p>Say hi to Guide. Tell Guide which situation sounds most like you, and it will point you to the right place.</p>
+        <p class="hint guide-teaser-desc">Helping you find the right place to begin.</p>
+      </div>
+      <button type="button" id="guide-open-btn" class="btn-primary">Hi Guide</button>
+    </div>
+  </section>
+
+  <div id="guide-modal" class="guide-modal-overlay" hidden>
+    <div class="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-modal-heading">
+      <button type="button" id="guide-close-btn" class="guide-modal-close" aria-label="Close">&times;</button>
+
+      <div id="guide-step-options">
+        <div class="guide-modal-header">
+          <span class="guide-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="#0847C7" stroke-width="1.8"/>
+              <path d="M15.5 8.5L13 13L8.5 15.5L11 11L15.5 8.5Z" fill="#E2A126"/>
+            </svg>
+          </span>
+          <div>
+            <h2 id="guide-modal-heading">Hi, I'm Guide.</h2>
+            <p class="guide-modal-descriptor">Helping you find the right place to begin.</p>
+          </div>
+        </div>
+        <p>Which situation sounds most like you?</p>
+        <div class="guide-options" id="guide-options-list"></div>
+      </div>
+
+      <div id="guide-step-recommendation" hidden>
+        <h3 id="guide-recommendation-heading"></h3>
+        <p id="guide-recommendation-text"></p>
+        <div class="guide-recommendation-actions">
+          <a id="guide-start-btn" class="btn-primary" href="#">Start</a>
+          <button type="button" id="guide-back-btn" class="btn-secondary">Go Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <main class="home-main">
     <section class="value-section">
       <div class="value-section-inner">
@@ -194,5 +243,7 @@
       <p class="site-footer-privacy">We don't store your resume or job posting after your session ends.</p>
     </div>
   </footer>
+
+  <script src="guide.js"></script>
 </body>
 </html>

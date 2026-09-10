@@ -60,6 +60,14 @@ document.querySelectorAll(".mode-btn[data-mode]").forEach((btn) => {
   btn.addEventListener("click", () => selectMode(btn.dataset.mode));
 });
 
+// Lets Guide (on the homepage) deep-link straight into a mode, since Refine
+// and Right Fit aren't standalone pages the way Beginning/Elevate are. No
+// param means no change to existing behavior - still shows the picker.
+const initialMode = new URLSearchParams(window.location.search).get("mode");
+if (initialMode && MODE_CONFIG[initialMode]) {
+  selectMode(initialMode);
+}
+
 function selectMode(mode) {
   currentMode = mode;
   const config = MODE_CONFIG[mode];
