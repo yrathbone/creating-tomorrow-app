@@ -22,13 +22,24 @@ build_match_recap_bytes() produces a one-page downloadable recap of a
 Right Fit comparison (match level, rationale, strengths, gaps, flags,
 growth suggestions) using the same visual style.
 
-build_resume_bytes() also recognizes a few optional keys used by Elevate
-but harmless to every other tool (absent for them, so nothing changes):
-  data["headline"]        - centered bold positioning line under contact
-  data["skills_heading"]  - overrides the "CORE SKILLS & EXPERTISE" heading
-                             text (Elevate uses "CORE EXPERTISE")
-  data["certifications"]  - bulleted section rendered after Education, only
-                             if non-empty
+build_resume_bytes() also recognizes a few optional keys, harmless to any
+tool that doesn't set them (absent for them, so nothing changes):
+  data["headline"]           - centered bold positioning line under contact
+  data["skills_heading"]     - overrides the "CORE SKILLS & EXPERTISE"
+                                heading text (Elevate/Refine use "CORE
+                                EXPERTISE")
+  data["certifications"]     - bulleted section rendered after Education,
+                                only if non-empty (used by Elevate)
+  data["additional_sections"] - a list of {"heading": str, "items": [str]}
+                                sections rendered after Education/
+                                Certifications, one heading bar + bulleted
+                                items per entry, only for entries with a
+                                non-empty items list (used by Refine to
+                                preserve things like Awards & Recognition,
+                                Licenses, Languages, Military Service,
+                                Professional Affiliations, Publications,
+                                Patents, or Security Clearances found in the
+                                source resume)
 """
 import io
 
@@ -189,6 +200,15 @@ def build_resume_bytes(data: dict, ats_mode: bool = False) -> bytes:
         cert_heading = add_heading_bar(doc, "CERTIFICATIONS")
         cert_heading.paragraph_format.space_before = Pt(6)
         for entry in certifications:
+            add_bullet(doc, entry)
+
+    for section in data.get("additional_sections") or []:
+        items = section.get("items") or []
+        if not items:
+            continue
+        section_heading = add_heading_bar(doc, section.get("heading", ""))
+        section_heading.paragraph_format.space_before = Pt(6)
+        for entry in items:
             add_bullet(doc, entry)
 
     buffer = io.BytesIO()

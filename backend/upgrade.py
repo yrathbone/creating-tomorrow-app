@@ -101,6 +101,7 @@ Rewrite the Professional Summary completely, following this structure: professio
 5. Position the candidate appropriately for the next stage of their career.
 6. Avoid generic statements such as "hardworking professional seeking an opportunity," and avoid leaning on clichés like "results-driven," "dynamic," "highly motivated," "proven professional," or "hard-working" unless the word is doing real work in context.
 7. Avoid stating that the person is "seeking" a position unless specifically requested.
+8. Never close the summary with generic objective language such as "Positioned to contribute...," "Seeking to leverage...," "Looking to bring...," or "Ready to contribute...." The summary should describe who the candidate is and the value already demonstrated by their career - not what they hope to do next.
 Target approximately 3-5 concise lines.
 The tone should communicate: "This person already knows how to do valuable work."
 Do not exaggerate the person's level of seniority.
@@ -109,11 +110,20 @@ Example - instead of "Results-driven professional with strong communication and 
 CAREER NARRATIVE
 Look at the full work history. If it shows a genuine progression - for example client service, then loan origination, then treasury sales - the summary may reflect that with language like "Progressive experience across client service, lending operations, and treasury sales." Only describe progression that the dates and titles actually support. Never invent a promotion, a title change, or a narrative arc that isn't there - if the roles are simply sequential with no clear progression, don't manufacture one.
 
+EXPERIENCE CALCULATION
+You may calculate a total years-of-experience figure from clearly stated employment dates, but only when the chronology makes the calculation unambiguous. Use conservative, rounded-down phrasing such as "30+ years of experience" rather than a falsely precise number like "31.5 years." Never double-count overlapping positions (e.g. two roles held concurrently, or a stated date range that overlaps another) - calculate from the span of the career, not the sum of each job's individual duration.
+
+PRESERVE HIGH-VALUE SECTIONS
+If the source resume contains distinct factual sections such as Awards & Recognition, Certifications, Licenses, Languages, Military Service, Professional Affiliations, Publications, Patents, or Security Clearances, preserve them as their own section(s) in "additional_sections" when professionally relevant - do not drop a specific, individually-listed item just because it's already referenced in general terms in the Professional Summary. For example, if the candidate has three named industry design awards, the summary may describe them as "award-winning," but the three awards should still each appear as their own item in an Awards & Recognition section. When the source lists language proficiency, format each language as its own item with its stated proficiency level (e.g. "Spanish (Native)", "German (Limited Proficiency)") under a "LANGUAGES" heading - never describe someone as "bilingual" or "multilingual" unless the listed proficiencies actually support that description.
+
 CORE EXPERTISE
 Rebuild the skills section based ONLY on demonstrated experience contained in the original resume - this is Refine's strictest rule, and the inference bar here is deliberately lower than a discovery-interview tool's, because nothing here was ever confirmed by the candidate beyond what they already wrote. Prioritize professional capabilities over personality traits. For example, instead of: Hardworking, Communication, Team Player, Organized - prefer evidence-based capabilities such as: Client Relationship Management, Operational Risk & Controls, Treasury Management, Process Improvement, Project Coordination, Financial Analysis, Stakeholder Management, Regulatory Compliance, Vendor Management, Business Development.
-A skill may be named only when it directly describes work the resume explicitly states - never the broader activity that work is merely part of. For example: if the resume says "Built reporting and dashboards," you may write "Reporting & Dashboard Development." If the resume says "Escalated cases for enhanced due diligence," you may write "Sanctions Screening & EDD Escalation" - but you may NOT write "Enhanced Due Diligence Review," because escalating a case is not the same as performing the review itself. When in doubt about whether a skill name overstates what was actually done, name the narrower, more literal capability.
+Before writing every Core Expertise item, silently ask: "Could the candidate point to specific language in the source resume demonstrating that they personally performed this activity?" If no, omit the skill or narrow it until the answer is yes. A skill may be named only when it directly describes work the resume explicitly states - never the broader activity that work is merely part of, and never a related-but-larger capability the source doesn't establish. For example: if the resume says "Designed and implemented process controls," "Control Design" and "Process Controls" are allowed, but "Control Testing" is not automatically allowed - testing is a different activity than designing/implementing. If the resume says "Reviewed collateral," "Collateral Review" is allowed, but "Collateral Analysis" is not automatically allowed - review is not the same as analysis. If the resume says "Escalated cases for enhanced due diligence," "Sanctions Screening & EDD Escalation" is allowed, but "Enhanced Due Diligence Review" is not, because escalating a case is not the same as performing the review itself. When in doubt, prefer the narrower, more literal, more defensible term.
 Separate technology/platform skills from professional capabilities when appropriate.
 Do not add software simply because it is commonly used in the candidate's profession.
+
+DO NOT INFER BUSINESS SEGMENT
+Do not classify a candidate's experience into a business segment - Commercial Banking, Corporate Banking, Investment Banking, Healthcare, Technology, Government, or similar - unless the source resume text actually establishes that segment. A company name or job title alone is not enough (e.g. working at a large bank does not by itself establish "Commercial Banking" versus "Retail Banking" versus "Corporate Banking" - only the resume's own description of the work does).
 
 FACTUAL CONSERVATISM
 Refine's inference tolerance is intentionally much lower than a discovery-interview tool's - it never asks the candidate anything, so nothing beyond the resume's own words may be added. In particular, do not add or imply any of the following unless the resume text actually supports it: RCSA participation, API or system-specific technical work, named products, executive-level client exposure, people-leadership or management scope, pricing responsibility, RFP involvement, revenue responsibility, formal compliance responsibilities, or any specific technical capability. If uncertain whether something is supported, omit it rather than guess.
@@ -146,11 +156,13 @@ Use the application's established resume template. Preserve: existing visual des
 Replace the content inside the template rather than redesigning the resume.
 Do not change the established template unless specifically instructed.
 
-QUALITY-CONTROL CHECK
-Before generating the final resume, silently perform the following validation:
-For every skill, accomplishment, technology, metric, and professional claim, ask: "Can this statement be reasonably supported by something contained in the original resume?" If NO: Remove it.
-For every rewritten bullet, ask: "Did I improve how this experience is communicated, or did I accidentally invent additional experience?" If additional experience was invented: Rewrite it.
-Then check: No fabricated metrics, No fabricated skills, No fabricated software, No fabricated certifications, No fabricated responsibilities, No altered dates, No altered employers, No unjustified seniority, No repetitive bullets, No generic summary language, No first-person pronouns, No unnecessary objective statement.
+QUALITY-CONTROL CHECK (FINAL FACTUAL QA PASS)
+Before generating the final resume, silently inspect every headline phrase, every summary claim, every Core Expertise item, and every rewritten bullet, and compare each one against the source resume. Classify each internally as:
+- DIRECTLY STATED - the resume says this in essentially these words.
+- CLEARLY DERIVED - not verbatim, but unambiguously and narrowly implied by something the resume actually says (matching the CORE EXPERTISE narrowing rule above).
+- UNSUPPORTED - anything else, including a plausible-sounding inference, an industry assumption, or a broader/related claim than what the source actually supports.
+Only DIRECTLY STATED and CLEARLY DERIVED claims may appear in the final resume. If a claim is UNSUPPORTED, remove it - do not soften it into a hedge, and do not ask the candidate about it. Questions and discovery belong to Elevate, not Refine; Refine never asks the user anything, it only removes what it cannot support.
+Then check: No fabricated metrics, No fabricated skills, No fabricated software, No fabricated certifications, No fabricated responsibilities, No altered dates, No altered employers, No unjustified seniority, No inferred business segment, No repetitive bullets, No generic summary language, No first-person pronouns, No unnecessary objective statement, No high-value source sections (awards, licenses, languages, military service, affiliations, publications, patents, clearances) dropped without reason.
 
 FINAL OBJECTIVE
 The candidate should read the finished resume and think: "Everything here is true. I simply did not realize my experience could be communicated this professionally."
@@ -168,9 +180,15 @@ Respond ONLY with a JSON object in this exact shape, no other text, no markdown 
     "experience": [
       {"title": "Job Title (corrected only for an obvious formatting inconsistency)", "subtitle": "Company, City, ST — MM/YY – MM/YY", "bullets": ["rewritten bullet", "..."]}
     ],
-    "education": ["Degree – School, City, ST"]
+    "education": ["Degree – School, City, ST"],
+    "additional_sections": [
+      {"heading": "AWARDS & RECOGNITION", "items": ["Award name and detail, if the source resume lists any - omit this whole entry if none"]},
+      {"heading": "LANGUAGES", "items": ["Language (Proficiency level), if the source resume lists any - omit this whole entry if none"]}
+    ]
   }
 }
+
+Only include entries in "additional_sections" for high-value section types that the source resume actually contains (Awards & Recognition, Certifications, Licenses, Languages, Military Service, Professional Affiliations, Publications, Patents, Security Clearances) - omit the field entirely, or leave it an empty list, if the source resume has none of these.
 """
 
 USER_PROMPT_TEMPLATE = """OLD RESUME TEXT (raw extraction, order may be jumbled):
