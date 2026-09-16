@@ -2391,24 +2391,6 @@ footer.site-footer-v2 {
   .about-hero-primary { font-size: 27px; }
 }
 
-.about-hero-supporting {
-  margin: 0 auto 22px;
-  max-width: 560px;
-  font-size: 17.5px;
-  font-weight: 400;
-  line-height: 1.6;
-  color: #4d5663;
-}
-
-.about-hero-brandline {
-  margin: 0;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #0847c7;
-}
-
 .about-main { background: #ffffff; }
 
 .about-section { padding: 80px 0; }
@@ -2416,8 +2398,6 @@ footer.site-footer-v2 {
 @media (max-width: 719px) {
   .about-section { padding: 56px 0; }
 }
-
-.about-section-alt { background: #eef1f6; }
 
 .about-section-inner {
   max-width: 1080px;
@@ -2432,18 +2412,6 @@ footer.site-footer-v2 {
 
 .about-inner-center { text-align: center; }
 
-.about-section h2 {
-  margin: 0 0 28px;
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.25;
-  color: #101318;
-}
-
-@media (min-width: 640px) {
-  .about-section h2 { font-size: 33px; }
-}
-
 .about-section p {
   margin: 0 0 20px;
   font-size: 17px;
@@ -2451,159 +2419,20 @@ footer.site-footer-v2 {
   color: #303844;
 }
 
-.about-section p.about-inline-quote {
-  font-size: 19px;
-  font-weight: 600;
-  font-style: italic;
-  color: #101318;
-}
-
-.about-section p.about-emphasis {
-  margin: 32px 0 0;
-  font-size: 22px;
-  font-weight: 750;
-  color: #101318;
-}
-
-.about-section p.about-emphasis-cobalt { color: #0847c7; }
-
+/* The closing brand-voice quote gets its own visual pause - centered,
+   set off by a top border - rather than blending into the paragraph
+   flow above it, since it's meant to read as a distinct closing beat. */
 .about-section p.about-editorial-line {
-  margin-top: 40px;
-  font-size: 19px;
+  max-width: 640px;
+  margin: 56px auto 0;
+  padding-top: 40px;
+  border-top: 1px solid #e4e8ef;
+  text-align: center;
+  font-size: 21px;
   font-style: italic;
-  line-height: 1.6;
+  line-height: 1.5;
   color: #063594;
 }
-
-.about-trio {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 28px;
-  margin: 44px 0;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-@media (min-width: 720px) {
-  .about-trio { grid-template-columns: repeat(3, 1fr); gap: 32px; }
-}
-
-.about-section p.about-trio-label {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #0847c7;
-}
-
-.about-trio-item p:last-child {
-  margin: 0;
-  font-size: 15.5px;
-  line-height: 1.6;
-  color: #4d5663;
-}
-
-.about-sequence {
-  margin: 28px 0;
-  padding: 28px 0;
-  border-top: 1px solid #e4e8ef;
-  border-bottom: 1px solid #e4e8ef;
-}
-
-.about-sequence p {
-  margin: 0 0 10px;
-  font-size: 19px;
-  font-weight: 600;
-  color: #101318;
-}
-
-.about-sequence p:last-child { margin-bottom: 0; }
-
-.about-section p.about-emphasis-theirs {
-  display: inline-block;
-  margin: 8px 0 0;
-  font-size: 26px;
-  font-weight: 750;
-  color: #e2a126;
-}
-
-.about-gold-underline {
-  display: block;
-  width: 30px;
-  height: 2px;
-  background: #e2a126;
-  margin-top: 10px;
-}
-
-.about-lens-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  text-align: center;
-  margin-top: 48px;
-  padding-top: 32px;
-  border-top: 1px solid rgba(16, 19, 24, 0.08);
-}
-
-@media (min-width: 720px) {
-  .about-lens-row { flex-direction: row; justify-content: center; gap: 28px; }
-}
-
-.about-lens-row span {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #8a92a0;
-}
-
-.about-list {
-  margin: 0 0 20px;
-  padding-left: 1.3rem;
-}
-
-.about-list li {
-  margin-bottom: 8px;
-  font-size: 17px;
-  line-height: 1.6;
-  color: #303844;
-}
-
-.about-jo-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 36px;
-  align-items: start;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-@media (min-width: 720px) {
-  .about-jo-grid { grid-template-columns: 240px 1fr; gap: 48px; }
-}
-
-.about-jo-photo {
-  aspect-ratio: 4 / 5;
-  max-width: 240px;
-  margin: 0 auto;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #eef1f6, #f7f9fc);
-  box-shadow: 0 10px 30px rgba(15, 32, 60, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.about-jo-photo span {
-  font-size: 32px;
-  font-weight: 700;
-  color: #0847c7;
-  opacity: 0.5;
-}
-
-.about-jo-text h2 { margin-top: 0; }
 
 .about-closing-line {
   max-width: 1080px;
@@ -2621,7 +2450,7 @@ footer.site-footer-v2 {
   .about-hero h1 { font-size: 34px; }
   .about-hero-primary { font-size: 21px; }
   .about-section-inner { padding: 0 20px; }
-  .about-jo-photo { max-width: 200px; }
+  .about-section p.about-editorial-line { margin-top: 40px; padding-top: 28px; font-size: 19px; }
 }
 
 /* --- Spotlight (LinkedIn Profile Review) --- */
