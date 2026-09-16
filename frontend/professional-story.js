@@ -294,16 +294,33 @@ function renderSection(sectionData, prefix, ids) {
 }
 
 // --- Copy buttons (delegated - results are rendered dynamically) -----------
+// navigator.clipboard.writeText() can reject for reasons outside our control
+// (no permission, an older browser, a background/unfocused tab) - without a
+// .catch() the button would just silently do nothing, leaving the person
+// unsure whether it worked. The fallback selects the text so they can still
+// copy it manually with their own keyboard shortcut.
 document.getElementById("step-results").addEventListener("click", (e) => {
   const btn = e.target.closest(".copy-btn");
   if (!btn) return;
   const target = document.getElementById(btn.dataset.copyTarget);
   if (!target) return;
-  navigator.clipboard.writeText(target.textContent).then(() => {
-    const original = btn.textContent;
-    btn.textContent = "Copied!";
-    setTimeout(() => (btn.textContent = original), 1500);
-  });
+
+  const original = btn.textContent;
+  navigator.clipboard
+    .writeText(target.textContent)
+    .then(() => {
+      btn.textContent = "Copied!";
+      setTimeout(() => (btn.textContent = original), 1500);
+    })
+    .catch(() => {
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      btn.textContent = "Selected — press Ctrl+C";
+      setTimeout(() => (btn.textContent = original), 2500);
+    });
 });
 
 // --- Start over --------------------------------------------------------------
