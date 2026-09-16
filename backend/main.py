@@ -30,10 +30,17 @@ Four tools, front-end names in parentheses:
                         experience) plus what-we-uncovered/changed/verify
                         summaries (Elevate)
   POST /api/generate - final resume_data + ats_mode -> .docx file
+  POST /api/profile-review - LinkedIn screenshots (any number) + pasted
+                        profile text + a profile PDF, any combination -> a
+                        5-section educational review (first impression,
+                        headline, about, experience, skills) plus a
+                        signature evidence-backed strengths list. No score.
+                        (5th tool, working name "Professional Story")
 
 Run locally:
   uvicorn main:app --reload --port 8000
 """
+import base64
 import os
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -47,6 +54,7 @@ from coach import analyze, CoachError
 from scratch import draft_entry, finalize, ScratchError
 from upgrade import upgrade, UpgradeError
 from elevate import analyze_for_discovery, discover, finalize_elevate, ElevateError
+from profile_review import review_profile, ProfileReviewError
 from resume_builder import build_resume_bytes, build_match_recap_bytes
 
 app = FastAPI(title="Creating Tomorrow API")
@@ -211,6 +219,86 @@ async def api_elevate_finalize(req: ElevateFinalizeRequest):
     try:
         result = finalize_elevate(req.resume_data, req.confirmed_facts)
     except ElevateError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result
+
+
+MAX_IMAGE_BYTES = 8 * 1024 * 1024  # 8 MB per screenshot
+MAX_TOTAL_IMAGE_BYTES = 24 * 1024 * 1024  # 24 MB combined across all screenshots
+ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp"}
+
+
+@app.post("/api/profile-review")
+async def api_profile_review(
+    screenshots: list[UploadFile] = File(default=[]),
+    profile_pdf: UploadFile = File(default=None),
+    headline: str = Form(default=""),
+    about: str = Form(default=""),
+    experience: str = Form(default=""),
+    skills: str = Form(default=""),
+    additional: str = Form(default=""),
+    everything: str = Form(default=""),
+):
+    # Every field above is optional - a person may supply any combination of
+    # screenshots, structured text fields, a single "paste everything" blob,
+    # and/or a PDF. Nothing is written to disk anywhere below: files are read
+    # into memory, used for this one request, and discarded when it returns.
+    images = []
+    total_image_bytes = 0
+    for screenshot in screenshots:
+        if screenshot.content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"That file type isn't supported yet. Please upload PNG, JPG, or WEBP screenshots.",
+            )
+        image_bytes = await screenshot.read()
+        if len(image_bytes) > MAX_IMAGE_BYTES:
+            raise HTTPException(status_code=413, detail="One of those screenshots is too large (8 MB max each).")
+        total_image_bytes += len(image_bytes)
+        if total_image_bytes > MAX_TOTAL_IMAGE_BYTES:
+            raise HTTPException(status_code=413, detail="Those screenshots are too large combined (24 MB max total).")
+        images.append({
+            "media_type": screenshot.content_type,
+            "data": base64.b64encode(image_bytes).decode("ascii"),
+        })
+
+    pdf_text = ""
+    if profile_pdf is not None:
+        pdf_bytes = await profile_pdf.read()
+        if len(pdf_bytes) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="That PDF is too large (5 MB max).")
+        try:
+            pdf_text = extract_text(profile_pdf.filename, pdf_bytes)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    pasted_parts = []
+    if everything.strip():
+        pasted_parts.append(everything.strip())
+    else:
+        for label, value in [
+            ("Headline", headline),
+            ("About", about),
+            ("Experience", experience),
+            ("Skills", skills),
+            ("Additional Information", additional),
+        ]:
+            if value.strip():
+                pasted_parts.append(f"{label}:\n{value.strip()}")
+    pasted_text = "\n\n".join(pasted_parts)
+
+    if not images and not pasted_text.strip() and not pdf_text.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="I need at least one screenshot, some pasted profile text, or a profile PDF before I can give you a useful review.",
+        )
+
+    try:
+        result = review_profile(images, pasted_text, pdf_text)
+    except ProfileReviewError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")

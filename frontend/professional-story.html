@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Professional Story: LinkedIn Profile Review — Creating Tomorrow</title>
+  <link rel="icon" type="image/png" href="logo-icon.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span><small>Real Skills. Brighter Tomorrows.</small></span></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="learn.html">Learn</a>
+      <a href="videos.html">Videos</a>
+      <a href="about.html">About</a>
+      <a href="tool.html" class="nav-cta">Build Your Resume →</a>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <p class="guide-eyebrow" style="text-align: center;">Professional Story</p>
+    <h1>What does your LinkedIn profile say about you?</h1>
+    <p class="tagline">Your experience already tells a story. Let's make sure your profile makes that story easy to understand.</p>
+  </header>
+
+  <main>
+    <section class="card" id="step-input">
+      <div class="guide-intro-line">
+        <span class="guide-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="#0847C7" stroke-width="1.8"/>
+            <path d="M15.5 8.5L13 13L8.5 15.5L11 11L15.5 8.5Z" fill="#E2A126"/>
+          </svg>
+        </span>
+        <p>Guide can review the information you choose to share and help you see what's already working, what could be clearer, and where your experience may be getting overlooked.</p>
+      </div>
+
+      <p class="hint privacy-note">Your profile belongs to you. Only upload your own profile or information you have permission to use. You can remove personal information you don't want analyzed. We don't store your screenshots, PDF, or profile text after your session ends.</p>
+
+      <div class="input-options">
+        <button type="button" class="mode-btn input-option-toggle" data-target="screenshots-panel" aria-expanded="false" aria-controls="screenshots-panel">
+          <strong>Upload Profile Screenshots</strong>
+          <span>Upload screenshots of the sections you'd like Guide to review.</span>
+        </button>
+        <div class="input-option-panel" id="screenshots-panel" hidden>
+          <label class="field">
+            <span>Screenshots (PNG, JPG, or WEBP — add as many as you need)</span>
+            <input type="file" id="screenshot-input" accept="image/png,image/jpeg,image/webp" multiple />
+          </label>
+          <div class="screenshot-thumbs" id="screenshot-thumbs"></div>
+        </div>
+
+        <button type="button" class="mode-btn input-option-toggle" data-target="paste-panel" aria-expanded="false" aria-controls="paste-panel">
+          <strong>Paste Your Profile</strong>
+          <span>Paste your headline, About section, experience, skills, or any other profile text.</span>
+        </button>
+        <div class="input-option-panel" id="paste-panel" hidden>
+          <div id="paste-structured">
+            <label class="field"><span>Headline</span><input type="text" id="paste-headline" placeholder="e.g. Client Service Associate at JPMorgan Chase" /></label>
+            <label class="field"><span>About</span><textarea id="paste-about" rows="4"></textarea></label>
+            <label class="field"><span>Experience</span><textarea id="paste-experience" rows="6"></textarea></label>
+            <label class="field"><span>Skills</span><textarea id="paste-skills" rows="3"></textarea></label>
+            <label class="field"><span>Additional Profile Information (optional)</span><textarea id="paste-additional" rows="3"></textarea></label>
+          </div>
+          <button type="button" id="paste-everything-toggle" class="btn-secondary">Paste everything instead</button>
+          <label class="field" id="paste-everything-wrap" hidden>
+            <span>Paste everything</span>
+            <textarea id="paste-everything" rows="10" placeholder="Paste your whole profile here — headline, About, experience, skills, whatever you have."></textarea>
+          </label>
+        </div>
+
+        <button type="button" class="mode-btn input-option-toggle" data-target="pdf-panel" aria-expanded="false" aria-controls="pdf-panel">
+          <strong>Upload Profile PDF</strong>
+          <span>Have a PDF copy of your profile? Upload it here.</span>
+        </button>
+        <div class="input-option-panel" id="pdf-panel" hidden>
+          <label class="field">
+            <span>Profile PDF</span>
+            <input type="file" id="pdf-input" accept=".pdf" />
+          </label>
+          <p class="hint" id="pdf-selected-name" hidden></p>
+        </div>
+      </div>
+
+      <button type="button" id="review-btn" disabled>Review My Profile →</button>
+      <div id="input-error" class="error" hidden></div>
+    </section>
+
+    <section class="card" id="step-loading" hidden>
+      <div class="processing-card" aria-live="polite">
+        <p class="processing-headline">Your profile review is taking shape.</p>
+        <div class="processing-visual" aria-hidden="true">
+          <span class="processing-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="3" width="14" height="18" rx="2" stroke="#0847C7" stroke-width="1.6"/>
+              <path d="M8 8h8M8 12h8M8 16h5" stroke="#0847C7" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="processing-dots">
+            <span class="processing-dot"></span>
+            <span class="processing-dot"></span>
+            <span class="processing-dot"></span>
+          </span>
+          <span class="processing-icon processing-icon-done">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="3" width="14" height="18" rx="2" stroke="#0847C7" stroke-width="1.6"/>
+              <path d="M8 8h8M8 12h5" stroke="#0847C7" stroke-width="1.4" stroke-linecap="round"/>
+              <circle cx="17" cy="17" r="5" fill="#E2A126"/>
+              <path d="M14.8 17l1.4 1.4 2.6-2.8" stroke="#101318" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <p class="processing-status"></p>
+        <p class="hint processing-wait-copy">This usually takes about <strong>30–60 seconds</strong>. Please keep this page open — there's no need to refresh.</p>
+      </div>
+    </section>
+
+    <section class="card" id="step-results" hidden>
+      <h2>Your Professional Story review</h2>
+
+      <div id="insufficient-info-block" class="error" hidden></div>
+
+      <div id="results-sections" hidden>
+        <div class="report-block">
+          <h3>1. First Impression</h3>
+          <h4>What's working</h4>
+          <ul id="fi-working"></ul>
+          <h4>What could be clearer</h4>
+          <ul id="fi-clearer"></ul>
+          <p class="hint" id="fi-why"></p>
+        </div>
+
+        <div class="report-block">
+          <h3>2. Headline</h3>
+          <p class="hint" id="headline-note" hidden></p>
+          <div id="headline-detail">
+            <p><strong>Current version:</strong> <span id="headline-current"></span></p>
+            <h4>What's working</h4>
+            <ul id="headline-working"></ul>
+            <h4>What could be clearer</h4>
+            <ul id="headline-clearer"></ul>
+            <div class="suggested-text-block">
+              <h4>Suggested version</h4>
+              <p id="headline-suggested"></p>
+              <button type="button" class="btn-secondary copy-btn" data-copy-target="headline-suggested">Copy</button>
+            </div>
+            <p class="hint" id="headline-why"></p>
+          </div>
+        </div>
+
+        <div class="report-block">
+          <h3>3. About Section</h3>
+          <p class="hint" id="about-note" hidden></p>
+          <div id="about-detail">
+            <h4>What's working</h4>
+            <ul id="about-working"></ul>
+            <h4>What could be clearer</h4>
+            <ul id="about-clearer"></ul>
+            <div class="suggested-text-block">
+              <h4>Suggested revision</h4>
+              <p id="about-suggested"></p>
+              <button type="button" class="btn-secondary copy-btn" data-copy-target="about-suggested">Copy</button>
+            </div>
+            <p class="hint" id="about-why"></p>
+          </div>
+        </div>
+
+        <div class="report-block">
+          <h3>4. Experience</h3>
+          <p class="hint" id="experience-note" hidden></p>
+          <div id="experience-detail">
+            <h4>What's working</h4>
+            <ul id="exp-working"></ul>
+            <h4>What may be getting lost</h4>
+            <ul id="exp-lost"></ul>
+            <h4>Suggested improvements</h4>
+            <ul id="exp-suggestions"></ul>
+            <p class="hint" id="exp-why"></p>
+          </div>
+        </div>
+
+        <div class="report-block">
+          <h3>5. Skills &amp; Discoverability</h3>
+          <h4>Clearly demonstrated skills</h4>
+          <ul id="skills-clear"></ul>
+          <h4>Possible skills to consider</h4>
+          <ul id="skills-possible"></ul>
+          <h4>Needs more information</h4>
+          <ul id="skills-needs-more"></ul>
+        </div>
+
+        <div class="report-block">
+          <h3>Here's What We See in Your Experience</h3>
+          <div id="strengths-list"></div>
+        </div>
+      </div>
+
+      <button type="button" id="start-over-btn" class="btn-secondary">Start a new review</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>Creating Tomorrow is a non-profit tool. We don't store your profile information after your session ends.</p>
+  </footer>
+
+  <script src="loading.js"></script>
+  <script src="professional-story.js"></script>
+</body>
+</html>
