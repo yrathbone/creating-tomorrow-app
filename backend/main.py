@@ -35,7 +35,7 @@ Four tools, front-end names in parentheses:
                         5-section educational review (first impression,
                         headline, about, experience, skills) plus a
                         signature evidence-backed strengths list. No score.
-                        (5th tool, working name "Professional Story")
+                        (5th tool, "Spotlight")
 
 Run locally:
   uvicorn main:app --reload --port 8000

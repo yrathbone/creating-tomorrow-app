@@ -1,9 +1,8 @@
 """
-Professional Story (working name - see main.py route comment) - reviews a
-LinkedIn profile using only what the person chooses to share: screenshots,
-pasted text, and/or a PDF export, in any combination. No LinkedIn scraping,
-login, or API of any kind - this only ever sees what was uploaded/pasted in
-this one request.
+Spotlight - reviews a LinkedIn profile using only what the person chooses
+to share: screenshots, pasted text, and/or a PDF export, in any
+combination. No LinkedIn scraping, login, or API of any kind - this only
+ever sees what was uploaded/pasted in this one request.
 
 One call: review_profile() sends everything supplied (images + text) to
 Claude in a single multi-modal message and gets back a structured review -
