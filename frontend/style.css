@@ -1069,6 +1069,30 @@ footer.site-footer-v2 {
   height: auto;
   object-fit: contain;
   flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 0 rgba(8, 71, 199, 0));
+  transition: filter 0.2s ease;
+}
+
+.guide-mascot:hover,
+.guide-mascot:focus-visible {
+  filter: drop-shadow(0 0 10px rgba(8, 71, 199, 0.35));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .guide-mascot {
+    transition: filter 0.2s ease, transform 0.2s ease;
+  }
+  .guide-mascot:hover,
+  .guide-mascot:focus-visible {
+    transform: scale(1.04);
+  }
+}
+
+.guide-mascot:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
 }
 
 @media (max-width: 640px) {
@@ -1094,6 +1118,21 @@ footer.site-footer-v2 {
   margin: 0 0 0.35rem;
   font-size: 1.35rem;
   color: var(--navy);
+  cursor: pointer;
+  width: fit-content;
+  transition: color 0.2s ease;
+}
+
+.guide-teaser-text h2:hover,
+.guide-teaser-text h2:focus-visible {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.guide-teaser-text h2:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .guide-teaser-text p {

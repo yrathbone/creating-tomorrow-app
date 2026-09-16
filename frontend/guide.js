@@ -76,6 +76,26 @@ function closeGuide() {
 }
 
 document.getElementById("guide-open-btn").addEventListener("click", openGuide);
+
+// The mascot image and headline are also click/keyboard entry points into
+// Guide (not the whole teaser section) - both use role="button" +
+// tabindex="0" since an <img> and <h2> aren't natively focusable/
+// activatable, so Enter/Space need to be wired up explicitly here.
+function activateOnEnterOrSpace(e, handler) {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    handler();
+  }
+}
+
+const guideMascot = document.getElementById("guide-character-slot");
+guideMascot.addEventListener("click", openGuide);
+guideMascot.addEventListener("keydown", (e) => activateOnEnterOrSpace(e, openGuide));
+
+const guideHeadline = document.getElementById("guide-headline-open");
+guideHeadline.addEventListener("click", openGuide);
+guideHeadline.addEventListener("keydown", (e) => activateOnEnterOrSpace(e, openGuide));
+
 document.getElementById("guide-close-btn").addEventListener("click", closeGuide);
 document.getElementById("guide-back-btn").addEventListener("click", () => {
   guideStepRecommendation.hidden = true;
