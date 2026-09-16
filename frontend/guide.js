@@ -32,6 +32,13 @@ const GUIDE_OPTIONS = [
     toolHref: "tool.html?mode=analyze",
     explanation: "Since you have a specific job in mind, Right Fit compares your resume to that posting and gives you an honest sense of how well you match.",
   },
+  {
+    id: "linkedin-profile",
+    label: "I want to review my LinkedIn profile",
+    toolName: "Spotlight",
+    toolHref: "spotlight.html",
+    explanation: "Since it's your LinkedIn profile you want a second look at, Spotlight reviews your headline, About section, experience, and skills using screenshots, pasted text, or a PDF you share.",
+  },
 ];
 
 const guideModal = document.getElementById("guide-modal");
