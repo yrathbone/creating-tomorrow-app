@@ -1064,6 +1064,19 @@ footer.site-footer-v2 {
   height: 38px;
 }
 
+.guide-mascot {
+  width: 110px;
+  height: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .guide-mascot {
+    width: 80px;
+  }
+}
+
 .guide-eyebrow {
   margin: 0 0 0.3rem;
   font-size: 13px;
