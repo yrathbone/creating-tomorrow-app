@@ -773,7 +773,7 @@ footer.site-footer-v2 {
   align-items: center;
 }
 
-@media (min-width: 860px) {
+@media (min-width: 1000px) {
   .home-hero-inner { grid-template-columns: 1.1fr 1fr; }
 }
 
@@ -946,7 +946,7 @@ footer.site-footer-v2 {
   display: block;
 }
 
-@media (max-width: 859px) {
+@media (max-width: 999px) {
   .hero-photo img { object-position: 65% top; }
 }
 
@@ -1025,7 +1025,7 @@ footer.site-footer-v2 {
   max-width: 10rem;
 }
 
-@media (max-width: 859px) {
+@media (max-width: 999px) {
   .floating-card-secondary { display: none; }
 }
 
