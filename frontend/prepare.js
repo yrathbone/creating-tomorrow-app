@@ -18,6 +18,20 @@ const jobDescriptionInput = document.getElementById("job-description");
 const resumeFileInput = document.getElementById("resume-file");
 const resumeSelectedName = document.getElementById("resume-selected-name");
 
+const jobDescriptionThinNotice = document.getElementById("job-description-thin-notice");
+// Purely an advisory hint, not a validation gate - the server's own
+// MIN_JOB_DESCRIPTION_CHARS (40, in main.py) is what actually blocks
+// submission. This is a higher, deterministic threshold just for the
+// non-blocking "this is pretty thin" notice: short enough that a real job
+// posting is very unlikely to fall under it, long enough that it won't
+// fire on ordinary complete postings.
+const THIN_JOB_DESCRIPTION_CHARS = 150;
+
+jobDescriptionInput.addEventListener("input", () => {
+  const length = jobDescriptionInput.value.trim().length;
+  jobDescriptionThinNotice.hidden = length === 0 || length >= THIN_JOB_DESCRIPTION_CHARS;
+});
+
 const PROCESSING_MESSAGES = [
   "Reading the job description...",
   "Identifying what this employer likely values...",

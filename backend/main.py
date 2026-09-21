@@ -79,6 +79,11 @@ app.add_middleware(
 
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB - old resumes are small text documents
 
+# Shared by /api/analyze and /api/prepare - both take free-text job posting
+# content and should be bounded the same way for cost control.
+MIN_JOB_DESCRIPTION_CHARS = 40
+MAX_JOB_DESCRIPTION_CHARS = 15000
+
 
 # StaticFiles sends no Cache-Control header by default, so browsers fall back
 # to heuristic caching and can keep serving old HTML/JS for a while after a
@@ -96,7 +101,7 @@ async def no_cache_for_frontend(request, call_next):
 @app.post("/api/analyze")
 async def api_analyze(
     resume_file: UploadFile = File(...),
-    job_posting: str = Form(...),
+    job_posting: str = Form(""),
 ):
     content = await resume_file.read()
     if len(content) > MAX_UPLOAD_BYTES:
@@ -110,8 +115,14 @@ async def api_analyze(
     if not resume_text.strip():
         raise HTTPException(status_code=400, detail="Could not extract any text from that file.")
 
-    if not job_posting.strip():
+    job_posting = job_posting.strip()
+    if not job_posting:
         raise HTTPException(status_code=400, detail="Job posting text is required.")
+    if len(job_posting) > MAX_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"That job posting is too long ({len(job_posting)} characters, {MAX_JOB_DESCRIPTION_CHARS} max) — please paste just the posting text.",
+        )
 
     try:
         result = analyze(resume_text, job_posting)
@@ -313,13 +324,9 @@ async def api_profile_review(
     return result
 
 
-MIN_JOB_DESCRIPTION_CHARS = 40
-MAX_JOB_DESCRIPTION_CHARS = 15000
-
-
 @app.post("/api/prepare")
 async def api_prepare(
-    job_description: str = Form(...),
+    job_description: str = Form(""),
     resume_file: UploadFile = File(default=None),
 ):
     job_description = job_description.strip()

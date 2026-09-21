@@ -654,6 +654,27 @@ footer.site-footer-v2 {
 
 .field-row .field {
   flex: 1;
+  /* Without this, a flex item's default min-width:auto lets a text
+     input's browser-default intrinsic width (~170-190px) override the
+     flex-shrink calculation, pushing it past its column and out past the
+     card's own padding on narrow viewports. */
+  min-width: 0;
+}
+
+.field-row .field input {
+  /* Plain text inputs (unlike .field textarea/input[type=file] above)
+     have no width rule elsewhere and fall back to the browser's default
+     intrinsic input width, which is wider than a narrow flex column on
+     small screens - scoped to .field-row only so other pages' plain text
+     inputs are untouched. */
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--ink);
 }
 
 .entry-form-card {

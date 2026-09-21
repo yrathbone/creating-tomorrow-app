@@ -6,6 +6,11 @@ let reflectiveQuestions = [];
 let lastMatchReport = null;
 let currentMode = null; // "refine" or "analyze"
 
+// Mirrors the backend's MAX_JOB_DESCRIPTION_CHARS (main.py) - the server is
+// the real enforcement, this is just an early, friendlier check so a too-long
+// paste doesn't have to make a round trip to find out.
+const MAX_JOB_POSTING_CHARS = 15000;
+
 const stepMode = document.getElementById("step-mode");
 const stepUpload = document.getElementById("step-upload");
 const stepLoading = document.getElementById("step-loading");
@@ -107,6 +112,13 @@ analyzeForm.addEventListener("submit", async (e) => {
   }
   if (config.needsJobPosting && !jobPosting) {
     showError(analyzeError, "Please paste the job posting.");
+    return;
+  }
+  if (config.needsJobPosting && jobPosting.length > MAX_JOB_POSTING_CHARS) {
+    showError(
+      analyzeError,
+      `That job posting is too long (${jobPosting.length} characters, ${MAX_JOB_POSTING_CHARS} max) — please paste just the posting text.`
+    );
     return;
   }
 
