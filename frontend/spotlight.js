@@ -8,6 +8,8 @@ const state = {
   pdfFile: null,
 };
 
+let lastReviewData = null; // the most recent completed review, for the download button
+
 function showError(el, message) {
   el.textContent = message;
   el.hidden = false;
@@ -190,6 +192,7 @@ function fillList(elementId, items) {
 }
 
 function renderResults(data) {
+  lastReviewData = data;
   const insufficientBlock = document.getElementById("insufficient-info-block");
   const resultsSections = document.getElementById("results-sections");
 
@@ -321,6 +324,41 @@ document.getElementById("step-results").addEventListener("click", (e) => {
       btn.textContent = "Selected — press Ctrl+C";
       setTimeout(() => (btn.textContent = original), 2500);
     });
+});
+
+// --- Download report ---------------------------------------------------------
+const downloadReportBtn = document.getElementById("download-report-btn");
+const downloadReportError = document.getElementById("download-report-error");
+
+downloadReportBtn.addEventListener("click", async () => {
+  downloadReportError.hidden = true;
+  if (!lastReviewData) return;
+
+  downloadReportBtn.disabled = true;
+  try {
+    const res = await fetch("/api/spotlight-recap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ review: lastReviewData }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Request failed (${res.status})`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Spotlight_Report.docx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    showError(downloadReportError, err.message || "Something went wrong generating your report.");
+  } finally {
+    downloadReportBtn.disabled = false;
+  }
 });
 
 // --- Start over --------------------------------------------------------------

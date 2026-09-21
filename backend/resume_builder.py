@@ -279,3 +279,79 @@ def build_match_recap_bytes(match_report: dict, candidate_name: str) -> bytes:
     buffer = io.BytesIO()
     doc.save(buffer)
     return buffer.getvalue()
+
+
+def build_profile_review_recap_bytes(review: dict) -> bytes:
+    """One-page .docx summary of a Spotlight review: signature strengths,
+    the concrete suggested headline/About rewrites (the parts someone can
+    actually copy and use), and a consolidated list of ways to strengthen
+    the profile - deliberately tighter than the full on-screen section-by-
+    section breakdown, so the download is something worth acting on rather
+    than a re-read of the whole page.
+    """
+    doc = Document()
+
+    normal = doc.styles["Normal"]
+    normal.font.name = FONT_NAME
+    normal.font.size = FONT_SIZE
+
+    set_page_geometry(doc.sections[0])
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    name_run = p.add_run("Spotlight — LinkedIn Profile Review")
+    style_run(name_run, bold=True)
+
+    if review.get("insufficient_information"):
+        add_heading_bar(doc, "MORE INFORMATION NEEDED")
+        p = doc.add_paragraph()
+        style_run(p.add_run(
+            review.get("insufficient_information_message")
+            or "There wasn't enough profile information supplied for a useful review."
+        ))
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        return buffer.getvalue()
+
+    strengths = review.get("strengths") or []
+    if strengths:
+        add_heading_bar(doc, "SIGNATURE STRENGTHS")
+        for item in strengths:
+            p = doc.add_paragraph()
+            title_run = p.add_run(item.get("title", ""))
+            style_run(title_run, bold=True)
+            if item.get("evidence"):
+                ev = doc.add_paragraph()
+                style_run(ev.add_run(item["evidence"]))
+
+    headline = review.get("headline") or {}
+    if headline.get("supplied") and headline.get("suggested"):
+        add_heading_bar(doc, "SUGGESTED HEADLINE")
+        p = doc.add_paragraph()
+        style_run(p.add_run(headline["suggested"]))
+
+    about = review.get("about") or {}
+    if about.get("supplied") and about.get("suggested_revision"):
+        add_heading_bar(doc, "SUGGESTED ABOUT SECTION")
+        p = doc.add_paragraph()
+        style_run(p.add_run(about["suggested_revision"]))
+
+    ways_to_strengthen = []
+    if headline.get("supplied"):
+        ways_to_strengthen.extend(headline.get("could_be_clearer") or [])
+    if about.get("supplied"):
+        ways_to_strengthen.extend(about.get("could_be_clearer") or [])
+    experience = review.get("experience") or {}
+    if experience.get("supplied"):
+        ways_to_strengthen.extend(experience.get("suggested_improvements") or [])
+    skills = review.get("skills") or {}
+    ways_to_strengthen.extend(skills.get("needs_more_information") or [])
+
+    if ways_to_strengthen:
+        add_heading_bar(doc, "WAYS TO STRENGTHEN THIS PROFILE")
+        for item in ways_to_strengthen:
+            add_bullet(doc, item)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    return buffer.getvalue()

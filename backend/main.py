@@ -36,6 +36,10 @@ Four tools, front-end names in parentheses:
                         headline, about, experience, skills) plus a
                         signature evidence-backed strengths list. No score.
                         (5th tool, "Spotlight")
+  POST /api/spotlight-recap - a completed Spotlight review -> one-page .docx
+                        download (signature strengths, suggested headline/
+                        About rewrites, and a consolidated list of ways to
+                        strengthen the profile). (Spotlight, download)
   POST /api/prepare  - job description text + old resume file (optional) ->
                         employer_priorities, grouped interview questions
                         (each with a plain-language "why" and the posting/
@@ -62,7 +66,7 @@ from upgrade import upgrade, UpgradeError
 from elevate import analyze_for_discovery, discover, finalize_elevate, ElevateError
 from profile_review import review_profile, ProfileReviewError
 from prepare import prepare, PrepareError
-from resume_builder import build_resume_bytes, build_match_recap_bytes
+from resume_builder import build_resume_bytes, build_match_recap_bytes, build_profile_review_recap_bytes
 
 app = FastAPI(title="Creating Tomorrow API")
 
@@ -322,6 +326,24 @@ async def api_profile_review(
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
     return result
+
+
+class SpotlightRecapRequest(BaseModel):
+    review: dict
+
+
+@app.post("/api/spotlight-recap")
+async def api_spotlight_recap(req: SpotlightRecapRequest):
+    try:
+        docx_bytes = build_profile_review_recap_bytes(req.review)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to build report: {e}")
+
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": 'attachment; filename="Spotlight_Report.docx"'},
+    )
 
 
 @app.post("/api/prepare")
