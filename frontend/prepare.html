@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prepare: Interview Preparation — Creating Tomorrow</title>
+  <meta name="description" content="Paste a job description and get tailored interview questions, why an interviewer may ask them, and questions you could ask back." />
+  <link rel="icon" type="image/png" href="logo-icon.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span><small>Real Skills. Brighter Tomorrows.</small></span></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="learn.html">Learn</a>
+      <a href="videos.html">Videos</a>
+      <a href="about.html">About</a>
+      <a href="tool.html" class="nav-cta">Build Your Resume →</a>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <p class="guide-eyebrow" style="text-align: center;">Prepare</p>
+    <h1>Know what they may ask before you walk into the room.</h1>
+    <p class="tagline">We don't invent your value. We help you see it — and help you get ready to talk about it.</p>
+  </header>
+
+  <main>
+    <section class="card" id="step-input">
+      <h2>1. Tell us about the role</h2>
+      <form id="prepare-form">
+        <label class="field">
+          <span>Paste the job description</span>
+          <textarea id="job-description" rows="12" placeholder="Paste the full job posting here..." required></textarea>
+          <span class="hint">We'll use the role's responsibilities, skills, and requirements to identify the questions you're most likely to encounter.</span>
+        </label>
+
+        <label class="field">
+          <span>Add your resume — optional</span>
+          <input type="file" id="resume-file" accept=".docx,.pdf,.txt" />
+          <span class="hint">Adding your resume helps us identify questions an interviewer may ask specifically about your experience.</span>
+          <span class="hint" id="resume-selected-name" hidden></span>
+        </label>
+
+        <button type="submit" id="prepare-btn">Prepare Me</button>
+      </form>
+      <div id="prepare-error" class="error" hidden></div>
+    </section>
+
+    <section class="card" id="step-loading" hidden>
+      <div class="processing-card" aria-live="polite">
+        <p class="processing-headline">Your interview prep is taking shape.</p>
+        <div class="processing-visual" aria-hidden="true">
+          <span class="processing-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="3" width="14" height="18" rx="2" stroke="#0847C7" stroke-width="1.6"/>
+              <path d="M8 8h8M8 12h8M8 16h5" stroke="#0847C7" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="processing-dots">
+            <span class="processing-dot"></span>
+            <span class="processing-dot"></span>
+            <span class="processing-dot"></span>
+          </span>
+          <span class="processing-icon processing-icon-done">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="3" width="14" height="18" rx="2" stroke="#0847C7" stroke-width="1.6"/>
+              <path d="M8 8h8M8 12h5" stroke="#0847C7" stroke-width="1.4" stroke-linecap="round"/>
+              <circle cx="17" cy="17" r="5" fill="#E2A126"/>
+              <path d="M14.8 17l1.4 1.4 2.6-2.8" stroke="#101318" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <p class="processing-status"></p>
+        <p class="hint processing-wait-copy">This usually takes about <strong>30–60 seconds</strong>. Please keep this page open — there's no need to refresh.</p>
+      </div>
+    </section>
+
+    <section class="card" id="step-results" hidden>
+      <h2>2. Your interview preparation</h2>
+
+      <div class="report-block">
+        <h3>What This Employer Appears to Care About</h3>
+        <div class="theme-chips-row" id="priorities-chips"></div>
+      </div>
+
+      <div class="report-block">
+        <h3>Likely Interview Questions</h3>
+        <p class="hint">These are informed guesses based on the language of this posting — not a guarantee of what you'll be asked.</p>
+        <div id="question-groups"></div>
+      </div>
+
+      <div class="report-block">
+        <h3>Questions You May Want to Ask Them</h3>
+        <ul id="candidate-questions-list"></ul>
+      </div>
+
+      <div class="suggested-text-block">
+        <h4>Preparation Tip</h4>
+        <p id="prep-tip"></p>
+      </div>
+
+      <button type="button" id="start-over-btn" class="btn-secondary">Prepare for another role</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>Creating Tomorrow is a non-profit tool. We don't store your job description or resume after your session ends.</p>
+  </footer>
+
+  <script src="loading.js"></script>
+  <script src="prepare.js"></script>
+</body>
+</html>

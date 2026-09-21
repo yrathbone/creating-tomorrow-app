@@ -39,6 +39,13 @@ const GUIDE_OPTIONS = [
     toolHref: "spotlight.html",
     explanation: "Since it's your LinkedIn profile you want a second look at, Spotlight reviews your headline, About section, experience, and skills using screenshots, pasted text, or a PDF you share.",
   },
+  {
+    id: "interview-prep",
+    label: "I have an interview coming up",
+    toolName: "Prepare",
+    toolHref: "prepare.html",
+    explanation: "Since you have an interview lined up, Prepare looks at the job description (and your resume, if you share it) to help you anticipate likely questions and prepare thoughtful ones of your own to ask.",
+  },
 ];
 
 const guideModal = document.getElementById("guide-modal");

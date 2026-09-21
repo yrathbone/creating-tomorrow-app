@@ -2588,3 +2588,53 @@ footer.site-footer-v2 {
     height: 80px;
   }
 }
+
+/* --- Prepare (interview prep tool) --- */
+
+.theme-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.theme-chip {
+  background: var(--blue-light);
+  color: var(--blue);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.prepare-question-group {
+  margin-top: 1.25rem;
+}
+
+.prepare-question-group h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  color: var(--blue);
+}
+
+.prepare-question-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.prepare-question-text {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.prepare-question-why,
+.prepare-question-signal {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.prepare-question-signal {
+  font-style: italic;
+}

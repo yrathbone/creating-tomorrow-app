@@ -36,6 +36,12 @@ Four tools, front-end names in parentheses:
                         headline, about, experience, skills) plus a
                         signature evidence-backed strengths list. No score.
                         (5th tool, "Spotlight")
+  POST /api/prepare  - job description text + old resume file (optional) ->
+                        employer_priorities, grouped interview questions
+                        (each with a plain-language "why" and the posting/
+                        resume language that prompted it), candidate
+                        questions to ask the interviewer, and a prep tip.
+                        (6th tool, working name "Prepare")
 
 Run locally:
   uvicorn main:app --reload --port 8000
@@ -55,6 +61,7 @@ from scratch import draft_entry, finalize, ScratchError
 from upgrade import upgrade, UpgradeError
 from elevate import analyze_for_discovery, discover, finalize_elevate, ElevateError
 from profile_review import review_profile, ProfileReviewError
+from prepare import prepare, PrepareError
 from resume_builder import build_resume_bytes, build_match_recap_bytes
 
 app = FastAPI(title="Creating Tomorrow API")
@@ -299,6 +306,51 @@ async def api_profile_review(
     try:
         result = review_profile(images, pasted_text, pdf_text)
     except ProfileReviewError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result
+
+
+MIN_JOB_DESCRIPTION_CHARS = 40
+MAX_JOB_DESCRIPTION_CHARS = 15000
+
+
+@app.post("/api/prepare")
+async def api_prepare(
+    job_description: str = Form(...),
+    resume_file: UploadFile = File(default=None),
+):
+    job_description = job_description.strip()
+    if not job_description:
+        raise HTTPException(status_code=400, detail="Please paste the job description.")
+    if len(job_description) < MIN_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(
+            status_code=400,
+            detail="That job description looks too short to work with — please paste the full posting.",
+        )
+    if len(job_description) > MAX_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"That job description is too long ({len(job_description)} characters, {MAX_JOB_DESCRIPTION_CHARS} max) — please paste just the posting text.",
+        )
+
+    resume_text = ""
+    if resume_file is not None:
+        content = await resume_file.read()
+        if len(content) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="That resume file is too large (5 MB max).")
+        try:
+            resume_text = extract_text(resume_file.filename, content)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        if not resume_text.strip():
+            raise HTTPException(status_code=400, detail="Could not extract any text from that resume file.")
+
+    try:
+        result = prepare(job_description, resume_text)
+    except PrepareError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
