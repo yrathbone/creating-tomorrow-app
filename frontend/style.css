@@ -982,6 +982,17 @@ footer.site-footer-v2 {
   color: var(--blue);
 }
 
+/* At these widths the hero is single-column (see .home-hero-inner above)
+   but noticeably wider than a phone, so the photo shows more of the group
+   at once - the card's normal size was tall enough to reach up into face
+   height for whoever stands in the middle. A smaller, tighter card sits
+   low enough to clear every face without changing the layout. */
+@media (min-width: 640px) and (max-width: 999px) {
+  .floating-card { padding: 1rem 1.2rem; }
+  .floating-card-eyebrow { margin-bottom: 0.5rem; }
+  .resume-checklist li { padding: 0.25rem 0; font-size: 0.85rem; }
+}
+
 .resume-checklist {
   list-style: none;
   padding: 0;
