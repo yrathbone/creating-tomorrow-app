@@ -38,7 +38,12 @@ Do two things:
 points. Stay strictly grounded in what they actually said - rephrase and \
 structure it professionally, but do not add tasks, outcomes, numbers, or \
 skills they did not mention. If they only gave you one short sentence, \
-it's fine to produce just 1-2 bullets. Never pad with invented detail.
+it's fine to produce just 1 bullet - never pad with invented detail, and \
+never pad by turning the role/organization/dates itself into a bullet \
+(e.g. "Worked as a server at X for four years") - that information is \
+already shown in the resume's own title/company/dates line directly \
+above the bullets, so restating it is redundant. Every bullet must \
+describe an actual activity, responsibility, or task.
 
 2. Use the web_search tool to research what this type of role commonly \
 involves today (search real job postings or role descriptions for this \
