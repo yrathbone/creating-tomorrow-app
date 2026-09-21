@@ -284,10 +284,12 @@ def build_match_recap_bytes(match_report: dict, candidate_name: str) -> bytes:
 def build_profile_review_recap_bytes(review: dict) -> bytes:
     """One-page .docx summary of a Spotlight review: signature strengths,
     the concrete suggested headline/About rewrites (the parts someone can
-    actually copy and use), and a consolidated list of ways to strengthen
-    the profile - deliberately tighter than the full on-screen section-by-
-    section breakdown, so the download is something worth acting on rather
-    than a re-read of the whole page.
+    actually copy and use), a consolidated list of ways to strengthen the
+    profile, and - when there was enough material - a sample of what an
+    updated profile could look like altogether, at the end. Deliberately
+    tighter than the full on-screen section-by-section breakdown, so the
+    download is something worth acting on rather than a re-read of the
+    whole page.
     """
     doc = Document()
 
@@ -351,6 +353,30 @@ def build_profile_review_recap_bytes(review: dict) -> bytes:
         add_heading_bar(doc, "WAYS TO STRENGTHEN THIS PROFILE")
         for item in ways_to_strengthen:
             add_bullet(doc, item)
+
+    sample = review.get("suggested_full_profile")
+    if sample:
+        add_heading_bar(doc, "SAMPLE UPDATED PROFILE")
+        p = doc.add_paragraph()
+        style_run(p.add_run(
+            "One way to put these suggestions together - feel free to use, adapt, or ignore any of it."
+        ))
+        if sample.get("headline"):
+            p = doc.add_paragraph()
+            style_run(p.add_run("Headline: "), bold=True)
+            style_run(p.add_run(sample["headline"]))
+        if sample.get("about"):
+            hp = doc.add_paragraph()
+            style_run(hp.add_run("About"), bold=True)
+            p = doc.add_paragraph()
+            style_run(p.add_run(sample["about"]))
+        for role in sample.get("experience") or []:
+            title = role.get("title", "")
+            org = role.get("organization", "")
+            p = doc.add_paragraph()
+            style_run(p.add_run(f"{title} — {org}" if org else title), bold=True)
+            for bullet in role.get("bullets") or []:
+                add_bullet(doc, bullet)
 
     buffer = io.BytesIO()
     doc.save(buffer)

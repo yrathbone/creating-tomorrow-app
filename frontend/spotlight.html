@@ -82,6 +82,18 @@
           </label>
           <p class="hint" id="pdf-selected-name" hidden></p>
         </div>
+
+        <button type="button" class="mode-btn input-option-toggle" data-target="resume-panel" aria-expanded="false" aria-controls="resume-panel">
+          <strong>Add Your Resume — Optional</strong>
+          <span>Your LinkedIn profile above is still what gets reviewed — adding your resume just gives us more real detail to draw on for the suggested updated profile at the end.</span>
+        </button>
+        <div class="input-option-panel" id="resume-panel" hidden>
+          <label class="field">
+            <span>Resume (.docx, .pdf, or .txt)</span>
+            <input type="file" id="resume-input" accept=".docx,.pdf,.txt" />
+          </label>
+          <p class="hint" id="resume-selected-name" hidden></p>
+        </div>
       </div>
 
       <button type="button" id="review-btn" disabled>Review My Profile →</button>
@@ -194,6 +206,20 @@
         <div class="report-block">
           <h3>Here's What We See in Your Experience</h3>
           <div id="strengths-list"></div>
+        </div>
+
+        <div class="report-block" id="sample-profile-block" hidden>
+          <h3>Sample Updated Profile</h3>
+          <p class="hint">One way to put these suggestions together — feel free to use, adapt, or ignore any of it.</p>
+          <div class="suggested-text-block" id="sample-profile-headline-block" hidden>
+            <h4>Headline</h4>
+            <p id="sample-profile-headline"></p>
+          </div>
+          <div class="suggested-text-block" id="sample-profile-about-block" hidden>
+            <h4>About</h4>
+            <p id="sample-profile-about"></p>
+          </div>
+          <div id="sample-profile-experience"></div>
         </div>
       </div>
 

@@ -6,6 +6,7 @@
 const state = {
   screenshots: [], // File objects
   pdfFile: null,
+  resumeFile: null, // optional - additional context only, not itself reviewed
 };
 
 let lastReviewData = null; // the most recent completed review, for the download button
@@ -105,6 +106,21 @@ pdfInput.addEventListener("change", () => {
   updateReviewButtonState();
 });
 
+// --- Add Your Resume (optional, additional context only - not itself
+// reviewed, so it never counts toward enabling the button below) -----------
+const resumeInput = document.getElementById("resume-input");
+const resumeSelectedName = document.getElementById("resume-selected-name");
+
+resumeInput.addEventListener("change", () => {
+  state.resumeFile = resumeInput.files[0] || null;
+  if (state.resumeFile) {
+    resumeSelectedName.textContent = `Selected: ${state.resumeFile.name}`;
+    resumeSelectedName.hidden = false;
+  } else {
+    resumeSelectedName.hidden = true;
+  }
+});
+
 // --- Enable/disable the primary CTA -----------------------------------------
 const reviewBtn = document.getElementById("review-btn");
 
@@ -142,6 +158,7 @@ reviewBtn.addEventListener("click", async () => {
   const formData = new FormData();
   state.screenshots.forEach((file) => formData.append("screenshots", file));
   if (state.pdfFile) formData.append("profile_pdf", state.pdfFile);
+  if (state.resumeFile) formData.append("resume_file", state.resumeFile);
 
   if (pasteEverythingMode) {
     formData.append("everything", document.getElementById("paste-everything").value.trim());
@@ -275,6 +292,49 @@ function renderResults(data) {
     card.appendChild(p);
     strengthsList.appendChild(card);
   });
+
+  // Sample updated profile (only present when there was enough material)
+  const sampleBlock = document.getElementById("sample-profile-block");
+  const sample = data.suggested_full_profile;
+  if (!sample) {
+    sampleBlock.hidden = true;
+  } else {
+    sampleBlock.hidden = false;
+
+    const headlineBlock = document.getElementById("sample-profile-headline-block");
+    if (sample.headline) {
+      document.getElementById("sample-profile-headline").textContent = sample.headline;
+      headlineBlock.hidden = false;
+    } else {
+      headlineBlock.hidden = true;
+    }
+
+    const aboutBlock = document.getElementById("sample-profile-about-block");
+    if (sample.about) {
+      document.getElementById("sample-profile-about").textContent = sample.about;
+      aboutBlock.hidden = false;
+    } else {
+      aboutBlock.hidden = true;
+    }
+
+    const expContainer = document.getElementById("sample-profile-experience");
+    expContainer.innerHTML = "";
+    (sample.experience || []).forEach((role) => {
+      const card = document.createElement("div");
+      card.className = "prepare-question-card"; // reuses existing card styling, not a new visual pattern
+      const h4 = document.createElement("h4");
+      h4.textContent = role.organization ? `${role.title} — ${role.organization}` : role.title;
+      card.appendChild(h4);
+      const ul = document.createElement("ul");
+      (role.bullets || []).forEach((b) => {
+        const li = document.createElement("li");
+        li.textContent = b;
+        ul.appendChild(li);
+      });
+      card.appendChild(ul);
+      expContainer.appendChild(card);
+    });
+  }
 }
 
 function renderSection(sectionData, prefix, ids) {

@@ -31,15 +31,19 @@ Four tools, front-end names in parentheses:
                         summaries (Elevate)
   POST /api/generate - final resume_data + ats_mode -> .docx file
   POST /api/profile-review - LinkedIn screenshots (any number) + pasted
-                        profile text + a profile PDF, any combination -> a
-                        5-section educational review (first impression,
-                        headline, about, experience, skills) plus a
-                        signature evidence-backed strengths list. No score.
-                        (5th tool, "Spotlight")
+                        profile text + a profile PDF, any combination, plus
+                        an optional resume file -> a 5-section educational
+                        review (first impression, headline, about,
+                        experience, skills), a signature evidence-backed
+                        strengths list, and (when there's enough material)
+                        a consolidated sample of an updated profile drawing
+                        on the resume where it fills in an existing LinkedIn
+                        role's detail. No score. (5th tool, "Spotlight")
   POST /api/spotlight-recap - a completed Spotlight review -> one-page .docx
                         download (signature strengths, suggested headline/
-                        About rewrites, and a consolidated list of ways to
-                        strengthen the profile). (Spotlight, download)
+                        About rewrites, a consolidated list of ways to
+                        strengthen the profile, and the sample updated
+                        profile if one was generated). (Spotlight, download)
   POST /api/prepare  - job description text + old resume file (optional) ->
                         employer_priorities, grouped interview questions
                         (each with a plain-language "why" and the posting/
@@ -257,6 +261,7 @@ ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp"}
 async def api_profile_review(
     screenshots: list[UploadFile] = File(default=[]),
     profile_pdf: UploadFile = File(default=None),
+    resume_file: UploadFile = File(default=None),
     headline: str = Form(default=""),
     about: str = Form(default=""),
     experience: str = Form(default=""),
@@ -318,8 +323,21 @@ async def api_profile_review(
             detail="I need at least one screenshot, some pasted profile text, or a profile PDF before I can give you a useful review.",
         )
 
+    # Optional and supplementary only - a resume alone (with none of the
+    # LinkedIn inputs above) is not enough to proceed; the check above still
+    # applies regardless of whether a resume was also provided.
+    resume_text = ""
+    if resume_file is not None:
+        resume_bytes = await resume_file.read()
+        if len(resume_bytes) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="That resume file is too large (5 MB max).")
+        try:
+            resume_text = extract_text(resume_file.filename, resume_bytes)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
     try:
-        result = review_profile(images, pasted_text, pdf_text)
+        result = review_profile(images, pasted_text, pdf_text, resume_text)
     except ProfileReviewError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
