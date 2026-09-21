@@ -22,15 +22,25 @@ upgrade() returns resume_data plus a fixed "what changed" / "please
 verify" summary (not model-generated - these are the same two lists on
 every run, so they're plain Python constants rather than something
 worth spending a model call on).
+
+Structured output: like coach.py (Right Fit) and profile_review.py
+(Spotlight), the upgraded resume is requested via a forced tool call
+(tool_choice) against an explicit input_schema, rather than asking the
+model to emit raw JSON text. This tool had the identical failure mode
+found and fixed in those two: on some real inputs, extended thinking
+was consuming the entire 8000-token budget, leaving no room for the
+actual output and producing an unparseable response.
 """
-import json
 import os
 
 import anthropic
 
-from llm_utils import extract_final_text, extract_json_object
-
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
+
+# See coach.py for why this is larger than it looks like it should need
+# to be: extended thinking eats a large, variable chunk of this budget
+# before the actual structured output is produced.
+MAX_TOKENS = 16000
 
 SYSTEM_PROMPT = """You are Nova, an expert executive resume writer and ATS optimization specialist.
 
@@ -169,37 +179,92 @@ FINAL OBJECTIVE
 The candidate should read the finished resume and think: "Everything here is true. I simply did not realize my experience could be communicated this professionally."
 That is the standard.
 
-Respond ONLY with a JSON object in this exact shape, no other text, no markdown code fence:
-
-{
-  "resume_data": {
-    "name": "FULL NAME",
-    "contact": "City, ST | Phone | Email | LinkedIn (omit parts not found)",
-    "headline": "POSITIONING HEADLINE",
-    "summary": "rewritten 3-5 line professional summary",
-    "skills": ["rebuilt skill", "..."],
-    "experience": [
-      {"title": "Job Title (corrected only for an obvious formatting inconsistency)", "subtitle": "Company, City, ST — MM/YY – MM/YY", "bullets": ["rewritten bullet", "..."]}
-    ],
-    "education": ["Degree – School, City, ST"],
-    "additional_sections": [
-      {"heading": "AWARDS & RECOGNITION", "items": ["Award name and detail, if the source resume lists any - omit this whole entry if none"]},
-      {"heading": "LANGUAGES", "items": ["Language (Proficiency level), if the source resume lists any - omit this whole entry if none"]}
-    ]
-  }
-}
-
 Only include entries in "additional_sections" for high-value section types that the source resume actually contains (Awards & Recognition, Certifications, Licenses, Languages, Military Service, Professional Affiliations, Publications, Patents, Security Clearances) - omit the field entirely, or leave it an empty list, if the source resume has none of these.
-"""
+
+Call the submit_resume tool with the restructured and upgraded resume. Do not respond with plain text."""
 
 USER_PROMPT_TEMPLATE = """OLD RESUME TEXT (raw extraction, order may be jumbled):
 {resume_text}
 
 Restructure and apply the executive upgrade as specified in the system prompt."""
 
+RETRY_NOTE = """
+
+(Note: a prior attempt at this same upgrade did not come back as a complete, \
+valid submit_resume call. Please produce the full restructured and upgraded \
+resume again as one complete submit_resume tool call.)"""
+
+UPGRADE_TOOL = {
+    "name": "submit_resume",
+    "description": "Submit the restructured and upgraded resume.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "resume_data": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "contact": {"type": "string"},
+                    "headline": {"type": "string"},
+                    "summary": {"type": "string"},
+                    "skills": {"type": "array", "items": {"type": "string"}},
+                    "experience": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "subtitle": {"type": "string"},
+                                "bullets": {"type": "array", "items": {"type": "string"}},
+                            },
+                            "required": ["title", "subtitle", "bullets"],
+                        },
+                    },
+                    "education": {"type": "array", "items": {"type": "string"}},
+                    "additional_sections": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "heading": {"type": "string"},
+                                "items": {"type": "array", "items": {"type": "string"}},
+                            },
+                            "required": ["heading", "items"],
+                        },
+                    },
+                },
+                "required": ["name", "contact", "headline", "summary", "skills", "experience", "education"],
+            },
+        },
+        "required": ["resume_data"],
+    },
+}
+
+REQUIRED_TOP_LEVEL_KEYS = ("resume_data",)
+
 
 class UpgradeError(Exception):
     pass
+
+
+def _diagnose(category: str) -> None:
+    print(f"[upgrade] Refine upgrade attempt failed: {category}")
+
+
+def _extract_tool_input(response) -> dict:
+    if response.stop_reason == "max_tokens":
+        raise ValueError("truncated_response")
+
+    tool_blocks = [b for b in response.content if getattr(b, "type", None) == "tool_use" and b.name == "submit_resume"]
+    if not tool_blocks:
+        raise ValueError("invalid_json")
+
+    data = tool_blocks[0].input
+    missing = [k for k in REQUIRED_TOP_LEVEL_KEYS if k not in data]
+    if missing:
+        raise ValueError("missing_required_field")
+
+    return data
 
 
 # Fixed, not model-generated: true of every Refine run, so there's no reason
@@ -223,28 +288,36 @@ REFINE_VERIFY = [
 
 
 def upgrade(resume_text: str) -> dict:
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
+    if not os.environ.get("ANTHROPIC_API_KEY"):
         raise UpgradeError("ANTHROPIC_API_KEY is not set on the server.")
 
     client = anthropic.Anthropic()
     user_prompt = USER_PROMPT_TEMPLATE.format(resume_text=resume_text)
 
-    try:
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=8000,  # extended thinking tokens count against this too
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-    except anthropic.APIError as e:
-        raise UpgradeError(f"Claude API error: {e}") from e
+    parsed = None
+    for attempt in range(2):  # original attempt + at most one retry
+        prompt_for_this_attempt = user_prompt + (RETRY_NOTE if attempt > 0 else "")
+        try:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=MAX_TOKENS,
+                system=SYSTEM_PROMPT,
+                tools=[UPGRADE_TOOL],
+                tool_choice={"type": "tool", "name": "submit_resume"},
+                messages=[{"role": "user", "content": prompt_for_this_attempt}],
+            )
+        except anthropic.APIError as e:
+            _diagnose("provider_error")
+            raise UpgradeError("We couldn't complete this upgrade right now. Please try again.") from e
 
-    text = extract_final_text(response)
-    try:
-        parsed = extract_json_object(text)
-    except (ValueError, json.JSONDecodeError) as e:
-        raise UpgradeError(f"Could not parse model response as JSON: {e}") from e
+        try:
+            parsed = _extract_tool_input(response)
+            break
+        except ValueError as e:
+            _diagnose(str(e))
+
+    if parsed is None:
+        raise UpgradeError("We couldn't complete this upgrade right now. Please try again.")
 
     resume_data = parsed["resume_data"]
     resume_data["skills_heading"] = "CORE EXPERTISE"
