@@ -28,15 +28,31 @@ Three calls, three stages of one interview:
 Never invents. A skill, responsibility, accomplishment, metric,
 technology, leadership scope, or certification may only reach the final
 resume if the candidate explicitly confirmed it during the interview.
+
+Structured output: like coach.py (Right Fit), upgrade.py (Refine), and
+profile_review.py (Spotlight), each of the three calls below is requested
+via a forced tool call (tool_choice) against an explicit input_schema,
+rather than asking the model to emit raw JSON text - the same fix applied
+to those three tools after the same underlying failure mode (extended
+thinking consuming the whole token budget on some inputs, leaving no room
+for the actual output). discover() is the one exception worth understanding:
+it can legitimately produce one of TWO different shapes each turn (another
+batch of questions, or the discovered-facts confirmation) - handled by
+offering two tools and forcing the model to call ONE of them
+(tool_choice type "any", restricted to just those two), rather than one tool
+with an either/or schema.
 """
 import json
 import os
 
 import anthropic
 
-from llm_utils import extract_final_text, extract_json_object
-
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
+
+# See coach.py for why this is larger than it looks like it should need to
+# be: extended thinking eats a large, variable chunk of this budget before
+# the actual structured output is produced.
+MAX_TOKENS = 16000
 
 ANALYZE_SYSTEM_PROMPT = """You are Nova, a thoughtful career strategist conducting a discovery interview - not a document formatter. Your job in this step is to understand the person's actual career, then figure out what to ask them about.
 
@@ -52,26 +68,9 @@ Do three things:
 
 4. For those categories, write the FIRST BATCH of 4-6 yes/no discovery questions - specific, resume-grounded questions about responsibilities, scope, or accomplishments that are common in this candidate's apparent field but that this resume doesn't currently mention. Each must be answerable honestly with yes/no. Never assume yes. Do not overwhelm - 4-6 questions is the right size for a first batch, not more.
 
-Respond ONLY with a JSON object in this exact shape, no other text, no markdown code fence:
-
-{
-  "resume_data": {
-    "name": "FULL NAME",
-    "contact": "City, ST | Phone | Email | LinkedIn (omit parts not found)",
-    "summary": "the candidate's own summary text, faithfully transcribed, not rewritten",
-    "skills": ["skill as stated", "..."],
-    "experience": [
-      {"title": "Job Title", "subtitle": "Company, City, ST — MM/YY – MM/YY", "bullets": ["bullet as stated", "..."]}
-    ],
-    "education": ["Degree – School, City, ST"]
-  },
-  "analysis_summary": "the warm 2-4 sentence analysis described above",
-  "categories": ["category one", "category two"],
-  "questions": [
-    {"id": "q1", "category": "category one", "question": "a specific yes/no question"}
-  ]
-}
-"""
+Call the submit_discovery_start tool with the restructured resume, \
+analysis, categories, and first question batch. Do not respond with plain \
+text."""
 
 ANALYZE_USER_PROMPT_TEMPLATE = """RESUME TEXT (raw extraction, order may be jumbled):
 {resume_text}
@@ -97,12 +96,9 @@ B) If enough has been gathered - most "yes" answers have a matching detail follo
    - Category should be one of the interview's categories, or a close variant if genuinely new ground came up in a detail answer.
    - If force_finish is true and nothing usable was actually confirmed, discovered_facts may be an empty list - that's fine and honest.
 
-Respond ONLY with a JSON object, no other text, no markdown code fence, in ONE of these two exact shapes:
-
-{"stage": "questions", "questions": [{"id": "q6", "category": "...", "question": "...", "type": "yes_no", "follow_up_to": null}]}
-
-{"stage": "confirm", "discovered_facts": [{"id": "f1", "category": "...", "bullet_text": "..."}]}
-"""
+Call ONE tool with your decision: submit_questions if there's more to ask, \
+or submit_confirm if it's time to move to the discovered-facts \
+confirmation. Do not respond with plain text, and do not call both."""
 
 DISCOVER_USER_PROMPT_TEMPLATE = """RESTRUCTURED RESUME:
 {resume_json}
@@ -139,26 +135,8 @@ Then write the FINAL ELEVATE SUMMARY:
 - "changes": plain-language list of what changed in the rewrite (e.g. "Strengthened professional positioning", "Reformatted for ATS readability", and - only if confirmed facts exist - "Added confirmed experience that was missing").
 - "verify": a short reminder list of things the candidate should double check - always include employment dates, job titles, and contact information; also include any metrics, a specific item for any entry you split/merged/restructured (see above), and, if any confirmed facts were added, "newly confirmed experience" as an item.
 
-Respond ONLY with a JSON object in this exact shape, no other text, no markdown code fence:
-
-{
-  "resume_data": {
-    "name": "FULL NAME",
-    "contact": "City, ST | Phone | Email | LinkedIn",
-    "headline": "POSITIONING HEADLINE",
-    "summary": "rewritten 3-5 line professional summary",
-    "skills": ["core expertise item", "..."],
-    "experience": [
-      {"title": "Job Title", "subtitle": "Company, City, ST — MM/YY – MM/YY", "bullets": ["bullet", "..."]}
-    ],
-    "education": ["Degree – School, City, ST"],
-    "certifications": ["certification, if any were in the original resume"]
-  },
-  "uncovered": ["..."],
-  "changes": ["..."],
-  "verify": ["..."]
-}
-"""
+Call the submit_final_resume tool with the final elevated resume and \
+summary. Do not respond with plain text."""
 
 FINALIZE_USER_PROMPT_TEMPLATE = """ORIGINAL RESTRUCTURED RESUME:
 {resume_json}
@@ -169,35 +147,224 @@ CONFIRMED FACTS (approved by the candidate - the only new content allowed):
 Produce the final elevated resume and summary as specified in the system prompt."""
 
 
+RETRY_NOTE = """
+
+(Note: a prior attempt at this same request did not come back as a \
+complete, valid tool call. Please produce the full result again as one \
+complete tool call.)"""
+
+_RESUME_DATA_PROPS = {
+    "name": {"type": "string"},
+    "contact": {"type": "string"},
+    "summary": {"type": "string"},
+    "skills": {"type": "array", "items": {"type": "string"}},
+    "experience": {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "subtitle": {"type": "string"},
+                "bullets": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["title", "subtitle", "bullets"],
+        },
+    },
+    "education": {"type": "array", "items": {"type": "string"}},
+}
+
+ANALYZE_TOOL = {
+    "name": "submit_discovery_start",
+    "description": "Submit the restructured resume, analysis, categories, and first question batch.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "resume_data": {
+                "type": "object",
+                "properties": _RESUME_DATA_PROPS,
+                "required": ["name", "contact", "skills", "experience", "education"],
+            },
+            "analysis_summary": {"type": "string"},
+            "categories": {"type": "array", "items": {"type": "string"}},
+            "questions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "category": {"type": "string"},
+                        "question": {"type": "string"},
+                    },
+                    "required": ["id", "category", "question"],
+                },
+            },
+        },
+        "required": ["resume_data", "analysis_summary", "categories", "questions"],
+    },
+}
+
+DISCOVER_QUESTIONS_TOOL = {
+    "name": "submit_questions",
+    "description": "Submit the next batch of discovery questions.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "questions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "category": {"type": "string"},
+                        "question": {"type": "string"},
+                        "type": {"type": "string", "enum": ["yes_no", "detail"]},
+                        "follow_up_to": {"type": ["string", "null"]},
+                    },
+                    "required": ["id", "category", "question", "type", "follow_up_to"],
+                },
+            },
+        },
+        "required": ["questions"],
+    },
+}
+
+DISCOVER_CONFIRM_TOOL = {
+    "name": "submit_confirm",
+    "description": "Submit the discovered facts for the candidate to confirm, once the interview has gathered enough.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "discovered_facts": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "category": {"type": "string"},
+                        "bullet_text": {"type": "string"},
+                    },
+                    "required": ["id", "category", "bullet_text"],
+                },
+            },
+        },
+        "required": ["discovered_facts"],
+    },
+}
+
+FINALIZE_TOOL = {
+    "name": "submit_final_resume",
+    "description": "Submit the final elevated resume and summary.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "resume_data": {
+                "type": "object",
+                "properties": {
+                    **_RESUME_DATA_PROPS,
+                    "headline": {"type": "string"},
+                    "certifications": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["name", "contact", "headline", "summary", "skills", "experience", "education"],
+            },
+            "uncovered": {"type": "array", "items": {"type": "string"}},
+            "changes": {"type": "array", "items": {"type": "string"}},
+            "verify": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["resume_data", "uncovered", "changes", "verify"],
+    },
+}
+
+
 class ElevateError(Exception):
     pass
 
 
-def _call(system_prompt: str, user_prompt: str) -> dict:
+def _diagnose(category: str) -> None:
+    print(f"[elevate] Elevate attempt failed: {category}")
+
+
+def _extract_tool_input(response, tool_name: str, required_keys: tuple) -> dict:
+    """For calls where exactly one specific tool must be called."""
+    if response.stop_reason == "max_tokens":
+        raise ValueError("truncated_response")
+
+    tool_blocks = [b for b in response.content if getattr(b, "type", None) == "tool_use" and b.name == tool_name]
+    if not tool_blocks:
+        raise ValueError("invalid_json")
+
+    data = tool_blocks[0].input
+    missing = [k for k in required_keys if k not in data]
+    if missing:
+        raise ValueError("missing_required_field")
+
+    return data
+
+
+def _extract_discover_input(response) -> dict:
+    """discover() can legitimately call EITHER submit_questions or
+    submit_confirm - whichever the model decides is appropriate this turn.
+    Returns the same {"stage": ..., ...} shape the frontend already expects,
+    regardless of which tool was actually called."""
+    if response.stop_reason == "max_tokens":
+        raise ValueError("truncated_response")
+
+    tool_blocks = [b for b in response.content if getattr(b, "type", None) == "tool_use"]
+    if not tool_blocks:
+        raise ValueError("invalid_json")
+
+    block = tool_blocks[0]
+    if block.name == "submit_questions":
+        if "questions" not in block.input:
+            raise ValueError("missing_required_field")
+        return {"stage": "questions", "questions": block.input["questions"]}
+    elif block.name == "submit_confirm":
+        if "discovered_facts" not in block.input:
+            raise ValueError("missing_required_field")
+        return {"stage": "confirm", "discovered_facts": block.input["discovered_facts"]}
+    else:
+        raise ValueError("invalid_json")  # neither expected tool was called
+
+
+def _call_with_retry(system_prompt: str, user_prompt: str, tools: list, tool_choice: dict, extract) -> dict:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise ElevateError("ANTHROPIC_API_KEY is not set on the server.")
 
     client = anthropic.Anthropic()
-    try:
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=8000,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-    except anthropic.APIError as e:
-        raise ElevateError(f"Claude API error: {e}") from e
 
-    text = extract_final_text(response)
-    try:
-        return extract_json_object(text)
-    except (ValueError, json.JSONDecodeError) as e:
-        raise ElevateError(f"Could not parse model response as JSON: {e}") from e
+    for attempt in range(2):  # original attempt + at most one retry
+        prompt_for_this_attempt = user_prompt + (RETRY_NOTE if attempt > 0 else "")
+        try:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=MAX_TOKENS,
+                system=system_prompt,
+                tools=tools,
+                tool_choice=tool_choice,
+                messages=[{"role": "user", "content": prompt_for_this_attempt}],
+            )
+        except anthropic.APIError as e:
+            _diagnose("provider_error")
+            raise ElevateError("We couldn't complete this step right now. Please try again.") from e
+
+        try:
+            return extract(response)
+        except ValueError as e:
+            _diagnose(str(e))
+
+    raise ElevateError("We couldn't complete this step right now. Please try again.")
 
 
 def analyze_for_discovery(resume_text: str) -> dict:
     user_prompt = ANALYZE_USER_PROMPT_TEMPLATE.format(resume_text=resume_text)
-    return _call(ANALYZE_SYSTEM_PROMPT, user_prompt)
+    return _call_with_retry(
+        ANALYZE_SYSTEM_PROMPT,
+        user_prompt,
+        tools=[ANALYZE_TOOL],
+        tool_choice={"type": "tool", "name": "submit_discovery_start"},
+        extract=lambda r: _extract_tool_input(
+            r, "submit_discovery_start", ("resume_data", "analysis_summary", "categories", "questions")
+        ),
+    )
 
 
 def _format_history(history: list) -> str:
@@ -221,7 +388,13 @@ def discover(resume_data: dict, categories: list, history: list, force_finish: b
         history_text=_format_history(history),
         force_finish="true" if force_finish else "false",
     )
-    return _call(DISCOVER_SYSTEM_PROMPT, user_prompt)
+    return _call_with_retry(
+        DISCOVER_SYSTEM_PROMPT,
+        user_prompt,
+        tools=[DISCOVER_QUESTIONS_TOOL, DISCOVER_CONFIRM_TOOL],
+        tool_choice={"type": "any"},
+        extract=_extract_discover_input,
+    )
 
 
 def finalize_elevate(resume_data: dict, confirmed_facts: list) -> dict:
@@ -234,4 +407,10 @@ def finalize_elevate(resume_data: dict, confirmed_facts: list) -> dict:
         resume_json=json.dumps(resume_data, indent=2),
         facts_text=facts_text,
     )
-    return _call(FINALIZE_SYSTEM_PROMPT, user_prompt)
+    return _call_with_retry(
+        FINALIZE_SYSTEM_PROMPT,
+        user_prompt,
+        tools=[FINALIZE_TOOL],
+        tool_choice={"type": "tool", "name": "submit_final_resume"},
+        extract=lambda r: _extract_tool_input(r, "submit_final_resume", ("resume_data", "uncovered", "changes", "verify")),
+    )

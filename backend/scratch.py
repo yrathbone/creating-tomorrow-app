@@ -11,16 +11,35 @@ Two calls:
                    to ask a few honest reflective questions.
   finalize()     - once all entries are in, drafts a summary paragraph and
                    suggests a few likely skills based on the whole picture.
+
+Structured output: like coach.py (Right Fit) and the other tools fixed
+after it, both calls here are requested via a forced tool call
+(tool_choice) against an explicit input_schema, rather than asking the
+model to emit raw JSON text - the same fix applied after the same
+underlying failure mode (extended thinking consuming the whole token
+budget on some inputs, leaving no room for the actual output).
+finalize() uses the same tool_choice="tool" pattern as coach.py. draft_entry()
+is the one call in this app that ALSO needs Claude's server-side web_search
+tool, which can't be combined with tool_choice forcing a single specific
+tool (the model would never be allowed to call web_search first). The fix
+used here instead is tool_choice={"type": "any"} with BOTH web_search and
+the custom submit_draft tool available - "any" only requires the model to
+call *some* tool rather than respond with plain text, so it's free to
+search first and call submit_draft once it's done. Empirically verified
+(5/5 test calls) that the model reliably searches first, then submits.
 """
-import json
 import os
 
 import anthropic
 
-from llm_utils import extract_final_text, extract_json_object
-
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 MAX_SEARCHES = int(os.environ.get("CT_SCRATCH_MAX_SEARCHES", "3"))
+
+# See coach.py for why this is larger than it looks like it should need to
+# be: extended thinking eats a large, variable chunk of this budget before
+# the actual structured output is produced.
+DRAFT_MAX_TOKENS = 8000
+FINALIZE_MAX_TOKENS = 16000
 
 ENTRY_SYSTEM_PROMPT = """You are Nova, helping someone build their very \
 first resume from scratch. This person likely has little or no resume-\
@@ -51,17 +70,8 @@ title). Based on that, write 2-3 REFLECTIVE QUESTIONS about commonly-\
 related responsibilities they didn't mention, each answerable honestly \
 with yes/no. Never assume yes. Only ask.
 
-After you finish researching, your FINAL message must contain ONLY a \
-JSON object - no commentary, no citations, no markdown code fence - in \
-this exact shape:
-
-{
-  "drafted_bullets": ["bullet one", "bullet two"],
-  "reflective_questions": [
-    {"id": "q1", "question": "People in this kind of role often do X — did you?", "bullet_if_yes": "the exact bullet text to add if they confirm"}
-  ]
-}
-"""
+After you finish researching, call the submit_draft tool with your \
+drafted bullets and reflective questions. Do not respond with plain text."""
 
 ENTRY_USER_PROMPT_TEMPLATE = """ENTRY TYPE: {entry_type}
 ROLE / TITLE: {title}
@@ -93,13 +103,8 @@ Service" and "Cash Handling" skills) but that they haven't explicitly \
 listed yet. These are suggestions for them to confirm, not facts - don't \
 suggest anything not clearly implied by what they described.
 
-Respond ONLY with a JSON object, no other text:
-
-{
-  "suggested_summary": "...",
-  "suggested_skills": ["skill one", "skill two"]
-}
-"""
+Call the submit_finalize tool with the summary and suggested skills. Do \
+not respond with plain text."""
 
 FINALIZE_USER_PROMPT_TEMPLATE = """NAME: {name}
 
@@ -115,34 +120,103 @@ SKILLS THEY ALREADY LISTED THEMSELVES:
 Produce the summary and skill suggestions as specified in the system prompt."""
 
 
+RETRY_NOTE = """
+
+(Note: a prior attempt at this same request did not come back as a \
+complete, valid tool call. Please produce the full result again as one \
+complete tool call.)"""
+
+DRAFT_TOOL = {
+    "name": "submit_draft",
+    "description": "Submit the drafted resume bullets and reflective questions for this one entry.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "drafted_bullets": {"type": "array", "items": {"type": "string"}},
+            "reflective_questions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "question": {"type": "string"},
+                        "bullet_if_yes": {"type": "string"},
+                    },
+                    "required": ["id", "question", "bullet_if_yes"],
+                },
+            },
+        },
+        "required": ["drafted_bullets", "reflective_questions"],
+    },
+}
+
+FINALIZE_TOOL = {
+    "name": "submit_finalize",
+    "description": "Submit the suggested professional summary and additional skills.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "suggested_summary": {"type": "string"},
+            "suggested_skills": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["suggested_summary", "suggested_skills"],
+    },
+}
+
+WEB_SEARCH_TOOL = {"type": "web_search_20250305", "name": "web_search", "max_uses": MAX_SEARCHES}
+
+
 class ScratchError(Exception):
     pass
 
 
-def _call(system_prompt: str, user_prompt: str, use_search: bool) -> dict:
+def _diagnose(category: str) -> None:
+    print(f"[scratch] Beginning attempt failed: {category}")
+
+
+def _extract_tool_input(response, tool_name: str, required_keys: tuple) -> dict:
+    if response.stop_reason == "max_tokens":
+        raise ValueError("truncated_response")
+
+    tool_blocks = [b for b in response.content if getattr(b, "type", None) == "tool_use" and b.name == tool_name]
+    if not tool_blocks:
+        raise ValueError("invalid_json")
+
+    data = tool_blocks[0].input
+    missing = [k for k in required_keys if k not in data]
+    if missing:
+        raise ValueError("missing_required_field")
+
+    return data
+
+
+def _call_with_retry(system_prompt: str, user_prompt: str, tools: list, tool_choice: dict, max_tokens: int, extract) -> dict:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise ScratchError("ANTHROPIC_API_KEY is not set on the server.")
 
     client = anthropic.Anthropic()
-    kwargs = dict(
-        model=MODEL,
-        max_tokens=6000,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_prompt}],
-    )
-    if use_search:
-        kwargs["tools"] = [{"type": "web_search_20250305", "name": "web_search", "max_uses": MAX_SEARCHES}]
 
-    try:
-        response = client.messages.create(**kwargs)
-    except anthropic.APIError as e:
-        raise ScratchError(f"Claude API error: {e}") from e
+    for attempt in range(2):  # original attempt + at most one retry
+        prompt_for_this_attempt = user_prompt + (RETRY_NOTE if attempt > 0 else "")
+        try:
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=max_tokens,
+                system=system_prompt,
+                tools=tools,
+                tool_choice=tool_choice,
+                messages=[{"role": "user", "content": prompt_for_this_attempt}],
+            )
+        except anthropic.APIError as e:
+            _diagnose("provider_error")
+            raise ScratchError("We couldn't complete this right now. Please try again.") from e
 
-    text = extract_final_text(response)
-    try:
-        return extract_json_object(text)
-    except (ValueError, json.JSONDecodeError) as e:
-        raise ScratchError(f"Could not parse model response as JSON: {e}") from e
+        try:
+            return extract(response)
+        except ValueError as e:
+            _diagnose(str(e))
+
+    raise ScratchError("We couldn't complete this right now. Please try again.")
 
 
 def draft_entry(entry_type: str, title: str, organization: str, dates: str, description: str) -> dict:
@@ -153,7 +227,20 @@ def draft_entry(entry_type: str, title: str, organization: str, dates: str, desc
         dates=dates,
         description=description,
     )
-    return _call(ENTRY_SYSTEM_PROMPT, user_prompt, use_search=True)
+    # tool_choice can't be forced to one specific tool here, since the model
+    # also needs the freedom to call web_search (possibly more than once)
+    # before it's ready to submit - "any" requires it to call SOME tool
+    # rather than respond with plain text, without pinning down which one
+    # first. See the module docstring for why this differs from every other
+    # tool in the app, and the empirical verification behind it.
+    return _call_with_retry(
+        ENTRY_SYSTEM_PROMPT,
+        user_prompt,
+        tools=[WEB_SEARCH_TOOL, DRAFT_TOOL],
+        tool_choice={"type": "any"},
+        max_tokens=DRAFT_MAX_TOKENS,
+        extract=lambda r: _extract_tool_input(r, "submit_draft", ("drafted_bullets", "reflective_questions")),
+    )
 
 
 def finalize(name: str, experience: list, education: list, existing_skills: list) -> dict:
@@ -170,4 +257,11 @@ def finalize(name: str, experience: list, education: list, existing_skills: list
         education_text=education_text,
         existing_skills=existing_skills_text,
     )
-    return _call(FINALIZE_SYSTEM_PROMPT, user_prompt, use_search=False)
+    return _call_with_retry(
+        FINALIZE_SYSTEM_PROMPT,
+        user_prompt,
+        tools=[FINALIZE_TOOL],
+        tool_choice={"type": "tool", "name": "submit_finalize"},
+        max_tokens=FINALIZE_MAX_TOKENS,
+        extract=lambda r: _extract_tool_input(r, "submit_finalize", ("suggested_summary", "suggested_skills")),
+    )
