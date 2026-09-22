@@ -151,8 +151,8 @@ analyzeForm.addEventListener("submit", async (e) => {
       renderMatchReport(data.match_report);
     } else if (currentMode === "refine") {
       document.getElementById("refine-summary-preview").textContent = resumeData.summary || "";
-      fillList("refine-changes-list", data.changes, (s) => s);
-      fillList("refine-verify-list", data.verify, (s) => s);
+      fillList("refine-changes-list", data.changes, (s) => escapeHtml(s));
+      fillList("refine-verify-list", data.verify, (s) => escapeHtml(s));
     }
 
     renderQuestions(reflectiveQuestions);
@@ -178,6 +178,23 @@ analyzeForm.addEventListener("submit", async (e) => {
   }
 });
 
+// Escapes text before it's inserted via innerHTML - needed anywhere a
+// template literal mixes markup (a wrapping <span>, an attribute value,
+// etc.) with dynamic text (AI-generated or user-typed), since that text
+// was never meant to be interpreted as HTML. Escapes quote characters too,
+// not just <>&, since some call sites interpolate into an attribute value
+// (e.g. name="${escapeHtml(q.id)}") where a bare quote could otherwise
+// break out of the attribute and let the rest of the string be parsed as
+// new markup/attributes.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function renderMatchReport(report) {
   const badge = document.getElementById("match-level-badge");
   badge.textContent = "Match: " + report.match_level;
@@ -191,10 +208,10 @@ function renderMatchReport(report) {
 
   document.getElementById("match-rationale").textContent = report.match_rationale || "";
 
-  fillList("strengths-list", report.strengths, (s) => s);
+  fillList("strengths-list", report.strengths, (s) => escapeHtml(s));
 
   fillList("gaps-list", report.required_qualification_gaps, (g) => {
-    return `<span class="gap-status">[${g.status}]</span>${g.requirement} — ${g.explanation}`;
+    return `<span class="gap-status">[${escapeHtml(g.status)}]</span>${escapeHtml(g.requirement)} — ${escapeHtml(g.explanation)}`;
   });
 
   const flags = report.same_word_different_job_flags || [];
@@ -202,13 +219,13 @@ function renderMatchReport(report) {
   if (flags.length) {
     flagsBlock.hidden = false;
     fillList("flags-list", flags, (f) => {
-      return `<span class="flag-term">"${f.term}"</span> — on your resume: ${f.resume_meaning}. In the posting: ${f.posting_meaning}. ${f.why_it_matters}`;
+      return `<span class="flag-term">"${escapeHtml(f.term)}"</span> — on your resume: ${escapeHtml(f.resume_meaning)}. In the posting: ${escapeHtml(f.posting_meaning)}. ${escapeHtml(f.why_it_matters)}`;
     });
   } else {
     flagsBlock.hidden = true;
   }
 
-  fillList("growth-list", report.growth_suggestions, (s) => s);
+  fillList("growth-list", report.growth_suggestions, (s) => escapeHtml(s));
 
   document.getElementById("fit-note").textContent = report.note_on_better_fit_roles || "";
 }
@@ -238,9 +255,9 @@ function renderQuestions(questions) {
     const options = document.createElement("div");
     options.className = "question-options";
     options.innerHTML = `
-      <label><input type="radio" name="${q.id}" value="yes" /> Yes</label>
-      <label><input type="radio" name="${q.id}" value="no" /> No</label>
-      <label><input type="radio" name="${q.id}" value="skip" checked /> Not sure / skip</label>
+      <label><input type="radio" name="${escapeHtml(q.id)}" value="yes" /> Yes</label>
+      <label><input type="radio" name="${escapeHtml(q.id)}" value="no" /> No</label>
+      <label><input type="radio" name="${escapeHtml(q.id)}" value="skip" checked /> Not sure / skip</label>
     `;
     card.appendChild(options);
     container.appendChild(card);

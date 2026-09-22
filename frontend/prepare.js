@@ -166,10 +166,17 @@ function buildQuestionCard(q) {
   return card;
 }
 
+// Escapes quote characters too, not just <>&, so this helper stays safe
+// even if a future call site interpolates into an attribute value (where a
+// bare quote could otherwise break out of the attribute), not just text
+// content between tags.
 function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function fillList(elementId, items) {

@@ -28,6 +28,22 @@ function showError(el, message) {
   el.hidden = false;
 }
 
+// Escapes text before it's inserted via innerHTML - needed anywhere a
+// template literal mixes markup (or an attribute value) with dynamic text
+// (AI-generated, here just a question id), since that text was never meant
+// to be interpreted as HTML. Escapes quote characters too, not just <>&,
+// since this is interpolated into an attribute value (name="${...}") where
+// a bare quote could otherwise break out of the attribute and let the rest
+// of the string be parsed as new markup/attributes.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function fillList(elementId, items) {
   const el = document.getElementById(elementId);
   el.innerHTML = "";
@@ -129,9 +145,9 @@ function renderQuestionsBatch(questions) {
       const options = document.createElement("div");
       options.className = "question-options";
       options.innerHTML = `
-        <label><input type="radio" name="${q.id}" value="yes" /> Yes</label>
-        <label><input type="radio" name="${q.id}" value="no" /> No</label>
-        <label><input type="radio" name="${q.id}" value="skip" checked /> Not sure / skip</label>
+        <label><input type="radio" name="${escapeHtml(q.id)}" value="yes" /> Yes</label>
+        <label><input type="radio" name="${escapeHtml(q.id)}" value="no" /> No</label>
+        <label><input type="radio" name="${escapeHtml(q.id)}" value="skip" checked /> Not sure / skip</label>
       `;
       card.appendChild(options);
     }

@@ -122,6 +122,23 @@ entryForm.addEventListener("submit", async (e) => {
   }
 });
 
+// Escapes text before it's inserted via innerHTML - needed anywhere a
+// template literal mixes markup (or an attribute value) with dynamic text
+// (AI-drafted or user-typed), since that text was never meant to be
+// interpreted as HTML. Escapes quote characters too, not just <>&, since
+// some call sites interpolate into an attribute value (e.g.
+// name="${escapeHtml(q.id)}") where a bare quote could otherwise break out
+// of the attribute and let the rest of the string be parsed as new
+// markup/attributes.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function renderEntryReview(entry) {
   const bulletsEl = document.getElementById("entry-drafted-bullets");
   bulletsEl.innerHTML = "";
@@ -142,9 +159,9 @@ function renderEntryReview(entry) {
     const options = document.createElement("div");
     options.className = "question-options";
     options.innerHTML = `
-      <label><input type="radio" name="${q.id}" value="yes" /> Yes</label>
-      <label><input type="radio" name="${q.id}" value="no" /> No</label>
-      <label><input type="radio" name="${q.id}" value="skip" checked /> Not sure / skip</label>
+      <label><input type="radio" name="${escapeHtml(q.id)}" value="yes" /> Yes</label>
+      <label><input type="radio" name="${escapeHtml(q.id)}" value="no" /> No</label>
+      <label><input type="radio" name="${escapeHtml(q.id)}" value="skip" checked /> Not sure / skip</label>
     `;
     card.appendChild(options);
     questionsEl.appendChild(card);
@@ -189,13 +206,13 @@ function renderExperienceList() {
   state.experience.forEach((entry, idx) => {
     const card = document.createElement("div");
     card.className = "entry-summary-card";
-    const bulletItems = entry.bullets.map((b) => `<li>${b}</li>`).join("");
+    const bulletItems = entry.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join("");
     card.innerHTML = `
       <div class="entry-summary-header">
-        <strong>${entry.title}</strong>
+        <strong>${escapeHtml(entry.title)}</strong>
         <button type="button" class="entry-remove-btn" data-idx="${idx}">Remove</button>
       </div>
-      <span class="hint">${entry.subtitle}</span>
+      <span class="hint">${escapeHtml(entry.subtitle)}</span>
       <ul>${bulletItems}</ul>
     `;
     el.appendChild(card);
@@ -248,7 +265,7 @@ function renderEducationList() {
     div.className = "entry-summary-card";
     div.innerHTML = `
       <div class="entry-summary-header">
-        <span>${line}</span>
+        <span>${escapeHtml(line)}</span>
         <button type="button" class="entry-remove-btn" data-idx="${idx}">Remove</button>
       </div>
     `;
@@ -287,7 +304,7 @@ function renderSkillsList() {
   state.skills.forEach((skill, idx) => {
     const li = document.createElement("li");
     li.className = "skill-tag";
-    li.innerHTML = `${skill} <button type="button" data-idx="${idx}">&times;</button>`;
+    li.innerHTML = `${escapeHtml(skill)} <button type="button" data-idx="${idx}">&times;</button>`;
     el.appendChild(li);
   });
   el.querySelectorAll("button").forEach((btn) => {
@@ -356,7 +373,7 @@ function renderSuggestedSkills() {
   suggestedSkills.forEach((skill, idx) => {
     const label = document.createElement("label");
     label.className = "checkbox-field";
-    label.innerHTML = `<input type="checkbox" data-skill-idx="${idx}" /><span>${skill}</span>`;
+    label.innerHTML = `<input type="checkbox" data-skill-idx="${idx}" /><span>${escapeHtml(skill)}</span>`;
     el.appendChild(label);
   });
 }
