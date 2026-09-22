@@ -8,6 +8,23 @@ these helpers don't.
 import json
 
 
+def log_usage(tool_name: str, response) -> None:
+    """Logs token counts only - never prompt/response content - so spend
+    can be tracked per tool from Render's log viewer (e.g. grep '[usage]'
+    and sum input_tokens/output_tokens) without storing any resume/job/
+    profile text anywhere. Every tool module calls this once per successful
+    API response. Safe to call even if `response.usage` is ever absent for
+    some reason - falls back to logging nothing rather than raising."""
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return
+    print(
+        f"[usage] tool={tool_name} model={getattr(response, 'model', '?')} "
+        f"input_tokens={getattr(usage, 'input_tokens', '?')} "
+        f"output_tokens={getattr(usage, 'output_tokens', '?')}"
+    )
+
+
 def extract_final_text(response) -> str:
     """Concatenate every text-type content block, in order, skipping
     thinking/tool-use/tool-result blocks. Web search in particular can

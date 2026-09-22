@@ -45,14 +45,30 @@ def extract_text(filename: str, content: bytes) -> str:
     suffix = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     file_obj = io.BytesIO(content)
 
-    if suffix == "docx":
-        text = extract_docx_text(file_obj)
-    elif suffix == "pdf":
-        text = extract_pdf_text(file_obj)
-    elif suffix == "txt":
-        text = content.decode("utf-8", errors="replace")
-    else:
-        raise ValueError(f"Unsupported file type: .{suffix} (expected .docx, .pdf, or .txt)")
+    try:
+        if suffix == "docx":
+            text = extract_docx_text(file_obj)
+        elif suffix == "pdf":
+            text = extract_pdf_text(file_obj)
+        elif suffix == "txt":
+            text = content.decode("utf-8", errors="replace")
+        else:
+            raise ValueError(f"Unsupported file type: .{suffix} (expected .docx, .pdf, or .txt)")
+    except ValueError:
+        raise
+    except Exception as e:
+        # python-docx/pypdf raise their own library-specific exceptions
+        # (BadZipFile, PdfStreamError, EmptyFileError, ...) for a corrupted,
+        # empty, or not-actually-a-.docx/.pdf file - none of those are
+        # ValueError, so every caller's `except ValueError` block (main.py)
+        # was letting them through as an unhandled 500 instead of the
+        # intended friendly 400. Converting every extraction failure to
+        # ValueError here fixes that once, for every caller, rather than
+        # needing a broader except clause repeated at each of the 6 call
+        # sites across main.py.
+        raise ValueError(
+            f"Could not read that .{suffix} file - it may be corrupted, empty, or not a valid .{suffix} file."
+        ) from e
 
     # Some PDF generators embed dashes/curly quotes as UTF-8 bytes run through
     # a Latin-1 font encoding, so extracted text can come out as mojibake

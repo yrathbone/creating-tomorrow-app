@@ -76,7 +76,12 @@ body {
 }
 
 .nav-wordmark-gold {
-  color: #d9922a;
+  /* Was #d9922a (2.59:1 on white - fails WCAG AA even at this element's
+     large/bold size, which only relaxes the requirement to 3:1). Darkened
+     to keep the same gold/amber hue while reaching 5.07:1, comfortably
+     past the 4.5:1 normal-text threshold - found via a contrast audit of
+     every real text-color pairing on the site, not just this one. */
+  color: #996300;
 }
 
 .nav-wordmark small {

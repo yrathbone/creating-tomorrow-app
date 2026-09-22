@@ -53,11 +53,27 @@ Four tools, front-end names in parentheses:
 
 Run locally:
   uvicorn main:app --reload --port 8000
+
+Concurrency note: every route below that calls a tool module's AI logic
+wraps that call in run_in_threadpool(). The Anthropic SDK's client used
+throughout backend/*.py is the SYNCHRONOUS client, called directly inside
+these `async def` route handlers - without offloading it to a worker
+thread, a single in-flight AI call (which can take 10-90+ seconds) blocks
+this process's entire single-threaded event loop, serializing every other
+concurrent request behind it, regardless of which tool or which visitor
+they belong to. Confirmed empirically: 3 concurrent /api/prepare requests
+with distinct inputs completed correctly (no cross-request data leakage -
+each response matched its own input) but took ~90s each, all finishing at
+the same moment - clear evidence of serialization, not 3x independent
+~20-30s calls running in parallel. run_in_threadpool() runs the blocking
+call in Starlette's worker thread pool instead, freeing the event loop to
+handle other requests while it's in flight.
 """
 import base64
 import os
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
@@ -133,7 +149,7 @@ async def api_analyze(
         )
 
     try:
-        result = analyze(resume_text, job_posting)
+        result = await run_in_threadpool(analyze, resume_text, job_posting)
     except CoachError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
@@ -182,7 +198,7 @@ async def api_refine(resume_file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Could not extract any text from that file.")
 
     try:
-        result = upgrade(resume_text)
+        result = await run_in_threadpool(upgrade, resume_text)
     except UpgradeError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
@@ -206,7 +222,7 @@ async def api_elevate_start(resume_file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Could not extract any text from that file.")
 
     try:
-        result = analyze_for_discovery(resume_text)
+        result = await run_in_threadpool(analyze_for_discovery, resume_text)
     except ElevateError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
@@ -226,7 +242,9 @@ class ElevateDiscoverRequest(BaseModel):
 @app.post("/api/elevate-discover")
 async def api_elevate_discover(req: ElevateDiscoverRequest):
     try:
-        result = discover(req.resume_data, req.categories, req.history, req.force_finish, req.round_number)
+        result = await run_in_threadpool(
+            discover, req.resume_data, req.categories, req.history, req.force_finish, req.round_number
+        )
     except ElevateError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
@@ -243,7 +261,7 @@ class ElevateFinalizeRequest(BaseModel):
 @app.post("/api/elevate-finalize")
 async def api_elevate_finalize(req: ElevateFinalizeRequest):
     try:
-        result = finalize_elevate(req.resume_data, req.confirmed_facts)
+        result = await run_in_threadpool(finalize_elevate, req.resume_data, req.confirmed_facts)
     except ElevateError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
@@ -337,7 +355,7 @@ async def api_profile_review(
             raise HTTPException(status_code=400, detail=str(e))
 
     try:
-        result = review_profile(images, pasted_text, pdf_text, resume_text)
+        result = await run_in_threadpool(review_profile, images, pasted_text, pdf_text, resume_text)
     except ProfileReviewError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
@@ -396,7 +414,7 @@ async def api_prepare(
             raise HTTPException(status_code=400, detail="Could not extract any text from that resume file.")
 
     try:
-        result = prepare(job_description, resume_text)
+        result = await run_in_threadpool(prepare, job_description, resume_text)
     except PrepareError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
@@ -419,7 +437,9 @@ async def api_scratch_entry(req: ScratchEntryRequest):
         raise HTTPException(status_code=400, detail="A role/title and a description of what you did are both required.")
 
     try:
-        result = draft_entry(req.entry_type, req.title, req.organization, req.dates, req.description)
+        result = await run_in_threadpool(
+            draft_entry, req.entry_type, req.title, req.organization, req.dates, req.description
+        )
     except ScratchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
@@ -438,7 +458,7 @@ class ScratchFinalizeRequest(BaseModel):
 @app.post("/api/scratch-finalize")
 async def api_scratch_finalize(req: ScratchFinalizeRequest):
     try:
-        result = finalize(req.name, req.experience, req.education, req.existing_skills)
+        result = await run_in_threadpool(finalize, req.name, req.experience, req.education, req.existing_skills)
     except ScratchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:

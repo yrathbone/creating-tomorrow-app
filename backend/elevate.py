@@ -47,6 +47,8 @@ import os
 
 import anthropic
 
+from llm_utils import log_usage
+
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
 # See coach.py for why this is larger than it looks like it should need to
@@ -325,7 +327,7 @@ def _extract_discover_input(response) -> dict:
         raise ValueError("invalid_json")  # neither expected tool was called
 
 
-def _call_with_retry(system_prompt: str, user_prompt: str, tools: list, tool_choice: dict, extract) -> dict:
+def _call_with_retry(label: str, system_prompt: str, user_prompt: str, tools: list, tool_choice: dict, extract) -> dict:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise ElevateError("ANTHROPIC_API_KEY is not set on the server.")
 
@@ -346,6 +348,7 @@ def _call_with_retry(system_prompt: str, user_prompt: str, tools: list, tool_cho
             _diagnose("provider_error")
             raise ElevateError("We couldn't complete this step right now. Please try again.") from e
 
+        log_usage(label, response)
         try:
             return extract(response)
         except ValueError as e:
@@ -357,6 +360,7 @@ def _call_with_retry(system_prompt: str, user_prompt: str, tools: list, tool_cho
 def analyze_for_discovery(resume_text: str) -> dict:
     user_prompt = ANALYZE_USER_PROMPT_TEMPLATE.format(resume_text=resume_text)
     return _call_with_retry(
+        "elevate_start",
         ANALYZE_SYSTEM_PROMPT,
         user_prompt,
         tools=[ANALYZE_TOOL],
@@ -389,6 +393,7 @@ def discover(resume_data: dict, categories: list, history: list, force_finish: b
         force_finish="true" if force_finish else "false",
     )
     return _call_with_retry(
+        "elevate_discover",
         DISCOVER_SYSTEM_PROMPT,
         user_prompt,
         tools=[DISCOVER_QUESTIONS_TOOL, DISCOVER_CONFIRM_TOOL],
@@ -408,6 +413,7 @@ def finalize_elevate(resume_data: dict, confirmed_facts: list) -> dict:
         facts_text=facts_text,
     )
     return _call_with_retry(
+        "elevate_finalize",
         FINALIZE_SYSTEM_PROMPT,
         user_prompt,
         tools=[FINALIZE_TOOL],

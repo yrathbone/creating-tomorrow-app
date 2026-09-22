@@ -35,6 +35,8 @@ import os
 
 import anthropic
 
+from llm_utils import log_usage
+
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
 # See coach.py for why this is larger than it looks like it should need
@@ -310,6 +312,7 @@ def upgrade(resume_text: str) -> dict:
             _diagnose("provider_error")
             raise UpgradeError("We couldn't complete this upgrade right now. Please try again.") from e
 
+        log_usage("refine", response)
         try:
             parsed = _extract_tool_input(response)
             break

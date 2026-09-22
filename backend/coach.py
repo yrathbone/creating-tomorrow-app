@@ -22,6 +22,8 @@ import os
 
 import anthropic
 
+from llm_utils import log_usage
+
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
 # Generous headroom: this model spends a meaningful chunk of its output
@@ -242,6 +244,7 @@ def analyze(resume_text: str, job_posting: str) -> dict:
             _diagnose("provider_error")
             raise CoachError("We couldn't complete this analysis right now. Please try again.") from e
 
+        log_usage("right_fit", response)
         try:
             return _extract_tool_input(response)
         except ValueError as e:

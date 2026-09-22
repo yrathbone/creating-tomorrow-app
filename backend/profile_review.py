@@ -32,6 +32,8 @@ import os
 
 import anthropic
 
+from llm_utils import log_usage
+
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
 # See coach.py for why this is larger than it looks like it should need to
@@ -271,6 +273,7 @@ def review_profile(images: list, pasted_text: str, pdf_text: str, resume_text: s
             _diagnose("provider_error")
             raise ProfileReviewError("We couldn't complete this review right now. Please try again.") from e
 
+        log_usage("spotlight", response)
         try:
             return _extract_tool_input(response)
         except ValueError as e:

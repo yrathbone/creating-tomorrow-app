@@ -22,6 +22,8 @@ import os
 
 import anthropic
 
+from llm_utils import log_usage
+
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
 # See coach.py for why this is larger than it looks like it should need to
@@ -215,6 +217,7 @@ def prepare(job_description: str, resume_text: str = "") -> dict:
             _diagnose("provider_error")
             raise PrepareError("We couldn't prepare your interview prep right now. Please try again.") from e
 
+        log_usage("prepare", response)
         try:
             return _extract_tool_input(response)
         except ValueError as e:

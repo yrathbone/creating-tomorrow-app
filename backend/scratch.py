@@ -32,6 +32,8 @@ import os
 
 import anthropic
 
+from llm_utils import log_usage
+
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 MAX_SEARCHES = int(os.environ.get("CT_SCRATCH_MAX_SEARCHES", "3"))
 
@@ -190,7 +192,7 @@ def _extract_tool_input(response, tool_name: str, required_keys: tuple) -> dict:
     return data
 
 
-def _call_with_retry(system_prompt: str, user_prompt: str, tools: list, tool_choice: dict, max_tokens: int, extract) -> dict:
+def _call_with_retry(label: str, system_prompt: str, user_prompt: str, tools: list, tool_choice: dict, max_tokens: int, extract) -> dict:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise ScratchError("ANTHROPIC_API_KEY is not set on the server.")
 
@@ -211,6 +213,7 @@ def _call_with_retry(system_prompt: str, user_prompt: str, tools: list, tool_cho
             _diagnose("provider_error")
             raise ScratchError("We couldn't complete this right now. Please try again.") from e
 
+        log_usage(label, response)
         try:
             return extract(response)
         except ValueError as e:
@@ -234,6 +237,7 @@ def draft_entry(entry_type: str, title: str, organization: str, dates: str, desc
     # first. See the module docstring for why this differs from every other
     # tool in the app, and the empirical verification behind it.
     return _call_with_retry(
+        "beginning_draft_entry",
         ENTRY_SYSTEM_PROMPT,
         user_prompt,
         tools=[WEB_SEARCH_TOOL, DRAFT_TOOL],
@@ -258,6 +262,7 @@ def finalize(name: str, experience: list, education: list, existing_skills: list
         existing_skills=existing_skills_text,
     )
     return _call_with_retry(
+        "beginning_finalize",
         FINALIZE_SYSTEM_PROMPT,
         user_prompt,
         tools=[FINALIZE_TOOL],
