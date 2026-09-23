@@ -316,9 +316,19 @@ aws_future = {
         "status": "PROPOSED - not built",
     },
     "backend_hosting": {
-        "candidates": ["AWS App Runner", "Lambda + API Gateway", "ECS/Fargate"],
+        # UPDATED 2026-09-22: App Runner stopped accepting new customers
+        # 2026-04-30 (verified live, not from stale docs). ECS Express Mode
+        # was actually built, deployed, verified via /api/health, and
+        # deleted the same night - real Fargate + ALB cost turned out to
+        # be ~$50+/month if left running, confirmed live, not estimated.
+        # Lambda's free tier is verified PERMANENT (1M requests + 400,000
+        # GB-seconds/month, forever) - now the primary recommendation.
+        "candidates": ["Lambda + API Gateway", "Amazon ECS Express Mode", "ECS/Fargate (manual)"],
+        "primary_recommendation": "Lambda + API Gateway",
+        "app_runner_status": "NOT AVAILABLE - closed to new customers as of 2026-04-30",
+        "ecs_express_mode_status": "tested and torn down 2026-09-22 - real, cost prohibits leaving it running; kept as an occasional practice target, not the persistent architecture",
         "replaces": "Render's uvicorn process",
-        "status": "PROPOSED - not built",
+        "status": "PROPOSED - not built (Lambda); ECS Express Mode already tested once, then deleted",
     },
     "secrets": {
         "candidate": "AWS Secrets Manager (or Parameter Store for a simpler start)",

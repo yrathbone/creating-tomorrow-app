@@ -2,9 +2,9 @@
 
 Priorities below are based on the ACTUAL architecture verified in
 `docs/CURRENT_INFRASTRUCTURE.md` — e.g. IAM is "learn during migration"
-because App Runner (the recommended backend target) requires it
-immediately, while RDS is "learn later" because this app verifiably doesn't
-use a database.
+because Lambda (the recommended backend target, updated 2026-09-22 after
+App Runner closed to new customers) requires it immediately, while RDS is
+"learn later" because this app verifiably doesn't use a database.
 
 ---
 
@@ -21,6 +21,16 @@ this is a starting estimate, not a test result.)*
 - Environment variables and why secrets don't belong in committed files
 - Git/GitHub basics (push, commit, and how Render's auto-deploy uses them)
 - What a prompt is, and how a system prompt differs from a user prompt
+- **Containers / Dockerfiles, hands-on** — added 2026-09-22: wrote a real
+  `Dockerfile`, built it in AWS CloudShell, pushed the image to ECR, and
+  deployed it as a working ECS Express Mode service (verified via
+  `/api/health`), then deleted it. This is genuine, demonstrated
+  experience now, not something still ahead of you.
+- **AWS service lifecycle/deprecation awareness** — added 2026-09-22:
+  caught, live in the console, that AWS App Runner had stopped accepting
+  new customers — a real instance of verifying against the live product
+  rather than trusting a plan (even one written minutes earlier). This is
+  a genuinely valuable habit, not just a lucky catch.
 
 ---
 
@@ -32,11 +42,17 @@ eventually.)*
 
 - **AWS IAM** — users, roles, policies. Needed from Stage 2 onward; almost
   every other AWS service leans on IAM for permissions.
-- **Hosting on AWS App Runner specifically** — how it builds/runs a
-  container, how it differs from Render's model. Needed for Stage 6.
-- **Containers / Dockerfiles** — App Runner can deploy from source code
-  directly, but understanding what a container actually is will make every
-  later AWS service easier. Needed for Stage 6.
+- **Lambda + API Gateway, and the Mangum adapter specifically** — updated
+  2026-09-22 (App Runner is no longer available to new customers): how an
+  existing FastAPI app adapts to Lambda's invocation model, how API
+  Gateway routes requests to it, and how cold starts actually behave
+  against this app's own ~15-90s AI response times. Needed for Stage 6.
+- **A real CI/CD pipeline (GitHub Actions or similar)** — moved up from
+  "learn later": unlike App Runner or Amplify, Lambda has no built-in
+  "watch my repo and redeploy on push" behavior. Getting back to
+  Render's current push-to-deploy convenience means actually building a
+  small pipeline (GitHub Actions calling the AWS CLI or SAM/CDK) — needed
+  for Stage 6, not an optional later refinement.
 - **S3** — buckets, permissions, static website hosting. Needed for
   Stage 3 (whichever frontend option you pick).
 - **CloudFront** — CDN basics, cache invalidation, origins. Needed for
@@ -44,9 +60,15 @@ eventually.)*
 - **AWS Systems Manager Parameter Store / Secrets Manager** — how a running
   AWS service reads a secret without it living in code. Needed for Stage 8
   (introduced earlier, informally, in Stage 6).
-- **CloudWatch** — reading logs, understanding what App Runner sends there
+- **CloudWatch** — reading logs, understanding what Lambda sends there
   by default. Needed the first time anything on AWS breaks, realistically
   as early as Stage 6-7.
+- **Cost governance: budget actions and resource tagging** — added
+  2026-09-22, learned directly from the ECS Express Mode test-and-delete:
+  a budget *alert* only emails you; a budget *action* can actually stop
+  or restrict resources automatically. Tagging every resource by project
+  gives real per-project cost visibility in Cost Explorer. Needed before
+  any future compute experiment, not just Stage 8.
 - **DNS mechanics in practice** — TTLs, propagation, what actually happens
   when you change a record. You already understand DNS conceptually; this
   is about doing a real cutover carefully. Needed for Stage 10.
@@ -66,23 +88,16 @@ now.)*
 - **RDS / PostgreSQL** — verified zero persistence anywhere in the current
   app (`CURRENT_INFRASTRUCTURE.md` Section E); there's nothing to migrate
   and no current reason to add it.
-- **Lambda + API Gateway** — genuinely well-suited to this app's stateless
-  design *eventually*, but deliberately deferred past the first migration
-  (see the Backend Hosting section of `AWS_MIGRATION_PLAN.md` for why) so
-  you're not learning an adapter layer and cold-start behavior at the same
-  time as everything else.
-- **ECS/Fargate, VPCs, subnets, load balancers, security groups** — this
-  app has no networking requirement that justifies this complexity today;
-  it's real, valuable, advanced AWS knowledge worth learning deliberately
-  later, not bundled into this migration.
+- **Manual ECS/Fargate with hand-configured VPCs, subnets, load balancers,
+  security groups** — updated 2026-09-22: the *simplified* version of this
+  (ECS Express Mode) was already tested hands-on and deleted the same
+  night. The full manual version — configuring each networking piece
+  yourself instead of letting Express Mode auto-provision it — remains
+  real, valuable, advanced AWS knowledge worth a later, deliberate "now I
+  want to learn VPCs" project, not bundled into this migration.
 - **Route 53** — no specific benefit identified over keeping GoDaddy; only
   becomes relevant if you adopt other AWS services that specifically
   integrate with it.
-- **CI/CD pipelines beyond "push triggers a deploy"** — Render already
-  gives you this today in its simplest form; AWS CodePipeline/CodeBuild (or
-  App Runner/Amplify's own built-in equivalents) are worth learning, but
-  not urgently — App Runner and Amplify both have adequate built-in
-  deploy-on-push behavior without needing a hand-built pipeline first.
 - **Auto-scaling configuration** — this app's traffic doesn't currently
   demand it; the default behavior of whichever service you choose is
   sufficient to start.
