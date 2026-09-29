@@ -11,6 +11,48 @@ Labeling convention used throughout, per the request:
 
 ---
 
+## DECISIONS LOCKED, 2026-09-29
+
+The open questions in Section 23 have been answered. These eight
+decisions are now the binding basis for every section below — sections
+originally written as open options have been revised to reflect them,
+not left as multiple-choice. **Phase 1 has explicitly not started.**
+This revision is still audit/design only.
+
+1. **Auth: AWS Cognito**, managed, no custom password handling. Kept
+   behind an internal interface so route handlers never touch
+   Cognito-specific code directly.
+2. **Database: Render-managed PostgreSQL** to start, standard
+   Postgres features only, portable migrations. RDS is not provisioned
+   as part of this feature.
+3. **Frontend: no framework.** Keep the existing plain HTML/JS
+   convention for the Career Profile MVP, but organize the new JS into
+   focused, reusable modules rather than one large script — the first
+   real departure from today's flat, one-file-per-page convention.
+4. **Rollout: Career Profile launches as its own authenticated area
+   first.** None of the six existing tools are modified in the initial
+   build. Sequence: Account → Career Profile → Manual CRUD → Resume
+   ingestion → Evidence verification. Right Fit is the first (and only
+   initially planned) tool integration, and only after that foundation
+   is stable.
+5. **No persistent original-file storage for the MVP.** Uploaded resumes
+   are processed transiently (extract → structure → discard the original
+   bytes) — nothing but the resulting structured/verified data is
+   stored. This removes object storage as a launch dependency entirely.
+6. **Career Profile is explicitly opt-in**, with clear consent language
+   before anything is stored, and eventual review/edit/export/delete
+   rights. Existing anonymous tools are unaffected.
+7. **Certifications never feed `ExperienceSkill` directly.** A new,
+   separate `CertificationSkill` relationship carries certification-
+   derived skills, constrained to `learned_exposure` only — it can never
+   by itself justify `applied_professionally` or
+   `repeated_professional_experience`; only independently verified
+   `Experience`/`Achievement` evidence can.
+8. Phase 1 has not started. This document is still the design artifact
+   under review.
+
+---
+
 ## 1. Executive Summary
 
 **A correction to the brief before anything else, stated plainly because
@@ -581,17 +623,26 @@ entity: purpose, key fields, relationships, data-source type, whether it
 needs provenance, and ownership/security notes.
 
 ### `User`
-- **Purpose:** the account itself.
-- **Key fields:** `id`, `email` (unique), `password_hash` (if
-  self-built auth) or `external_id` (if a managed provider), `created_at`,
+- **Purpose:** the account itself. **Updated per Decision 1:** Cognito
+  is the system of record for credentials — this table never stores a
+  password of any kind.
+- **Key fields:** `id` (internal PK, used by every other table's FK —
+  never expose Cognito's own `sub` as a foreign key target, so a future
+  provider swap only touches this one table), `cognito_sub` (unique,
+  Cognito's own subject identifier — the actual link to the auth
+  provider), `email` (cached from Cognito at signup for display/contact
+  purposes only — never the auth source of truth, never used to look up
+  a user for authorization), `consent_given_at` (nullable timestamp —
+  **null means no Career Profile consent yet**, per Decision 6; account
+  existence and consent are deliberately separate facts), `created_at`,
   `deleted_at` (soft-delete, to support export-before-delete workflows).
 - **Relationships:** one-to-many with every other table below.
-- **Data source:** user-entered (email) / provider-issued (external_id).
+- **Data source:** provider-issued (`cognito_sub`, `email` at signup).
 - **Provenance:** not applicable — this is the root of ownership.
-- **Security:** the single most sensitive table. Password hashing must
-  use a real KDF (bcrypt/argon2) if self-built; if a managed provider is
-  chosen, this table may not store credentials at all, only a reference
-  ID — a real fork addressed in Section 23.
+- **Security:** no credential material stored here at all. The
+  `cognito_sub` is the only field that must never be accepted from a
+  request body — it's derived exclusively from a verified JWT (see
+  Deliverable E).
 
 ### `CareerProfile`
 - **Purpose:** the top-level container for one user's evidence vault —
@@ -721,12 +772,45 @@ needs provenance, and ownership/security notes.
   `issued_date` (nullable), `expires_date` (nullable), `source`,
   `verified`.
 - **Relationships:** many-to-one to `CareerProfile`; one-to-many with
-  `ExperienceSkill`-style rows where `evidence_level =
-  learned_exposure` specifically (a certification alone can only ever
-  justify `learned_exposure`, never a higher evidence level, unless a
-  linked `Experience` independently supports more — this rule belongs in
-  application logic, not just the schema, and is worth stating as an
-  explicit invariant).
+  `CertificationSkill` (below) — **updated per Decision 7:** no longer
+  described as feeding `ExperienceSkill`-shaped rows; it has its own
+  distinct relationship now, enforced at the schema level, not just by
+  convention.
+
+### `CertificationSkill` — new, per Decision 7
+- **Purpose:** the certification-derived equivalent of
+  `ExperienceSkill`, kept as a **structurally separate table** so a
+  certification alone can never be mistaken for — or silently
+  contribute evidence toward — professional experience. This is a
+  schema-level enforcement of the brief's own rule, not just an
+  application-logic convention that could be bypassed by a future
+  shortcut.
+- **Key fields:** `id`, `certification_id` (FK), `skill_id` (FK),
+  `source_text` (why this certification implies this skill — e.g. "IBM
+  Product Management Certificate covers customer discovery"),
+  `evidence_level` — **constrained by a database CHECK constraint to
+  the single value `learned_exposure`.** This is deliberately not left
+  to application code to enforce alone: `CertificationSkill.evidence_level
+  != 'learned_exposure'` should be a constraint violation, not just a
+  bug that's possible to introduce later. `applied_professionally` and
+  `repeated_professional_experience` are **not valid values in this
+  table at all** — those levels can only ever come from
+  `ExperienceSkill`, tied to real `Experience`/`Achievement` evidence.
+  Also: `confidence` (`ai_suggested` | `user_confirmed`), `verified_at`.
+- **Relationships:** many-to-one to `Certification`; many-to-one to
+  `Skill` (the same canonical `Skill` table `ExperienceSkill` uses — a
+  skill is one thing regardless of source; only the *evidence* differs).
+- **Matching implication, worth stating explicitly since it affects
+  Phase 5:** when the Career Match engine scores a job's required
+  skills against the profile, a skill supported *only* by
+  `CertificationSkill` should be treated as a materially weaker signal
+  than one supported by `ExperienceSkill` — likely surfaced as
+  "Possible" or "Needs development," never counted the same as
+  demonstrated professional evidence in the Career Match percentage.
+  The exact weighting is a Phase 5 design detail, not resolved here, but
+  the schema-level separation is what makes that distinction possible
+  to enforce later at all.
+- **Security:** ownership-scoped via `Certification` → `CareerProfile`.
 
 ### `Language`
 - **Purpose:** spoken/written languages and proficiency.
@@ -776,14 +860,21 @@ needs provenance, and ownership/security notes.
 
 ### `ResumeVersion`
 - **Purpose:** a generated (or uploaded-and-ingested) resume, versioned
-  over time.
+  over time. **Updated per Decision 5: no original file is ever
+  persisted.** An uploaded resume is extracted and structured
+  transiently (reusing `extractor.py` in memory, exactly as every
+  existing tool already does today), and only the resulting structured
+  data reaches this table — the original bytes are discarded the moment
+  extraction completes, the same in-memory-only lifetime the app's
+  existing six tools already guarantee for every upload.
 - **Key fields:** `id`, `career_profile_id` (FK), `resume_data` (JSONB —
   matches `resume_builder.py`'s existing schema exactly, so the existing
   `.docx` generator can consume it unchanged), `source`
   (`uploaded` | `generated`), `target_job_analysis_id` (FK, nullable —
   which `JobAnalysis` this version was generated for, if any),
-  `file_storage_key` (nullable — pointer to the original uploaded file
-  in object storage, if `source = uploaded`), `created_at`.
+  `created_at`. **No `file_storage_key` field** — removed entirely, not
+  left nullable-and-unused, so the schema itself doesn't imply a
+  capability the MVP deliberately doesn't have.
 - **Relationships:** many-to-one to `CareerProfile`; referenced by
   `JobAnalysis.resume_version_id`.
 - **Provenance:** each bullet inside `resume_data` should carry an
@@ -908,23 +999,30 @@ what this specific codebase actually needs first.
 - **Complexity:** Low.
 
 ### Phase 1 — Accounts / authentication
-- **Objectives:** real login/registration/session handling — the
-  single biggest net-new capability this whole feature depends on.
-- **Files likely affected:** new `backend/auth/` package; `main.py`
-  gains auth dependency injection for protected routes.
-- **DB changes:** `User` table (and session/token storage, depending on
-  the chosen approach).
-- **API changes:** new `/api/auth/*` endpoints (or none, if a managed
-  provider like Cognito handles this externally and the backend only
-  verifies tokens).
-- **Frontend changes:** new login/register UI — the first genuinely new
-  UI pattern this codebase will have.
-- **Dependencies:** Phase 0's provider decision.
-- **Risks:** this is the highest-stakes phase from a security standpoint
-  — password handling, session/token security, and CORS tightening all
-  need to be correct before any real user data exists behind them.
-- **Complexity:** Medium-High (Medium if a managed provider is chosen,
-  High if self-built).
+- **Objectives:** Cognito-backed login/registration/session handling
+  (Decision 1, locked) — the single biggest net-new capability this
+  whole feature depends on. **Explicitly not started** — this remains
+  planning only per your instruction.
+- **Files likely affected:** new `backend/auth/` package (see
+  Deliverable G for exact contents); `main.py` gains auth dependency
+  injection for protected routes only — the 13 existing anonymous
+  endpoints are untouched.
+- **DB changes:** `User` table only — Cognito itself holds credentials,
+  so there's no password/session-token table on our side.
+- **API changes:** no custom `/api/auth/*` login endpoints — Cognito's
+  own API handles signup/login directly from the frontend; the backend
+  only ever verifies tokens (see Deliverable C).
+- **Frontend changes:** new login/register pages, styled consistently
+  with the existing site (Deliverable C) rather than Cognito's default
+  Hosted UI look.
+- **Dependencies:** none remaining — Decision 1 resolved the only open
+  question this phase had.
+- **Risks:** still the highest-stakes phase, now for token/session
+  handling and CORS tightening specifically (credential storage itself
+  is Cognito's problem, not ours, which meaningfully lowers this phase's
+  risk versus the self-built option originally considered).
+- **Complexity:** Medium (lower than originally estimated, specifically
+  because Decision 1 removed the self-built-auth path).
 
 ### Phase 2 — Career Profile CRUD
 - **Objectives:** `CareerProfile`, `Experience`, `Education`,
@@ -1002,11 +1100,11 @@ what this specific codebase actually needs first.
 - **Complexity:** Low.
 
 ### Phase 9 — Integration into existing tools
-- **Objectives:** the Section 15 integrations, one tool at a time,
-  starting with Right Fit (highest value, lowest risk to existing
-  behavior).
-- **Complexity:** Medium per tool, and should be done one tool at a
-  time with its own verification pass, not all at once.
+- **Objectives, locked per Decision 4:** Right Fit only, and only after
+  Phases 1-4 are stable in production. No other tool is touched in the
+  initial build — Refine, Beginning, Prepare, and Spotlight integrations
+  (Section 15) remain future work, not part of this plan's scope.
+- **Complexity:** Medium, for the one integration actually planned.
 
 ### Phase 10 — Future job search / recommendations
 - **Objectives:** explicitly out of scope for detailed planning here —
@@ -1018,53 +1116,48 @@ what this specific codebase actually needs first.
 
 ## 17. Hosting Recommendation
 
-**Recommendation:**
+**Recommendation, updated for the locked decisions above:**
 
 ### Keep Now
 - **Render** for backend hosting — nothing about this feature requires
-  leaving it. Render offers a **managed PostgreSQL add-on**, which is
-  the lowest-friction way to add the one piece of infrastructure this
-  feature genuinely needs, without introducing a second cloud provider
-  or any new deployment complexity.
-- **GoDaddy** for DNS — unaffected by any of this; authentication and a
-  database don't touch DNS at all.
-- **The current no-separate-frontend-host model** — even with new
-  Career Profile pages, there's no technical reason the static-file-plus
-  -API single-process model needs to change for this feature
-  specifically (it may still be worth reconsidering *frontend framework
-  choice* per Section 3's flag, but that's a UI-complexity decision, not
-  a hosting one).
+  leaving it. Render's own **managed PostgreSQL add-on** is the decided
+  database (Decision 2).
+- **GoDaddy** for DNS — unaffected by any of this.
+- **The current no-separate-frontend-host model** — decided to stay
+  (Decision 3); the Career Profile pages are served by the same FastAPI
+  process, same as every page today.
 
 ### Short-term (needed specifically for Career Profiles)
-- **A managed PostgreSQL database** (Render's own add-on is the
-  simplest start; this is also directly portable to RDS later with no
-  wasted learning — see Section 18).
-- **Real authentication** (Section 23's provider question).
-- **Object storage for original uploaded resume files**, separate from
-  the structured data in Postgres — this is the one piece that doesn't
-  have an obvious "stay on Render" answer, since Render doesn't offer
-  object storage itself. Options: S3 (works fine even while everything
-  else stays on Render — nothing requires all infrastructure to live in
-  one place), or simply *not* keeping the original file at all and only
-  keeping the extracted/structured data (a real, valid simplification
-  worth considering, since `ResumeVersion.resume_data` already captures
-  everything the app itself needs — the original file's only remaining
-  value is "let the user re-download exactly what they uploaded," which
-  may or may not be worth the storage complexity).
-- **A staging/preview environment**, which doesn't exist today at all —
-  worth having *before* shipping authentication and real user data, not
-  after.
+- **Render's managed PostgreSQL add-on** (Decision 2 — locked, not a
+  choice between options anymore).
+- **AWS Cognito** (Decision 1 — locked). Worth naming plainly: this is
+  the one piece of AWS actually entering the architecture now, not
+  later — a deliberate, narrowly-scoped adoption of one managed service
+  for one specific job (authentication), not the start of a broader
+  migration. Everything else — compute, database — stays on Render.
+  Section 18 still applies: this is compatibility-driven adoption of the
+  right tool for one job, not migration for its own sake.
+- **Object storage is explicitly NOT a launch dependency** (Decision 5
+  — this removes what was previously the one short-term item without an
+  obvious "stay on Render" answer). Uploaded resumes are processed
+  transiently and discarded; nothing needs a place to live beyond the
+  request that ingests it.
+- **A staging/preview environment**, which doesn't exist today — still
+  worth having before shipping authentication and real user data,
+  unchanged from the original recommendation.
 
 ### Consider Later
-- **CloudFront/S3 for the frontend**, once/if the frontend framework
-  question (Section 3) is resolved in favor of something with a real
-  build step.
+- **S3**, only if persistent original-file storage is ever built as its
+  own later feature (Decision 5 explicitly defers this, not cancels it).
+- **CloudFront/S3 for the frontend**, only if the no-framework decision
+  (Decision 3) is ever revisited.
 - **Secrets Manager or Parameter Store**, once there's more than the
-  current single `ANTHROPIC_API_KEY` to manage (a database connection
-  string and auth-provider credentials would make this worth doing).
+  current API key plus a database connection string plus Cognito
+  configuration to manage — worth re-evaluating once Phase 1 is actually
+  built, not before.
 - **Moving the database to RDS**, only if/when Render Postgres's own
-  limits (storage, connection count, backup granularity) actually become
-  a real constraint — not preemptively.
+  limits become a real, observed constraint — not preemptively (Decision
+  2, explicit).
 
 ---
 
@@ -1077,9 +1170,9 @@ maps *compatibility*, not urgency.
 
 | AWS Service | Would it make sense here? | Why / why not |
 |---|---|---|
-| **Cognito** | Yes, if a managed auth provider is chosen (Section 23) | Directly solves Phase 1's hardest problem (secure password/session handling) without building it yourself — strong fit *if* you're already leaning AWS for learning purposes; a non-AWS alternative (Auth0, Clerk) would work equally well technically |
-| **RDS PostgreSQL** | Yes, later, not now | Render Postgres and RDS Postgres are the same engine — the `Experience`/`Skill`/etc. schema in Section 13 is fully portable either direction with zero redesign. Move only if Render Postgres's actual limits become real |
-| **S3** | Yes, for original-file storage specifically | The one piece of this feature with no natural Render-native answer (Section 17) — a reasonable place to *start* using AWS for one specific need, without moving everything else |
+| **Cognito** | **Decided: yes (Decision 1).** | Solves Phase 1's hardest problem (secure credential/session handling) without building it yourself, kept behind an internal interface (Deliverable E) so this choice stays swappable later if it ever needs to be |
+| **RDS PostgreSQL** | Not now (Decision 2, explicit) | Render Postgres and RDS Postgres are the same engine — the schema in Section 13 is fully portable either direction with zero redesign whenever the move actually makes sense |
+| **S3** | Not a launch dependency (Decision 5) | Deferred, not cancelled — only relevant if persistent original-file storage is ever built as a separate later feature |
 | **App Runner / ECS / Lambda** | Not for this feature specifically | Nothing about Career Profiles requires moving backend compute off Render — this would be the same AWS backend-hosting decision already covered in `AWS_MIGRATION_PLAN.md`, independent of this feature |
 | **CloudFront / Amplify** | Only if the frontend framework question resolves toward a real build step | Otherwise no different from today's Render-served static files |
 | **Secrets Manager** | Later, once there's more than one secret to manage | Not urgent at today's scale (one API key) |
@@ -1158,35 +1251,401 @@ start building, once you've reviewed and approved this audit.
 
 ## 23. Questions For Us Before Any Coding Begins
 
-1. **Authentication provider:** self-built (full control, more code to
-   secure correctly, no recurring cost) vs. a managed provider like
-   Cognito, Auth0, or Clerk (faster, offloads the highest-security-stakes
-   part of this feature, small recurring cost, and — if Cognito — doubles
-   as real AWS hands-on learning). This is the single most consequential
-   open decision in this whole audit.
-2. **Database provider to start:** Render's own Postgres add-on
-   (simplest, stays in one place) vs. provisioning RDS from day one
-   (more AWS learning sooner, more moving pieces sooner). Section 17
-   recommends starting with Render Postgres; worth confirming that
-   matches your own priorities.
-3. **Frontend approach for the Career Profile UI specifically:** keep
-   the existing hand-written-HTML-per-page convention (consistent with
-   the rest of the site, but this feature is more form-heavy/stateful
-   than anything built so far), or introduce a lightweight framework now
-   that the UI complexity justifies it (a real scope/tooling decision,
-   not something to default into either direction).
-4. **Rollout scope:** should the Career Profile ship as something
-   entirely separate from the six existing tools at first (an isolated
-   "My Career Profile" area, usable on its own), or should Phase 9's
-   tool integrations be pulled forward and treated as part of the
-   initial launch rather than a later phase?
-5. **Original-file retention:** keep the originally-uploaded resume file
-   in object storage for re-download (adds S3 as a dependency), or store
-   only the extracted/structured data and treat the original file as
-   disposable once ingested (simpler, no object-storage dependency, but
-   the user loses the ability to get back their exact original file)?
-6. **Privacy/consent UX:** given the site's current "we don't save
-   anything" promise, how explicit and how prominent should the opt-in
-   consent flow be before anyone's first piece of Career Profile data is
-   stored? This is a product/legal question this audit can't answer for
-   you.
+**Resolved 2026-09-29 — see "DECISIONS LOCKED" near the top of this
+document.** The six questions originally posed here (auth provider,
+database provider, frontend approach, rollout scope, original-file
+retention, privacy/consent posture) were all answered and are now
+binding decisions 1-6. This section is kept, unedited in spirit, as the
+historical record of what was asked — not because it's still open.
+
+**Remaining open items, surfaced while producing Deliverables A-G below
+— none of these block Phase 0, but worth your input before Phase 1:**
+
+1. **Cognito Hosted UI vs. a custom-built login page calling Cognito's
+   API directly.** Deliverable C recommends the custom-page approach (to
+   match the site's existing visual design, consistent with Decision 3's
+   "no framework, but still our own pages" spirit) — flagged as a
+   recommendation, not treated as already decided by Decision 1, since
+   Decision 1 addressed *which provider*, not *which login UI pattern*.
+2. **SQLAlchemy + Alembic as the ORM/migration tooling** — proposed in
+   Deliverable B as the natural pairing for "standard PostgreSQL,
+   portable migrations" (Decision 2), but this specific tool choice
+   wasn't explicitly named in your decisions, so it's presented as a
+   recommendation to confirm, not an eighth locked decision.
+3. **Certification-derived skill matching weight** (referenced in the
+   updated `CertificationSkill` entity, Section 13) — the schema now
+   enforces that certifications can never claim professional-level
+   evidence, but the exact scoring weight a certification-only skill
+   should carry in the Phase 5 Career Match percentage is a real design
+   decision for that phase, not resolved here.
+
+---
+
+## 24. Deliverable A — Data Model Update Summary
+
+Full detail is in the revised Section 13 above; this is a short index of
+what actually changed, so the diff from the original proposal is easy to
+scan without re-reading every entity:
+
+- **`User`:** `password_hash` removed entirely; added `cognito_sub`
+  (the real identity link) and `consent_given_at` (Decision 6 — null
+  until explicit consent).
+- **`ResumeVersion`:** `file_storage_key` removed entirely (Decision 5)
+  — no field even exists to imply the capability.
+- **`Certification`:** its relationship to skill evidence was
+  restructured — no longer implied to feed `ExperienceSkill`-shaped
+  rows.
+- **`CertificationSkill`:** new table (Decision 7) — structurally
+  separate from `ExperienceSkill`, with `evidence_level` constrained by
+  a database CHECK constraint to `learned_exposure` only.
+- **Everything else** (`CareerProfile`, `Experience`, `Achievement`,
+  `Skill`, `SkillAlias`, `ExperienceSkill`, `Technology`/
+  `ExperienceTechnology`, `Education`, `Language`,
+  `GeographicExperience`, `IndustryExperience`, `JobPreference`,
+  `JobAnalysis`) is **unchanged** from the original proposal —
+  `ExperienceSkill` specifically was kept exactly as proposed, per
+  Decision 7's explicit instruction.
+
+---
+
+## 25. Deliverable B — Phase 0 Exact Implementation Checklist
+
+**Recommendation.** Ordered, concrete, still zero production code —
+this is provisioning and one code-organization refactor, not feature
+work. Each item names what it actually is, not just a label.
+
+1. **Tighten CORS in `backend/main.py`** — replace
+   `allow_origins=["*"]` with the real frontend origin(s)
+   (`https://creatingtomorrow.net`, plus whatever local dev origin is
+   used). Harmless today with no auth/cookies; becomes load-bearing the
+   moment Phase 1 introduces authenticated requests, so doing it now
+   means Phase 1 doesn't inherit a half-finished security prerequisite.
+2. **Create the Cognito User Pool** (AWS Console or IaC — a one-time
+   setup task, addressed in full in Deliverable C). No application code
+   depends on this existing yet in Phase 0; this just makes the User
+   Pool ID/Client ID available for Phase 1.
+3. **Provision the Render PostgreSQL add-on** (full configuration in
+   Deliverable D) and confirm `DATABASE_URL` is available as an
+   environment variable to the existing web service — nothing reads it
+   yet.
+4. **Choose and pin the ORM/migration tooling** — recommended:
+   SQLAlchemy (2.x, using its modern declarative style) + Alembic.
+   Rationale: this is the most standard, most portable pairing for
+   "plain PostgreSQL, no proprietary features, migrations that move
+   cleanly to RDS later" (Decision 2) — nothing exotic, nothing that
+   locks you to Render. Add both to `backend/requirements.txt`; do not
+   create any models or migrations yet.
+5. **Add the remaining new dependencies to `backend/requirements.txt`:**
+   a Postgres driver (`psycopg[binary]` — the modern, actively
+   maintained psycopg3, rather than the older psycopg2), and a JWT
+   verification library for Cognito tokens (`python-jose[cryptography]`
+   is the common choice for verifying Cognito's RS256-signed JWTs
+   against its published JWKS).
+6. **Extract the duplicated "restructure resume into JSON" prompt logic**
+   (confirmed duplicated across `coach.py`, `upgrade.py`, `elevate.py`,
+   and `prepare.py`/`profile_review.py` in Section 8) into one new shared
+   function — e.g. `backend/resume_ingestion.py`. **Critically: do not
+   change what any of the six existing tools do yet.** This step is
+   purely "create the shared version," not "make the existing tools use
+   it" — that migration is separate, later work, and out of scope for
+   Phase 0. The immediate purpose is that Phase 3 (resume ingestion into
+   the Career Profile) has one correct place to call, not a sixth
+   near-duplicate copy.
+7. **Do not touch:** any existing route in `main.py` beyond the CORS
+   line in step 1; any existing tool module's behavior; `render.yaml`'s
+   existing `buildCommand`/`startCommand` (only its environment variable
+   references grow, in step 3).
+8. **Verify, before calling Phase 0 done:** the existing six tools still
+   work exactly as before (a quick pass through each, matching this
+   project's established practice of verifying against the real app, not
+   just reading the diff) — Phase 0 should be invisible to every current
+   anonymous user.
+
+---
+
+## 26. Deliverable C — Proposed Cognito Integration Design
+
+**Recommendation.**
+
+### Pool setup
+- One Cognito **User Pool** for this application. Standard attributes:
+  email (required, used as the username), no phone number requirement
+  (keep the signup form minimal, consistent with Decision 6's "minimal
+  personal data collection" principle).
+- **Email/password sign-in only for the MVP** — no social login (Google/
+  Microsoft OAuth via Cognito) in the initial build; a reasonable later
+  addition, not a Phase 1 requirement.
+- MFA: optional, not required, for the MVP — worth revisiting once real
+  users exist, but not a launch blocker for what is, at this stage, a
+  career-document storage feature, not a financial one.
+
+### Login UI: custom page, not Cognito's Hosted UI
+- **Recommendation:** build `frontend/career/login.html` /
+  `register.html` as plain HTML/JS (consistent with Decision 3), calling
+  Cognito's own API directly via the `amazon-cognito-identity-js` SDK
+  (a client-side library, not a backend dependency) rather than
+  redirecting to Cognito's default-styled Hosted UI.
+- **Why:** Cognito's Hosted UI is faster to stand up but visually
+  breaks from the rest of the site (it's AWS's own default styling,
+  not this site's cobalt/gold brand) — for a feature meant to feel like
+  a natural part of Creating Tomorrow rather than a hand-off to a
+  third-party screen, the small extra effort of a custom page is worth
+  it. This is presented as a recommendation (Section 23, item 1), not
+  something Decision 1 already settled.
+
+### Token flow
+1. User submits email/password on the custom login page →
+   `amazon-cognito-identity-js` calls Cognito directly from the
+   browser — the backend is never involved in this exchange, and never
+   sees the password.
+2. Cognito returns an **ID token** (a signed JWT containing the user's
+   `sub`, email, and standard claims) and an access token.
+3. The frontend stores the ID token in memory for the session (a plain
+   JS variable, matching this app's existing "nothing persists across a
+   reload" convention) — **not `localStorage`**, to limit the token's
+   exposure window if the page is ever compromised by any future
+   XSS-class issue; re-authenticating on a hard refresh is an acceptable
+   MVP tradeoff for the added safety.
+4. Every subsequent request to a protected `/api/career/*` endpoint
+   includes the ID token as `Authorization: Bearer <token>`.
+
+### Backend verification (the "internal interface" from Decision 1)
+- A single new FastAPI dependency, e.g. `get_current_user()` in
+  `backend/auth/dependencies.py`:
+  1. Extracts the bearer token from the request.
+  2. Verifies its signature against Cognito's published JWKS (fetched
+     from Cognito's well-known endpoint, cached rather than fetched on
+     every request).
+  3. Confirms the token isn't expired and its issuer/audience match this
+     app's User Pool/Client ID.
+  4. Looks up (or, on a verified user's very first request, creates)
+     the internal `User` row by `cognito_sub`.
+  5. Returns the internal `User` object — **every route handler
+     downstream only ever sees this internal object, never a raw Cognito
+     token or claim.** This is the entire "internal interface" Decision 1
+     asked for: if the auth provider ever changed, only this one
+     dependency's implementation would need to change — no route handler
+     anywhere would need to know or care.
+
+---
+
+## 27. Deliverable D — Proposed Render PostgreSQL Configuration
+
+**Recommendation.**
+
+- **Plan tier:** start on Render's lowest-cost Postgres tier available.
+  Consistent with this project's established budget-consciousness (the
+  same reasoning that drove the Lambda-over-ECS decision earlier this
+  project) — upgrade only once real usage data shows it's actually
+  needed, not preemptively.
+- **SSL:** Render Postgres requires SSL connections by default
+  (`sslmode=require` in the connection string) — this needs to be
+  reflected in however the SQLAlchemy engine is configured in Phase 0/1,
+  not discovered as a surprise later.
+- **Connection wiring:** link the Postgres instance to the existing
+  `creating-tomorrow` web service in Render's dashboard, which
+  auto-populates a `DATABASE_URL` environment variable — no manual
+  connection-string copying into `render.yaml`, consistent with how
+  `ANTHROPIC_API_KEY` is already handled (dashboard-set, never in the
+  repo).
+- **Connection pooling:** a single low-tier Postgres instance has a
+  real, limited maximum connection count. Configure SQLAlchemy's engine
+  with a conservative pool size (small `pool_size`, modest `max_overflow`)
+  from the start, rather than defaulting to values sized for a much
+  larger deployment — this matters more than it would on a bigger plan,
+  specifically because of the deliberately low-cost tier choice above.
+- **Backups/retention:** Render's exact backup retention policy at each
+  plan tier — **Not verified from the current codebase**; check Render's
+  current published Postgres documentation/dashboard before relying on
+  any specific retention window, since this materially affects the
+  Decision 6 "users must eventually be able to export/delete" commitment
+  (a backup retention window is a real recovery/privacy consideration,
+  not just an operational detail).
+- **Migrations:** Alembic (Deliverable B), run manually for now — Render
+  supports a "Pre-Deploy Command" that could run `alembic upgrade head`
+  automatically on future deploys, worth adopting once the migration
+  history is established, not on day one while the schema is still
+  actively taking shape.
+
+---
+
+## 28. Deliverable E — Ownership / Authorization Pattern for Career Profile Routes
+
+**Recommendation.**
+
+**The core rule, stated once so it can be enforced consistently: every
+Career Profile route derives the acting user exclusively from the
+verified Cognito token (via `get_current_user()`, Deliverable C) — never
+from a path parameter, query string, or request body.** A URL like
+`/api/career/experiences/42` must never trust a client-supplied user or
+profile ID to decide *whose* data row 42 belongs to; ownership is always
+re-derived server-side from the token on every single request.
+
+Concretely:
+
+1. **Every protected route declares `current_user: User =
+   Depends(get_current_user)`** as a parameter — FastAPI's dependency
+   injection makes this hard to accidentally omit, since the route
+   simply doesn't have a `current_user` to use if the dependency isn't
+   declared.
+2. **A single helper, not repeated per-route logic:**
+   `get_career_profile_or_404(db, current_user)` — looks up the
+   `CareerProfile` row belonging to `current_user.id`, raising 404 if
+   none exists (e.g. consent hasn't been given yet — see Deliverable F).
+   Every route that touches Career Profile data calls this helper first,
+   rather than each route hand-rolling its own ownership filter — this
+   directly addresses the "ownership-scoping bug" risk flagged in
+   Section 10/16 (Phase 2): there's exactly one place this logic lives,
+   not thirty places it could be gotten wrong independently.
+3. **Every child-entity query (Experience, Achievement, Skill evidence,
+   etc.) joins through `CareerProfile.user_id == current_user.id`** —
+   never queries a child table by its own ID alone without that join,
+   even though it would often "work" without it (the row exists) —
+   the join is what prevents User A from reading or editing User B's
+   row 42 just because they guessed or enumerated the ID.
+4. **No admin/role concept in the MVP** — every user only ever accesses
+   their own data; there's no support-staff or admin read path proposed
+   here, consistent with Decision 6's minimal-data-collection principle
+   and simply not a stated requirement anywhere in the brief.
+
+---
+
+## 29. Deliverable F — Privacy / Consent User Flow
+
+**Recommendation**, directly implementing Decision 6.
+
+1. **Anonymous use of the six existing tools is completely unaffected.**
+   No login prompt, no consent screen, nothing changes for anyone who
+   never visits the Career Profile area — this is the literal meaning of
+   "opt-in," not a soft suggestion.
+2. **A visitor who wants a Career Profile clicks into that area and is
+   prompted to sign up or log in** (Deliverable C's custom pages).
+   Successfully creating a Cognito account creates an internal `User`
+   row — but **`consent_given_at` is still null at this point.** Having
+   an account and having consented to Career Profile data storage are
+   two separate, deliberately un-conflated facts (Section 13).
+3. **On first entry to the actual Career Profile area, before any CRUD
+   form, upload field, or AI suggestion is shown**, a plain-language
+   consent screen states, specifically and concretely (not buried in a
+   general Terms of Service link):
+   - What will be stored (their career history, skills, education, etc.
+     — named plainly, not just "your data").
+   - Why (so tools like Right Fit can compare against their whole
+     career, not just one uploaded resume — tied back to the actual
+     stated purpose, not generic boilerplate).
+   - That nothing becomes part of their profile without their explicit
+     confirmation, even when the AI suggests it (restating the brief's
+     own core promise back to the user, since it's the single most
+     reassuring, concrete thing this screen can say).
+   - Their rights: review, edit, export, and delete their data — stated
+     as real rights on this screen itself, not deferred to a settings
+     page they'd have to go find.
+4. **Only an explicit, affirmative action** — a real, clearly-labeled
+   button ("Yes, save my career information") — **sets
+   `consent_given_at`** and creates the `CareerProfile` row. No
+   pre-checked box, no "continuing implies consent" framing.
+5. **Before `consent_given_at` is set, no Career Profile data can be
+   written** — enforced by Deliverable E's `get_career_profile_or_404`
+   helper naturally, since there's no `CareerProfile` row to write
+   children onto yet; the consent gate isn't just a UI screen, it's a
+   genuine data-model precondition.
+6. **Review/edit/export/delete**, per Decision 6's "users must eventually
+   be able to" language — explicitly **not required for the MVP launch
+   itself**, but the data model (Section 13) and the ownership pattern
+   (Deliverable E) are both already shaped so that adding these later is
+   straightforward: export is "serialize everything under this
+   `CareerProfile`," delete is "cascade-delete everything under this
+   `CareerProfile`" (plus the `User.deleted_at` soft-delete for the
+   account itself) — no schema rework needed when this is built.
+
+---
+
+## 30. Deliverable G — Proposed Folder / File Structure
+
+**Recommendation**, following the existing codebase's established
+convention (one module per concern) rather than introducing an
+unfamiliar structure.
+
+### Backend
+
+```
+backend/
+  main.py                 UNCHANGED entry point; gains CORS tightening
+                           (Phase 0) and new router includes (Phase 1+)
+  auth/
+    __init__.py
+    cognito.py             JWKS fetching/caching, JWT verification
+    dependencies.py         get_current_user() - the one "internal
+                             interface" every protected route depends on
+  db.py                    SQLAlchemy engine/session setup - the first
+                           database connection this codebase will have
+  models/
+    __init__.py
+    user.py                User
+    career_profile.py       CareerProfile, Experience, Achievement,
+                             GeographicExperience, IndustryExperience,
+                             Education, Certification, Language,
+                             JobPreference
+    skill.py                Skill, SkillAlias, ExperienceSkill,
+                             CertificationSkill, Technology,
+                             ExperienceTechnology
+    resume.py                ResumeVersion, JobAnalysis
+  career/
+    __init__.py
+    routes.py                /api/career/* endpoint definitions
+    ingestion.py             resume upload -> extract (reuses
+                             extractor.py unchanged) -> restructure
+                             (reuses the Phase 0 shared extraction
+                             function) -> candidate evidence rows
+    verification.py           accept/reject/edit endpoints, generalizing
+                             elevate.py's confirm-facts pattern
+    matching.py                Phase 5+: Career Match / Resume Coverage
+                             (not built in Phase 0-4)
+  resume_ingestion.py       NEW in Phase 0 - the extracted shared
+                           "restructure resume text into JSON" function,
+                           consumed by career/ingestion.py; the six
+                           existing tools are NOT changed to use it yet
+  migrations/                Alembic migration scripts
+  # existing files below, entirely unchanged:
+  coach.py, upgrade.py, scratch.py, elevate.py, profile_review.py,
+  prepare.py, extractor.py, resume_builder.py, llm_utils.py,
+  requirements.txt
+```
+
+### Frontend
+
+**Note:** this is the one deliberate departure from the site's existing
+flat `frontend/*.html` convention — justified specifically by Decision
+3's instruction to organize the new JS into focused modules, which a
+flat structure doesn't naturally support once there are this many
+distinct concerns.
+
+```
+frontend/
+  career/
+    login.html
+    register.html
+    consent.html              the Deliverable F screen, its own page
+                             so it can never be skipped by a direct link
+    profile.html               the main Career Profile dashboard/CRUD UI
+    verify.html                  the accept/reject/edit evidence-review UI
+    js/
+      auth.js                  Cognito sign-in/sign-up calls
+                             (amazon-cognito-identity-js), token storage
+      api.js                    shared fetch() helper that attaches the
+                             bearer token - the one place every career/
+                             page's API calls flow through
+      experienceForm.js          manual CRUD form logic for Experience/
+                             Education/Certification/Language
+      evidenceReview.js          the accept/reject/edit UI logic,
+                             generalized from elevate.js's
+                             renderDiscoveredFacts() pattern
+      consentFlow.js             the Deliverable F consent-screen logic
+  # existing files below, entirely unchanged:
+  index.html, tool.html, scratch.html, elevate.html, spotlight.html,
+  prepare.html, learn.html, article.html, videos.html, about.html,
+  app.js, scratch.js, elevate.js, spotlight.js, prepare.js, guide.js,
+  loading.js, markdown.js, style.css
+```
+
+   decision for that phase, not resolved here.
