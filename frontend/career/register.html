@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Your Account — Creating Tomorrow</title>
+  <meta name="description" content="Create a Creating Tomorrow account to build your Career Profile." />
+  <link rel="icon" type="image/png" href="../logo-icon.png" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="../index.html" class="nav-logo"><img src="../logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="../tool.html" class="nav-cta">Career Tools →</a>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <p class="guide-eyebrow" style="text-align: center;">Career Profile</p>
+    <h1>Create your account</h1>
+    <p class="tagline">This is an early, invite-only preview. Your existing tools stay free and fully anonymous — this is a separate, opt-in account.</p>
+  </header>
+
+  <main>
+    <section class="card" id="step-signup">
+      <h2>1. Your email and password</h2>
+      <form id="signup-form">
+        <label class="field">
+          <span>Email</span>
+          <input type="email" id="signup-email" required />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input type="password" id="signup-password" minlength="8" required />
+          <span class="hint">At least 8 characters.</span>
+        </label>
+        <button type="submit" id="signup-btn">Create Account</button>
+      </form>
+      <div id="signup-error" class="error" hidden></div>
+    </section>
+
+    <section class="card" id="step-confirm" hidden>
+      <h2>2. Confirm your email</h2>
+      <p>We sent a confirmation code to <strong id="confirm-email-display"></strong>. Enter it below.</p>
+      <form id="confirm-form">
+        <label class="field">
+          <span>Confirmation code</span>
+          <input type="text" id="confirm-code" required />
+        </label>
+        <button type="submit" id="confirm-btn">Confirm</button>
+      </form>
+      <button type="button" id="resend-btn" class="btn-secondary">Resend code</button>
+      <div id="confirm-error" class="error" hidden></div>
+      <div id="confirm-resend-msg" class="success" hidden></div>
+    </section>
+
+    <section class="card" id="step-done" hidden>
+      <h2>You're all set</h2>
+      <p class="success">Your account is confirmed. You can now <a href="login.html">log in</a>.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Creating Tomorrow's Career Profile is an early, invite-only preview. Everything else on this site remains free and fully anonymous.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.20/dist/amazon-cognito-identity.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="register.js"></script>
+</body>
+</html>
