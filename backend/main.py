@@ -87,6 +87,7 @@ from elevate import analyze_for_discovery, discover, finalize_elevate, ElevateEr
 from profile_review import review_profile, ProfileReviewError
 from prepare import prepare, PrepareError
 from resume_builder import build_resume_bytes, build_match_recap_bytes, build_profile_review_recap_bytes
+from db import check_connection
 
 app = FastAPI(title="Creating Tomorrow API")
 
@@ -505,7 +506,19 @@ async def api_generate(req: GenerateRequest):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "api_key_configured": bool(os.environ.get("ANTHROPIC_API_KEY"))}
+    database_status = "not_configured"
+    if os.environ.get("DATABASE_URL"):
+        try:
+            await run_in_threadpool(check_connection)
+            database_status = "connected"
+        except Exception as e:
+            database_status = f"error: {type(e).__name__}"
+
+    return {
+        "status": "ok",
+        "api_key_configured": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "database": database_status,
+    }
 
 
 # Serve the static frontend last, so /api/* routes above take priority.

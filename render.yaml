@@ -6,7 +6,11 @@ services:
   - type: web
     name: creating-tomorrow
     runtime: python
-    plan: free
+    # Manually upgraded from free in the Render dashboard (2026-09-29) to
+    # eliminate spin-down/cold-start delay for users. Kept in sync here
+    # deliberately - this service is Blueprint-managed, so the next
+    # Blueprint sync would otherwise silently revert it back to free.
+    plan: starter
     buildCommand: "pip install -r backend/requirements.txt"
     startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
