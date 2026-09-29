@@ -6,3 +6,11 @@ pypdf
 ftfy
 anthropic
 pydantic
+
+# Added for Career Profile Phase 0 (docs/CAREER_PROFILE_ARCHITECTURE_AUDIT.md).
+# Not yet imported/used by any route - see backend/resume_ingestion.py and
+# the Phase 0 completion report for what's actually wired up so far.
+sqlalchemy==2.0.*
+alembic==1.*
+psycopg[binary]
+python-jose[cryptography]

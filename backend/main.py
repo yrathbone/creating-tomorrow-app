@@ -91,12 +91,23 @@ from resume_builder import build_resume_bytes, build_match_recap_bytes, build_pr
 app = FastAPI(title="Creating Tomorrow API")
 
 # Only needed if the frontend is ever served from a different origin than
-# the API (e.g. local dev with a separate dev server). Same-origin
-# deployment (frontend served by this same app) doesn't need this, but it's
-# harmless to leave permissive for now since there's no auth/cookies here.
+# the API (e.g. local dev with a separate dev server - .claude/launch.json's
+# frontend-static config, port 8123, calling backend-full's API on 8124).
+# Same-origin deployment (frontend served by this same app, as production
+# always is) doesn't strictly need this. Tightened from allow_origins=["*"]
+# as Phase 0 of the Career Profile work (docs/CAREER_PROFILE_ARCHITECTURE_
+# AUDIT.md) - a wildcard becomes a real risk the moment Phase 1 introduces
+# authenticated, cookie/token-bearing requests, so this is fixed before
+# that need arrives rather than after.
+ALLOWED_ORIGINS = [
+    "https://creatingtomorrow.net",
+    "https://www.creatingtomorrow.net",
+    "http://localhost:8123",  # frontend-static, per .claude/launch.json
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
