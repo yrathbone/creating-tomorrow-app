@@ -51,6 +51,22 @@ This revision is still audit/design only.
 8. Phase 1 has not started. This document is still the design artifact
    under review.
 
+**Three additional items confirmed 2026-09-29**, resolving the
+"Remaining open items" originally listed in Section 23:
+
+9. **Custom login page, not Cognito Hosted UI** — confirmed. Keeps the
+   Creating Tomorrow visual identity; Cognito remains the sole
+   credential/session authority underneath it (Deliverable C's design
+   already reflected this as a recommendation — now locked).
+10. **SQLAlchemy + Alembic** — confirmed as the ORM/migration tooling
+    (Deliverable B's recommendation — now locked).
+11. **Certification-skill matching weight — explicitly deferred**, not
+    decided now. No scoring weight should be invented ahead of the real
+    Career Match engine (Phase 5) and real beta-test data; the schema-
+    level separation (`CertificationSkill` vs. `ExperienceSkill`,
+    Decision 7) is what makes that future decision possible, not a
+    reason to guess at the number now.
+
 ---
 
 ## 1. Executive Summary
@@ -1258,26 +1274,13 @@ retention, privacy/consent posture) were all answered and are now
 binding decisions 1-6. This section is kept, unedited in spirit, as the
 historical record of what was asked — not because it's still open.
 
-**Remaining open items, surfaced while producing Deliverables A-G below
-— none of these block Phase 0, but worth your input before Phase 1:**
+**All three items originally listed here were resolved 2026-09-29 — see
+Decisions 9-11 near the top of this document.** Custom login page:
+confirmed. SQLAlchemy + Alembic: confirmed. Certification-skill matching
+weight: explicitly deferred to Phase 5, not decided now, and not to be
+guessed at ahead of real beta-test data.
 
-1. **Cognito Hosted UI vs. a custom-built login page calling Cognito's
-   API directly.** Deliverable C recommends the custom-page approach (to
-   match the site's existing visual design, consistent with Decision 3's
-   "no framework, but still our own pages" spirit) — flagged as a
-   recommendation, not treated as already decided by Decision 1, since
-   Decision 1 addressed *which provider*, not *which login UI pattern*.
-2. **SQLAlchemy + Alembic as the ORM/migration tooling** — proposed in
-   Deliverable B as the natural pairing for "standard PostgreSQL,
-   portable migrations" (Decision 2), but this specific tool choice
-   wasn't explicitly named in your decisions, so it's presented as a
-   recommendation to confirm, not an eighth locked decision.
-3. **Certification-derived skill matching weight** (referenced in the
-   updated `CertificationSkill` entity, Section 13) — the schema now
-   enforces that certifications can never claim professional-level
-   evidence, but the exact scoring weight a certification-only skill
-   should carry in the Phase 5 Career Match percentage is a real design
-   decision for that phase, not resolved here.
+No open items remain that block Phase 0. Phase 1 still has not started.
 
 ---
 
