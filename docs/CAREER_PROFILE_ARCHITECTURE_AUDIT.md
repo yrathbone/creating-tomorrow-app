@@ -1694,11 +1694,19 @@ alone is sufficient, and the access token has it.
 
 **Recommendation.**
 
-- **Plan tier:** start on Render's lowest-cost Postgres tier available.
-  Consistent with this project's established budget-consciousness (the
-  same reasoning that drove the Lambda-over-ECS decision earlier this
-  project) — upgrade only once real usage data shows it's actually
-  needed, not preemptively.
+- **Plan tier — corrected 2026-09-29, verified before provisioning
+  anything:** Render's free Postgres tier **auto-deletes 30 days after
+  creation** (then a 14-day grace period before permanent deletion) —
+  confirmed against Render's own current documentation, not assumed.
+  This makes the free tier fundamentally unsuitable for data meant to
+  persist indefinitely; the earlier "start on the lowest-cost tier"
+  guidance is corrected here to mean the lowest-cost **paid** tier
+  (Render's Basic-256mb, currently ~$6/month), not free. Consistent
+  with this project's established budget-consciousness (the same
+  reasoning that drove the Lambda-over-ECS decision earlier this
+  project) — this is still the smallest real commitment, just not a
+  free one; upgrade the instance size only once real usage data shows
+  it's actually needed.
 - **SSL:** Render Postgres requires SSL connections by default
   (`sslmode=require` in the connection string) — this needs to be
   reflected in however the SQLAlchemy engine is configured in Phase 0/1,
