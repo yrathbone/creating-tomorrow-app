@@ -138,6 +138,24 @@ conflates "the profile is new" with "the person is underqualified."
   yet - paste it... and I'll take a look"` — informative, never a
   judgment) — the same tone this new feature should carry forward.
 
+### Architecture principle — added 2026-09-29
+
+**Career Evidence = what the user has done. Career Direction = where
+the user wants to go. Application History = what the user has pursued.
+Resume and LinkedIn = outputs generated from those layers.**
+
+This is the organizing principle behind the two future capabilities
+added to Section 13 below (`JobPreference`/`JobInterestSignal`/
+`Application`, and `LinkedInProfileVersion`). It generalizes the
+document's original core principle — "a resume is an output of the
+Career Profile, not the Career Profile itself" — to cover *every*
+output this system produces, not just resumes: LinkedIn content,
+future job recommendations, anything else built later. The pattern to
+hold onto for any future addition: **evidence and direction are always
+upstream, sources of truth; every document, score, or recommendation is
+always downstream, generated, and disposable/regeneratable** — never
+the other way around.
+
 ---
 
 ## 1. Executive Summary
@@ -921,13 +939,112 @@ needs provenance, and ownership/security notes.
 - **Key fields:** `id`, `experience_id` (FK), `industry_name`,
   `source_text`, `evidence_level`.
 
-### `JobPreference`
-- **Purpose:** the user's own stated preferences (target roles,
-  locations, remote/hybrid, comp range if they choose to share it) —
-  distinct from evidence, since preferences are never "verified," only
-  stated.
+### `JobPreference` — updated 2026-09-29 (future capability, not Phase 0/1 scope)
+- **Purpose:** the user's own **confirmed** stated preferences (target
+  roles, locations, remote/hybrid, comp range if they choose to share
+  it) — distinct from evidence, since preferences are never "verified"
+  the way `Experience` is, only stated. **Updated invariant:** this
+  table holds *confirmed* preferences only — it is never populated or
+  updated automatically from observed behavior. See `JobInterestSignal`
+  below for the layer that actually observes behavior; a row only
+  reaches `JobPreference` via the same explicit-confirmation discipline
+  used everywhere else in this design (Elevate's confirm-facts pattern,
+  `ExperienceSkill.confidence`).
 - **Key fields:** `id`, `career_profile_id` (FK), `preference_type`,
-  `value`.
+  `value`, `source` (`manual` | `suggested_from_signals` — did the user
+  type this in directly, or confirm a pattern the system noticed),
+  `source_signal_ids` (nullable array — which `JobInterestSignal` rows,
+  if any, prompted the suggestion the user then confirmed; null when
+  `source = manual`).
+- **Relationships:** many-to-one to `CareerProfile`; optionally
+  references the `JobInterestSignal` rows named in `source_signal_ids`.
+
+### `JobInterestSignal` — new, 2026-09-29 (future capability, not Phase 0/1 scope)
+- **Purpose:** the observed-behavior layer — what the system notices
+  the user *doing* with jobs, logged passively, never itself treated as
+  a confirmed fact about what the user wants. This is deliberately a
+  separate table from `JobPreference`, not a status flag on it, so the
+  "observed vs. confirmed" boundary the brief requires is a real schema
+  boundary, not just an application-logic convention that could be
+  bypassed later.
+- **Key fields:** `id`, `career_profile_id` (FK), `job_analysis_id`
+  (FK, nullable — links to a specific `JobAnalysis` run if this signal
+  relates to one), `event_type` (`analyzed` | `saved` |
+  `resume_generated` | `applied` | `dismissed` | `user_liked` |
+  `user_disliked`), `job_title_observed` (free text — e.g. "Technical
+  Consulting," used for the pattern-detection the brief's own example
+  describes: noticing repeated signals around a similar role type),
+  `created_at`.
+- **Relationships:** many-to-one to `CareerProfile`; optionally to
+  `JobAnalysis`.
+- **Data source:** system-observed, automatically, as a side effect of
+  normal product use (analyzing a job, generating a resume against it,
+  etc.) — never user-entered directly.
+- **The hard invariant, stated plainly since it's the whole point of
+  this table:** no background process, no aggregation job, no AI
+  suggestion may ever write directly to `JobPreference` from this
+  table's data. The only allowed flow is: pattern noticed in
+  `JobInterestSignal` rows → a suggestion is *shown* to the user (e.g.
+  "You frequently explore Technical Consulting roles — add this to your
+  target roles?") → an explicit affirmative user action creates the
+  `JobPreference` row, with `source_signal_ids` pointing back at the
+  signals that prompted it. Identical in spirit to how an AI-suggested
+  `ExperienceSkill` never becomes real evidence without confirmation.
+- **Security:** ownership-scoped via `career_profile_id`.
+
+### `Application` — new, 2026-09-29 (future capability, not Phase 0/1 scope)
+- **Purpose:** the confirmed application-history layer — jobs the user
+  actually pursued, not just viewed or analyzed. Kept as its own table
+  rather than folded into `JobInterestSignal.event_type = "applied"`
+  because an application plausibly carries more structured detail over
+  time (status, which resume was actually submitted) than a single
+  behavioral-event row is meant to hold.
+- **Key fields:** `id`, `career_profile_id` (FK), `job_analysis_id`
+  (FK, nullable), `job_title`, `employer` (nullable), `applied_date`,
+  `status` (`applied` | `interviewing` | `offer` | `rejected` |
+  `withdrawn` — a reasonable future-proofed set; only `applied` is
+  expected to be populated at launch, since outcome-tracking UI isn't
+  being built now), `resume_version_id` (FK, nullable — which
+  `ResumeVersion` was actually submitted, a direct, concrete piece of
+  provenance), `source` (`manual` | `derived_from_signal` — did the
+  user explicitly log this, or was it promoted from a
+  `JobInterestSignal.event_type = "applied"` event).
+- **Relationships:** many-to-one to `CareerProfile`; optionally to
+  `JobAnalysis` and `ResumeVersion`.
+- **Security:** ownership-scoped via `career_profile_id`.
+
+### `LinkedInProfileVersion` — new, 2026-09-29 (future capability, not Phase 0/1 scope)
+- **Purpose:** the LinkedIn equivalent of `ResumeVersion` — treats a
+  LinkedIn profile as *another generated-or-imported output*, not a
+  second source of truth alongside the Career Profile. Mirrors
+  Spotlight's existing input model (pasted text / PDF / screenshots,
+  extracted transiently — consistent with Decision 5, extended here:
+  no original screenshot/PDF is persisted, only the resulting text and
+  recommendations).
+- **Key fields:** `id`, `career_profile_id` (FK), `imported_content`
+  (JSONB or text — the ingested LinkedIn profile content, in whatever
+  shape `profile_review.py` already normalizes pasted text/PDF/
+  screenshots into today), `recommendations` (JSONB — each
+  recommendation records what's missing, underrepresented,
+  inconsistently described, or using weaker terminology than the
+  verified evidence supports), `created_at`.
+- **Relationships:** many-to-one to `CareerProfile`.
+- **Provenance — required, per the brief's explicit instruction:**
+  every individual entry inside `recommendations` must carry an
+  `evidence_ids` array pointing at the specific `Experience`/
+  `Achievement`/`ExperienceSkill` rows that justify it — the same
+  per-bullet provenance pattern already specified for `ResumeVersion`
+  in this section, applied here too. A recommendation with no
+  supporting evidence ID should not be possible to produce, by the same
+  logic that already governs resume-bullet generation.
+- **Explicit non-goals, restated from the brief:** no LinkedIn API
+  write integration at this stage — this table only ever holds
+  *recommendations for the user to act on themselves*, never anything
+  this system publishes on their behalf. Spotlight's existing
+  non-fabrication discipline (`profile_review.py`'s system prompt)
+  extends here unchanged: never invent experience, never auto-publish
+  inferred information.
+- **Security:** ownership-scoped via `career_profile_id`.
 
 ### `JobAnalysis`
 - **Purpose:** one "Do I Match?" run against one job description —
@@ -1049,10 +1166,24 @@ Profile is additive, not a breaking change to current behavior.
 - **Prepare (`prepare.py`):** could read Career Profile evidence instead
   of requiring a fresh resume upload each time, for the "resume-based
   questions" group specifically.
-- **Spotlight (`profile_review.py`):** already accepts an optional
-  resume for additional context (built this session) — a logged-in
-  user's Career Profile is a strictly richer version of that same input,
-  a natural drop-in replacement for the optional-resume parameter.
+- **Spotlight (`profile_review.py`) — expanded 2026-09-29, still future
+  scope, not Phase 9:** already accepts an optional resume for
+  additional context (built earlier this session), which remains the
+  near-term integration described above. The longer-term direction,
+  per the new "Career Evidence upstream, LinkedIn downstream"
+  architecture principle: Spotlight eventually treats the **Career
+  Profile as its primary source of verified evidence**, and the
+  person's *current* LinkedIn profile becomes just another output to
+  compare against it — the same relationship `ResumeVersion` already
+  has to the Career Profile, applied to LinkedIn via the new
+  `LinkedInProfileVersion` entity (Section 13). Spotlight would then
+  identify verified experience that's missing, underrepresented,
+  inconsistently described, or expressed in weaker terminology than the
+  evidence actually supports — with every recommendation required to
+  carry `evidence_ids` provenance, and no LinkedIn write/publish
+  capability of any kind. This is a real, named future direction, not
+  vague — but it is **not Phase 9** (Decision 4 keeps Phase 9 scoped to
+  Right Fit only) and not scheduled; see Section 16's Phase 12.
 
 None of this requires changing any of the six tools' existing anonymous,
 no-account entry points — every integration above is framed as an
@@ -1197,6 +1328,27 @@ what this specific codebase actually needs first.
 - **Objectives:** explicitly out of scope for detailed planning here —
   the brief itself frames this as a future direction, not a near-term
   phase.
+- **Complexity:** Not yet scoped.
+
+### Phase 11 — Job Discovery (future, named 2026-09-29, explicitly NOT being built now)
+- **Objectives:** recommend roles to the user using both verified
+  career evidence and confirmed career direction (`JobPreference`) —
+  the capability the brief explicitly names as the eventual reason for
+  `JobInterestSignal`/`Application`/`JobPreference` to exist, and
+  explicitly instructs not to build yet.
+- **Dependencies:** Phases 3-6 (a populated evidence graph and a
+  working match engine) plus real `JobInterestSignal`/`JobPreference`
+  data — this phase has no realistic starting point before both exist.
+- **Complexity:** Not yet scoped — deliberately, per the brief's
+  instruction not to design this now.
+
+### Phase 12 — LinkedIn Refiner integration (future, named 2026-09-29, explicitly NOT being built now)
+- **Objectives:** the expanded Spotlight integration described in
+  Section 15 — Career Profile as primary evidence source, current
+  LinkedIn profile as a comparison target via `LinkedInProfileVersion`,
+  provenance-linked recommendations, no publish/write capability.
+- **Dependencies:** a populated, verified evidence graph (Phase 3-4) and
+  the near-term Spotlight optional-resume integration already built.
 - **Complexity:** Not yet scoped.
 
 ---
