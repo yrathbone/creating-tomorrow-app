@@ -66,6 +66,77 @@ This revision is still audit/design only.
     level separation (`CertificationSkill` vs. `ExperienceSkill`,
     Decision 7) is what makes that future decision possible, not a
     reason to guess at the number now.
+12. **Protected FastAPI calls use the Cognito access token, not the ID
+    token** — corrected 2026-09-29 after verifying against AWS's own
+    documentation; see Deliverable C for the reasoning and the full
+    updated design. This is a design correction, not a new open
+    question — it supersedes the earlier draft of Deliverable C's token
+    flow, nothing else changes.
+
+---
+
+## PRODUCT PRINCIPLES — added 2026-09-29
+
+Two principles that apply across every phase of this feature, not just
+one section — added here, prominently, because they should shape how
+every future phase (and every future person working on this) writes
+copy, designs a schema field, and frames a result, not just how Phase 0
+is scoped.
+
+### "Evidence-seeking, not deficiency-seeking"
+
+The Career Profile exists to surface what a person has actually done —
+find the real evidence, however it's phrased, wherever it's buried —
+not to produce a list of what's wrong or missing about them. This isn't
+a new value invented for this feature: it's the same spirit already
+present in every existing tool's system prompt (e.g. Right Fit's own
+language is calibrated to avoid "counting keyword overlap" and instead
+"reason about the comparison the way a human career coach would";
+Elevate's discovery questions are framed as surfacing what the resume
+"doesn't currently mention," never what the *person* lacks). The Career
+Profile generalizes that same posture across a whole evidence graph
+instead of one resume.
+
+**Concretely, this principle should shape:**
+- **Copy and labeling in the matching engine (Phase 5).** A qualification
+  the profile doesn't support should never be labeled in a way that
+  reads as a judgment on the *person* — "not yet evidenced" or "worth
+  exploring" reads very differently than "missing" or "gap," even though
+  both describe the same underlying fact. This is a concrete instruction
+  for whoever writes Phase 5's actual UI copy, not just a mood to keep
+  in mind.
+- **The career-archaeology interview's question framing** (Section 15's
+  original brief, Phase 3/4) — questions should be posed as invitations
+  to surface real evidence ("did this role involve X?"), never as a
+  checklist implying the person is behind or lacking until they answer
+  enough of them.
+
+### "An incomplete profile must never be treated as an incomplete person"
+
+A thin Career Profile — few confirmed roles, few verified skills — is a
+statement about how much evidence has been entered and confirmed so
+far, never a statement about the person's actual career or worth. This
+principle exists specifically to prevent two realistic failure modes:
+a UI that makes a new user feel deficient before they've had a chance to
+build out their profile, and a matching/scoring result that quietly
+conflates "the profile is new" with "the person is underqualified."
+
+**Concretely, this principle should shape:**
+- **The Career Match Score and Resume Coverage metrics (Phases 5-6)** —
+  both must be legible as *a measure of the profile's current evidence*,
+  not a measure of the person. The brief's own definition already gets
+  this right ("the percentage of identifiable job qualifications
+  supported by verified evidence in the Career Profile") — this
+  principle is the reminder to keep that framing intact through every
+  later design decision in those phases, not let it drift toward
+  something that reads as a verdict on the candidate.
+- **The consent/onboarding flow (Deliverable F)** — a brand-new,
+  necessarily-empty Career Profile should never present as a problem to
+  fix under time pressure; it's a starting point, framed the same
+  encouraging way `profile_review.py` (Spotlight) already frames a
+  thin/incomplete LinkedIn section today (`"I don't have your headline
+  yet - paste it... and I'll take a look"` — informative, never a
+  judgment) — the same tone this new feature should carry forward.
 
 ---
 
@@ -1341,9 +1412,12 @@ work. Each item names what it actually is, not just a label.
 5. **Add the remaining new dependencies to `backend/requirements.txt`:**
    a Postgres driver (`psycopg[binary]` — the modern, actively
    maintained psycopg3, rather than the older psycopg2), and a JWT
-   verification library for Cognito tokens (`python-jose[cryptography]`
-   is the common choice for verifying Cognito's RS256-signed JWTs
-   against its published JWKS).
+   verification library for Cognito's **access tokens** specifically
+   (Deliverable C, updated 2026-09-29) — `python-jose[cryptography]` is
+   the common choice for verifying Cognito's RS256-signed JWTs against
+   its published JWKS, and for checking the `token_use == "access"`
+   claim so an ID token presented by mistake is rejected, not silently
+   accepted.
 6. **Extract the duplicated "restructure resume into JSON" prompt logic**
    (confirmed duplicated across `coach.py`, `upgrade.py`, `elevate.py`,
    and `prepare.py`/`profile_review.py` in Section 8) into one new shared
@@ -1396,21 +1470,47 @@ work. Each item names what it actually is, not just a label.
   it. This is presented as a recommendation (Section 23, item 1), not
   something Decision 1 already settled.
 
-### Token flow
+### Token flow — updated 2026-09-29: access token, not ID token, authorizes backend calls
+
+**Verified against AWS's own Cognito documentation and current OAuth2/
+OIDC guidance before changing this** (not assumed): the **ID token** and
+the **access token** exist for two different, deliberately separate
+purposes. The ID token asserts *identity to the client application*
+(who's signed in — meant for the frontend's own use, e.g. displaying a
+name). The access token is what OAuth2/OIDC actually designs for
+*authorizing calls to a resource server* — our FastAPI backend is
+exactly that resource server. Sending the ID token to the backend for
+authorization works technically (Cognito doesn't prevent it, and some
+real deployments do it), but it's a standards mismatch, not the correct
+tool for this job — corrected here rather than carried forward from the
+earlier draft.
+
+**One detail this correction depends on, also verified:** the Cognito
+access token's payload already includes the `sub` claim (alongside
+`token_use: "access"`, `scope`, `client_id`) — it does **not** include
+email or other profile attributes, which only live in the ID token. This
+is not a problem for our design: `email` is already cached on the
+internal `User` row at signup time (Section 13), so `get_current_user()`
+never needed to re-read it from a token on every request anyway — `sub`
+alone is sufficient, and the access token has it.
+
 1. User submits email/password on the custom login page →
    `amazon-cognito-identity-js` calls Cognito directly from the
    browser — the backend is never involved in this exchange, and never
    sees the password.
-2. Cognito returns an **ID token** (a signed JWT containing the user's
-   `sub`, email, and standard claims) and an access token.
-3. The frontend stores the ID token in memory for the session (a plain
-   JS variable, matching this app's existing "nothing persists across a
-   reload" convention) — **not `localStorage`**, to limit the token's
-   exposure window if the page is ever compromised by any future
+2. Cognito returns **both** an ID token and an access token (standard
+   Cognito behavior — you always get both). The ID token stays entirely
+   client-side, used only if the frontend wants to display identity
+   details (e.g. a name/email in the UI) — it is **never sent to the
+   backend**.
+3. The frontend stores the **access token** in memory for the session (a
+   plain JS variable, matching this app's existing "nothing persists
+   across a reload" convention) — **not `localStorage`**, to limit the
+   token's exposure window if the page is ever compromised by any future
    XSS-class issue; re-authenticating on a hard refresh is an acceptable
    MVP tradeoff for the added safety.
 4. Every subsequent request to a protected `/api/career/*` endpoint
-   includes the ID token as `Authorization: Bearer <token>`.
+   includes the **access token** as `Authorization: Bearer <token>`.
 
 ### Backend verification (the "internal interface" from Decision 1)
 - A single new FastAPI dependency, e.g. `get_current_user()` in
@@ -1418,17 +1518,23 @@ work. Each item names what it actually is, not just a label.
   1. Extracts the bearer token from the request.
   2. Verifies its signature against Cognito's published JWKS (fetched
      from Cognito's well-known endpoint, cached rather than fetched on
-     every request).
-  3. Confirms the token isn't expired and its issuer/audience match this
-     app's User Pool/Client ID.
+     every request), **and confirms `token_use == "access"`** — rejecting
+     an ID token presented where an access token is expected, so the
+     distinction above is actually enforced in code, not just documented
+     intent.
+  3. Confirms the token isn't expired and its issuer/`client_id` match
+     this app's User Pool/App Client.
   4. Looks up (or, on a verified user's very first request, creates)
-     the internal `User` row by `cognito_sub`.
+     the internal `User` row by `cognito_sub` (from the access token's
+     `sub` claim).
   5. Returns the internal `User` object — **every route handler
      downstream only ever sees this internal object, never a raw Cognito
-     token or claim.** This is the entire "internal interface" Decision 1
-     asked for: if the auth provider ever changed, only this one
-     dependency's implementation would need to change — no route handler
-     anywhere would need to know or care.
+     token or claim.** This remains the entire "internal interface"
+     Decision 1 asked for: if the auth provider ever changed, only this
+     one dependency's implementation would need to change — no route
+     handler anywhere would need to know or care, and this correction
+     didn't touch that guarantee at all, only which of Cognito's two
+     tokens satisfies it correctly.
 
 ---
 
