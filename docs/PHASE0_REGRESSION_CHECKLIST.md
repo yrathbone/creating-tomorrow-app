@@ -54,5 +54,33 @@ acceptance requirements: `http://localhost:8123`.**
 
 ## Results
 
-Filled in after Phase 0 is deployed and verified — see the "Regression
-results" section of the Phase 0 completion report.
+Run twice: once locally (before pushing) and once against production
+(`https://creatingtomorrow.net`, after the deploy was confirmed live via
+the new CORS behavior, not just a passing health check — the app's own
+known "health check passing ≠ new code fully live" gotcha).
+
+| # | Check | Local | Production |
+|---|---|---|---|
+| 1 | Beginning | PASS | PASS |
+| 2 | Refine | PASS | PASS |
+| 3 | Right Fit | PASS | PASS |
+| 4 | Elevate | PASS | PASS |
+| 5 | Spotlight | PASS | PASS |
+| 6 | Prepare | FAIL then PASS on retry (see note) | PASS |
+| 7 | `/api/generate` | PASS | PASS |
+| 8 | Static pages | PASS | PASS |
+| 9 | `/api/health` | PASS | PASS |
+| 10 | CORS, 3 allowed origins | PASS | PASS |
+| 11 | CORS, negative case | PASS | PASS |
+
+**Note on item 6 (local run only):** the first local Prepare call
+returned a 502 (`missing_required_field` on both the original attempt
+and the automatic retry, per `prepare.py`'s own logged diagnostic). This
+is a real finding, but **not a Phase 0 regression** — `prepare.py` was
+not touched by any Phase 0 change, and an immediate retry of the exact
+same request succeeded (200). Logged as a pre-existing, rare
+reliability edge case worth a look before Phase 1, not something Phase
+0 caused or should fix (out of this phase's scope). Production ran
+Prepare successfully on the first attempt.
+
+**Overall: 11/11 pass in production.** No regression found.
