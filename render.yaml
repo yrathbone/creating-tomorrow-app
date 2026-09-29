@@ -18,3 +18,12 @@ services:
         sync: false   # set manually in the Render dashboard - never in this repo
       - key: CT_MODEL
         value: claude-sonnet-5
+      # Cognito User Pool ID / App Client ID / region are not secrets (the
+      # frontend embeds these same values client-side too) - safe as plain
+      # values here, consistent with CT_MODEL above.
+      - key: COGNITO_REGION
+        value: us-east-2
+      - key: COGNITO_USER_POOL_ID
+        value: us-east-2_uLhNvjpep
+      - key: COGNITO_APP_CLIENT_ID
+        value: 5rfhr0o7799aa41a5odrt9i9hd
