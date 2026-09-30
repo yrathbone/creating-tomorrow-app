@@ -17,13 +17,13 @@
     </div>
   </nav>
 
-  <header class="page-header">
+  <header class="page-header" id="page-header">
     <p class="guide-eyebrow" style="text-align: center;">Career Profile</p>
     <h1>Log in</h1>
     <p class="tagline">This is an early, invite-only preview.</p>
   </header>
 
-  <main>
+  <main id="main-content">
     <section class="card" id="step-login">
       <h2>Email and password</h2>
       <form id="login-form">
@@ -61,8 +61,74 @@
       <p class="hint" style="margin-top:1.5rem;">Privacy · Terms · Delete My Data (coming soon — not yet available)</p>
     </section>
 
-    <section class="card" id="step-profile" hidden>
-      <h2>Your Career Profile</h2>
+    <section id="step-profile" hidden>
+      <div class="dashboard-tabs">
+        <a href="#dashboard-top" class="dashboard-tab active">Dashboard</a>
+        <a href="#career-profile-detail" class="dashboard-tab">Career Profile</a>
+        <span class="dashboard-tab" aria-disabled="true">Jobs</span>
+        <span class="dashboard-tab" aria-disabled="true">Resumes</span>
+        <span class="dashboard-tab" aria-disabled="true">Applications</span>
+        <a href="../spotlight.html" class="dashboard-tab">LinkedIn</a>
+      </div>
+
+      <div class="dashboard-hero" id="dashboard-top">
+        <h1>Your Career, in One Place</h1>
+        <p>Your Career Profile keeps the experience you've verified so you don't have to rebuild your history every time you apply.</p>
+        <div class="dashboard-hero-actions">
+          <span class="btn-primary" aria-disabled="true" style="opacity:0.6; cursor:default;">+ Add a Job <span class="coming-soon">Coming soon</span></span>
+          <a href="../scratch.html" class="btn-secondary">Build a Resume</a>
+          <button type="button" id="update-profile-btn" class="btn-secondary">Update My Career Profile</button>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="card span-2">
+          <div class="dashboard-card-header"><h2>Current Job Target</h2></div>
+          <p class="hint">Found a job you're interested in? Add it here and we'll compare it with your verified career experience.</p>
+          <span class="btn-secondary" aria-disabled="true" style="opacity:0.6; cursor:default;">+ Add a Job <span class="coming-soon">Coming soon</span></span>
+        </div>
+
+        <div class="card span-2">
+          <div class="dashboard-card-header"><h2>Career Snapshot</h2></div>
+          <div class="stat-row" id="career-stat-row"></div>
+          <h3 style="margin-top:1.5rem;">Recently Confirmed</h3>
+          <ul id="recently-confirmed-list"></ul>
+        </div>
+
+        <div class="card">
+          <div class="dashboard-card-header"><h2>Career Profile</h2></div>
+          <p class="hint">Most recent roles</p>
+          <div id="role-preview-list"></div>
+          <button type="button" id="view-full-profile-btn" class="btn-secondary">View Full Career Profile</button>
+        </div>
+
+        <div class="card">
+          <div class="dashboard-card-header"><h2>Applications</h2></div>
+          <p class="hint">Jobs you apply to through your Career Profile will appear here.</p>
+          <span class="btn-secondary" aria-disabled="true" style="opacity:0.6; cursor:default;">View Applications <span class="coming-soon">Coming soon</span></span>
+        </div>
+
+        <div class="card">
+          <div class="dashboard-card-header"><h2>Education &amp; Certifications</h2></div>
+          <div id="dashboard-education-list"></div>
+          <div id="dashboard-certifications-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="dashboard-card-header"><h2>Career Direction</h2></div>
+          <p class="hint">Tell us what kinds of opportunities you're looking for. Creating Tomorrow can use this alongside your verified experience.</p>
+          <p class="hint">Coming soon.</p>
+        </div>
+
+        <div class="card span-2">
+          <div class="dashboard-card-header"><h2>LinkedIn</h2></div>
+          <p class="hint">Use your verified Career Profile to strengthen the way your experience appears on LinkedIn.</p>
+          <a href="../spotlight.html" class="btn-secondary">Refine My LinkedIn</a>
+        </div>
+      </div>
+
+      <section class="card" id="career-profile-detail" hidden style="margin-top:2rem;">
+      <h2>Full Career Profile</h2>
 
       <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem;">
         <button type="button" id="mode-manual-btn" class="btn-secondary">Enter manually</button>
@@ -179,6 +245,7 @@
 
       <h3>Your roles so far</h3>
       <ul id="experience-list"></ul>
+      </section>
     </section>
   </main>
 

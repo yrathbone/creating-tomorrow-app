@@ -2675,3 +2675,127 @@ footer.site-footer-v2 {
 .prepare-question-signal {
   font-style: italic;
 }
+
+/* --- Career Profile dashboard (login.html, post-login) --------------- */
+
+main.dashboard-main {
+  max-width: 1120px;
+}
+
+.dashboard-hero {
+  margin-bottom: 2rem;
+}
+.dashboard-hero h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  color: var(--navy);
+}
+.dashboard-hero p {
+  color: var(--muted);
+  max-width: 640px;
+  margin: 0;
+}
+.dashboard-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.dashboard-hero-actions .btn-primary,
+.dashboard-hero-actions .btn-secondary {
+  margin-top: 0;
+}
+
+.dashboard-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+}
+.dashboard-tab {
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dashboard-tab:hover { border-color: var(--blue); }
+.dashboard-tab.active { background: var(--blue); color: white; border-color: var(--blue); }
+.dashboard-tab[aria-disabled="true"] {
+  color: var(--muted);
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (min-width: 860px) {
+  .dashboard-grid { grid-template-columns: 1fr 1fr; }
+  .dashboard-grid .span-2 { grid-column: 1 / -1; }
+}
+
+.dashboard-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.dashboard-card-header h2 { margin: 0; }
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem;
+  text-align: center;
+}
+.stat-card .stat-number {
+  display: block;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--blue);
+}
+.stat-card .stat-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.role-preview-item {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.role-preview-item:last-child { border-bottom: none; }
+.role-preview-item .role-title { font-weight: 700; }
+.role-preview-item .role-org { color: var(--muted); }
+.role-preview-item .role-dates { color: var(--muted); font-size: 0.85rem; }
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.list-row:last-child { border-bottom: none; }
+.list-row-text { min-width: 0; }
+.list-row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}

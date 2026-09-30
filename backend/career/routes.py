@@ -133,6 +133,25 @@ async def list_experiences(
     return [_experience_to_dict(e) for e in experiences]
 
 
+@router.delete("/experiences/{experience_id}")
+async def delete_experience(
+    experience_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    experience = (
+        db.query(Experience)
+        .filter_by(id=experience_id, career_profile_id=profile.id)
+        .one_or_none()
+    )
+    if experience is None:
+        raise HTTPException(status_code=404, detail="Role not found.")
+    db.delete(experience)
+    db.commit()
+    return {"deleted": True}
+
+
 class EducationIn(BaseModel):
     institution: str
     degree: str | None = None
