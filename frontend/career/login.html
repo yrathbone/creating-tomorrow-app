@@ -42,12 +42,23 @@
     </section>
 
     <section class="card" id="step-consent" hidden>
-      <h2>Save your career information?</h2>
-      <p>Creating Tomorrow's Career Profile stores your work history, skills, and education — your name, job titles, employers, dates, and the accomplishments you describe — so tools like Right Fit can compare against your whole career, not just one uploaded resume.</p>
-      <p><strong>Nothing is added to your profile without your explicit confirmation</strong> — not even something an AI suggests.</p>
-      <p class="hint">You'll be able to review, edit, export, or delete this information later.</p>
-      <button type="button" id="consent-btn">Yes, save my career information</button>
+      <h2>Your Career Profile belongs to you</h2>
+      <p>Creating Tomorrow can securely save the career information you choose to confirm so you don't have to rebuild your history every time you apply.</p>
+      <ul>
+        <li>Your Career Profile information will be stored for future use.</li>
+        <li>AI may suggest career information, but suggestions do not become verified evidence until you confirm them.</li>
+        <li>Creating Tomorrow will not invent career experience.</li>
+        <li>You can review and edit your stored information.</li>
+        <li>You will be able to delete your Career Profile and account data.</li>
+        <li>The existing anonymous tools remain separate from your saved Career Profile.</li>
+        <li>Original uploaded resume files are not retained after we extract information from them.</li>
+      </ul>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <button type="button" id="consent-btn">I understand — Create My Career Profile</button>
+        <a href="../index.html" class="btn-secondary">Not now</a>
+      </div>
       <div id="consent-error" class="error" hidden></div>
+      <p class="hint" style="margin-top:1.5rem;">Privacy · Terms · Delete My Data (coming soon — not yet available)</p>
     </section>
 
     <section class="card" id="step-profile" hidden>
