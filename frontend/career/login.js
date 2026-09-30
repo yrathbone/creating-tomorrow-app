@@ -54,6 +54,17 @@ async function showProfileStep() {
   await loadExperiences();
 }
 
+document.getElementById("mode-manual-btn").addEventListener("click", () => {
+  document.getElementById("manual-entry-section").hidden = false;
+  document.getElementById("resume-entry-section").hidden = true;
+});
+
+document.getElementById("mode-resume-btn").addEventListener("click", async () => {
+  document.getElementById("manual-entry-section").hidden = true;
+  document.getElementById("resume-entry-section").hidden = false;
+  await checkForResumeDraft();
+});
+
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   loginError.hidden = true;

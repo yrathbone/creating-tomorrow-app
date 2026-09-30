@@ -8,7 +8,7 @@ are live; Experience is the first Manual CRUD entity.
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -62,3 +62,29 @@ class Experience(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     career_profile: Mapped["CareerProfile"] = relationship(back_populates="experiences")
+
+
+class ResumeIngestionDraft(Base):
+    """In-progress resume-upload interview state (roles extracted so far,
+    Q&A history, the question batch currently awaiting answers, and any
+    discovered facts pending review) - persisted so onboarding is
+    resumable across logins/devices, not just within one browser tab's
+    memory. One active draft per Career Profile; cleared once the
+    candidate saves (career/routes.py's /resume-save) or explicitly
+    discards it. Plain JSON (not Postgres-specific JSONB) per Deliverable
+    D's "standard Postgres features only, portable migrations" principle.
+    """
+    __tablename__ = "resume_ingestion_drafts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"), unique=True)
+    analysis_summary: Mapped[str | None] = mapped_column(String, nullable=True)
+    roles: Mapped[list] = mapped_column(JSON, default=list)
+    categories: Mapped[list] = mapped_column(JSON, default=list)
+    history: Mapped[list] = mapped_column(JSON, default=list)
+    pending_questions: Mapped[list] = mapped_column(JSON, default=list)
+    discovered_facts: Mapped[list] = mapped_column(JSON, default=list)
+    round_number: Mapped[int] = mapped_column(default=1)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    career_profile: Mapped["CareerProfile"] = relationship()
