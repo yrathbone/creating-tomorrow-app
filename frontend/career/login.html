@@ -192,6 +192,33 @@
         <h2>Career Profile</h2>
         <p class="hint">Everything you've confirmed so far. Edit or delete anything below.</p>
 
+        <div id="skill-scan-start">
+          <button type="button" id="skill-scan-btn" class="btn-secondary">Scan for Missing Skills</button>
+          <p class="hint">Reviews your whole profile against what's typical for your kinds of roles, and asks about anything that looks like a real blind spot.</p>
+        </div>
+
+        <div id="skill-scan-loading" class="processing-card" hidden aria-live="polite">
+          <p class="processing-status"></p>
+          <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
+        </div>
+
+        <div id="skill-scan-questions" hidden>
+          <p id="skill-scan-summary"></p>
+          <div id="skill-scan-questions-list"></div>
+          <div id="skill-scan-questions-error" class="error" hidden></div>
+          <button type="button" id="skill-scan-questions-submit-btn">Continue</button>
+          <button type="button" id="skill-scan-questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
+        </div>
+
+        <div id="skill-scan-review" hidden>
+          <h3>Add these to your profile?</h3>
+          <p class="hint">Choose which role each one belongs to, or remove it.</p>
+          <div id="skill-scan-facts-list"></div>
+          <button type="button" id="skill-scan-save-btn">Save to My Career Profile</button>
+          <button type="button" id="skill-scan-cancel-btn" class="btn-secondary">Cancel</button>
+          <div id="skill-scan-save-error" class="error" hidden></div>
+        </div>
+
         <h3>Experience</h3>
         <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
           <button type="button" id="sort-newest-btn" class="btn-secondary">Newest first</button>
@@ -343,5 +370,6 @@
   <script src="login.js"></script>
   <script src="js/resumeReview.js"></script>
   <script src="js/jobMatch.js"></script>
+  <script src="js/skillScan.js"></script>
 </body>
 </html>

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
 from career.job_match import JobMatchError, build_tailored_resume, compare_to_job
+from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
 from models import CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, User
@@ -792,3 +793,68 @@ async def job_build_resume(
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
     return result
+
+
+# --- Skill scan: review the WHOLE Career Profile against what's standard
+# for the kinds of roles it represents (not tied to a specific job
+# posting or a fresh upload). The interview loop reuses the existing
+# /job-discover route unchanged - discover() doesn't care what kind of
+# gap-finding triggered it, it only ever sees categories/history/
+# questions as opaque context.
+
+@router.post("/skill-scan")
+async def skill_scan(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    profile_text = _build_profile_text(db, profile)
+
+    try:
+        result = await run_in_threadpool(start_skill_scan, profile_text)
+    except SkillScanError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result
+
+
+class SkillScanFactAssignment(BaseModel):
+    bullet_text: str
+    existing_id: int
+
+
+class SkillScanSaveRequest(BaseModel):
+    confirmed_facts: list[SkillScanFactAssignment] = []
+
+
+@router.post("/skill-scan-save")
+async def skill_scan_save(
+    req: SkillScanSaveRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+
+    updated = []
+    for fact in req.confirmed_facts:
+        experience = (
+            db.query(Experience)
+            .filter_by(id=fact.existing_id, career_profile_id=profile.id)
+            .one_or_none()
+        )
+        if experience is None:
+            continue  # skip a role that no longer exists rather than fail the whole save
+        existing_lines = [l for l in (experience.description or "").split("\n") if l.strip()]
+        bullet = fact.bullet_text.strip()
+        if bullet and bullet not in existing_lines:
+            existing_lines.append(bullet)
+        experience.description = "\n".join(existing_lines) or None
+        updated.append(experience)
+
+    db.commit()
+    for e in updated:
+        db.refresh(e)
+
+    return {"experiences": [_experience_to_dict(e) for e in updated]}
