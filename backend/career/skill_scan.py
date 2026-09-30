@@ -34,13 +34,13 @@ SCAN_SYSTEM_PROMPT = """You are Nova, a thoughtful career strategist reviewing s
 
 You are given a structured summary of the candidate's Career Profile.
 
-Do two things:
+This scan can be run more than once as a profile grows, so judge each run on its own merits rather than assuming there must be something new to ask:
 
-1. Infer 2-4 CATEGORIES of skills, responsibilities, tools, or achievements that are STANDARD or commonly expected for the TYPES of roles this profile represents, but that the profile does NOT currently mention. Ground this in the specific roles/industries actually shown - not a generic checklist (for example: a sales-flavored role commonly involves quota attainment, pipeline/CRM management, or competitive positioning; a technical consulting role commonly involves specific platforms, stakeholder types, or delivery methodologies - generalize this idea to whatever this profile's actual fields are). The goal is catching real, plausible blind spots, not inventing generic filler.
+1. Infer 0-4 CATEGORIES of skills, responsibilities, tools, or achievements that are STANDARD or commonly expected for the TYPES of roles this profile represents, but that the profile does NOT currently mention. Ground this in the specific roles/industries actually shown - not a generic checklist (for example: a sales-flavored role commonly involves quota attainment, pipeline/CRM management, or competitive positioning; a technical consulting role commonly involves specific platforms, stakeholder types, or delivery methodologies - generalize this idea to whatever this profile's actual fields are). The goal is catching real, plausible blind spots, not inventing generic filler or manufacturing a question just to have one.
 
-2. For those categories, write a FIRST BATCH of 4-6 yes/no discovery questions - specific, grounded in what this candidate's roles actually suggest, asking whether they've done something common for their field that their profile doesn't currently capture. Each must be answerable honestly with yes/no. Never assume yes. This batch must never be empty.
+2. For those categories, write a batch of yes/no discovery questions - specific, grounded in what this candidate's roles actually suggest, asking whether they've done something common for their field that their profile doesn't currently capture. Each must be answerable honestly with yes/no. Never assume yes. If the profile already looks well-rounded and thorough for the fields it represents, it is correct and expected to return FEW questions or an EMPTY list - that means the scan is genuinely done for now, not that you failed to find something. Never pad the list with a marginal or repetitive question just to avoid an empty result.
 
-Call the submit_skill_scan tool with a short warm analysis summary, categories, and the first question batch. Do not respond with plain text."""
+Call the submit_skill_scan tool with a short warm analysis summary, categories (may be empty), and the question batch (may be empty). Do not respond with plain text."""
 
 SCAN_USER_PROMPT_TEMPLATE = """CANDIDATE'S CAREER PROFILE (verified, already-confirmed evidence):
 {profile_text}
@@ -63,7 +63,6 @@ SCAN_TOOL = {
             "categories": {"type": "array", "items": {"type": "string"}},
             "questions": {
                 "type": "array",
-                "minItems": 3,
                 "items": {
                     "type": "object",
                     "properties": {

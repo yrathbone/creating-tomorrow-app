@@ -18,6 +18,7 @@ const SKILL_SCAN_MAX_ROUNDS = 4;
 const skillScanStart = document.getElementById("skill-scan-start");
 const skillScanLoading = document.getElementById("skill-scan-loading");
 const skillScanQuestions = document.getElementById("skill-scan-questions");
+const skillScanComplete = document.getElementById("skill-scan-complete");
 const skillScanReview = document.getElementById("skill-scan-review");
 
 function hideAllSkillScanStates() {
@@ -25,6 +26,7 @@ function hideAllSkillScanStates() {
   skillScanLoading.hidden = true;
   skillScanQuestions.hidden = true;
   skillScanReview.hidden = true;
+  skillScanComplete.hidden = true;
 }
 
 document.getElementById("skill-scan-btn").addEventListener("click", async () => {
@@ -54,8 +56,13 @@ document.getElementById("skill-scan-btn").addEventListener("click", async () => 
 
     stopProcessingState(skillScanLoading);
     hideAllSkillScanStates();
-    renderSkillScanQuestionsBatch(currentSkillScanQuestions);
-    skillScanQuestions.hidden = false;
+    if (currentSkillScanQuestions.length === 0) {
+      document.getElementById("skill-scan-complete-summary").textContent = data.analysis_summary || "";
+      skillScanComplete.hidden = false;
+    } else {
+      renderSkillScanQuestionsBatch(currentSkillScanQuestions);
+      skillScanQuestions.hidden = false;
+    }
   } catch (err) {
     stopProcessingState(skillScanLoading);
     hideAllSkillScanStates();
@@ -284,6 +291,11 @@ document.getElementById("skill-scan-save-btn").addEventListener("click", async (
 });
 
 document.getElementById("skill-scan-cancel-btn").addEventListener("click", () => {
+  hideAllSkillScanStates();
+  skillScanStart.hidden = false;
+});
+
+document.getElementById("skill-scan-complete-ok-btn").addEventListener("click", () => {
   hideAllSkillScanStates();
   skillScanStart.hidden = false;
 });
