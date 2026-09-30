@@ -41,6 +41,21 @@ function normalizeKey(s) {
   return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
+// Shared fuzzy scorer for two normalized strings - exact match scores
+// highest, then substring containment (handles phrasing like "Treasury
+// Management Officer - HHN" vs "Treasury Management Officer" or
+// "Google Project Management (Professional Certificate)" vs "Google
+// Project Management"), then significant word overlap. 0 means no
+// meaningful similarity.
+function fuzzyTextScore(a, b) {
+  if (!a || !b) return 0;
+  if (a === b) return 3;
+  if (a.includes(b) || b.includes(a)) return 2;
+  const aWords = new Set(a.split(" ").filter(Boolean));
+  const overlap = b.split(" ").filter((w) => w && aWords.has(w)).length;
+  return overlap >= 2 ? 1 : 0;
+}
+
 function findBestExperienceMatch(role) {
   const newOrg = normalizeKey(role.organization);
   const newTitle = normalizeKey(role.title);
@@ -49,30 +64,42 @@ function findBestExperienceMatch(role) {
   let bestScore = 0;
   for (const existing of allExperiences) {
     if (normalizeKey(existing.organization) !== newOrg) continue;
-    const title = normalizeKey(existing.title);
-    let score = 0;
-    if (title === newTitle) score = 3;
-    else if (title && newTitle && (title.includes(newTitle) || newTitle.includes(title))) score = 2;
-    else {
-      const newWords = new Set(newTitle.split(" ").filter(Boolean));
-      const overlap = title.split(" ").filter((w) => w && newWords.has(w)).length;
-      if (overlap >= 2) score = 1;
-    }
+    const score = fuzzyTextScore(normalizeKey(existing.title), newTitle);
     if (score > bestScore) { bestScore = score; best = existing; }
   }
-  return best;
+  return bestScore > 0 ? best : null;
 }
 
 function findBestEducationMatch(entry) {
   const newInstitution = normalizeKey(entry.institution);
   if (!newInstitution) return null;
-  return allEducation.find((e) => normalizeKey(e.institution) === newInstitution) || null;
+  const newDegree = normalizeKey(entry.degree);
+  let best = null;
+  let bestScore = 0;
+  for (const existing of allEducation) {
+    if (normalizeKey(existing.institution) !== newInstitution) continue;
+    const existingDegree = normalizeKey(existing.degree);
+    // Institution alone isn't enough - the same school can genuinely have
+    // several distinct real degrees (this is exactly the bug that caused
+    // duplicate-looking-but-actually-different UMGC entries to collide).
+    // If either side is missing a degree, treat institution match as
+    // weakly sufficient rather than losing the match entirely.
+    const score = (!newDegree || !existingDegree) ? 1 : fuzzyTextScore(existingDegree, newDegree);
+    if (score > bestScore) { bestScore = score; best = existing; }
+  }
+  return bestScore > 0 ? best : null;
 }
 
 function findBestCertificationMatch(entry) {
   const newName = normalizeKey(entry.name);
   if (!newName) return null;
-  return allCertifications.find((c) => normalizeKey(c.name) === newName) || null;
+  let best = null;
+  let bestScore = 0;
+  for (const existing of allCertifications) {
+    const score = fuzzyTextScore(normalizeKey(existing.name), newName);
+    if (score > bestScore) { bestScore = score; best = existing; }
+  }
+  return bestScore > 0 ? best : null;
 }
 
 // Builds the "which existing record is this?" dropdown used on every
