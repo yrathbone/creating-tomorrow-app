@@ -42,7 +42,7 @@ document.getElementById("skill-scan-btn").addEventListener("click", async () => 
     const res = await authedFetch("/api/career/skill-scan", { method: "POST" });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const data = await res.json();
 
@@ -158,7 +158,7 @@ async function submitSkillScanAnswers(forceFinish) {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const data = await res.json();
 
@@ -275,7 +275,7 @@ document.getElementById("skill-scan-save-btn").addEventListener("click", async (
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Couldn't save those changes.");
+        throw new Error(formatErrorDetail(err.detail, "Couldn't save those changes."));
       }
     }
 

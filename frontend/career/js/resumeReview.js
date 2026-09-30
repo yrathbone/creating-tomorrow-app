@@ -262,7 +262,7 @@ resumeUploadForm.addEventListener("submit", async (e) => {
     const res = await authedFetch("/api/career/resume-start", { method: "POST", body: formData });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const data = await res.json();
 
@@ -384,7 +384,7 @@ async function submitResumeAnswers(forceFinish) {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const data = await res.json();
 
@@ -642,7 +642,7 @@ document.getElementById("resume-save-btn").addEventListener("click", async () =>
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const saved = await res.json();
 

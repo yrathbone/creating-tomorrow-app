@@ -1,3 +1,18 @@
+// FastAPI's own validation errors (422s) put an ARRAY of {loc, msg, type}
+// objects in `detail`, not a string - passing that straight into
+// `new Error(...)` stringified it as "[object Object]" everywhere in this
+// feature. This normalizes any shape (string, validation-error array,
+// single object, or nothing) into an actual readable message.
+function formatErrorDetail(detail, fallback) {
+  if (!detail) return fallback;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail.map((d) => (d && d.msg) ? `${(d.loc || []).join(".")}: ${d.msg}` : JSON.stringify(d)).join("; ");
+  }
+  if (typeof detail === "object") return detail.msg || JSON.stringify(detail);
+  return String(detail);
+}
+
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const loginBtn = document.getElementById("login-btn");
@@ -219,7 +234,7 @@ function renderExperienceDetailList() {
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error(body.detail || "Couldn't save that change.");
+          throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
         }
         await loadExperiences();
       },
@@ -272,7 +287,7 @@ async function loadEducation() {
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(body.detail || "Couldn't save that change.");
+            throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
           }
           await loadEducation();
         },
@@ -309,7 +324,7 @@ async function loadCertifications() {
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(body.detail || "Couldn't save that change.");
+            throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
           }
           await loadCertifications();
         },
@@ -517,7 +532,7 @@ consentBtn.addEventListener("click", async () => {
     const res = await authedFetch("/api/career/consent", { method: "POST" });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(body.detail || "Couldn't save consent.");
+      throw new Error(formatErrorDetail(body.detail, "Couldn't save consent."));
     }
     await showProfileStep();
   } catch (err) {
@@ -550,7 +565,7 @@ experienceForm.addEventListener("submit", async (e) => {
     });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(body.detail || "Couldn't add that role.");
+      throw new Error(formatErrorDetail(body.detail, "Couldn't add that role."));
     }
     experienceForm.reset();
     await loadExperiences();
@@ -582,7 +597,7 @@ educationForm.addEventListener("submit", async (e) => {
     });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(body.detail || "Couldn't add that education entry.");
+      throw new Error(formatErrorDetail(body.detail, "Couldn't add that education entry."));
     }
     educationForm.reset();
     await loadEducation();
@@ -613,7 +628,7 @@ certificationForm.addEventListener("submit", async (e) => {
     });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(body.detail || "Couldn't add that certification.");
+      throw new Error(formatErrorDetail(body.detail, "Couldn't add that certification."));
     }
     certificationForm.reset();
     await loadCertifications();

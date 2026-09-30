@@ -74,7 +74,7 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const data = await res.json();
 
@@ -230,7 +230,7 @@ async function submitJobAnswers(forceFinish) {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const data = await res.json();
 
@@ -295,7 +295,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const data = await res.json();
     jobState.tailoredResumeData = data.resume_data;
@@ -322,7 +322,7 @@ document.getElementById("job-download-btn").addEventListener("click", async () =
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
