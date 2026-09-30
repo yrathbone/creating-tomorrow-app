@@ -7,6 +7,8 @@
 
 const resumeState = {
   roles: [],
+  education: [],
+  certifications: [],
   categories: [],
   history: [],
   roundNumber: 1,
@@ -86,6 +88,8 @@ async function checkForResumeDraft() {
 
 function loadDraftIntoState(draft) {
   resumeState.roles = draft.roles || [];
+  resumeState.education = draft.education || [];
+  resumeState.certifications = draft.certifications || [];
   resumeState.categories = draft.categories || [];
   resumeState.history = draft.history || [];
   resumeState.discoveredFacts = draft.discovered_facts || [];
@@ -145,6 +149,8 @@ resumeUploadForm.addEventListener("submit", async (e) => {
     const data = await res.json();
 
     resumeState.roles = data.roles || [];
+    resumeState.education = data.education || [];
+    resumeState.certifications = data.certifications || [];
     resumeState.categories = data.categories || [];
     resumeState.history = [];
     resumeState.roundNumber = 1;
@@ -339,7 +345,80 @@ function renderResumeReview() {
     rolesContainer.appendChild(card);
   });
 
+  renderResumeEducation();
+  renderResumeCertifications();
   renderResumeFacts();
+}
+
+function renderResumeEducation() {
+  const container = document.getElementById("resume-education-list");
+  if (!container) return;
+  container.innerHTML = "";
+  document.getElementById("resume-education-block").hidden = resumeState.education.length === 0;
+
+  resumeState.education.forEach((entry, idx) => {
+    const card = document.createElement("div");
+    card.className = "entry-summary-card";
+
+    const header = document.createElement("div");
+    header.className = "entry-summary-header";
+    const label = document.createElement("span");
+    label.className = "hint";
+    label.textContent = "Education " + (idx + 1);
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "entry-remove-btn";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => {
+      resumeState.education.splice(idx, 1);
+      renderResumeEducation();
+    });
+    header.appendChild(label);
+    header.appendChild(removeBtn);
+    card.appendChild(header);
+
+    card.appendChild(makeTextField("Institution", entry.institution, (v) => { entry.institution = v; }));
+    card.appendChild(makeTextField("Degree", entry.degree, (v) => { entry.degree = v; }));
+    card.appendChild(makeTextField("Field of study", entry.field_of_study, (v) => { entry.field_of_study = v; }));
+    card.appendChild(makeTextField("Graduation date", entry.graduation_date, (v) => { entry.graduation_date = v; }));
+
+    container.appendChild(card);
+  });
+}
+
+function renderResumeCertifications() {
+  const container = document.getElementById("resume-certifications-list");
+  if (!container) return;
+  container.innerHTML = "";
+  document.getElementById("resume-certifications-block").hidden = resumeState.certifications.length === 0;
+
+  resumeState.certifications.forEach((entry, idx) => {
+    const card = document.createElement("div");
+    card.className = "entry-summary-card";
+
+    const header = document.createElement("div");
+    header.className = "entry-summary-header";
+    const label = document.createElement("span");
+    label.className = "hint";
+    label.textContent = "Certification " + (idx + 1);
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "entry-remove-btn";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => {
+      resumeState.certifications.splice(idx, 1);
+      renderResumeCertifications();
+    });
+    header.appendChild(label);
+    header.appendChild(removeBtn);
+    card.appendChild(header);
+
+    card.appendChild(makeTextField("Certification name", entry.name, (v) => { entry.name = v; }));
+    card.appendChild(makeTextField("Issuer", entry.issuer, (v) => { entry.issuer = v; }));
+    card.appendChild(makeTextField("Date", entry.date, (v) => { entry.date = v; }));
+
+    container.appendChild(card);
+  });
 }
 
 function renderResumeFacts() {
@@ -411,6 +490,8 @@ document.getElementById("resume-save-btn").addEventListener("click", async () =>
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         roles: resumeState.roles,
+        education: resumeState.education,
+        certifications: resumeState.certifications,
         confirmed_facts: resumeState.discoveredFacts.map((f) => ({
           bullet_text: f.bullet_text,
           role_index: f.roleIndex,
@@ -421,20 +502,28 @@ document.getElementById("resume-save-btn").addEventListener("click", async () =>
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || `Request failed (${res.status})`);
     }
-    const savedRoles = await res.json();
+    const saved = await res.json();
 
     resumeReviewState.hidden = true;
     resumeState.roles = [];
+    resumeState.education = [];
+    resumeState.certifications = [];
     resumeState.discoveredFacts = [];
     resumeState.history = [];
     resumeState.roundNumber = 1;
     currentDraft = null;
 
+    const parts = [];
+    if (saved.experiences.length) parts.push(saved.experiences.length + " role" + (saved.experiences.length === 1 ? "" : "s"));
+    if (saved.education.length) parts.push(saved.education.length + " education entr" + (saved.education.length === 1 ? "y" : "ies"));
+    if (saved.certifications.length) parts.push(saved.certifications.length + " certification" + (saved.certifications.length === 1 ? "" : "s"));
     document.getElementById("resume-save-summary-text").textContent =
-      "Saved " + savedRoles.length + " role" + (savedRoles.length === 1 ? "" : "s") + " to your Career Profile.";
+      "Saved " + (parts.length ? parts.join(", ") : "your changes") + " to your Career Profile.";
     document.getElementById("resume-save-summary").hidden = false;
 
     await loadExperiences();
+    await loadEducation();
+    await loadCertifications();
   } catch (err) {
     showResumeError(saveError, err.message || "Something went wrong saving your roles.");
   } finally {

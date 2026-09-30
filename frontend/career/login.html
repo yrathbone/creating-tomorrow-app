@@ -72,6 +72,27 @@
           <button type="submit" id="exp-submit-btn">Add Role</button>
         </form>
         <div id="exp-error" class="error" hidden></div>
+
+        <h3>Add education</h3>
+        <form id="education-form">
+          <label class="field"><span>Institution</span><input type="text" id="edu-institution" required /></label>
+          <label class="field"><span>Degree (optional)</span><input type="text" id="edu-degree" /></label>
+          <label class="field"><span>Field of study (optional)</span><input type="text" id="edu-field" /></label>
+          <label class="field"><span>Graduation date (optional)</span><input type="text" id="edu-graduation" placeholder="e.g. 05/19" /></label>
+          <button type="submit" id="edu-submit-btn">Add Education</button>
+        </form>
+        <div id="edu-error" class="error" hidden></div>
+        <ul id="education-list"></ul>
+
+        <h3>Add a certification</h3>
+        <form id="certification-form">
+          <label class="field"><span>Certification name</span><input type="text" id="cert-name" required /></label>
+          <label class="field"><span>Issuer (optional)</span><input type="text" id="cert-issuer" /></label>
+          <label class="field"><span>Date (optional)</span><input type="text" id="cert-date" placeholder="e.g. 03/22" /></label>
+          <button type="submit" id="cert-submit-btn">Add Certification</button>
+        </form>
+        <div id="cert-error" class="error" hidden></div>
+        <ul id="certifications-list"></ul>
       </div>
 
       <div id="resume-entry-section" hidden>
@@ -111,6 +132,16 @@
           <h3>Review your roles</h3>
           <p class="hint">Edit anything that's not quite right before saving.</p>
           <div id="resume-roles-list"></div>
+
+          <div id="resume-education-block" hidden>
+            <h3>Education</h3>
+            <div id="resume-education-list"></div>
+          </div>
+
+          <div id="resume-certifications-block" hidden>
+            <h3>Certifications</h3>
+            <div id="resume-certifications-list"></div>
+          </div>
 
           <div id="resume-facts-block">
             <h3>Things you confirmed</h3>

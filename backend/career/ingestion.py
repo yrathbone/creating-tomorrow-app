@@ -1,8 +1,9 @@
 """
 Resume-driven Career Profile ingestion: upload a resume -> extract each
-role -> run the same discovery-interview loop Elevate already uses to
-surface under-described experience -> the candidate confirms facts ->
-roles (plus confirmed facts folded in) become real Experience rows.
+role, education entry, and certification -> run the same discovery-
+interview loop Elevate already uses to surface under-described
+experience -> the candidate confirms facts -> roles (plus confirmed
+facts folded in), education, and certifications become real rows.
 
 Two stages here, reusing elevate.py wherever the logic is genuinely
 generic rather than resume-specific:
@@ -38,15 +39,19 @@ RESTRUCTURE_SYSTEM_PROMPT = """You are Nova, a thoughtful career strategist revi
 
 You are given raw text extracted from someone's resume (it may be in any order or layout - it's just extracted text).
 
-Do three things:
+Do five things:
 
 1. Extract each ROLE (job, internship, or distinct position) faithfully into the schema below. Preserve all real content - do not invent, embellish, polish, or infer anything not in the source text. This is a faithful transcription step, not a rewrite: keep the candidate's own wording for bullets. Write start_date/end_date in numeric MM/YY format, keeping "Present"/"Current" as-is for an ongoing role. If a field genuinely isn't stated (e.g. no location given), leave it null rather than guessing.
 
-2. Write a short, warm, conversational ANALYSIS of the career areas you see - 2-4 sentences, naming the specific functional areas, industries, or types of work the resume shows evidence of. Never say or imply the resume is "bad," weak, or lacking - frame it as a strong starting point with more likely underneath it.
+2. Extract each EDUCATION entry (degree/program) faithfully - institution, degree, field_of_study, graduation_date. Only include what the resume actually states; leave a field null rather than guessing (e.g. don't infer a field of study from a degree name alone).
 
-3. Infer 2-4 CATEGORIES of experience specific to THIS resume - not a generic checklist (for example: someone in banking might warrant categories like treasury products supported or senior client contacts; someone in technology might warrant systems/platforms used or stakeholder collaboration - generalize to whatever this resume's actual field is). For those categories, write the FIRST BATCH of 4-6 yes/no discovery questions - specific, resume-grounded questions about responsibilities, scope, or accomplishments that are common in this candidate's apparent field but that this resume doesn't currently mention. Each must be answerable honestly with yes/no. Never assume yes. 4-6 questions is the right size for a first batch, not more.
+3. Extract each CERTIFICATION faithfully - name, issuer, date. Only real, explicitly stated certifications - never infer one from a job title or skill.
 
-Call the submit_resume_review tool with the extracted roles, analysis, categories, and first question batch. Do not respond with plain text."""
+4. Write a short, warm, conversational ANALYSIS of the career areas you see - 2-4 sentences, naming the specific functional areas, industries, or types of work the resume shows evidence of. Never say or imply the resume is "bad," weak, or lacking - frame it as a strong starting point with more likely underneath it.
+
+5. Infer 2-4 CATEGORIES of experience specific to THIS resume - not a generic checklist (for example: someone in banking might warrant categories like treasury products supported or senior client contacts; someone in technology might warrant systems/platforms used or stakeholder collaboration - generalize to whatever this resume's actual field is). For those categories, write the FIRST BATCH of 4-6 yes/no discovery questions - specific, resume-grounded questions about responsibilities, scope, or accomplishments that are common in this candidate's apparent field but that this resume doesn't currently mention. Each must be answerable honestly with yes/no. Never assume yes. 4-6 questions is the right size for a first batch, not more.
+
+Call the submit_resume_review tool with the extracted roles, education, certifications, analysis, categories, and first question batch. Do not respond with plain text."""
 
 RESTRUCTURE_USER_PROMPT_TEMPLATE = """RESUME TEXT (raw extraction, order may be jumbled):
 {resume_text}
@@ -68,9 +73,22 @@ _ROLE_PROPS = {
     "bullets": {"type": "array", "items": {"type": "string"}},
 }
 
+_EDUCATION_PROPS = {
+    "institution": {"type": "string"},
+    "degree": {"type": ["string", "null"]},
+    "field_of_study": {"type": ["string", "null"]},
+    "graduation_date": {"type": ["string", "null"], "description": "MM/YY format if stated"},
+}
+
+_CERTIFICATION_PROPS = {
+    "name": {"type": "string"},
+    "issuer": {"type": ["string", "null"]},
+    "date": {"type": ["string", "null"], "description": "MM/YY format if stated"},
+}
+
 RESTRUCTURE_TOOL = {
     "name": "submit_resume_review",
-    "description": "Submit the extracted roles, analysis, categories, and first question batch.",
+    "description": "Submit the extracted roles, education, certifications, analysis, categories, and first question batch.",
     "input_schema": {
         "type": "object",
         "properties": {
@@ -80,6 +98,22 @@ RESTRUCTURE_TOOL = {
                     "type": "object",
                     "properties": _ROLE_PROPS,
                     "required": ["title", "organization", "location", "start_date", "end_date", "bullets"],
+                },
+            },
+            "education": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": _EDUCATION_PROPS,
+                    "required": ["institution", "degree", "field_of_study", "graduation_date"],
+                },
+            },
+            "certifications": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": _CERTIFICATION_PROPS,
+                    "required": ["name", "issuer", "date"],
                 },
             },
             "analysis_summary": {"type": "string"},
@@ -97,7 +131,7 @@ RESTRUCTURE_TOOL = {
                 },
             },
         },
-        "required": ["roles", "analysis_summary", "categories", "questions"],
+        "required": ["roles", "education", "certifications", "analysis_summary", "categories", "questions"],
     },
 }
 
@@ -122,7 +156,7 @@ def _extract_tool_input(response) -> dict:
         raise ValueError("invalid_json")
 
     data = tool_blocks[0].input
-    required = ("roles", "analysis_summary", "categories", "questions")
+    required = ("roles", "education", "certifications", "analysis_summary", "categories", "questions")
     missing = [k for k in required if k not in data]
     if missing:
         raise ValueError("missing_required_field")

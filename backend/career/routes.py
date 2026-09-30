@@ -25,7 +25,7 @@ from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
 from db import get_db_session
 from extractor import extract_text
-from models import CareerProfile, Experience, ResumeIngestionDraft, User
+from models import CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, User
 
 router = APIRouter()
 
@@ -133,6 +133,198 @@ async def list_experiences(
     return [_experience_to_dict(e) for e in experiences]
 
 
+class EducationIn(BaseModel):
+    institution: str
+    degree: str | None = None
+    field_of_study: str | None = None
+    graduation_date: str | None = None
+
+
+def _education_to_dict(e: Education) -> dict:
+    return {
+        "id": e.id,
+        "institution": e.institution,
+        "degree": e.degree,
+        "field_of_study": e.field_of_study,
+        "graduation_date": e.graduation_date,
+        "created_at": e.created_at.isoformat() if e.created_at else None,
+    }
+
+
+@router.post("/education")
+async def create_education(
+    req: EducationIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    if not req.institution.strip():
+        raise HTTPException(status_code=400, detail="Institution is required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    entry = Education(
+        career_profile_id=profile.id,
+        institution=req.institution.strip(),
+        degree=(req.degree or "").strip() or None,
+        field_of_study=(req.field_of_study or "").strip() or None,
+        graduation_date=(req.graduation_date or "").strip() or None,
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return _education_to_dict(entry)
+
+
+@router.get("/education")
+async def list_education(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entries = (
+        db.query(Education)
+        .filter_by(career_profile_id=profile.id)
+        .order_by(Education.created_at.desc())
+        .all()
+    )
+    return [_education_to_dict(e) for e in entries]
+
+
+def _get_education_or_404(db: Session, profile: CareerProfile, education_id: int) -> Education:
+    entry = (
+        db.query(Education)
+        .filter_by(id=education_id, career_profile_id=profile.id)
+        .one_or_none()
+    )
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Education entry not found.")
+    return entry
+
+
+@router.put("/education/{education_id}")
+async def update_education(
+    education_id: int,
+    req: EducationIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_education_or_404(db, profile, education_id)
+    entry.institution = req.institution.strip()
+    entry.degree = (req.degree or "").strip() or None
+    entry.field_of_study = (req.field_of_study or "").strip() or None
+    entry.graduation_date = (req.graduation_date or "").strip() or None
+    db.commit()
+    db.refresh(entry)
+    return _education_to_dict(entry)
+
+
+@router.delete("/education/{education_id}")
+async def delete_education(
+    education_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_education_or_404(db, profile, education_id)
+    db.delete(entry)
+    db.commit()
+    return {"deleted": True}
+
+
+class CertificationIn(BaseModel):
+    name: str
+    issuer: str | None = None
+    date: str | None = None
+
+
+def _certification_to_dict(c: Certification) -> dict:
+    return {
+        "id": c.id,
+        "name": c.name,
+        "issuer": c.issuer,
+        "date": c.date,
+        "created_at": c.created_at.isoformat() if c.created_at else None,
+    }
+
+
+@router.post("/certifications")
+async def create_certification(
+    req: CertificationIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    if not req.name.strip():
+        raise HTTPException(status_code=400, detail="Certification name is required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    entry = Certification(
+        career_profile_id=profile.id,
+        name=req.name.strip(),
+        issuer=(req.issuer or "").strip() or None,
+        date=(req.date or "").strip() or None,
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return _certification_to_dict(entry)
+
+
+@router.get("/certifications")
+async def list_certifications(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entries = (
+        db.query(Certification)
+        .filter_by(career_profile_id=profile.id)
+        .order_by(Certification.created_at.desc())
+        .all()
+    )
+    return [_certification_to_dict(c) for c in entries]
+
+
+def _get_certification_or_404(db: Session, profile: CareerProfile, certification_id: int) -> Certification:
+    entry = (
+        db.query(Certification)
+        .filter_by(id=certification_id, career_profile_id=profile.id)
+        .one_or_none()
+    )
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Certification not found.")
+    return entry
+
+
+@router.put("/certifications/{certification_id}")
+async def update_certification(
+    certification_id: int,
+    req: CertificationIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_certification_or_404(db, profile, certification_id)
+    entry.name = req.name.strip()
+    entry.issuer = (req.issuer or "").strip() or None
+    entry.date = (req.date or "").strip() or None
+    db.commit()
+    db.refresh(entry)
+    return _certification_to_dict(entry)
+
+
+@router.delete("/certifications/{certification_id}")
+async def delete_certification(
+    certification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_certification_or_404(db, profile, certification_id)
+    db.delete(entry)
+    db.commit()
+    return {"deleted": True}
+
+
 # --- Resume-driven ingestion: upload -> extract roles -> discovery
 # interview (reuses elevate.py's discover() unchanged) -> candidate
 # reviews and saves. The AI calls themselves are stateless, same as every
@@ -147,6 +339,8 @@ def _draft_to_dict(d: ResumeIngestionDraft) -> dict:
     return {
         "analysis_summary": d.analysis_summary,
         "roles": d.roles,
+        "education": d.education,
+        "certifications": d.certifications,
         "categories": d.categories,
         "history": d.history,
         "pending_questions": d.pending_questions,
@@ -211,6 +405,8 @@ async def resume_start(
         db.add(draft)
     draft.analysis_summary = result.get("analysis_summary")
     draft.roles = result.get("roles") or []
+    draft.education = result.get("education") or []
+    draft.certifications = result.get("certifications") or []
     draft.categories = result.get("categories") or []
     draft.history = []
     draft.pending_questions = result.get("questions") or []
@@ -267,6 +463,8 @@ class ConfirmedFactAssignment(BaseModel):
 
 class ResumeSaveRequest(BaseModel):
     roles: list[dict]
+    education: list[dict] = []
+    certifications: list[dict] = []
     confirmed_facts: list[ConfirmedFactAssignment] = []
 
 
@@ -285,7 +483,7 @@ async def save_resume_roles(
             bullets.append(fact.bullet_text)
             roles[fact.role_index]["bullets"] = bullets
 
-    created = []
+    created_experiences = []
     for role in roles:
         title = (role.get("title") or "").strip()
         organization = (role.get("organization") or "").strip()
@@ -302,15 +500,50 @@ async def save_resume_roles(
             source="resume_upload",
         )
         db.add(experience)
-        created.append(experience)
+        created_experiences.append(experience)
+
+    created_education = []
+    for entry in req.education:
+        institution = (entry.get("institution") or "").strip()
+        if not institution:
+            continue
+        education = Education(
+            career_profile_id=profile.id,
+            institution=institution,
+            degree=(entry.get("degree") or "").strip() or None,
+            field_of_study=(entry.get("field_of_study") or "").strip() or None,
+            graduation_date=(entry.get("graduation_date") or "").strip() or None,
+            source="resume_upload",
+        )
+        db.add(education)
+        created_education.append(education)
+
+    created_certifications = []
+    for entry in req.certifications:
+        name = (entry.get("name") or "").strip()
+        if not name:
+            continue
+        certification = Certification(
+            career_profile_id=profile.id,
+            name=name,
+            issuer=(entry.get("issuer") or "").strip() or None,
+            date=(entry.get("date") or "").strip() or None,
+            source="resume_upload",
+        )
+        db.add(certification)
+        created_certifications.append(certification)
 
     db.commit()
-    for e in created:
-        db.refresh(e)
+    for row in created_experiences + created_education + created_certifications:
+        db.refresh(row)
 
     draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
     if draft is not None:
         db.delete(draft)
         db.commit()
 
-    return [_experience_to_dict(e) for e in created]
+    return {
+        "experiences": [_experience_to_dict(e) for e in created_experiences],
+        "education": [_education_to_dict(e) for e in created_education],
+        "certifications": [_certification_to_dict(c) for c in created_certifications],
+    }

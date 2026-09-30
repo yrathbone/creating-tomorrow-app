@@ -41,6 +41,8 @@ class CareerProfile(Base):
 
     user: Mapped["User"] = relationship(back_populates="career_profile")
     experiences: Mapped[list["Experience"]] = relationship(back_populates="career_profile")
+    education_entries: Mapped[list["Education"]] = relationship(back_populates="career_profile")
+    certifications: Mapped[list["Certification"]] = relationship(back_populates="career_profile")
 
 
 class Experience(Base):
@@ -64,6 +66,35 @@ class Experience(Base):
     career_profile: Mapped["CareerProfile"] = relationship(back_populates="experiences")
 
 
+class Education(Base):
+    __tablename__ = "education"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"))
+    institution: Mapped[str] = mapped_column(String)
+    degree: Mapped[str | None] = mapped_column(String, nullable=True)
+    field_of_study: Mapped[str | None] = mapped_column(String, nullable=True)
+    graduation_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    source: Mapped[str] = mapped_column(String, default="manual")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    career_profile: Mapped["CareerProfile"] = relationship(back_populates="education_entries")
+
+
+class Certification(Base):
+    __tablename__ = "certifications"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"))
+    name: Mapped[str] = mapped_column(String)
+    issuer: Mapped[str | None] = mapped_column(String, nullable=True)
+    date: Mapped[str | None] = mapped_column(String, nullable=True)
+    source: Mapped[str] = mapped_column(String, default="manual")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    career_profile: Mapped["CareerProfile"] = relationship(back_populates="certifications")
+
+
 class ResumeIngestionDraft(Base):
     """In-progress resume-upload interview state (roles extracted so far,
     Q&A history, the question batch currently awaiting answers, and any
@@ -80,6 +111,8 @@ class ResumeIngestionDraft(Base):
     career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"), unique=True)
     analysis_summary: Mapped[str | None] = mapped_column(String, nullable=True)
     roles: Mapped[list] = mapped_column(JSON, default=list)
+    education: Mapped[list] = mapped_column(JSON, default=list)
+    certifications: Mapped[list] = mapped_column(JSON, default=list)
     categories: Mapped[list] = mapped_column(JSON, default=list)
     history: Mapped[list] = mapped_column(JSON, default=list)
     pending_questions: Mapped[list] = mapped_column(JSON, default=list)
