@@ -149,6 +149,20 @@ function makeTextField(labelText, value, onInput) {
   return label;
 }
 
+function makeTextareaField(labelText, value, onInput) {
+  const label = document.createElement("label");
+  label.className = "field";
+  const span = document.createElement("span");
+  span.textContent = labelText;
+  const textarea = document.createElement("textarea");
+  textarea.rows = 5;
+  textarea.value = value || "";
+  textarea.addEventListener("input", () => onInput(textarea.value));
+  label.appendChild(span);
+  label.appendChild(textarea);
+  return label;
+}
+
 const resumeUploadForm = document.getElementById("resume-upload-form");
 const resumeUploadBtn = document.getElementById("resume-upload-btn");
 const resumeUploadError = document.getElementById("resume-upload-error");

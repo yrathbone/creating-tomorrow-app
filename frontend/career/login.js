@@ -82,7 +82,8 @@ function renderDetailCard(container, entity, fieldDefs, { onSave, onDelete }) {
     card.innerHTML = "";
     const draft = Object.assign({}, entity);
     for (const f of fieldDefs.fields) {
-      card.appendChild(makeTextField(f.label, draft[f.key], (v) => { draft[f.key] = v; }));
+      const makeField = f.multiline ? makeTextareaField : makeTextField;
+      card.appendChild(makeField(f.label, draft[f.key], (v) => { draft[f.key] = v; }));
     }
 
     const saveBtn = document.createElement("button");
@@ -148,7 +149,7 @@ const EXPERIENCE_FIELD_DEFS = {
     { key: "location", label: "Location" },
     { key: "start_date", label: "Start date" },
     { key: "end_date", label: "End date" },
-    { key: "description", label: "Description" },
+    { key: "description", label: "Description", multiline: true },
   ],
 };
 
