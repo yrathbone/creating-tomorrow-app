@@ -64,7 +64,7 @@
     <section id="step-profile" hidden>
       <div class="dashboard-tabs">
         <a href="#dashboard-top" class="dashboard-tab active">Dashboard</a>
-        <a href="#career-profile-detail" class="dashboard-tab">Career Profile</a>
+        <button type="button" id="nav-career-profile-btn" class="dashboard-tab">Career Profile</button>
         <span class="dashboard-tab" aria-disabled="true">Jobs</span>
         <span class="dashboard-tab" aria-disabled="true">Resumes</span>
         <span class="dashboard-tab" aria-disabled="true">Applications</span>
@@ -128,7 +128,30 @@
       </div>
 
       <section class="card" id="career-profile-detail" hidden style="margin-top:2rem;">
-      <h2>Full Career Profile</h2>
+        <h2>Career Profile</h2>
+        <p class="hint">Everything you've confirmed so far. Edit or delete anything below.</p>
+
+        <h3>Experience</h3>
+        <div id="experience-detail-list"></div>
+
+        <h3>Education</h3>
+        <div id="education-detail-list"></div>
+
+        <h3>Certifications</h3>
+        <div id="certification-detail-list"></div>
+
+        <h3>Skills, Technologies &amp; Achievements</h3>
+        <p class="hint">Not yet tracked as separate, verified evidence — for now they're part of your role descriptions above. Tracking these individually is planned.</p>
+
+        <h3>Languages</h3>
+        <p class="hint">Not yet tracked. Planned for a future update.</p>
+
+        <h3>Geographic / International Experience</h3>
+        <p class="hint">Not yet tracked. Planned for a future update.</p>
+      </section>
+
+      <section class="card" id="career-profile-editor" hidden style="margin-top:2rem;">
+      <h2>Add to My Career Profile</h2>
 
       <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem;">
         <button type="button" id="mode-manual-btn" class="btn-secondary">Enter manually</button>
@@ -159,7 +182,6 @@
           <button type="submit" id="edu-submit-btn">Add Education</button>
         </form>
         <div id="edu-error" class="error" hidden></div>
-        <ul id="education-list"></ul>
 
         <h3>Add a certification</h3>
         <form id="certification-form">
@@ -169,7 +191,6 @@
           <button type="submit" id="cert-submit-btn">Add Certification</button>
         </form>
         <div id="cert-error" class="error" hidden></div>
-        <ul id="certifications-list"></ul>
       </div>
 
       <div id="resume-entry-section" hidden>
@@ -243,8 +264,6 @@
         </div>
       </div>
 
-      <h3>Your roles so far</h3>
-      <ul id="experience-list"></ul>
       </section>
     </section>
   </main>

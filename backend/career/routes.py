@@ -133,13 +133,7 @@ async def list_experiences(
     return [_experience_to_dict(e) for e in experiences]
 
 
-@router.delete("/experiences/{experience_id}")
-async def delete_experience(
-    experience_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db_session),
-):
-    profile = get_career_profile_or_404(db, current_user)
+def _get_experience_or_404(db: Session, profile: CareerProfile, experience_id: int) -> Experience:
     experience = (
         db.query(Experience)
         .filter_by(id=experience_id, career_profile_id=profile.id)
@@ -147,6 +141,40 @@ async def delete_experience(
     )
     if experience is None:
         raise HTTPException(status_code=404, detail="Role not found.")
+    return experience
+
+
+@router.put("/experiences/{experience_id}")
+async def update_experience(
+    experience_id: int,
+    req: ExperienceIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    if not req.title.strip() or not req.organization.strip():
+        raise HTTPException(status_code=400, detail="Title and organization are both required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    experience = _get_experience_or_404(db, profile, experience_id)
+    experience.title = req.title.strip()
+    experience.organization = req.organization.strip()
+    experience.location = (req.location or "").strip() or None
+    experience.start_date = (req.start_date or "").strip() or None
+    experience.end_date = (req.end_date or "").strip() or None
+    experience.description = (req.description or "").strip() or None
+    db.commit()
+    db.refresh(experience)
+    return _experience_to_dict(experience)
+
+
+@router.delete("/experiences/{experience_id}")
+async def delete_experience(
+    experience_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    experience = _get_experience_or_404(db, profile, experience_id)
     db.delete(experience)
     db.commit()
     return {"deleted": True}

@@ -8,17 +8,14 @@ const consentError = document.getElementById("consent-error");
 const experienceForm = document.getElementById("experience-form");
 const expError = document.getElementById("exp-error");
 const expSubmitBtn = document.getElementById("exp-submit-btn");
-const experienceList = document.getElementById("experience-list");
 
 const educationForm = document.getElementById("education-form");
 const eduError = document.getElementById("edu-error");
 const eduSubmitBtn = document.getElementById("edu-submit-btn");
-const educationList = document.getElementById("education-list");
 
 const certificationForm = document.getElementById("certification-form");
 const certError = document.getElementById("cert-error");
 const certSubmitBtn = document.getElementById("cert-submit-btn");
-const certificationsList = document.getElementById("certifications-list");
 
 // Kept in memory only, never persisted - a hard refresh means signing in
 // again (Deliverable C's deliberate MVP tradeoff).
@@ -39,26 +36,94 @@ let allExperiences = [];
 let allEducation = [];
 let allCertifications = [];
 
-function makeListRow(text, onDelete) {
-  const li = document.createElement("li");
-  li.className = "list-row";
-  const span = document.createElement("span");
-  span.className = "list-row-text";
-  span.textContent = text;
-  li.appendChild(span);
+// Generic editable/deletable detail card - view mode shows a summary line
+// plus Edit/Delete; Edit swaps in text fields with Save/Cancel. Used for
+// Experience, Education, and Certification detail lists so there's one
+// implementation of "edit in place, save via PUT" rather than three.
+function renderDetailCard(container, entity, fieldDefs, { onSave, onDelete }) {
+  const card = document.createElement("div");
+  card.className = "entry-summary-card";
 
-  const actions = document.createElement("span");
-  actions.className = "list-row-actions";
-  const deleteBtn = document.createElement("button");
-  deleteBtn.type = "button";
-  deleteBtn.className = "entry-remove-btn";
-  deleteBtn.textContent = "Delete";
-  deleteBtn.addEventListener("click", onDelete);
-  actions.appendChild(deleteBtn);
-  li.appendChild(actions);
+  function renderView() {
+    card.innerHTML = "";
+    const header = document.createElement("div");
+    header.className = "entry-summary-header";
+    const summary = document.createElement("strong");
+    summary.textContent = fieldDefs.summary(entity);
+    const actions = document.createElement("span");
+    actions.className = "list-row-actions";
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "entry-remove-btn";
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", renderEdit);
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "entry-remove-btn";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.addEventListener("click", () => onDelete(entity));
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    header.appendChild(summary);
+    header.appendChild(actions);
+    card.appendChild(header);
 
-  return li;
+    const detailText = fieldDefs.detail ? fieldDefs.detail(entity) : "";
+    if (detailText) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.style.whiteSpace = "pre-line";
+      p.textContent = detailText;
+      card.appendChild(p);
+    }
+  }
+
+  function renderEdit() {
+    card.innerHTML = "";
+    const draft = Object.assign({}, entity);
+    for (const f of fieldDefs.fields) {
+      card.appendChild(makeTextField(f.label, draft[f.key], (v) => { draft[f.key] = v; }));
+    }
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.textContent = "Save";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn-secondary";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.addEventListener("click", renderView);
+
+    const saveError = document.createElement("div");
+    saveError.className = "error";
+    saveError.hidden = true;
+
+    saveBtn.addEventListener("click", async () => {
+      saveError.hidden = true;
+      saveBtn.disabled = true;
+      try {
+        await onSave(entity, draft);
+      } catch (err) {
+        saveError.textContent = (err && err.message) || "Couldn't save that change.";
+        saveError.hidden = false;
+        saveBtn.disabled = false;
+        return;
+      }
+      saveBtn.disabled = false;
+    });
+
+    card.appendChild(saveBtn);
+    card.appendChild(cancelBtn);
+    card.appendChild(saveError);
+  }
+
+  renderView();
+  container.appendChild(card);
 }
+
+// makeTextField is defined in resumeReview.js (loaded before this file) and
+// reused here for the same "label + input, onInput updates a draft object"
+// pattern used by the resume-review edit cards.
 
 function experienceLabel(exp) {
   const dates = [exp.start_date, exp.end_date].filter(Boolean).join(" – ");
@@ -74,24 +139,70 @@ function certificationLabel(entry) {
   return entry.name + (entry.issuer ? " — " + entry.issuer : "") + (entry.date ? " (" + entry.date + ")" : "");
 }
 
+const EXPERIENCE_FIELD_DEFS = {
+  summary: experienceLabel,
+  detail: (exp) => exp.description || "",
+  fields: [
+    { key: "title", label: "Title" },
+    { key: "organization", label: "Organization" },
+    { key: "location", label: "Location" },
+    { key: "start_date", label: "Start date" },
+    { key: "end_date", label: "End date" },
+    { key: "description", label: "Description" },
+  ],
+};
+
+const EDUCATION_FIELD_DEFS = {
+  summary: educationLabel,
+  fields: [
+    { key: "institution", label: "Institution" },
+    { key: "degree", label: "Degree" },
+    { key: "field_of_study", label: "Field of study" },
+    { key: "graduation_date", label: "Graduation date" },
+  ],
+};
+
+const CERTIFICATION_FIELD_DEFS = {
+  summary: certificationLabel,
+  fields: [
+    { key: "name", label: "Certification name" },
+    { key: "issuer", label: "Issuer" },
+    { key: "date", label: "Date" },
+  ],
+};
+
 async function loadExperiences() {
   const res = await authedFetch("/api/career/experiences");
   allExperiences = await res.json();
   if (!Array.isArray(allExperiences)) allExperiences = [];
 
-  experienceList.textContent = "";
+  const container = document.getElementById("experience-detail-list");
+  container.textContent = "";
   if (allExperiences.length === 0) {
-    const li = document.createElement("li");
-    li.className = "hint";
-    li.textContent = "No roles added yet.";
-    experienceList.appendChild(li);
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "No roles added yet.";
+    container.appendChild(p);
   } else {
     for (const exp of allExperiences) {
-      experienceList.appendChild(makeListRow(experienceLabel(exp), async () => {
-        await authedFetch("/api/career/experiences/" + exp.id, { method: "DELETE" });
-        await loadExperiences();
-        updateDashboardSummary();
-      }));
+      renderDetailCard(container, exp, EXPERIENCE_FIELD_DEFS, {
+        onSave: async (entity, draft) => {
+          const res = await authedFetch("/api/career/experiences/" + entity.id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(draft),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.detail || "Couldn't save that change.");
+          }
+          await loadExperiences();
+        },
+        onDelete: async (entity) => {
+          await authedFetch("/api/career/experiences/" + entity.id, { method: "DELETE" });
+          await loadExperiences();
+        },
+      });
     }
   }
   updateDashboardSummary();
@@ -102,19 +213,33 @@ async function loadEducation() {
   allEducation = await res.json();
   if (!Array.isArray(allEducation)) allEducation = [];
 
-  educationList.textContent = "";
+  const container = document.getElementById("education-detail-list");
+  container.textContent = "";
   if (allEducation.length === 0) {
-    const li = document.createElement("li");
-    li.className = "hint";
-    li.textContent = "No education added yet.";
-    educationList.appendChild(li);
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "No education added yet.";
+    container.appendChild(p);
   } else {
     for (const entry of allEducation) {
-      educationList.appendChild(makeListRow(educationLabel(entry), async () => {
-        await authedFetch("/api/career/education/" + entry.id, { method: "DELETE" });
-        await loadEducation();
-        updateDashboardSummary();
-      }));
+      renderDetailCard(container, entry, EDUCATION_FIELD_DEFS, {
+        onSave: async (entity, draft) => {
+          const res = await authedFetch("/api/career/education/" + entity.id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(draft),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.detail || "Couldn't save that change.");
+          }
+          await loadEducation();
+        },
+        onDelete: async (entity) => {
+          await authedFetch("/api/career/education/" + entity.id, { method: "DELETE" });
+          await loadEducation();
+        },
+      });
     }
   }
   updateDashboardSummary();
@@ -125,19 +250,33 @@ async function loadCertifications() {
   allCertifications = await res.json();
   if (!Array.isArray(allCertifications)) allCertifications = [];
 
-  certificationsList.textContent = "";
+  const container = document.getElementById("certification-detail-list");
+  container.textContent = "";
   if (allCertifications.length === 0) {
-    const li = document.createElement("li");
-    li.className = "hint";
-    li.textContent = "No certifications added yet.";
-    certificationsList.appendChild(li);
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "No certifications added yet.";
+    container.appendChild(p);
   } else {
     for (const entry of allCertifications) {
-      certificationsList.appendChild(makeListRow(certificationLabel(entry), async () => {
-        await authedFetch("/api/career/certifications/" + entry.id, { method: "DELETE" });
-        await loadCertifications();
-        updateDashboardSummary();
-      }));
+      renderDetailCard(container, entry, CERTIFICATION_FIELD_DEFS, {
+        onSave: async (entity, draft) => {
+          const res = await authedFetch("/api/career/certifications/" + entity.id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(draft),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.detail || "Couldn't save that change.");
+          }
+          await loadCertifications();
+        },
+        onDelete: async (entity) => {
+          await authedFetch("/api/career/certifications/" + entity.id, { method: "DELETE" });
+          await loadCertifications();
+        },
+      });
     }
   }
   updateDashboardSummary();
@@ -275,14 +414,21 @@ async function showProfileStep() {
   await loadCertifications();
 }
 
-function revealCareerProfileDetail() {
-  const detail = document.getElementById("career-profile-detail");
-  detail.hidden = false;
-  detail.scrollIntoView({ behavior: "smooth", block: "start" });
+function revealCareerProfileSections(scrollToId) {
+  document.getElementById("career-profile-detail").hidden = false;
+  document.getElementById("career-profile-editor").hidden = false;
+  document.getElementById(scrollToId).scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-document.getElementById("view-full-profile-btn").addEventListener("click", revealCareerProfileDetail);
-document.getElementById("update-profile-btn").addEventListener("click", revealCareerProfileDetail);
+document.getElementById("view-full-profile-btn").addEventListener("click", () => {
+  revealCareerProfileSections("career-profile-detail");
+});
+document.getElementById("update-profile-btn").addEventListener("click", () => {
+  revealCareerProfileSections("career-profile-editor");
+});
+document.getElementById("nav-career-profile-btn").addEventListener("click", () => {
+  revealCareerProfileSections("career-profile-detail");
+});
 
 document.getElementById("mode-manual-btn").addEventListener("click", () => {
   document.getElementById("manual-entry-section").hidden = false;
