@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
+from career.job_match import JobMatchError, build_tailored_resume, compare_to_job
 from db import get_db_session
 from extractor import extract_text
 from models import CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, User
@@ -657,3 +658,137 @@ async def save_resume_roles(
         "created_count": len(created_experiences) + len(created_education) + len(created_certifications),
         "updated_count": len(updated_experiences) + len(updated_education) + len(updated_certifications),
     }
+
+
+# --- Job comparison: paste a job -> compare against the WHOLE Career
+# Profile -> gap interview (reuses elevate.py's discover(), same as the
+# resume-ingestion flow above) -> build a tailored resume from real
+# profile evidence. Stateless - unlike resume ingestion, this doesn't
+# persist a resumable draft (no ResumeIngestionDraft writes here), since
+# the "Career Profile" itself is already the persistent record; only the
+# ingestion-into-profile flow needed cross-session resumability.
+
+MIN_JOB_DESCRIPTION_CHARS = 40
+MAX_JOB_DESCRIPTION_CHARS = 15000
+
+
+def _build_profile_text(db: Session, profile: CareerProfile) -> str:
+    experiences = db.query(Experience).filter_by(career_profile_id=profile.id).order_by(Experience.created_at.desc()).all()
+    education = db.query(Education).filter_by(career_profile_id=profile.id).all()
+    certifications = db.query(Certification).filter_by(career_profile_id=profile.id).all()
+
+    lines = ["EXPERIENCE:"]
+    if experiences:
+        for e in experiences:
+            dates = " – ".join(d for d in [e.start_date, e.end_date] if d)
+            lines.append(f"- {e.title} at {e.organization}" + (f" ({dates})" if dates else ""))
+            if e.description:
+                for bullet in e.description.split("\n"):
+                    if bullet.strip():
+                        lines.append(f"  * {bullet.strip()}")
+    else:
+        lines.append("(none recorded yet)")
+
+    lines.append("\nEDUCATION:")
+    if education:
+        for ed in education:
+            parts = [p for p in [ed.degree, ed.field_of_study] if p]
+            lines.append(f"- {ed.institution}" + (f": {', '.join(parts)}" if parts else "") + (f" ({ed.graduation_date})" if ed.graduation_date else ""))
+    else:
+        lines.append("(none recorded yet)")
+
+    lines.append("\nCERTIFICATIONS:")
+    if certifications:
+        for c in certifications:
+            lines.append(f"- {c.name}" + (f" — {c.issuer}" if c.issuer else "") + (f" ({c.date})" if c.date else ""))
+    else:
+        lines.append("(none recorded yet)")
+
+    return "\n".join(lines)
+
+
+class JobCompareRequest(BaseModel):
+    job_description: str
+
+
+@router.post("/job-compare")
+async def job_compare(
+    req: JobCompareRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    job_description = req.job_description.strip()
+    if not job_description:
+        raise HTTPException(status_code=400, detail="Please paste the job description.")
+    if len(job_description) < MIN_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(status_code=400, detail="That job description looks too short to work with — please paste the full posting.")
+    if len(job_description) > MAX_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(status_code=400, detail=f"That job description is too long ({len(job_description)} characters, {MAX_JOB_DESCRIPTION_CHARS} max).")
+
+    profile = get_career_profile_or_404(db, current_user)
+    profile_text = _build_profile_text(db, profile)
+
+    try:
+        result = await run_in_threadpool(compare_to_job, profile_text, job_description)
+    except JobMatchError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result
+
+
+class JobDiscoverRequest(BaseModel):
+    resume_data: dict
+    categories: list = []
+    history: list = []
+    force_finish: bool = False
+    round_number: int = 1
+
+
+@router.post("/job-discover")
+async def job_discover(
+    req: JobDiscoverRequest,
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        result = await run_in_threadpool(
+            discover, req.resume_data, req.categories, req.history, req.force_finish, req.round_number
+        )
+    except ElevateError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result
+
+
+class JobBuildResumeRequest(BaseModel):
+    job_description: str
+    confirmed_facts: list[dict] = []
+    name: str
+    contact: str
+
+
+@router.post("/job-build-resume")
+async def job_build_resume(
+    req: JobBuildResumeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    if not req.name.strip() or not req.contact.strip():
+        raise HTTPException(status_code=400, detail="Name and contact info are both required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    profile_text = _build_profile_text(db, profile)
+
+    try:
+        result = await run_in_threadpool(
+            build_tailored_resume, profile_text, req.job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
+        )
+    except JobMatchError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    return result

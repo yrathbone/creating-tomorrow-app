@@ -84,8 +84,69 @@
       <div class="dashboard-grid">
         <div class="card span-2">
           <div class="dashboard-card-header"><h2>Current Job Target</h2></div>
-          <p class="hint">Found a job you're interested in? Add it here and we'll compare it with your verified career experience.</p>
-          <span class="btn-secondary" aria-disabled="true" style="opacity:0.6; cursor:default;">+ Add a Job <span class="coming-soon">Coming soon</span></span>
+
+          <div id="job-target-empty">
+            <p class="hint">Found a job you're interested in? Add it here and we'll compare it with your verified career experience.</p>
+            <button type="button" id="job-target-add-btn">+ Add a Job</button>
+          </div>
+
+          <div id="job-input-state" hidden>
+            <form id="job-compare-form">
+              <label class="field">
+                <span>Paste the job description</span>
+                <textarea id="job-description-input" rows="10" required></textarea>
+              </label>
+              <button type="submit" id="job-compare-btn">Compare to My Career Profile</button>
+              <button type="button" id="job-cancel-btn" class="btn-secondary">Cancel</button>
+            </form>
+            <div id="job-compare-error" class="error" hidden></div>
+          </div>
+
+          <div id="job-loading-state" class="processing-card" hidden aria-live="polite">
+            <p class="processing-status"></p>
+            <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
+          </div>
+
+          <div id="job-match-state" hidden>
+            <p><strong>Match: </strong><span id="job-match-level"></span></p>
+            <p id="job-match-rationale"></p>
+            <div id="job-strengths-block">
+              <h4>Strengths</h4>
+              <ul id="job-strengths-list"></ul>
+            </div>
+            <div id="job-gaps-block">
+              <h4>Worth exploring</h4>
+              <ul id="job-gaps-list"></ul>
+            </div>
+            <button type="button" id="job-start-interview-btn">Explore These With Me</button>
+            <button type="button" id="job-skip-interview-btn" class="btn-secondary">Skip to Building My Resume</button>
+          </div>
+
+          <div id="job-questions-state" hidden>
+            <div id="job-questions-list"></div>
+            <div id="job-questions-error" class="error" hidden></div>
+            <button type="button" id="job-questions-submit-btn">Continue</button>
+            <button type="button" id="job-questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
+          </div>
+
+          <div id="job-build-form-state" hidden>
+            <h4>A couple details for the resume header</h4>
+            <label class="field"><span>Your name</span><input type="text" id="job-build-name" required /></label>
+            <label class="field"><span>Contact line</span><input type="text" id="job-build-contact" placeholder="City, ST | Phone | Email | LinkedIn" required /></label>
+            <button type="button" id="job-build-btn">Build My Resume</button>
+            <div id="job-build-error" class="error" hidden></div>
+          </div>
+
+          <div id="job-build-loading-state" class="processing-card" hidden aria-live="polite">
+            <p class="processing-status"></p>
+            <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
+          </div>
+
+          <div id="job-build-done-state" hidden>
+            <p class="success">Your tailored resume is ready.</p>
+            <button type="button" id="job-download-btn">Download Resume (.docx)</button>
+            <button type="button" id="job-start-over-btn" class="btn-secondary">Compare Another Job</button>
+          </div>
         </div>
 
         <div class="card span-2">
@@ -281,5 +342,6 @@
   <script src="../loading.js"></script>
   <script src="login.js"></script>
   <script src="js/resumeReview.js"></script>
+  <script src="js/jobMatch.js"></script>
 </body>
 </html>
