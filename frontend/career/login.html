@@ -41,10 +41,34 @@
       <div id="login-error" class="error" hidden></div>
     </section>
 
-    <section class="card" id="step-loggedin" hidden>
-      <h2>You're logged in</h2>
-      <p class="success">Signed in successfully. Here's what the backend sees for your account (confirms the full Cognito → API chain is working):</p>
-      <pre id="me-result"></pre>
+    <section class="card" id="step-consent" hidden>
+      <h2>Save your career information?</h2>
+      <p>Creating Tomorrow's Career Profile stores your work history, skills, and education — your name, job titles, employers, dates, and the accomplishments you describe — so tools like Right Fit can compare against your whole career, not just one uploaded resume.</p>
+      <p><strong>Nothing is added to your profile without your explicit confirmation</strong> — not even something an AI suggests.</p>
+      <p class="hint">You'll be able to review, edit, export, or delete this information later.</p>
+      <button type="button" id="consent-btn">Yes, save my career information</button>
+      <div id="consent-error" class="error" hidden></div>
+    </section>
+
+    <section class="card" id="step-profile" hidden>
+      <h2>Your Career Profile</h2>
+
+      <h3>Add a role</h3>
+      <form id="experience-form">
+        <label class="field"><span>Title</span><input type="text" id="exp-title" required /></label>
+        <label class="field"><span>Organization</span><input type="text" id="exp-organization" required /></label>
+        <label class="field"><span>Location (optional)</span><input type="text" id="exp-location" /></label>
+        <div class="field-row">
+          <label class="field"><span>Start date (optional)</span><input type="text" id="exp-start" placeholder="e.g. 07/21" /></label>
+          <label class="field"><span>End date (optional)</span><input type="text" id="exp-end" placeholder="e.g. Present" /></label>
+        </div>
+        <label class="field"><span>Description (optional)</span><textarea id="exp-description" rows="4"></textarea></label>
+        <button type="submit" id="exp-submit-btn">Add Role</button>
+      </form>
+      <div id="exp-error" class="error" hidden></div>
+
+      <h3>Your roles so far</h3>
+      <ul id="experience-list"></ul>
     </section>
   </main>
 

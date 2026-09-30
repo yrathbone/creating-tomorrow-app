@@ -20,8 +20,9 @@ import urllib.request
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
-from db import get_session
+from db import get_db_session
 from models import User
 
 COGNITO_REGION = os.environ.get("COGNITO_REGION")
@@ -60,6 +61,7 @@ def _get_signing_key(kid: str) -> dict:
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+    db: Session = Depends(get_db_session),
 ) -> User:
     if not COGNITO_REGION or not COGNITO_USER_POOL_ID or not COGNITO_APP_CLIENT_ID:
         raise HTTPException(status_code=503, detail="Authentication is not configured on this server.")
@@ -87,14 +89,10 @@ def get_current_user(
     if not cognito_sub:
         raise HTTPException(status_code=401, detail="Token is missing a subject claim.")
 
-    session = get_session()
-    try:
-        user = session.query(User).filter_by(cognito_sub=cognito_sub).one_or_none()
-        if user is None:
-            user = User(cognito_sub=cognito_sub)
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-        return user
-    finally:
-        session.close()
+    user = db.query(User).filter_by(cognito_sub=cognito_sub).one_or_none()
+    if user is None:
+        user = User(cognito_sub=cognito_sub)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    return user

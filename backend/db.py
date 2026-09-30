@@ -16,6 +16,7 @@ database.
 """
 import os
 
+from fastapi import HTTPException
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -46,7 +47,10 @@ def _get_engine():
         url = normalized_database_url()
         if not url:
             raise RuntimeError("DATABASE_URL is not set on this environment.")
-        _engine = create_engine(url, pool_pre_ping=True)
+        # Deliberately conservative pool size (Deliverable D) - a single
+        # low-tier Postgres instance has a real, limited max connection
+        # count, and this app runs as a single Uvicorn worker.
+        _engine = create_engine(url, pool_pre_ping=True, pool_size=3, max_overflow=2)
     return _engine
 
 
@@ -55,6 +59,20 @@ def get_session() -> Session:
     if _SessionLocal is None:
         _SessionLocal = sessionmaker(bind=_get_engine())
     return _SessionLocal()
+
+
+def get_db_session():
+    """FastAPI dependency - one session per request, shared by every
+    dependency/route that declares it (FastAPI caches a dependency's
+    result per request), closed once the request finishes."""
+    try:
+        session = get_session()
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 def check_connection() -> None:

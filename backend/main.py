@@ -72,7 +72,7 @@ handle other requests while it's in flight.
 import base64
 import os
 
-from fastapi import Depends, FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -88,10 +88,10 @@ from profile_review import review_profile, ProfileReviewError
 from prepare import prepare, PrepareError
 from resume_builder import build_resume_bytes, build_match_recap_bytes, build_profile_review_recap_bytes
 from db import check_connection
-from models import User
-from auth.dependencies import get_current_user
+from career.routes import router as career_router
 
 app = FastAPI(title="Creating Tomorrow API")
+app.include_router(career_router, prefix="/api/career")
 
 # Only needed if the frontend is ever served from a different origin than
 # the API (e.g. local dev with a separate dev server - .claude/launch.json's
@@ -504,20 +504,6 @@ async def api_generate(req: GenerateRequest):
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
-
-
-# First real use of get_current_user() - proves the Cognito access-token
-# verification pipeline end to end (valid token -> 200 with the internal
-# User row; missing/invalid token -> 401 via HTTPBearer/get_current_user).
-# Not a real Career Profile route yet - see docs/CAREER_PROFILE_ARCHITECTURE_
-# AUDIT.md's locked sequence (Account -> Career Profile -> Manual CRUD -> ...).
-@app.get("/api/career/me")
-async def api_career_me(current_user: User = Depends(get_current_user)):
-    return {
-        "id": current_user.id,
-        "email": current_user.email,
-        "consent_given": current_user.consent_given_at is not None,
-    }
 
 
 @app.get("/api/health")
