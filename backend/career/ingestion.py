@@ -49,7 +49,7 @@ Do five things:
 
 4. Write a short, warm, conversational ANALYSIS of the career areas you see - 2-4 sentences, naming the specific functional areas, industries, or types of work the resume shows evidence of. Never say or imply the resume is "bad," weak, or lacking - frame it as a strong starting point with more likely underneath it.
 
-5. Infer 2-4 CATEGORIES of experience specific to THIS resume - not a generic checklist (for example: someone in banking might warrant categories like treasury products supported or senior client contacts; someone in technology might warrant systems/platforms used or stakeholder collaboration - generalize to whatever this resume's actual field is). For those categories, write the FIRST BATCH of 4-6 yes/no discovery questions - specific, resume-grounded questions about responsibilities, scope, or accomplishments that are common in this candidate's apparent field but that this resume doesn't currently mention. Each must be answerable honestly with yes/no. Never assume yes. 4-6 questions is the right size for a first batch, not more.
+5. Infer 2-4 CATEGORIES of experience specific to THIS resume - not a generic checklist (for example: someone in banking might warrant categories like treasury products supported or senior client contacts; someone in technology might warrant systems/platforms used or stakeholder collaboration - generalize to whatever this resume's actual field is). For those categories, write the FIRST BATCH of 4-6 yes/no discovery questions - specific, resume-grounded questions about responsibilities, scope, or accomplishments that are common in this candidate's apparent field but that this resume doesn't currently mention. Each must be answerable honestly with yes/no. Never assume yes. 4-6 questions is the right size for a first batch, not more. This batch must never be empty - even a thorough, detailed resume always has more underneath it worth asking about (scope, scale, stakeholders, tools, outcomes); write at least 4 questions every time, no exceptions.
 
 Call the submit_resume_review tool with the extracted roles, education, certifications, analysis, categories, and first question batch. Do not respond with plain text."""
 
@@ -120,6 +120,7 @@ RESTRUCTURE_TOOL = {
             "categories": {"type": "array", "items": {"type": "string"}},
             "questions": {
                 "type": "array",
+                "minItems": 3,
                 "items": {
                     "type": "object",
                     "properties": {
@@ -160,6 +161,14 @@ def _extract_tool_input(response) -> dict:
     missing = [k for k in required if k not in data]
     if missing:
         raise ValueError("missing_required_field")
+
+    # The prompt instructs at least 4 questions whenever there's a role to
+    # ask about; enforce it in code too rather than trusting the model to
+    # always follow the instruction (schema minItems alone isn't a
+    # guarantee) - a candidate with real work history should never land on
+    # an empty interview.
+    if data.get("roles") and len(data.get("questions") or []) < 3:
+        raise ValueError("too_few_questions")
 
     return data
 

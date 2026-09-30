@@ -31,6 +31,83 @@ function showResumeError(el, message) {
   el.hidden = false;
 }
 
+// Matches newly extracted resume data against what's already in the
+// profile (allExperiences/allEducation/allCertifications, from login.js)
+// so uploading another resume consolidates into the same roles instead of
+// creating duplicates every time. Heuristic, not exact - always shown as
+// an editable dropdown so the candidate has final say, never applied
+// silently.
+function normalizeKey(s) {
+  return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function findBestExperienceMatch(role) {
+  const newOrg = normalizeKey(role.organization);
+  const newTitle = normalizeKey(role.title);
+  if (!newOrg) return null;
+  let best = null;
+  let bestScore = 0;
+  for (const existing of allExperiences) {
+    if (normalizeKey(existing.organization) !== newOrg) continue;
+    const title = normalizeKey(existing.title);
+    let score = 0;
+    if (title === newTitle) score = 3;
+    else if (title && newTitle && (title.includes(newTitle) || newTitle.includes(title))) score = 2;
+    else {
+      const newWords = new Set(newTitle.split(" ").filter(Boolean));
+      const overlap = title.split(" ").filter((w) => w && newWords.has(w)).length;
+      if (overlap >= 2) score = 1;
+    }
+    if (score > bestScore) { bestScore = score; best = existing; }
+  }
+  return best;
+}
+
+function findBestEducationMatch(entry) {
+  const newInstitution = normalizeKey(entry.institution);
+  if (!newInstitution) return null;
+  return allEducation.find((e) => normalizeKey(e.institution) === newInstitution) || null;
+}
+
+function findBestCertificationMatch(entry) {
+  const newName = normalizeKey(entry.name);
+  if (!newName) return null;
+  return allCertifications.find((c) => normalizeKey(c.name) === newName) || null;
+}
+
+// Builds the "which existing record is this?" dropdown used on every
+// role/education/certification review card. onChange receives the
+// selected existing id, or null for "add as new".
+function makeMatchSelect(existingOptions, bestMatch, onChange) {
+  const label = document.createElement("label");
+  label.className = "field";
+  const span = document.createElement("span");
+  span.textContent = "This is:";
+  const select = document.createElement("select");
+
+  const newOption = document.createElement("option");
+  newOption.value = "";
+  newOption.textContent = "➕ Add as a new entry";
+  select.appendChild(newOption);
+
+  for (const opt of existingOptions) {
+    const option = document.createElement("option");
+    option.value = String(opt.id);
+    option.textContent = opt.label;
+    select.appendChild(option);
+  }
+
+  select.value = bestMatch ? String(bestMatch.id) : "";
+  onChange(select.value ? Number(select.value) : null);
+  select.addEventListener("change", () => {
+    onChange(select.value ? Number(select.value) : null);
+  });
+
+  label.appendChild(span);
+  label.appendChild(select);
+  return label;
+}
+
 function makeTextField(labelText, value, onInput) {
   const label = document.createElement("label");
   label.className = "field";
@@ -319,6 +396,14 @@ function renderResumeReview() {
     header.appendChild(removeBtn);
     card.appendChild(header);
 
+    const roleOptions = allExperiences.map((e) => ({
+      id: e.id,
+      label: e.organization + " — " + e.title + (e.start_date ? " (" + e.start_date + ")" : ""),
+    }));
+    card.appendChild(makeMatchSelect(roleOptions, findBestExperienceMatch(role), (id) => {
+      role.existing_id = id;
+    }));
+
     card.appendChild(makeTextField("Title", role.title, (v) => { role.title = v; }));
     card.appendChild(makeTextField("Organization", role.organization, (v) => { role.organization = v; }));
 
@@ -377,6 +462,14 @@ function renderResumeEducation() {
     header.appendChild(removeBtn);
     card.appendChild(header);
 
+    const eduOptions = allEducation.map((e) => ({
+      id: e.id,
+      label: e.institution + (e.degree ? " — " + e.degree : ""),
+    }));
+    card.appendChild(makeMatchSelect(eduOptions, findBestEducationMatch(entry), (id) => {
+      entry.existing_id = id;
+    }));
+
     card.appendChild(makeTextField("Institution", entry.institution, (v) => { entry.institution = v; }));
     card.appendChild(makeTextField("Degree", entry.degree, (v) => { entry.degree = v; }));
     card.appendChild(makeTextField("Field of study", entry.field_of_study, (v) => { entry.field_of_study = v; }));
@@ -412,6 +505,14 @@ function renderResumeCertifications() {
     header.appendChild(label);
     header.appendChild(removeBtn);
     card.appendChild(header);
+
+    const certOptions = allCertifications.map((c) => ({
+      id: c.id,
+      label: c.name + (c.issuer ? " — " + c.issuer : ""),
+    }));
+    card.appendChild(makeMatchSelect(certOptions, findBestCertificationMatch(entry), (id) => {
+      entry.existing_id = id;
+    }));
 
     card.appendChild(makeTextField("Certification name", entry.name, (v) => { entry.name = v; }));
     card.appendChild(makeTextField("Issuer", entry.issuer, (v) => { entry.issuer = v; }));
@@ -514,11 +615,10 @@ document.getElementById("resume-save-btn").addEventListener("click", async () =>
     currentDraft = null;
 
     const parts = [];
-    if (saved.experiences.length) parts.push(saved.experiences.length + " role" + (saved.experiences.length === 1 ? "" : "s"));
-    if (saved.education.length) parts.push(saved.education.length + " education entr" + (saved.education.length === 1 ? "y" : "ies"));
-    if (saved.certifications.length) parts.push(saved.certifications.length + " certification" + (saved.certifications.length === 1 ? "" : "s"));
+    if (saved.created_count) parts.push(saved.created_count + " new");
+    if (saved.updated_count) parts.push(saved.updated_count + " updated in your existing profile");
     document.getElementById("resume-save-summary-text").textContent =
-      "Saved " + (parts.length ? parts.join(", ") : "your changes") + " to your Career Profile.";
+      (parts.length ? parts.join(", ") : "Your changes were") + " saved to your Career Profile.";
     document.getElementById("resume-save-summary").hidden = false;
 
     await loadExperiences();

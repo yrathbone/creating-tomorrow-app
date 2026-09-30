@@ -530,12 +530,38 @@ async def save_resume_roles(
             bullets.append(fact.bullet_text)
             roles[fact.role_index]["bullets"] = bullets
 
-    created_experiences = []
+    # Each role/education/certification may carry an "existing_id" (set by
+    # the frontend when it matched this resume-extracted entry against
+    # something already in the profile) - when present, merge into that
+    # row instead of creating a duplicate. This is what makes uploading a
+    # second/updated resume consolidate into the same roles rather than
+    # piling up near-duplicates every time.
+    created_experiences, updated_experiences = [], []
     for role in roles:
         title = (role.get("title") or "").strip()
         organization = (role.get("organization") or "").strip()
         if not title or not organization:
             continue  # skip incomplete rows rather than fail the whole save
+        new_bullets = [b.strip() for b in (role.get("bullets") or []) if b and b.strip()]
+
+        existing_id = role.get("existing_id")
+        existing = (
+            db.query(Experience).filter_by(id=existing_id, career_profile_id=profile.id).one_or_none()
+            if existing_id else None
+        )
+        if existing is not None:
+            existing_lines = [l for l in (existing.description or "").split("\n") if l.strip()]
+            merged_lines = existing_lines + [b for b in new_bullets if b not in existing_lines]
+            existing.description = "\n".join(merged_lines) or None
+            if not existing.location:
+                existing.location = (role.get("location") or "").strip() or None
+            if not existing.start_date:
+                existing.start_date = (role.get("start_date") or "").strip() or None
+            if not existing.end_date:
+                existing.end_date = (role.get("end_date") or "").strip() or None
+            updated_experiences.append(existing)
+            continue
+
         experience = Experience(
             career_profile_id=profile.id,
             title=title,
@@ -543,17 +569,33 @@ async def save_resume_roles(
             location=(role.get("location") or "").strip() or None,
             start_date=(role.get("start_date") or "").strip() or None,
             end_date=(role.get("end_date") or "").strip() or None,
-            description="\n".join(b.strip() for b in (role.get("bullets") or []) if b and b.strip()) or None,
+            description="\n".join(new_bullets) or None,
             source="resume_upload",
         )
         db.add(experience)
         created_experiences.append(experience)
 
-    created_education = []
+    created_education, updated_education = [], []
     for entry in req.education:
         institution = (entry.get("institution") or "").strip()
         if not institution:
             continue
+
+        existing_id = entry.get("existing_id")
+        existing = (
+            db.query(Education).filter_by(id=existing_id, career_profile_id=profile.id).one_or_none()
+            if existing_id else None
+        )
+        if existing is not None:
+            if not existing.degree:
+                existing.degree = (entry.get("degree") or "").strip() or None
+            if not existing.field_of_study:
+                existing.field_of_study = (entry.get("field_of_study") or "").strip() or None
+            if not existing.graduation_date:
+                existing.graduation_date = (entry.get("graduation_date") or "").strip() or None
+            updated_education.append(existing)
+            continue
+
         education = Education(
             career_profile_id=profile.id,
             institution=institution,
@@ -565,11 +607,25 @@ async def save_resume_roles(
         db.add(education)
         created_education.append(education)
 
-    created_certifications = []
+    created_certifications, updated_certifications = [], []
     for entry in req.certifications:
         name = (entry.get("name") or "").strip()
         if not name:
             continue
+
+        existing_id = entry.get("existing_id")
+        existing = (
+            db.query(Certification).filter_by(id=existing_id, career_profile_id=profile.id).one_or_none()
+            if existing_id else None
+        )
+        if existing is not None:
+            if not existing.issuer:
+                existing.issuer = (entry.get("issuer") or "").strip() or None
+            if not existing.date:
+                existing.date = (entry.get("date") or "").strip() or None
+            updated_certifications.append(existing)
+            continue
+
         certification = Certification(
             career_profile_id=profile.id,
             name=name,
@@ -581,7 +637,12 @@ async def save_resume_roles(
         created_certifications.append(certification)
 
     db.commit()
-    for row in created_experiences + created_education + created_certifications:
+    all_rows = (
+        created_experiences + updated_experiences
+        + created_education + updated_education
+        + created_certifications + updated_certifications
+    )
+    for row in all_rows:
         db.refresh(row)
 
     draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
@@ -590,7 +651,9 @@ async def save_resume_roles(
         db.commit()
 
     return {
-        "experiences": [_experience_to_dict(e) for e in created_experiences],
-        "education": [_education_to_dict(e) for e in created_education],
-        "certifications": [_certification_to_dict(c) for c in created_certifications],
+        "experiences": [_experience_to_dict(e) for e in created_experiences + updated_experiences],
+        "education": [_education_to_dict(e) for e in created_education + updated_education],
+        "certifications": [_certification_to_dict(c) for c in created_certifications + updated_certifications],
+        "created_count": len(created_experiences) + len(created_education) + len(created_certifications),
+        "updated_count": len(updated_experiences) + len(updated_education) + len(updated_certifications),
     }
