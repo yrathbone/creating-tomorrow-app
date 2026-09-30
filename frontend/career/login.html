@@ -239,8 +239,11 @@
         <h3>Certifications</h3>
         <div id="certification-detail-list"></div>
 
-        <h3>Skills, Technologies &amp; Achievements</h3>
-        <p class="hint">Not yet tracked as separate, verified evidence — for now they're part of your role descriptions above. Tracking these individually is planned.</p>
+        <h3>Skills</h3>
+        <div id="skill-detail-list"></div>
+
+        <h3>Technologies &amp; Achievements</h3>
+        <p class="hint">Not yet tracked as their own separate evidence — for now they're part of your role descriptions above. Tracking these individually is planned.</p>
 
         <h3>Languages</h3>
         <p class="hint">Not yet tracked. Planned for a future update.</p>
@@ -290,6 +293,18 @@
           <button type="submit" id="cert-submit-btn">Add Certification</button>
         </form>
         <div id="cert-error" class="error" hidden></div>
+
+        <h3>Add a skill</h3>
+        <form id="skill-form">
+          <label class="field"><span>Skill</span><input type="text" id="skill-name" required /></label>
+          <label class="field"><span>How it was used (optional)</span><textarea id="skill-source-text" rows="2"></textarea></label>
+          <label class="field">
+            <span>Which role does this belong to? (optional)</span>
+            <select id="skill-experience-id"><option value="">Not tied to one specific role</option></select>
+          </label>
+          <button type="submit" id="skill-submit-btn">Add Skill</button>
+        </form>
+        <div id="skill-error" class="error" hidden></div>
       </div>
 
       <div id="resume-entry-section" hidden>

@@ -219,23 +219,49 @@ function renderSkillScanReview() {
     header.appendChild(removeBtn);
     card.appendChild(header);
 
+    // This becomes a real Skill row, not a bullet appended to a role's
+    // description - name is the skill itself (editable; the AI's
+    // category is a reasonable starting label, not necessarily the final
+    // one), source_text is the "how it was used" context.
+    fact.name = fact.category || "";
+    fact.include = true;
+
+    const nameLabel = document.createElement("label");
+    nameLabel.className = "field";
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = "Skill";
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = fact.name;
+    nameInput.addEventListener("input", () => { fact.name = nameInput.value; });
+    nameLabel.appendChild(nameSpan);
+    nameLabel.appendChild(nameInput);
+    card.appendChild(nameLabel);
+
     const textLabel = document.createElement("label");
     textLabel.className = "field";
+    const textSpan = document.createElement("span");
+    textSpan.textContent = "How it was used (optional)";
     const textarea = document.createElement("textarea");
     textarea.rows = 2;
     textarea.value = fact.bullet_text || "";
     textarea.addEventListener("input", () => { fact.bullet_text = textarea.value; });
+    textLabel.appendChild(textSpan);
     textLabel.appendChild(textarea);
     card.appendChild(textLabel);
 
     const selectLabel = document.createElement("label");
     selectLabel.className = "field";
     const selectSpan = document.createElement("span");
-    selectSpan.textContent = "Which role does this belong to?";
+    selectSpan.textContent = "Which role does this belong to? (optional)";
     const select = document.createElement("select");
     const noneOption = document.createElement("option");
     noneOption.value = "";
-    noneOption.textContent = "Don't add this one";
+    // Deliberately the default - a past bug here silently defaulted to
+    // whatever role was most recently added, regardless of relevance.
+    // "Not tied to one role" is always correct as a default; a specific
+    // role is only ever chosen explicitly.
+    noneOption.textContent = "Not tied to one specific role";
     select.appendChild(noneOption);
     allExperiences.forEach((exp) => {
       const option = document.createElement("option");
@@ -243,11 +269,8 @@ function renderSkillScanReview() {
       option.textContent = exp.title + " — " + exp.organization;
       select.appendChild(option);
     });
-    if (allExperiences.length > 0) {
-      select.value = String(allExperiences[0].id);
-    }
-    fact.existingId = select.value ? Number(select.value) : null;
-    select.addEventListener("change", () => { fact.existingId = select.value ? Number(select.value) : null; });
+    fact.experienceId = null;
+    select.addEventListener("change", () => { fact.experienceId = select.value ? Number(select.value) : null; });
     selectLabel.appendChild(selectSpan);
     selectLabel.appendChild(select);
     card.appendChild(selectLabel);
@@ -262,7 +285,10 @@ document.getElementById("skill-scan-save-btn").addEventListener("click", async (
   const saveBtn = document.getElementById("skill-scan-save-btn");
   saveBtn.disabled = true;
 
-  const toSave = skillScanState.discoveredFacts.filter((f) => f.existingId);
+  // Every fact still in the list gets saved - "Remove" (above) is how a
+  // candidate excludes one, not leaving a dropdown unset. Not being tied
+  // to a specific role is a valid, intentional choice, not "skip this."
+  const toSave = skillScanState.discoveredFacts.filter((f) => (f.name || "").trim());
 
   try {
     if (toSave.length > 0) {
@@ -270,7 +296,11 @@ document.getElementById("skill-scan-save-btn").addEventListener("click", async (
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          confirmed_facts: toSave.map((f) => ({ bullet_text: f.bullet_text, existing_id: f.existingId })),
+          confirmed_facts: toSave.map((f) => ({
+            name: f.name.trim(),
+            source_text: (f.bullet_text || "").trim(),
+            experience_id: f.experienceId || null,
+          })),
         }),
       });
       if (!res.ok) {
@@ -281,7 +311,7 @@ document.getElementById("skill-scan-save-btn").addEventListener("click", async (
 
     hideAllSkillScanStates();
     skillScanStart.hidden = false;
-    await loadExperiences();
+    await loadSkills();
   } catch (err) {
     errorEl.textContent = err.message || "Something went wrong saving.";
     errorEl.hidden = false;

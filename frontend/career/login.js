@@ -32,6 +32,10 @@ const certificationForm = document.getElementById("certification-form");
 const certError = document.getElementById("cert-error");
 const certSubmitBtn = document.getElementById("cert-submit-btn");
 
+const skillForm = document.getElementById("skill-form");
+const skillError = document.getElementById("skill-error");
+const skillSubmitBtn = document.getElementById("skill-submit-btn");
+
 // Kept in memory only, never persisted - a hard refresh means signing in
 // again (Deliverable C's deliberate MVP tradeoff).
 let currentAccessToken = null;
@@ -50,6 +54,7 @@ function authedFetch(path, options = {}) {
 let allExperiences = [];
 let allEducation = [];
 let allCertifications = [];
+let allSkills = [];
 
 // Generic editable/deletable detail card - view mode shows a summary line
 // plus Edit/Delete; Edit swaps in text fields with Save/Cancel. Used for
@@ -155,6 +160,14 @@ function certificationLabel(entry) {
   return entry.name + (entry.issuer ? " — " + entry.issuer : "") + (entry.date ? " (" + entry.date + ")" : "");
 }
 
+function skillLabel(entry) {
+  if (entry.experience_id) {
+    const exp = allExperiences.find((e) => e.id === entry.experience_id);
+    if (exp) return entry.name + " (" + exp.title + " — " + exp.organization + ")";
+  }
+  return entry.name;
+}
+
 const EXPERIENCE_FIELD_DEFS = {
   summary: experienceLabel,
   detail: (exp) => exp.description || "",
@@ -184,6 +197,15 @@ const CERTIFICATION_FIELD_DEFS = {
     { key: "name", label: "Certification name" },
     { key: "issuer", label: "Issuer" },
     { key: "date", label: "Date" },
+  ],
+};
+
+const SKILL_FIELD_DEFS = {
+  summary: skillLabel,
+  detail: (s) => s.source_text || "",
+  fields: [
+    { key: "name", label: "Skill" },
+    { key: "source_text", label: "How it was used", multiline: true },
   ],
 };
 
@@ -255,12 +277,31 @@ document.getElementById("sort-oldest-btn").addEventListener("click", () => {
   renderExperienceDetailList();
 });
 
+function populateSkillExperienceSelect() {
+  const select = document.getElementById("skill-experience-id");
+  if (!select) return;
+  const previousValue = select.value;
+  select.textContent = "";
+  const noneOption = document.createElement("option");
+  noneOption.value = "";
+  noneOption.textContent = "Not tied to one specific role";
+  select.appendChild(noneOption);
+  for (const exp of allExperiences) {
+    const option = document.createElement("option");
+    option.value = String(exp.id);
+    option.textContent = exp.title + " — " + exp.organization;
+    select.appendChild(option);
+  }
+  select.value = previousValue;
+}
+
 async function loadExperiences() {
   const res = await authedFetch("/api/career/experiences");
   allExperiences = await res.json();
   if (!Array.isArray(allExperiences)) allExperiences = [];
 
   renderExperienceDetailList();
+  populateSkillExperienceSelect();
   updateDashboardSummary();
 }
 
@@ -338,6 +379,46 @@ async function loadCertifications() {
   updateDashboardSummary();
 }
 
+async function loadSkills() {
+  const res = await authedFetch("/api/career/skills");
+  allSkills = await res.json();
+  if (!Array.isArray(allSkills)) allSkills = [];
+
+  const container = document.getElementById("skill-detail-list");
+  container.textContent = "";
+  if (allSkills.length === 0) {
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "No skills added yet.";
+    container.appendChild(p);
+  } else {
+    for (const entry of allSkills) {
+      renderDetailCard(container, entry, SKILL_FIELD_DEFS, {
+        onSave: async (entity, draft) => {
+          // The generic edit form doesn't expose "which role" - preserve
+          // whatever was already set rather than letting Pydantic's
+          // default silently clear it on every edit.
+          const res = await authedFetch("/api/career/skills/" + entity.id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(Object.assign({}, draft, { experience_id: entity.experience_id })),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
+          }
+          await loadSkills();
+        },
+        onDelete: async (entity) => {
+          await authedFetch("/api/career/skills/" + entity.id, { method: "DELETE" });
+          await loadSkills();
+        },
+      });
+    }
+  }
+  updateDashboardSummary();
+}
+
 function updateDashboardSummary() {
   const statRow = document.getElementById("career-stat-row");
   if (statRow) {
@@ -346,6 +427,7 @@ function updateDashboardSummary() {
       [allExperiences.length, allExperiences.length === 1 ? "Role" : "Roles"],
       [allEducation.length, "Education"],
       [allCertifications.length, allCertifications.length === 1 ? "Certification" : "Certifications"],
+      [allSkills.length, allSkills.length === 1 ? "Skill" : "Skills"],
     ];
     for (const [number, label] of stats) {
       const card = document.createElement("div");
@@ -369,6 +451,7 @@ function updateDashboardSummary() {
       ...allExperiences.map((e) => ({ text: e.title + " — " + e.organization, created_at: e.created_at })),
       ...allEducation.map((e) => ({ text: e.institution, created_at: e.created_at })),
       ...allCertifications.map((e) => ({ text: e.name, created_at: e.created_at })),
+      ...allSkills.map((e) => ({ text: e.name, created_at: e.created_at })),
     ]
       .filter((item) => item.created_at)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -469,6 +552,7 @@ async function showProfileStep() {
   await loadExperiences();
   await loadEducation();
   await loadCertifications();
+  await loadSkills();
 }
 
 function revealCareerProfileSections(scrollToId) {
@@ -637,5 +721,37 @@ certificationForm.addEventListener("submit", async (e) => {
     certError.hidden = false;
   } finally {
     certSubmitBtn.disabled = false;
+  }
+});
+
+skillForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  skillError.hidden = true;
+  skillSubmitBtn.disabled = true;
+
+  const experienceIdRaw = document.getElementById("skill-experience-id").value;
+  const payload = {
+    name: document.getElementById("skill-name").value.trim(),
+    source_text: document.getElementById("skill-source-text").value.trim() || null,
+    experience_id: experienceIdRaw ? Number(experienceIdRaw) : null,
+  };
+
+  try {
+    const res = await authedFetch("/api/career/skills", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const body = await res.json();
+      throw new Error(formatErrorDetail(body.detail, "Couldn't add that skill."));
+    }
+    skillForm.reset();
+    await loadSkills();
+  } catch (err) {
+    skillError.textContent = (err && err.message) || "Couldn't add that skill.";
+    skillError.hidden = false;
+  } finally {
+    skillSubmitBtn.disabled = false;
   }
 });

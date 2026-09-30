@@ -27,7 +27,7 @@ from career.job_match import JobMatchError, build_tailored_resume, compare_to_jo
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
-from models import CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, User
+from models import CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, Skill, User
 
 router = APIRouter()
 
@@ -374,6 +374,116 @@ async def delete_certification(
     return {"deleted": True}
 
 
+class SkillIn(BaseModel):
+    name: str
+    source_text: str | None = None
+    experience_id: int | None = None
+
+
+def _skill_to_dict(s: Skill) -> dict:
+    return {
+        "id": s.id,
+        "name": s.name,
+        "source_text": s.source_text,
+        "experience_id": s.experience_id,
+        "created_at": s.created_at.isoformat() if s.created_at else None,
+    }
+
+
+def _validate_skill_experience_id(db: Session, profile: CareerProfile, experience_id: int | None) -> int | None:
+    """None is always valid (a flat, not-tied-to-a-role skill). A provided
+    id must actually belong to this profile - never trust a client-
+    supplied id without checking ownership, same rule as everywhere else."""
+    if experience_id is None:
+        return None
+    exists = (
+        db.query(Experience)
+        .filter_by(id=experience_id, career_profile_id=profile.id)
+        .one_or_none()
+    )
+    if exists is None:
+        raise HTTPException(status_code=400, detail="That role no longer exists.")
+    return experience_id
+
+
+@router.post("/skills")
+async def create_skill(
+    req: SkillIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    if not req.name.strip():
+        raise HTTPException(status_code=400, detail="Skill name is required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    experience_id = _validate_skill_experience_id(db, profile, req.experience_id)
+    entry = Skill(
+        career_profile_id=profile.id,
+        experience_id=experience_id,
+        name=req.name.strip(),
+        source_text=(req.source_text or "").strip() or None,
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return _skill_to_dict(entry)
+
+
+@router.get("/skills")
+async def list_skills(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entries = (
+        db.query(Skill)
+        .filter_by(career_profile_id=profile.id)
+        .order_by(Skill.created_at.desc())
+        .all()
+    )
+    return [_skill_to_dict(s) for s in entries]
+
+
+def _get_skill_or_404(db: Session, profile: CareerProfile, skill_id: int) -> Skill:
+    entry = db.query(Skill).filter_by(id=skill_id, career_profile_id=profile.id).one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Skill not found.")
+    return entry
+
+
+@router.put("/skills/{skill_id}")
+async def update_skill(
+    skill_id: int,
+    req: SkillIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    if not req.name.strip():
+        raise HTTPException(status_code=400, detail="Skill name is required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_skill_or_404(db, profile, skill_id)
+    entry.name = req.name.strip()
+    entry.source_text = (req.source_text or "").strip() or None
+    entry.experience_id = _validate_skill_experience_id(db, profile, req.experience_id)
+    db.commit()
+    db.refresh(entry)
+    return _skill_to_dict(entry)
+
+
+@router.delete("/skills/{skill_id}")
+async def delete_skill(
+    skill_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_skill_or_404(db, profile, skill_id)
+    db.delete(entry)
+    db.commit()
+    return {"deleted": True}
+
+
 # --- Resume-driven ingestion: upload -> extract roles -> discovery
 # interview (reuses elevate.py's discover() unchanged) -> candidate
 # reviews and saves. The AI calls themselves are stateless, same as every
@@ -677,6 +787,14 @@ def _build_profile_text(db: Session, profile: CareerProfile) -> str:
     experiences = db.query(Experience).filter_by(career_profile_id=profile.id).order_by(Experience.created_at.desc()).all()
     education = db.query(Education).filter_by(career_profile_id=profile.id).all()
     certifications = db.query(Certification).filter_by(career_profile_id=profile.id).all()
+    skills = db.query(Skill).filter_by(career_profile_id=profile.id).all()
+    skills_by_experience: dict[int, list[Skill]] = {}
+    unassigned_skills: list[Skill] = []
+    for s in skills:
+        if s.experience_id:
+            skills_by_experience.setdefault(s.experience_id, []).append(s)
+        else:
+            unassigned_skills.append(s)
 
     lines = ["EXPERIENCE:"]
     if experiences:
@@ -687,6 +805,15 @@ def _build_profile_text(db: Session, profile: CareerProfile) -> str:
                 for bullet in e.description.split("\n"):
                     if bullet.strip():
                         lines.append(f"  * {bullet.strip()}")
+            for s in skills_by_experience.get(e.id, []):
+                lines.append(f"  * Skill: {s.name}" + (f" — {s.source_text}" if s.source_text else ""))
+    else:
+        lines.append("(none recorded yet)")
+
+    lines.append("\nSKILLS (not tied to one specific role):")
+    if unassigned_skills:
+        for s in unassigned_skills:
+            lines.append(f"- {s.name}" + (f" — {s.source_text}" if s.source_text else ""))
     else:
         lines.append("(none recorded yet)")
 
@@ -821,8 +948,9 @@ async def skill_scan(
 
 
 class SkillScanFactAssignment(BaseModel):
-    bullet_text: str
-    existing_id: int
+    name: str
+    source_text: str = ""
+    experience_id: int | None = None  # None = not tied to one specific role - never guessed, always the candidate's own choice
 
 
 class SkillScanSaveRequest(BaseModel):
@@ -837,24 +965,24 @@ async def skill_scan_save(
 ):
     profile = get_career_profile_or_404(db, current_user)
 
-    updated = []
+    created = []
     for fact in req.confirmed_facts:
-        experience = (
-            db.query(Experience)
-            .filter_by(id=fact.existing_id, career_profile_id=profile.id)
-            .one_or_none()
+        name = fact.name.strip()
+        if not name:
+            continue
+        experience_id = _validate_skill_experience_id(db, profile, fact.experience_id)
+        skill = Skill(
+            career_profile_id=profile.id,
+            experience_id=experience_id,
+            name=name,
+            source_text=fact.source_text.strip() or None,
+            source="skill_scan",
         )
-        if experience is None:
-            continue  # skip a role that no longer exists rather than fail the whole save
-        existing_lines = [l for l in (experience.description or "").split("\n") if l.strip()]
-        bullet = fact.bullet_text.strip()
-        if bullet and bullet not in existing_lines:
-            existing_lines.append(bullet)
-        experience.description = "\n".join(existing_lines) or None
-        updated.append(experience)
+        db.add(skill)
+        created.append(skill)
 
     db.commit()
-    for e in updated:
-        db.refresh(e)
+    for s in created:
+        db.refresh(s)
 
-    return {"experiences": [_experience_to_dict(e) for e in updated]}
+    return {"skills": [_skill_to_dict(s) for s in created]}

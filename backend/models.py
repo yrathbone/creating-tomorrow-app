@@ -43,6 +43,7 @@ class CareerProfile(Base):
     experiences: Mapped[list["Experience"]] = relationship(back_populates="career_profile")
     education_entries: Mapped[list["Education"]] = relationship(back_populates="career_profile")
     certifications: Mapped[list["Certification"]] = relationship(back_populates="career_profile")
+    skills: Mapped[list["Skill"]] = relationship(back_populates="career_profile")
 
 
 class Experience(Base):
@@ -64,6 +65,34 @@ class Experience(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     career_profile: Mapped["CareerProfile"] = relationship(back_populates="experiences")
+    skills: Mapped[list["Skill"]] = relationship(back_populates="experience")
+
+
+class Skill(Base):
+    """A confirmed skill on the Career Profile - deliberately one table,
+    not the full Skill/ExperienceSkill split the architecture doc
+    describes for a shared canonical taxonomy (Section 13), since that's
+    future/Phase 5+ scope this project isn't building yet. Supports both
+    ways a skill gets added, per Yovana's own request:
+      - tied to a specific role, with source_text capturing HOW it was
+        used (experience_id set, source_text set) - including
+        non-standard/custom skills that wouldn't be on any pre-built
+        list, not just a fixed taxonomy checkbox;
+      - a flat addition straight to the general skill list, no story
+        required (experience_id and source_text both null).
+    """
+    __tablename__ = "skills"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"))
+    experience_id: Mapped[int | None] = mapped_column(ForeignKey("experiences.id"), nullable=True)
+    name: Mapped[str] = mapped_column(String)
+    source_text: Mapped[str | None] = mapped_column(String, nullable=True)
+    source: Mapped[str] = mapped_column(String, default="manual")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    career_profile: Mapped["CareerProfile"] = relationship(back_populates="skills")
+    experience: Mapped["Experience | None"] = relationship(back_populates="skills")
 
 
 class Education(Base):
