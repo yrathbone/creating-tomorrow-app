@@ -172,11 +172,34 @@ const CERTIFICATION_FIELD_DEFS = {
   ],
 };
 
-async function loadExperiences() {
-  const res = await authedFetch("/api/career/experiences");
-  allExperiences = await res.json();
-  if (!Array.isArray(allExperiences)) allExperiences = [];
+// Sorts by actual role date (start_date), not by when the row was added
+// to the profile - "created_at order" and "career chronology" are
+// different things, and the detail view should reflect the latter.
+let experienceSortDirection = "newest";
 
+function parseDateForSort(s) {
+  if (!s) return 0;
+  const str = s.trim().toLowerCase();
+  if (str === "present" || str === "current") return 999912;
+  const match = str.match(/(\d{1,2})\D+(\d{2,4})/);
+  if (match) {
+    let month = parseInt(match[1], 10);
+    let year = parseInt(match[2], 10);
+    if (year < 100) year += year < 50 ? 2000 : 1900;
+    return year * 100 + month;
+  }
+  const yearOnly = str.match(/(\d{4})/);
+  if (yearOnly) return parseInt(yearOnly[1], 10) * 100;
+  return 0;
+}
+
+function sortedExperiences() {
+  const sorted = allExperiences.slice().sort((a, b) => parseDateForSort(a.start_date) - parseDateForSort(b.start_date));
+  if (experienceSortDirection === "newest") sorted.reverse();
+  return sorted;
+}
+
+function renderExperienceDetailList() {
   const container = document.getElementById("experience-detail-list");
   container.textContent = "";
   if (allExperiences.length === 0) {
@@ -184,28 +207,45 @@ async function loadExperiences() {
     p.className = "hint";
     p.textContent = "No roles added yet.";
     container.appendChild(p);
-  } else {
-    for (const exp of allExperiences) {
-      renderDetailCard(container, exp, EXPERIENCE_FIELD_DEFS, {
-        onSave: async (entity, draft) => {
-          const res = await authedFetch("/api/career/experiences/" + entity.id, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(draft),
-          });
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.detail || "Couldn't save that change.");
-          }
-          await loadExperiences();
-        },
-        onDelete: async (entity) => {
-          await authedFetch("/api/career/experiences/" + entity.id, { method: "DELETE" });
-          await loadExperiences();
-        },
-      });
-    }
+    return;
   }
+  for (const exp of sortedExperiences()) {
+    renderDetailCard(container, exp, EXPERIENCE_FIELD_DEFS, {
+      onSave: async (entity, draft) => {
+        const res = await authedFetch("/api/career/experiences/" + entity.id, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(draft),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.detail || "Couldn't save that change.");
+        }
+        await loadExperiences();
+      },
+      onDelete: async (entity) => {
+        await authedFetch("/api/career/experiences/" + entity.id, { method: "DELETE" });
+        await loadExperiences();
+      },
+    });
+  }
+}
+
+document.getElementById("sort-newest-btn").addEventListener("click", () => {
+  experienceSortDirection = "newest";
+  renderExperienceDetailList();
+});
+document.getElementById("sort-oldest-btn").addEventListener("click", () => {
+  experienceSortDirection = "oldest";
+  renderExperienceDetailList();
+});
+
+async function loadExperiences() {
+  const res = await authedFetch("/api/career/experiences");
+  allExperiences = await res.json();
+  if (!Array.isArray(allExperiences)) allExperiences = [];
+
+  renderExperienceDetailList();
   updateDashboardSummary();
 }
 
@@ -342,7 +382,8 @@ function updateDashboardSummary() {
       p.textContent = "No roles yet — add one or upload a resume to get started.";
       rolePreview.appendChild(p);
     } else {
-      for (const exp of allExperiences.slice(0, 3)) {
+      const newestFirst = allExperiences.slice().sort((a, b) => parseDateForSort(b.start_date) - parseDateForSort(a.start_date));
+      for (const exp of newestFirst.slice(0, 3)) {
         const item = document.createElement("div");
         item.className = "role-preview-item";
         const title = document.createElement("div");
