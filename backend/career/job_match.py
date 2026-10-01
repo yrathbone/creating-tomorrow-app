@@ -133,10 +133,12 @@ Select and order skills and bullets that are most relevant to this specific job 
 WRITING STYLE:
 Senior, polished, confident, concise, human. Avoid repetitive AI resume language such as "results-driven," "dynamic," "highly motivated," "proven track record," or "hard-working" unless truly appropriate given the evidence.
 
+ATS TERMINOLOGY (applies most to the SKILLS section): applicant tracking systems and recruiters search on literal keyword/phrase matches, not paraphrases - meaning the same thing in different words still scores as a miss. When the evidence genuinely supports it, use the exact standard industry term a recruiter or ATS would search for (e.g. "Risk Management," "Corporate Banking," "Customer Relationship Management") as its own clean skill phrase, not only folded into a longer descriptive sentence elsewhere. Never use a term the evidence doesn't actually support just because it sounds standard for the field.
+
 Build the resume:
 1. A POSITIONING HEADLINE: 2-3 short pipe-separated capitalized phrases capturing the candidate's professional identity relevant to this job, supported only by their real experience.
 2. A PROFESSIONAL SUMMARY (3-5 lines) connecting their real background to this specific posting.
-3. SKILLS: a list of skills/expertise phrases drawn from the Career Profile plus whatever the confirmed facts demonstrate, prioritized for relevance to this posting.
+3. SKILLS: a list of skills/expertise phrases drawn from the Career Profile plus whatever the confirmed facts demonstrate, prioritized for relevance to this posting, using exact standard terminology per the ATS note above wherever the evidence supports it.
 4. EXPERIENCE: each role's bullets, prioritized and polished for relevance to this posting, confirmed facts folded into the right role.
 5. EDUCATION and CERTIFICATIONS: pass through from the Career Profile unchanged.
 
@@ -207,10 +209,12 @@ Unlike a job-targeted resume, do not prioritize or drop content for relevance to
 WRITING STYLE:
 Senior, polished, confident, concise, human. Avoid repetitive AI resume language such as "results-driven," "dynamic," "highly motivated," "proven track record," or "hard-working" unless truly appropriate given the evidence.
 
+ATS TERMINOLOGY (applies most to the SKILLS section): applicant tracking systems and recruiters search on literal keyword/phrase matches, not paraphrases - meaning the same thing in different words still scores as a miss. When the evidence genuinely supports it, use the exact standard industry term a recruiter or ATS would search for (e.g. "Risk Management," "Corporate Banking," "Customer Relationship Management") as its own clean skill phrase, not only folded into a longer descriptive sentence elsewhere. Never use a term the evidence doesn't actually support just because it sounds standard for the field.
+
 Build the resume:
 1. A POSITIONING HEADLINE: 2-3 short pipe-separated capitalized phrases capturing the candidate's professional identity, supported only by their real experience.
 2. A PROFESSIONAL SUMMARY (3-5 lines) reflecting their real background as a whole.
-3. SKILLS: a polished, deduplicated list of skills/expertise phrases drawn from the Career Profile.
+3. SKILLS: a polished, deduplicated list of skills/expertise phrases drawn from the Career Profile, using exact standard terminology per the ATS note above wherever the evidence supports it.
 4. EXPERIENCE: every role from the Career Profile, with polished bullets - no role dropped.
 5. EDUCATION and CERTIFICATIONS: pass through from the Career Profile unchanged.
 
