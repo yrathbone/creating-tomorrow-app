@@ -102,6 +102,12 @@ function renderDetailCard(container, entity, fieldDefs, { onSave, onDelete }) {
     card.innerHTML = "";
     const draft = Object.assign({}, entity);
     for (const f of fieldDefs.fields) {
+      if (f.type === "select") {
+        const options = typeof f.options === "function" ? f.options() : f.options;
+        const current = draft[f.key] == null ? "" : String(draft[f.key]);
+        card.appendChild(makeSelectField(f.label, current, options, (v) => { draft[f.key] = v ? Number(v) : null; }));
+        continue;
+      }
       const makeField = f.multiline ? makeTextareaField : makeTextField;
       card.appendChild(makeField(f.label, draft[f.key], (v) => { draft[f.key] = v; }));
     }
@@ -206,6 +212,15 @@ const SKILL_FIELD_DEFS = {
   fields: [
     { key: "name", label: "Skill" },
     { key: "source_text", label: "How it was used", multiline: true },
+    {
+      key: "experience_id",
+      label: "Which role does this belong to?",
+      type: "select",
+      options: () => [
+        { value: "", label: "Not tied to one specific role" },
+        ...allExperiences.map((e) => ({ value: String(e.id), label: e.title + " — " + e.organization })),
+      ],
+    },
   ],
 };
 
@@ -395,13 +410,10 @@ async function loadSkills() {
     for (const entry of allSkills) {
       renderDetailCard(container, entry, SKILL_FIELD_DEFS, {
         onSave: async (entity, draft) => {
-          // The generic edit form doesn't expose "which role" - preserve
-          // whatever was already set rather than letting Pydantic's
-          // default silently clear it on every edit.
           const res = await authedFetch("/api/career/skills/" + entity.id, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(Object.assign({}, draft, { experience_id: entity.experience_id })),
+            body: JSON.stringify(draft),
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
@@ -537,6 +549,31 @@ function updateDashboardSummary() {
     }
   }
 }
+
+document.getElementById("export-profile-btn").addEventListener("click", async () => {
+  const errorEl = document.getElementById("export-profile-error");
+  errorEl.hidden = true;
+  try {
+    const res = await authedFetch("/api/career/export");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
+    }
+    const data = await res.json();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "career_profile_backup_" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    errorEl.textContent = err.message || "Something went wrong downloading your profile.";
+    errorEl.hidden = false;
+  }
+});
 
 function showConsentStep() {
   document.getElementById("step-login").hidden = true;

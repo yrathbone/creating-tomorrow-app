@@ -1192,3 +1192,32 @@ async def download_resume_version(
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.get("/export")
+async def export_career_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    """A full, unfiltered snapshot of everything in the Career Profile -
+    a backup the candidate can keep before manually cleaning up their own
+    data (merging duplicates, moving misattributed evidence, etc.), not a
+    resume and not something generated/polished."""
+    profile = get_career_profile_or_404(db, current_user)
+
+    experiences = db.query(Experience).filter_by(career_profile_id=profile.id).order_by(Experience.created_at.desc()).all()
+    education = db.query(Education).filter_by(career_profile_id=profile.id).all()
+    certifications = db.query(Certification).filter_by(career_profile_id=profile.id).all()
+    skills = db.query(Skill).filter_by(career_profile_id=profile.id).all()
+    scans = db.query(ScanHistory).filter_by(career_profile_id=profile.id).order_by(ScanHistory.created_at.desc()).all()
+    resumes = db.query(ResumeVersion).filter_by(career_profile_id=profile.id).order_by(ResumeVersion.created_at.desc()).all()
+
+    return {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "experiences": [_experience_to_dict(e) for e in experiences],
+        "education": [_education_to_dict(e) for e in education],
+        "certifications": [_certification_to_dict(c) for c in certifications],
+        "skills": [_skill_to_dict(s) for s in skills],
+        "scan_history": [_scan_history_to_dict(s) for s in scans],
+        "resume_versions": [_resume_version_to_dict(v) for v in resumes],
+    }

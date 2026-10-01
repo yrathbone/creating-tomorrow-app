@@ -163,6 +163,25 @@ function makeTextareaField(labelText, value, onInput) {
   return label;
 }
 
+function makeSelectField(labelText, value, options, onInput) {
+  const label = document.createElement("label");
+  label.className = "field";
+  const span = document.createElement("span");
+  span.textContent = labelText;
+  const select = document.createElement("select");
+  for (const opt of options) {
+    const option = document.createElement("option");
+    option.value = opt.value;
+    option.textContent = opt.label;
+    select.appendChild(option);
+  }
+  select.value = value || "";
+  select.addEventListener("change", () => onInput(select.value));
+  label.appendChild(span);
+  label.appendChild(select);
+  return label;
+}
+
 const resumeUploadForm = document.getElementById("resume-upload-form");
 const resumeUploadBtn = document.getElementById("resume-upload-btn");
 const resumeUploadError = document.getElementById("resume-upload-error");
