@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -27,7 +28,8 @@ from career.job_match import JobMatchError, build_tailored_resume, compare_to_jo
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
-from models import CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, Skill, User
+from models import CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
+from resume_builder import build_resume_bytes
 
 router = APIRouter()
 
@@ -863,7 +865,24 @@ async def job_compare(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
-    return result
+    job_title = (result.get("job_title") or "").strip() or None
+    scan = ScanHistory(
+        career_profile_id=profile.id,
+        scan_type="job_comparison",
+        job_title=job_title,
+        summary_text=result["match_report"]["match_rationale"],
+        result_data={
+            "match_report": result["match_report"],
+            "categories": result.get("categories") or [],
+            "questions": result.get("questions") or [],
+            "job_title": job_title,
+        },
+    )
+    db.add(scan)
+    db.commit()
+    db.refresh(scan)
+
+    return {**result, "scan_history_id": scan.id}
 
 
 class JobDiscoverRequest(BaseModel):
@@ -896,6 +915,24 @@ class JobBuildResumeRequest(BaseModel):
     confirmed_facts: list[dict] = []
     name: str
     contact: str
+    scan_history_id: int | None = None
+
+
+def _validate_scan_history_id(db: Session, profile: CareerProfile, scan_history_id: int | None) -> int | None:
+    """None is always valid - a resume can be built without a prior
+    job-comparison run in this session. A provided id must belong to this
+    profile AND be a job_comparison scan - never trust a client-supplied
+    id without checking ownership, same rule as _validate_skill_experience_id."""
+    if scan_history_id is None:
+        return None
+    exists = (
+        db.query(ScanHistory)
+        .filter_by(id=scan_history_id, career_profile_id=profile.id, scan_type="job_comparison")
+        .one_or_none()
+    )
+    if exists is None:
+        raise HTTPException(status_code=400, detail="That job comparison no longer exists.")
+    return scan_history_id
 
 
 @router.post("/job-build-resume")
@@ -908,6 +945,7 @@ async def job_build_resume(
         raise HTTPException(status_code=400, detail="Name and contact info are both required.")
 
     profile = get_career_profile_or_404(db, current_user)
+    scan_history_id = _validate_scan_history_id(db, profile, req.scan_history_id)
     profile_text = _build_profile_text(db, profile)
 
     try:
@@ -919,7 +957,16 @@ async def job_build_resume(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
-    return result
+    version = ResumeVersion(
+        career_profile_id=profile.id,
+        scan_history_id=scan_history_id,
+        resume_data=result["resume_data"],
+    )
+    db.add(version)
+    db.commit()
+    db.refresh(version)
+
+    return {**result, "resume_version_id": version.id}
 
 
 # --- Skill scan: review the WHOLE Career Profile against what's standard
@@ -944,7 +991,26 @@ async def skill_scan(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
-    return result
+    scan_history_id = None
+    questions = result.get("questions") or []
+    if not questions:
+        # No questions at all means the scan concluded immediately -
+        # "nothing new stood out" is itself a real result worth a history
+        # entry, not just the save-confirmed path below.
+        summary_text = (result.get("analysis_summary") or "").strip() or "Nothing new stood out this time."
+        scan = ScanHistory(
+            career_profile_id=profile.id,
+            scan_type="skill_scan",
+            job_title=None,
+            summary_text=summary_text,
+            result_data={"categories": result.get("categories") or [], "skills": []},
+        )
+        db.add(scan)
+        db.commit()
+        db.refresh(scan)
+        scan_history_id = scan.id
+
+    return {**result, "scan_history_id": scan_history_id}
 
 
 class SkillScanFactAssignment(BaseModel):
@@ -955,6 +1021,8 @@ class SkillScanFactAssignment(BaseModel):
 
 class SkillScanSaveRequest(BaseModel):
     confirmed_facts: list[SkillScanFactAssignment] = []
+    analysis_summary: str = ""
+    categories: list[str] = []
 
 
 @router.post("/skill-scan-save")
@@ -985,4 +1053,142 @@ async def skill_scan_save(
     for s in created:
         db.refresh(s)
 
-    return {"skills": [_skill_to_dict(s) for s in created]}
+    scan_history_id = None
+    if created:
+        summary_text = req.analysis_summary.strip() or f"Found {len(created)} new skill{'s' if len(created) != 1 else ''}."
+        scan = ScanHistory(
+            career_profile_id=profile.id,
+            scan_type="skill_scan",
+            job_title=None,
+            summary_text=summary_text,
+            result_data={"categories": req.categories, "skills": [s.name for s in created]},
+        )
+        db.add(scan)
+        db.commit()
+        db.refresh(scan)
+        scan_history_id = scan.id
+
+    return {"skills": [_skill_to_dict(s) for s in created], "scan_history_id": scan_history_id}
+
+
+# --- History: read-only logs of past job/skill scans and past generated
+# resumes. Ownership-scoped the same way as every other entity in this
+# file; no edit-in-place (unlike renderDetailCard's Experience/Education/
+# Certification/Skill pattern) since this is a log, not an editable record.
+
+MAX_HISTORY_LIST = 50
+
+
+def _scan_history_to_dict(s: ScanHistory) -> dict:
+    return {
+        "id": s.id,
+        "scan_type": s.scan_type,
+        "job_title": s.job_title,
+        "summary_text": s.summary_text,
+        "result_data": s.result_data,
+        "created_at": s.created_at.isoformat() if s.created_at else None,
+    }
+
+
+@router.get("/scan-history")
+async def list_scan_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entries = (
+        db.query(ScanHistory)
+        .filter_by(career_profile_id=profile.id)
+        .order_by(ScanHistory.created_at.desc())
+        .limit(MAX_HISTORY_LIST)
+        .all()
+    )
+    return [_scan_history_to_dict(s) for s in entries]
+
+
+def _get_scan_history_or_404(db: Session, profile: CareerProfile, scan_history_id: int) -> ScanHistory:
+    entry = db.query(ScanHistory).filter_by(id=scan_history_id, career_profile_id=profile.id).one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Scan not found.")
+    return entry
+
+
+@router.delete("/scan-history/{scan_history_id}")
+async def delete_scan_history(
+    scan_history_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_scan_history_or_404(db, profile, scan_history_id)
+    db.delete(entry)
+    db.commit()
+    return {"deleted": True}
+
+
+def _resume_version_to_dict(v: ResumeVersion) -> dict:
+    return {
+        "id": v.id,
+        "scan_history_id": v.scan_history_id,
+        "resume_data": v.resume_data,
+        "created_at": v.created_at.isoformat() if v.created_at else None,
+    }
+
+
+@router.get("/resume-versions")
+async def list_resume_versions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entries = (
+        db.query(ResumeVersion)
+        .filter_by(career_profile_id=profile.id)
+        .order_by(ResumeVersion.created_at.desc())
+        .limit(MAX_HISTORY_LIST)
+        .all()
+    )
+    return [_resume_version_to_dict(v) for v in entries]
+
+
+def _get_resume_version_or_404(db: Session, profile: CareerProfile, resume_version_id: int) -> ResumeVersion:
+    entry = db.query(ResumeVersion).filter_by(id=resume_version_id, career_profile_id=profile.id).one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Resume not found.")
+    return entry
+
+
+@router.delete("/resume-versions/{resume_version_id}")
+async def delete_resume_version(
+    resume_version_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_resume_version_or_404(db, profile, resume_version_id)
+    db.delete(entry)
+    db.commit()
+    return {"deleted": True}
+
+
+@router.get("/resume-versions/{resume_version_id}/download")
+async def download_resume_version(
+    resume_version_id: int,
+    ats_mode: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_resume_version_or_404(db, profile, resume_version_id)
+
+    try:
+        docx_bytes = build_resume_bytes(entry.resume_data, ats_mode=ats_mode)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to build resume: {e}")
+
+    filename = (entry.resume_data.get("name") or "Resume").replace(" ", "_") + "_Resume.docx"
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

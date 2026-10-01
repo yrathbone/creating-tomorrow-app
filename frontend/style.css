@@ -544,6 +544,32 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   color: #1b5e28;
 }
 
+/* Same three colors as #match-level-badge above, but class-only so
+   multiple history cards on one page can each carry their own badge
+   (an ID selector can only ever match one element). */
+.history-match-badge {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 6px;
+}
+
+.history-match-badge.match-level-low {
+  background: #fbe4e2;
+  color: #8a241c;
+}
+
+.history-match-badge.match-level-average {
+  background: #fbe8c8;
+  color: var(--gold-ink);
+}
+
+.history-match-badge.match-level-high {
+  background: #d7f0da;
+  color: #1b5e28;
+}
+
 .report-block {
   margin-top: 1.5rem;
 }

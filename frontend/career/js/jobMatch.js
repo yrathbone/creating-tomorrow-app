@@ -15,6 +15,7 @@ const jobState = {
   discoveredFacts: [],
   matchReport: null,
   tailoredResumeData: null,
+  scanHistoryId: null,
 };
 let currentJobQuestions = [];
 const JOB_MAX_ROUNDS = 4;
@@ -83,6 +84,7 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
     jobState.history = [];
     jobState.roundNumber = 1;
     jobState.discoveredFacts = [];
+    jobState.scanHistoryId = data.scan_history_id || null;
     currentJobQuestions = data.questions || [];
 
     renderJobMatch(data.match_report);
@@ -291,6 +293,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
         confirmed_facts: jobState.discoveredFacts,
         name,
         contact,
+        scan_history_id: jobState.scanHistoryId,
       }),
     });
     if (!res.ok) {
@@ -303,6 +306,8 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     stopProcessingState(jobBuildLoadingState);
     jobBuildLoadingState.hidden = true;
     jobBuildDoneState.hidden = false;
+    if (typeof loadScanHistory === "function") loadScanHistory();
+    if (typeof loadResumeVersions === "function") loadResumeVersions();
   } catch (err) {
     stopProcessingState(jobBuildLoadingState);
     hideAllJobStates();
@@ -349,6 +354,7 @@ document.getElementById("job-start-over-btn").addEventListener("click", () => {
   jobState.discoveredFacts = [];
   jobState.matchReport = null;
   jobState.tailoredResumeData = null;
+  jobState.scanHistoryId = null;
   document.getElementById("job-description-input").value = "";
   document.getElementById("job-build-name").value = "";
   document.getElementById("job-build-contact").value = "";

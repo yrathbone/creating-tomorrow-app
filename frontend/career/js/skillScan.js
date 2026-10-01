@@ -11,6 +11,7 @@ const skillScanState = {
   history: [],
   roundNumber: 1,
   discoveredFacts: [],
+  analysisSummary: "",
 };
 let currentSkillScanQuestions = [];
 const SKILL_SCAN_MAX_ROUNDS = 4;
@@ -53,12 +54,14 @@ document.getElementById("skill-scan-btn").addEventListener("click", async () => 
     currentSkillScanQuestions = data.questions || [];
 
     document.getElementById("skill-scan-summary").textContent = data.analysis_summary || "";
+    skillScanState.analysisSummary = data.analysis_summary || "";
 
     stopProcessingState(skillScanLoading);
     hideAllSkillScanStates();
     if (currentSkillScanQuestions.length === 0) {
       document.getElementById("skill-scan-complete-summary").textContent = data.analysis_summary || "";
       skillScanComplete.hidden = false;
+      if (typeof loadScanHistory === "function") loadScanHistory();
     } else {
       renderSkillScanQuestionsBatch(currentSkillScanQuestions);
       skillScanQuestions.hidden = false;
@@ -301,6 +304,8 @@ document.getElementById("skill-scan-save-btn").addEventListener("click", async (
             source_text: (f.bullet_text || "").trim(),
             experience_id: f.experienceId || null,
           })),
+          analysis_summary: skillScanState.analysisSummary,
+          categories: skillScanState.categories,
         }),
       });
       if (!res.ok) {
@@ -312,6 +317,7 @@ document.getElementById("skill-scan-save-btn").addEventListener("click", async (
     hideAllSkillScanStates();
     skillScanStart.hidden = false;
     await loadSkills();
+    if (typeof loadScanHistory === "function") loadScanHistory();
   } catch (err) {
     errorEl.textContent = err.message || "Something went wrong saving.";
     errorEl.hidden = false;

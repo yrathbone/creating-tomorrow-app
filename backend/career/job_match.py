@@ -43,6 +43,8 @@ Do three things:
 
 3. For the gaps you found, write a FIRST BATCH of 4-6 yes/no discovery questions to find out if the candidate actually has relevant experience that just isn't in their profile yet - specific and grounded in this posting's actual requirements, never generic. Each must be answerable honestly with yes/no. Never assume yes. This batch must never be empty when there are real gaps to explore.
 
+4. Extract a short JOB TITLE label for this posting - e.g. "Senior Software Engineer at Acme Corp" - or a brief descriptive phrase if the posting doesn't plainly state a title/employer (e.g. "Retail Store Manager role").
+
 Call the submit_job_comparison tool with your complete analysis. Do not respond with plain text."""
 
 COMPARE_USER_PROMPT_TEMPLATE = """CANDIDATE'S CAREER PROFILE (verified, already-confirmed evidence):
@@ -79,10 +81,14 @@ MATCH_REPORT_PROPS = {
 
 COMPARE_TOOL = {
     "name": "submit_job_comparison",
-    "description": "Submit the match assessment, gaps, categories, and first discovery-question batch.",
+    "description": "Submit the job title label, match assessment, gaps, categories, and first discovery-question batch.",
     "input_schema": {
         "type": "object",
         "properties": {
+            "job_title": {
+                "type": "string",
+                "description": "A short label for this posting, e.g. 'Senior Software Engineer at Acme Corp' - or a brief descriptive phrase if the posting doesn't plainly state a title/employer.",
+            },
             "match_report": {
                 "type": "object",
                 "properties": MATCH_REPORT_PROPS,
@@ -103,7 +109,7 @@ COMPARE_TOOL = {
                 },
             },
         },
-        "required": ["match_report", "categories", "questions"],
+        "required": ["job_title", "match_report", "categories", "questions"],
     },
 }
 
@@ -246,7 +252,7 @@ def compare_to_job(profile_text: str, job_description: str) -> dict:
         COMPARE_SYSTEM_PROMPT,
         user_prompt,
         COMPARE_TOOL,
-        extract=lambda r: _extract_tool_input(r, "submit_job_comparison", ("match_report", "categories", "questions")),
+        extract=lambda r: _extract_tool_input(r, "submit_job_comparison", ("job_title", "match_report", "categories", "questions")),
     )
 
 

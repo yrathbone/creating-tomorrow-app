@@ -44,6 +44,8 @@ class CareerProfile(Base):
     education_entries: Mapped[list["Education"]] = relationship(back_populates="career_profile")
     certifications: Mapped[list["Certification"]] = relationship(back_populates="career_profile")
     skills: Mapped[list["Skill"]] = relationship(back_populates="career_profile")
+    scan_histories: Mapped[list["ScanHistory"]] = relationship(back_populates="career_profile")
+    resume_versions: Mapped[list["ResumeVersion"]] = relationship(back_populates="career_profile")
 
 
 class Experience(Base):
@@ -150,3 +152,60 @@ class ResumeIngestionDraft(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     career_profile: Mapped["CareerProfile"] = relationship()
+
+
+class ScanHistory(Base):
+    """A persisted record that a job-comparison or skill scan actually ran,
+    and what it found - deliberately one table with a scan_type
+    discriminator ("job_comparison" | "skill_scan"), not a
+    JobComparisonHistory/SkillScanHistory split, same reasoning Skill
+    already applies to its own would-be Skill/ExperienceSkill split
+    (Section 13 of the architecture doc is future/Phase 5+ scope this
+    project isn't building yet). result_data is a JSON blob rather than
+    many nullable specific columns because each scan_type's result is a
+    different, variable shape, read back whole for display and never
+    queried by field - the same tradeoff the architecture doc calls out
+    for its own (unbuilt) JobAnalysis.match_detail. job_title is its own
+    column (not buried in result_data) since list views need it without
+    unpacking JSON - nullable since it's only ever populated for
+    scan_type == "job_comparison".
+    """
+    __tablename__ = "scan_histories"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"))
+    scan_type: Mapped[str] = mapped_column(String)  # "job_comparison" | "skill_scan"
+    job_title: Mapped[str | None] = mapped_column(String, nullable=True)
+    summary_text: Mapped[str] = mapped_column(String)
+    result_data: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    career_profile: Mapped["CareerProfile"] = relationship(back_populates="scan_histories")
+    resume_versions: Mapped[list["ResumeVersion"]] = relationship(back_populates="scan_history")
+
+
+class ResumeVersion(Base):
+    """A resume actually built through the Career Profile - created the
+    moment build_tailored_resume() (career/job_match.py) returns, not
+    gated on the candidate ever clicking Download, so "what did I build
+    last month" survives a refresh/navigate-away the way the transient
+    job-build-resume flow never could on its own. resume_data is plain
+    JSON (not Postgres-specific JSONB) in exactly the shape
+    resume_builder.py's build_resume_bytes() already consumes, matching
+    ResumeIngestionDraft's own "standard Postgres features only, portable
+    migrations" choice - so a later download re-runs no AI call, it just
+    reformats the stored data. scan_history_id is nullable because a
+    resume built through this flow is still worth keeping even without a
+    job-comparison run behind it; when present, it links back to the
+    job_comparison ScanHistory row this resume was tailored for.
+    """
+    __tablename__ = "resume_versions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"))
+    scan_history_id: Mapped[int | None] = mapped_column(ForeignKey("scan_histories.id"), nullable=True)
+    resume_data: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    career_profile: Mapped["CareerProfile"] = relationship(back_populates="resume_versions")
+    scan_history: Mapped["ScanHistory | None"] = relationship(back_populates="resume_versions")

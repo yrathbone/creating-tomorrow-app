@@ -553,6 +553,8 @@ async function showProfileStep() {
   await loadEducation();
   await loadCertifications();
   await loadSkills();
+  await loadScanHistory();
+  await loadResumeVersions();
 }
 
 function revealCareerProfileSections(scrollToId) {
