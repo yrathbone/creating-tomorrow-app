@@ -4,10 +4,17 @@
 // formatErrorDetail()/escapeHtml() from login.js/resumeReview.js, both
 // loaded before this file.
 
+// Populated by loadScanHistory() - exposed as a shared global (same
+// pattern as allExperiences/allSkills in login.js) so jobMatch.js can find
+// the most recent job_comparison entry to restore "Current Job Target" on
+// page load, without a second fetch.
+let allScanHistory = [];
+
 async function loadScanHistory() {
   const res = await authedFetch("/api/career/scan-history");
   const entries = await res.json();
   const list = Array.isArray(entries) ? entries : [];
+  allScanHistory = list;
 
   const container = document.getElementById("scan-history-list");
   if (!container) return;

@@ -294,6 +294,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
         name,
         contact,
         scan_history_id: jobState.scanHistoryId,
+        qa_history: jobState.history,
       }),
     });
     if (!res.ok) {
@@ -346,7 +347,7 @@ document.getElementById("job-download-btn").addEventListener("click", async () =
   }
 });
 
-document.getElementById("job-start-over-btn").addEventListener("click", () => {
+function resetJobTarget() {
   jobState.jobDescription = "";
   jobState.categories = [];
   jobState.history = [];
@@ -360,4 +361,33 @@ document.getElementById("job-start-over-btn").addEventListener("click", () => {
   document.getElementById("job-build-contact").value = "";
   hideAllJobStates();
   jobTargetEmpty.hidden = false;
-});
+}
+
+document.getElementById("job-start-over-btn").addEventListener("click", resetJobTarget);
+document.getElementById("job-match-new-btn").addEventListener("click", resetJobTarget);
+
+// Restores the dashboard's "Current Job Target" to the most recent real
+// job comparison on page load, instead of always starting back at the
+// empty "+ Add a Job" state - the comparison itself was already saved to
+// scan history the moment it ran, so the dashboard should reflect that
+// rather than pretending it never happened. Reads allScanHistory, a
+// shared global populated by history.js's loadScanHistory() (loaded
+// before this file), rather than fetching it again here.
+function restoreCurrentJobTarget() {
+  const latest = (typeof allScanHistory !== "undefined" ? allScanHistory : []).find((s) => s.scan_type === "job_comparison");
+  if (!latest || !latest.result_data || !latest.result_data.match_report) return;
+
+  const data = latest.result_data;
+  jobState.jobDescription = data.job_description || "";
+  jobState.matchReport = data.match_report;
+  jobState.categories = data.categories || [];
+  jobState.history = data.qa_history || [];
+  jobState.roundNumber = 1;
+  jobState.discoveredFacts = [];
+  jobState.scanHistoryId = latest.id;
+  currentJobQuestions = data.questions || [];
+
+  renderJobMatch(jobState.matchReport);
+  hideAllJobStates();
+  jobMatchState.hidden = false;
+}

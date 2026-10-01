@@ -872,10 +872,12 @@ async def job_compare(
         job_title=job_title,
         summary_text=result["match_report"]["match_rationale"],
         result_data={
+            "job_description": job_description,
             "match_report": result["match_report"],
             "categories": result.get("categories") or [],
             "questions": result.get("questions") or [],
             "job_title": job_title,
+            "qa_history": [],
         },
     )
     db.add(scan)
@@ -916,23 +918,24 @@ class JobBuildResumeRequest(BaseModel):
     name: str
     contact: str
     scan_history_id: int | None = None
+    qa_history: list[dict] = []
 
 
-def _validate_scan_history_id(db: Session, profile: CareerProfile, scan_history_id: int | None) -> int | None:
+def _validate_scan_history_id(db: Session, profile: CareerProfile, scan_history_id: int | None) -> ScanHistory | None:
     """None is always valid - a resume can be built without a prior
     job-comparison run in this session. A provided id must belong to this
     profile AND be a job_comparison scan - never trust a client-supplied
     id without checking ownership, same rule as _validate_skill_experience_id."""
     if scan_history_id is None:
         return None
-    exists = (
+    scan = (
         db.query(ScanHistory)
         .filter_by(id=scan_history_id, career_profile_id=profile.id, scan_type="job_comparison")
         .one_or_none()
     )
-    if exists is None:
+    if scan is None:
         raise HTTPException(status_code=400, detail="That job comparison no longer exists.")
-    return scan_history_id
+    return scan
 
 
 @router.post("/job-build-resume")
@@ -945,7 +948,7 @@ async def job_build_resume(
         raise HTTPException(status_code=400, detail="Name and contact info are both required.")
 
     profile = get_career_profile_or_404(db, current_user)
-    scan_history_id = _validate_scan_history_id(db, profile, req.scan_history_id)
+    scan = _validate_scan_history_id(db, profile, req.scan_history_id)
     profile_text = _build_profile_text(db, profile)
 
     try:
@@ -959,10 +962,19 @@ async def job_build_resume(
 
     version = ResumeVersion(
         career_profile_id=profile.id,
-        scan_history_id=scan_history_id,
+        scan_history_id=scan.id if scan else None,
         resume_data=result["resume_data"],
     )
     db.add(version)
+
+    # The gap-interview Q&A itself (every question asked, every answer given)
+    # otherwise only ever lived in the frontend's in-memory jobState - save
+    # it onto the scan it belongs to now that a resume was actually built
+    # from it, so "what was I asked, and how did I answer" survives reload.
+    if scan is not None:
+        scan.result_data = {**scan.result_data, "qa_history": req.qa_history}
+        db.add(scan)
+
     db.commit()
     db.refresh(version)
 
