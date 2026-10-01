@@ -77,7 +77,7 @@
         <div class="dashboard-hero-actions">
           <button type="button" id="upload-resume-btn" class="btn-primary">Upload My Resume</button>
           <span class="btn-primary" aria-disabled="true" style="opacity:0.6; cursor:default;">+ Add a Job <span class="coming-soon">Coming soon</span></span>
-          <a href="../scratch.html" class="btn-secondary">Build a Resume</a>
+          <button type="button" id="general-resume-hero-btn" class="btn-secondary">Build a General Resume</button>
           <button type="button" id="update-profile-btn" class="btn-secondary">Update My Career Profile</button>
         </div>
       </div>
@@ -147,6 +147,34 @@
             <p class="success">Your tailored resume is ready.</p>
             <button type="button" id="job-download-btn">Download Resume (.docx)</button>
             <button type="button" id="job-start-over-btn" class="btn-secondary">Compare Another Job</button>
+          </div>
+        </div>
+
+        <div class="card" id="general-resume-card">
+          <div class="dashboard-card-header"><h2>General Resume</h2></div>
+
+          <div id="general-resume-empty">
+            <p class="hint">Build a polished resume straight from your verified Career Profile — no specific job needed.</p>
+            <button type="button" id="general-resume-start-btn" class="btn-secondary">Build a General Resume</button>
+          </div>
+
+          <div id="general-resume-form" hidden>
+            <label class="field"><span>Your name</span><input type="text" id="general-resume-name" required /></label>
+            <label class="field"><span>Contact line</span><input type="text" id="general-resume-contact" placeholder="City, ST | Phone | Email | LinkedIn" required /></label>
+            <button type="button" id="general-resume-build-btn">Build My Resume</button>
+            <button type="button" id="general-resume-cancel-btn" class="btn-secondary">Cancel</button>
+            <div id="general-resume-error" class="error" hidden></div>
+          </div>
+
+          <div id="general-resume-loading" class="processing-card" hidden aria-live="polite">
+            <p class="processing-status"></p>
+            <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
+          </div>
+
+          <div id="general-resume-done" hidden>
+            <p class="success">Your general resume is ready.</p>
+            <button type="button" id="general-resume-download-btn">Download Resume (.docx)</button>
+            <button type="button" id="general-resume-again-btn" class="btn-secondary">Build Again</button>
           </div>
         </div>
 
@@ -387,7 +415,7 @@
           <p class="hint">You can keep building this any time — there's no finish line, just more evidence to add as you think of it.</p>
           <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
             <a href="../tool.html?mode=analyze" class="btn-secondary">Match a Job (Right Fit)</a>
-            <a href="../scratch.html" class="btn-secondary">Build a Resume</a>
+            <button type="button" id="general-resume-hero-btn-2" class="btn-secondary">Build a General Resume</button>
             <a href="../spotlight.html" class="btn-secondary">Refine My LinkedIn</a>
             <button type="button" id="resume-save-continue-btn">Continue Building My Profile</button>
           </div>
@@ -410,5 +438,6 @@
   <script src="js/jobMatch.js"></script>
   <script src="js/skillScan.js"></script>
   <script src="js/history.js"></script>
+  <script src="js/generalResume.js"></script>
 </body>
 </html>

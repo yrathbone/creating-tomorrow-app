@@ -195,6 +195,68 @@ BUILD_RESUME_TOOL = {
 }
 
 
+GENERAL_RESUME_SYSTEM_PROMPT = """You are Nova, an expert executive resume writer, building a general resume straight from a candidate's verified Career Profile. There is no specific job posting to tailor to this time - the Career Profile itself (real roles, education, certifications, skills they've already confirmed) is the ONLY source of truth. Nothing else may be added.
+
+FACTUAL SAFETY RULES (non-negotiable):
+Never invent skills, technologies, employers, job titles, metrics, revenue, team sizes, certifications, education, products, responsibilities, leadership scope, client types, awards, or years of experience. Only the supplied Career Profile content may appear. If something is uncertain, leave it out.
+Never promote participation into ownership: if source text says "supported" do not write "led"; if it says "partnered with" do not write "owned".
+
+SCOPE (this is an organize-and-polish task, not a selection task):
+Unlike a job-targeted resume, do not prioritize or drop content for relevance to any particular posting - include every real role from the Career Profile. Use judgment about ordering and which skills/bullets to foreground within a role, but the goal is a complete, broadly strong resume, not a narrowed one.
+
+WRITING STYLE:
+Senior, polished, confident, concise, human. Avoid repetitive AI resume language such as "results-driven," "dynamic," "highly motivated," "proven track record," or "hard-working" unless truly appropriate given the evidence.
+
+Build the resume:
+1. A POSITIONING HEADLINE: 2-3 short pipe-separated capitalized phrases capturing the candidate's professional identity, supported only by their real experience.
+2. A PROFESSIONAL SUMMARY (3-5 lines) reflecting their real background as a whole.
+3. SKILLS: a polished, deduplicated list of skills/expertise phrases drawn from the Career Profile.
+4. EXPERIENCE: every role from the Career Profile, with polished bullets - no role dropped.
+5. EDUCATION and CERTIFICATIONS: pass through from the Career Profile unchanged.
+
+Call the submit_general_resume tool with the resume. Do not respond with plain text."""
+
+GENERAL_RESUME_USER_PROMPT_TEMPLATE = """CANDIDATE'S CAREER PROFILE (verified, already-confirmed evidence):
+{profile_text}
+
+CANDIDATE NAME: {name}
+CANDIDATE CONTACT LINE: {contact}
+
+Produce the general resume as specified in the system prompt."""
+
+GENERAL_RESUME_TOOL = {
+    "name": "submit_general_resume",
+    "description": "Submit the general resume in the standard format.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "resume_data": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "contact": {"type": "string"},
+                    "headline": {"type": "string"},
+                    "summary": {"type": "string"},
+                    "skills": {"type": "array", "items": {"type": "string"}},
+                    "experience": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": _RESUME_EXPERIENCE_PROPS,
+                            "required": ["title", "subtitle", "bullets"],
+                        },
+                    },
+                    "education": {"type": "array", "items": {"type": "string"}},
+                    "certifications": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["name", "contact", "headline", "summary", "skills", "experience", "education"],
+            },
+        },
+        "required": ["resume_data"],
+    },
+}
+
+
 class JobMatchError(Exception):
     pass
 
@@ -282,4 +344,15 @@ def build_tailored_resume(profile_text: str, job_description: str, confirmed_fac
         user_prompt,
         BUILD_RESUME_TOOL,
         extract=lambda r: _extract_tool_input(r, "submit_tailored_resume", ("resume_data",)),
+    )
+
+
+def build_general_resume(profile_text: str, name: str, contact: str) -> dict:
+    user_prompt = GENERAL_RESUME_USER_PROMPT_TEMPLATE.format(profile_text=profile_text, name=name, contact=contact)
+    return _call_with_retry(
+        "career_general_resume",
+        GENERAL_RESUME_SYSTEM_PROMPT,
+        user_prompt,
+        GENERAL_RESUME_TOOL,
+        extract=lambda r: _extract_tool_input(r, "submit_general_resume", ("resume_data",)),
     )

@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
-from career.job_match import JobMatchError, build_tailored_resume, compare_to_job
+from career.job_match import JobMatchError, build_general_resume, build_tailored_resume, compare_to_job
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
@@ -960,6 +960,42 @@ async def job_build_resume(
     version = ResumeVersion(
         career_profile_id=profile.id,
         scan_history_id=scan_history_id,
+        resume_data=result["resume_data"],
+    )
+    db.add(version)
+    db.commit()
+    db.refresh(version)
+
+    return {**result, "resume_version_id": version.id}
+
+
+class GeneralResumeRequest(BaseModel):
+    name: str
+    contact: str
+
+
+@router.post("/build-general-resume")
+async def build_general_resume_route(
+    req: GeneralResumeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    if not req.name.strip() or not req.contact.strip():
+        raise HTTPException(status_code=400, detail="Name and contact info are both required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    profile_text = _build_profile_text(db, profile)
+
+    try:
+        result = await run_in_threadpool(build_general_resume, profile_text, req.name.strip(), req.contact.strip())
+    except JobMatchError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    version = ResumeVersion(
+        career_profile_id=profile.id,
+        scan_history_id=None,
         resume_data=result["resume_data"],
     )
     db.add(version)
