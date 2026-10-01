@@ -548,6 +548,30 @@ function updateDashboardSummary() {
       }
     }
   }
+
+  const dashSkills = document.getElementById("dashboard-skills-list");
+  if (dashSkills) {
+    dashSkills.textContent = "";
+    if (allSkills.length === 0) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "No skills yet — add one or run a skill scan to get started.";
+      dashSkills.appendChild(p);
+    } else {
+      const preview = allSkills.slice(0, 8);
+      for (const entry of preview) {
+        const p = document.createElement("p");
+        p.textContent = skillLabel(entry);
+        dashSkills.appendChild(p);
+      }
+      if (allSkills.length > preview.length) {
+        const more = document.createElement("p");
+        more.className = "hint";
+        more.textContent = "+ " + (allSkills.length - preview.length) + " more";
+        dashSkills.appendChild(more);
+      }
+    }
+  }
 }
 
 document.getElementById("export-profile-btn").addEventListener("click", async () => {
@@ -608,6 +632,13 @@ document.getElementById("update-profile-btn").addEventListener("click", () => {
 });
 document.getElementById("nav-career-profile-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-detail");
+});
+document.getElementById("view-skills-btn").addEventListener("click", () => {
+  revealCareerProfileSections("skill-detail-list");
+});
+document.getElementById("upload-resume-btn").addEventListener("click", () => {
+  revealCareerProfileSections("career-profile-editor");
+  document.getElementById("mode-resume-btn").click();
 });
 
 document.getElementById("mode-manual-btn").addEventListener("click", () => {
