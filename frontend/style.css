@@ -2764,6 +2764,7 @@ main.dashboard-main {
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr;
+  grid-auto-flow: dense;
   gap: 1.5rem;
   align-items: start;
 }
