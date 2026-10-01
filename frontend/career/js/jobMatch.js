@@ -124,7 +124,7 @@ function renderJobMatch(matchReport) {
   } else {
     gaps.forEach((g) => {
       const li = document.createElement("li");
-      li.textContent = g.requirement + " — " + g.explanation;
+      li.textContent = g.requirement + (g.importance ? " (" + g.importance + ")" : "") + " — " + g.explanation;
       gapsList.appendChild(li);
     });
   }
