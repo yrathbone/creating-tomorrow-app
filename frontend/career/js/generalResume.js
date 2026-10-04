@@ -46,6 +46,7 @@ document.getElementById("general-resume-build-btn").addEventListener("click", as
     errorEl.hidden = false;
     return;
   }
+  if (!confirmHeaderDetails(name, contact)) return;
 
   hideAllGeneralResumeStates();
   generalResumeLoading.hidden = false;

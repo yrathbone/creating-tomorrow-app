@@ -29,6 +29,17 @@ const jobBuildFormState = document.getElementById("job-build-form-state");
 const jobBuildLoadingState = document.getElementById("job-build-loading-state");
 const jobBuildDoneState = document.getElementById("job-build-done-state");
 
+// Whatever is typed here prints at the top of the resume exactly as written
+// (a version label like "Yovana Rathbone 3" or a missing email both hurt a
+// resume), so ask once before building. Also used by generalResume.js.
+function confirmHeaderDetails(name, contact) {
+  const problems = [];
+  if (/\d/.test(name)) problems.push('Your name contains a number ("' + name + '") and it will print on the resume exactly like that.');
+  if (!contact.includes("@")) problems.push("Your contact line has no email address. Recruiters and applicant tracking systems look for one.");
+  if (problems.length === 0) return true;
+  return window.confirm(problems.join("\n\n") + "\n\nBuild the resume anyway?\n(Cancel to go back and fix it.)");
+}
+
 function hideAllJobStates() {
   jobTargetEmpty.hidden = true;
   jobInputState.hidden = true;
@@ -275,6 +286,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     errorEl.hidden = false;
     return;
   }
+  if (!confirmHeaderDetails(name, contact)) return;
 
   hideAllJobStates();
   jobBuildLoadingState.hidden = false;

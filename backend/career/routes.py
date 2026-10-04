@@ -953,7 +953,8 @@ async def job_build_resume(
 
     try:
         result = await run_in_threadpool(
-            build_tailored_resume, profile_text, req.job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
+            build_tailored_resume, profile_text, req.job_description, req.confirmed_facts, req.name.strip(), req.contact.strip(),
+            scan.job_title if scan else None,
         )
     except JobMatchError as e:
         raise HTTPException(status_code=502, detail=str(e))
