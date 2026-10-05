@@ -7,3 +7,6 @@ test_*
 live_*
 *.json.bak
 /live_test*
+
+# Real automated tests (the test_* rule above is for stray test artifacts)
+!backend/tests/test_*.py

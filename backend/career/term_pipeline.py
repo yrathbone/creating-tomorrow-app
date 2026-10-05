@@ -20,12 +20,13 @@ import re
 from career import job_match
 from career.job_match import JobMatchError
 
-MAX_TERMS = 40
+MAX_TERMS = 30
+MAX_TERM_WORDS = 5  # longer "terms" are sentence fragments, not keywords
 SUPPORTED = ("literal", "related")
 
 PLAN_SYSTEM_PROMPT = """You are Nova, a careful resume strategist. You are given a job posting and a candidate's verified Career Profile (plus any facts the candidate confirmed in an interview about this posting). Produce a TERM PLAN.
 
-1. List the key skill, keyword, tool, domain and requirement phrases the posting uses, in the posting's OWN exact wording. Read requirements, responsibilities, the overview, preferred qualifications, and any skill tags or keyword run-ins (several short tags run together with no spaces, for example "clear communicationstakeholder managementproblem-solving" - split them into separate terms). Include domain and industry terms (for example fintech, financial technology, financial services, banking) and tools or technologies. Skip generic filler unless the posting states it as a requirement. At most 40 terms, most important first. Judge importance from the posting's own language: "required" (must-have or a key requirement), "preferred" (nice-to-have), or "mentioned".
+1. List the key skill, keyword, tool, domain and requirement phrases the posting uses, in the posting's OWN exact wording. Read requirements, responsibilities, the overview, preferred qualifications, and any skill tags or keyword run-ins (several short tags run together with no spaces, for example "clear communicationstakeholder managementproblem-solving" - split them into separate terms). Include domain and industry terms (for example fintech, financial technology, financial services, banking) and tools or technologies. Every term must be a SHORT keyword phrase a recruiter would search for: a skill, tool, technology, domain or requirement written as a noun phrase of at most 4 words (for example "proposal development," "technical expertise," "financial products," "pricing strategies," "client onboarding"). Do NOT list duties, sentences or sentence fragments (not "taking ownership of complex initiatives," not "translate complex technical concepts into clear business value," not "address technical objections"); if a duty contains a real skill, list just the short skill. Skip generic filler unless the posting states it as a requirement. At most 30 terms, most important first. Judge importance from the posting's own language: "required" (must-have or a key requirement), "preferred" (nice-to-have), or "mentioned".
 
 2. For EACH term decide whether the candidate's evidence supports it:
 - "literal": the exact term (ignoring capitalization, plurals and hyphens) appears in the Career Profile or the confirmed facts.
@@ -72,7 +73,7 @@ PLAN_TOOL = {
 
 REVISE_SYSTEM_PROMPT = """You are making a MINIMAL edit to a finished resume. You are given the resume as JSON and a list of posting terms that are supported by the candidate's real evidence but are missing from the resume.
 
-Add each missing term using its EXACT wording. Prefer the SKILLS section: append the term to the best-fitting grouped line (a line looks like "Group label: skill, skill, skill") or add a short new group line. Where it reads naturally you may instead work the exact wording into the summary or into the bullet the evidence comes from, without changing what the bullet claims.
+Add each missing term using its EXACT wording, ONLY in the SKILLS section: append it to the best-fitting grouped line (a line looks like "Group label: skill, skill, skill") or add a short new group line. Do not touch the summary or any bullet. Never add a term that is already in SKILLS.
 
 Rules: change nothing else; do not add any term that is not on the list; do not add claims, metrics, employers, titles or responsibilities; keep every experience entry. Return the COMPLETE resume_data with the same structure. Call the submit_revised_resume tool. Do not respond with plain text."""
 
@@ -156,7 +157,7 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
     for raw in (data.get("terms") or [])[:MAX_TERMS]:
         term = (raw.get("term") or "").strip()
         key = normalize(term)
-        if not term or key in seen:
+        if not term or key in seen or len(key.split()) > MAX_TERM_WORDS:
             continue
         seen.add(key)
 
@@ -177,6 +178,45 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
             "evidence": evidence,
         })
     return terms
+
+
+def _split_top_level(text: str) -> list[str]:
+    """Split on commas that are not inside parentheses, so
+    "Data Analytics (Tableau, Power BI), CRM" keeps its parenthetical whole."""
+    parts, depth, cur = [], 0, []
+    for ch in text:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth = max(0, depth - 1)
+        if ch == "," and depth == 0:
+            parts.append("".join(cur).strip())
+            cur = []
+        else:
+            cur.append(ch)
+    parts.append("".join(cur).strip())
+    return [p for p in parts if p]
+
+
+def dedupe_skills(resume_data: dict) -> dict:
+    """Remove repeated skills (case, plural and hyphen insensitive) across the
+    grouped skills lines, and drop a line left with nothing."""
+    seen: set[str] = set()
+    lines: list[str] = []
+    for line in resume_data.get("skills") or []:
+        label, sep, rest = line.partition(":")
+        grouped = bool(sep) and len(label) <= 40
+        items = _split_top_level(rest if grouped else line)
+        kept = []
+        for item in items:
+            key = normalize(item)
+            if key and key not in seen:
+                seen.add(key)
+                kept.append(item)
+        if not kept:
+            continue
+        lines.append(f"{label.strip()}: {', '.join(kept)}" if grouped else ", ".join(kept))
+    return {**resume_data, "skills": lines}
 
 
 def check_placement(resume_data: dict, terms: list[dict]) -> None:
@@ -232,7 +272,7 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         result["term_report"] = []
         return result
 
-    resume = result["resume_data"]
+    resume = dedupe_skills(result["resume_data"])
     check_placement(resume, terms)
     missing = [t for t in terms if t["support"] in SUPPORTED and not t["on_resume"]]
     if missing:
@@ -241,7 +281,7 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         except JobMatchError:
             revised = None
         if revised:
-            resume = {**resume, **revised}
+            resume = dedupe_skills({**resume, **revised})
             check_placement(resume, terms)
     result["resume_data"] = resume
     result["term_report"] = [
