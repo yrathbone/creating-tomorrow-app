@@ -315,6 +315,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     }
     const data = await res.json();
     jobState.tailoredResumeData = data.resume_data;
+    renderRoleSelection(data.role_selection || []);
 
     stopProcessingState(jobBuildLoadingState);
     jobBuildLoadingState.hidden = true;
@@ -329,6 +330,21 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     errorEl.hidden = false;
   }
 });
+
+// Shows which roles kept their full bullets and which were shortened to one
+// line, so the candidate can tell if the builder guessed relevance wrong.
+function renderRoleSelection(selection) {
+  const block = document.getElementById("job-role-selection-block");
+  const list = document.getElementById("job-role-selection-list");
+  list.textContent = "";
+  block.hidden = selection.length === 0;
+  for (const item of selection) {
+    const li = document.createElement("li");
+    const label = item.treatment === "condensed" ? "shortened to one line" : "kept with key bullets";
+    li.textContent = (item.title || "") + (item.organization ? " — " + item.organization : "") + ": " + label + (item.reason ? " (" + item.reason + ")" : "");
+    list.appendChild(li);
+  }
+}
 
 document.getElementById("job-download-btn").addEventListener("click", async () => {
   if (!jobState.tailoredResumeData) return;
@@ -368,6 +384,7 @@ function resetJobTarget() {
   jobState.matchReport = null;
   jobState.tailoredResumeData = null;
   jobState.scanHistoryId = null;
+  renderRoleSelection([]);
   document.getElementById("job-description-input").value = "";
   document.getElementById("job-build-name").value = "";
   document.getElementById("job-build-contact").value = "";

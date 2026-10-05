@@ -964,7 +964,9 @@ async def job_build_resume(
     version = ResumeVersion(
         career_profile_id=profile.id,
         scan_history_id=scan.id if scan else None,
-        resume_data=result["resume_data"],
+        # Kept with the saved resume so what was trimmed stays visible later;
+        # build_resume_bytes() ignores keys it doesn't use.
+        resume_data={**result["resume_data"], "role_selection": result.get("role_selection") or []},
     )
     db.add(version)
 

@@ -127,8 +127,10 @@ FACTUAL SAFETY RULES (non-negotiable):
 Never invent skills, technologies, employers, job titles, metrics, revenue, team sizes, certifications, education, products, responsibilities, leadership scope, client types, awards, or years of experience. Only the supplied Career Profile content and confirmed facts may appear. If something is uncertain, leave it out.
 Never promote participation into ownership: if source text says "supported" do not write "led"; if it says "partnered with" do not write "owned".
 
-TAILORING (this is a selection/prioritization task, not a rewrite of the facts):
-Select and order skills and bullets that are most relevant to this specific job posting - the Career Profile likely has more history than belongs on one resume; use judgment about what to foreground, but do not drop an entire role that's part of the candidate's real background. Fold each confirmed fact's bullet into the single most relevant existing role (matching by category, timing, or context) - never invent a new employer or role to hold it.
+TAILORING AND LENGTH (this is a selection/prioritization task, not a rewrite of the facts): the goal is a resume a recruiter can digest quickly - ideally two pages or fewer - holding the key aspects that matter for THIS role, not the candidate's whole history. First judge how relevant each role in the Career Profile is to this posting (consider the title, the type of work, the skills used, and recency). Then treat every role one of two ways:
+- FULL: roles that are relevant. Keep only the strongest bullets, the ones that speak to the posting's requirements and wording: about 4-6 for the most relevant or recent roles, 2-3 for somewhat relevant or older ones. Drop bullets that do not help for this role.
+- CONDENSED: roles that are not relevant to this posting (for example a bank teller job on a software architecture resume). Keep the title and the subtitle line (organization, location, dates) but return an EMPTY bullets list - or at most one bullet if it genuinely helps. NEVER leave a role out of the experience list entirely, because that would leave a gap in the timeline.
+Apply the same discipline to SKILLS: include the skills that matter for this posting and leave out ones that do not help for this role (roughly 12-18 entries), rather than listing everything. Never move a bullet from one role to another and never invent a role, employer or title. Fold each confirmed fact's bullet into the single most relevant existing role (matching by category, timing, or context). Record every role's treatment, with a short reason, in role_selection.
 
 WRITING STYLE:
 Senior, polished, confident, concise, human. Avoid repetitive AI resume language such as "results-driven," "dynamic," "highly motivated," "proven track record," or "hard-working" unless truly appropriate given the evidence.
@@ -144,8 +146,8 @@ TITLES AND EMPLOYERS ARE EVIDENCE: a role title in the profile is itself proof o
 Build the resume:
 1. A POSITIONING HEADLINE: 2-3 short pipe-separated capitalized phrases capturing the candidate's professional identity relevant to this job, supported only by their real experience.
 2. A PROFESSIONAL SUMMARY (3-5 lines) connecting their real background to this specific posting.
-3. SKILLS: a list of skills/expertise phrases drawn from the Career Profile plus whatever the confirmed facts demonstrate, prioritized for relevance to this posting, using exact standard terminology per the ATS note above wherever the evidence supports it.
-4. EXPERIENCE: each role's bullets, prioritized and polished for relevance to this posting, confirmed facts folded into the right role.
+3. SKILLS: a list of skills/expertise phrases drawn from the Career Profile plus whatever the confirmed facts demonstrate, limited to those that matter for this posting (roughly 12-18), using exact standard terminology per the ATS note above wherever the evidence supports it.
+4. EXPERIENCE: every role, each treated per the TAILORING AND LENGTH rule above (FULL roles with trimmed, polished bullets; CONDENSED roles with title and subtitle only), confirmed facts folded into the right role.
 5. EDUCATION and CERTIFICATIONS: pass through from the Career Profile unchanged.
 
 Call the submit_tailored_resume tool with the resume. Do not respond with plain text."""
@@ -198,6 +200,20 @@ BUILD_RESUME_TOOL = {
                     "certifications": {"type": "array", "items": {"type": "string"}},
                 },
                 "required": ["name", "contact", "headline", "summary", "skills", "experience", "education"],
+            },
+            "role_selection": {
+                "type": "array",
+                "description": "One entry per role in the experience list, in the same order: how it was treated for this posting.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "organization": {"type": "string"},
+                        "treatment": {"type": "string", "enum": ["full", "condensed"]},
+                        "reason": {"type": "string", "description": "One short sentence."},
+                    },
+                    "required": ["title", "organization", "treatment", "reason"],
+                },
             },
         },
         "required": ["resume_data"],
