@@ -340,7 +340,7 @@ function renderRoleSelection(selection) {
   block.hidden = selection.length === 0;
   for (const item of selection) {
     const li = document.createElement("li");
-    const label = item.treatment === "condensed" ? "shortened to one line" : "kept with key bullets";
+    const label = item.treatment === "omitted" ? "left off" : "kept with key bullets";
     li.textContent = (item.title || "") + (item.organization ? " — " + item.organization : "") + ": " + label + (item.reason ? " (" + item.reason + ")" : "");
     list.appendChild(li);
   }

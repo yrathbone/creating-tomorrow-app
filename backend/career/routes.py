@@ -960,12 +960,18 @@ async def job_build_resume(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
+    # role_selection is kept with the saved resume so what was left off stays
+    # visible later; skills_style "grouped" makes the .docx print the compact
+    # "Label: skill, skill" lines. build_resume_bytes() ignores keys it doesn't use.
+    final_resume = {
+        **result["resume_data"],
+        "skills_style": "grouped",
+        "role_selection": result.get("role_selection") or [],
+    }
     version = ResumeVersion(
         career_profile_id=profile.id,
         scan_history_id=scan.id if scan else None,
-        # Kept with the saved resume so what was trimmed stays visible later;
-        # build_resume_bytes() ignores keys it doesn't use.
-        resume_data={**result["resume_data"], "role_selection": result.get("role_selection") or []},
+        resume_data=final_resume,
     )
     db.add(version)
 
@@ -980,7 +986,7 @@ async def job_build_resume(
     db.commit()
     db.refresh(version)
 
-    return {**result, "resume_version_id": version.id}
+    return {**result, "resume_data": final_resume, "resume_version_id": version.id}
 
 
 class GeneralResumeRequest(BaseModel):

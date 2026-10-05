@@ -104,6 +104,20 @@ def add_bullet(doc, text):
     return p
 
 
+def add_skill_line(doc, text):
+    """A compact skills line like "Payments & Integration: API Connectivity, ISO 20022"
+    - the part before the first colon (if any) is the bold group label."""
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(2)
+    label, sep, rest = text.partition(":")
+    if sep and len(label) <= 40:
+        style_run(p.add_run(label + ":"), bold=True)
+        style_run(p.add_run(rest))
+    else:
+        style_run(p.add_run(text))
+    return p
+
+
 def set_page_geometry(section):
     section.page_width = Inches(8.5)
     section.page_height = Inches(11)
@@ -163,9 +177,12 @@ def build_resume_bytes(data: dict, ats_mode: bool = False) -> bytes:
 
         doc.add_section(WD_SECTION.CONTINUOUS)
         set_page_geometry(doc.sections[-1])
-        set_columns(doc.sections[-1], 1 if ats_mode else 2)
+        # "grouped" = a few compact "Label: skill, skill" lines (single column)
+        # instead of one bullet per skill in two columns.
+        grouped = data.get("skills_style") == "grouped"
+        set_columns(doc.sections[-1], 1 if (ats_mode or grouped) else 2)
         for skill in data["skills"]:
-            add_bullet(doc, skill)
+            (add_skill_line if grouped else add_bullet)(doc, skill)
 
     # Always start a fresh single-column section here, regardless of
     # whether there's experience content - this undoes the skills
