@@ -141,13 +141,23 @@
 
           <div id="job-build-loading-state" class="processing-card" hidden aria-live="polite">
             <p class="processing-status"></p>
-            <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
+            <p class="hint processing-wait-copy">This does a few careful checks, so it usually takes about 1–2 minutes. Please keep this page open.</p>
           </div>
 
           <div id="job-build-done-state" hidden>
             <p class="success">Your tailored resume is ready.</p>
             <button type="button" id="job-download-btn">Download Resume (.docx)</button>
             <button type="button" id="job-start-over-btn" class="btn-secondary">Compare Another Job</button>
+
+            <div id="job-term-report-block" hidden>
+              <h4>Still worth addressing</h4>
+              <p class="hint" id="job-term-summary"></p>
+              <ul id="job-term-missing-list"></ul>
+              <details id="job-term-included-details" hidden>
+                <summary>Terms from the posting that are on your resume</summary>
+                <ul id="job-term-included-list"></ul>
+              </details>
+            </div>
 
             <div id="job-role-selection-block" hidden>
               <h4>How I chose what to include</h4>

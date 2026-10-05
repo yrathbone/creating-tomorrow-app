@@ -291,9 +291,10 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
   hideAllJobStates();
   jobBuildLoadingState.hidden = false;
   startProcessingState(jobBuildLoadingState, [
-    "Reviewing your Career Profile...",
-    "Tailoring your resume to this role...",
-    "Finalizing formatting...",
+    "Reading the posting's key terms...",
+    "Matching them to your experience...",
+    "Writing your resume...",
+    "Double-checking nothing was missed...",
   ]);
 
   try {
@@ -316,6 +317,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     const data = await res.json();
     jobState.tailoredResumeData = data.resume_data;
     renderRoleSelection(data.role_selection || []);
+    renderTermReport(data.term_report || []);
 
     stopProcessingState(jobBuildLoadingState);
     jobBuildLoadingState.hidden = true;
@@ -330,6 +332,63 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     errorEl.hidden = false;
   }
 });
+
+// Opens the Add a skill form with the posting term filled in, so a skill the
+// candidate really has (but never wrote down) becomes part of the profile and
+// is used in every later resume.
+function prefillSkillFromTerm(term) {
+  revealCareerProfileSections("career-profile-editor");
+  document.getElementById("mode-manual-btn").click();
+  document.getElementById("skill-name").value = term;
+  document.getElementById("skill-source-text").focus();
+}
+
+// "Still worth addressing": posting terms the profile does not support yet
+// (required ones first), plus any that are supported but could not be placed.
+function renderTermReport(report) {
+  const block = document.getElementById("job-term-report-block");
+  const summary = document.getElementById("job-term-summary");
+  const missingList = document.getElementById("job-term-missing-list");
+  const includedList = document.getElementById("job-term-included-list");
+  const includedDetails = document.getElementById("job-term-included-details");
+  missingList.textContent = "";
+  includedList.textContent = "";
+  block.hidden = report.length === 0;
+  if (report.length === 0) return;
+
+  const rank = { required: 0, preferred: 1, mentioned: 2 };
+  const byRank = (a, b) => (rank[a.importance] ?? 3) - (rank[b.importance] ?? 3);
+  const onResume = report.filter((r) => r.status === "on_resume");
+  const notPlaced = report.filter((r) => r.status === "not_placed").sort(byRank);
+  const notInProfile = report.filter((r) => r.status === "not_in_profile").sort(byRank);
+
+  let text = onResume.length + " of " + report.length + " terms from the posting are on your resume.";
+  if (notInProfile.length) text += " " + notInProfile.length + " aren't backed by your profile yet. If you have that experience, add it and rebuild.";
+  if (notPlaced.length) text += " " + notPlaced.length + (notPlaced.length === 1 ? " is" : " are") + " in your profile but couldn't be placed, so add " + (notPlaced.length === 1 ? "it" : "them") + " by hand.";
+  summary.textContent = text;
+
+  for (const item of notPlaced.concat(notInProfile)) {
+    const li = document.createElement("li");
+    const label = item.term + (item.importance && item.importance !== "mentioned" ? " (" + item.importance + ")" : "");
+    li.textContent = label + (item.status === "not_placed" ? " — in your profile, but couldn't be placed on the resume " : " ");
+    if (item.status === "not_in_profile") {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "entry-remove-btn";
+      btn.textContent = "I have this — add to my profile";
+      btn.addEventListener("click", () => prefillSkillFromTerm(item.term));
+      li.appendChild(btn);
+    }
+    missingList.appendChild(li);
+  }
+
+  includedDetails.hidden = onResume.length === 0;
+  for (const item of onResume) {
+    const li = document.createElement("li");
+    li.textContent = item.term + (item.evidence ? " — " + item.evidence : "");
+    includedList.appendChild(li);
+  }
+}
 
 // Shows which roles kept their full bullets and which were shortened to one
 // line, so the candidate can tell if the builder guessed relevance wrong.
@@ -385,6 +444,7 @@ function resetJobTarget() {
   jobState.tailoredResumeData = null;
   jobState.scanHistoryId = null;
   renderRoleSelection([]);
+  renderTermReport([]);
   document.getElementById("job-description-input").value = "";
   document.getElementById("job-build-name").value = "";
   document.getElementById("job-build-contact").value = "";

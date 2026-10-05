@@ -137,7 +137,7 @@ Senior, polished, confident, concise, human. Avoid repetitive AI resume language
 
 ATS TERMINOLOGY (applies most to the SKILLS section): applicant tracking systems and recruiters search on literal keyword/phrase matches, not paraphrases - meaning the same thing in different words still scores as a miss. When the evidence genuinely supports it, use the exact standard industry term a recruiter or ATS would search for (e.g. "Risk Management," "Corporate Banking," "Customer Relationship Management") as its own clean skill phrase, not only folded into a longer descriptive sentence elsewhere. This includes DERIVING a standard skill label from what an EXPERIENCE bullet already describes, even if that exact term never appears verbatim - restating already-described activity as its standard name is using supplied content, not inventing it. For example, a bullet describing "managed a treasury client portfolio for large corporate clients" directly supports "Customer Relationship Management" as a skill entry, and in a sales/advisory context also supports "Consultative Selling" - both belong in SKILLS even though neither phrase was typed verbatim anywhere in the profile. Likewise, a bullet describing "presented on panels addressing risk, automation, and the future of payments and served on an advisory board to inform product strategy" directly supports "Presentation Skills" (or "Public Speaking") and "Advisory Board Participation" (or "Industry Thought Leadership") as their own skill entries - do not leave this kind of activity sitting only as narrative text under EXPERIENCE when it clearly supports a standard skill phrase. Apply this same derivation to EVERY bullet across EVERY role, not just one or two - a skill phrase belongs in SKILLS whenever any bullet anywhere in the profile genuinely supports it, not only when it's convenient. Never use a term the underlying activity doesn't actually support just because it sounds standard for the field.
 
-POSTING TERMINOLOGY (this is what lets a recruiter or ATS see that the skills are there): before writing, read the job posting and list the key skill and keyword phrases it uses - in its requirements, responsibilities, overview, and any skill tags or keyword run-ins it contains. For EACH one, check the Career Profile for evidence of the same underlying skill, even when the profile words it differently (for example: posting "product adoption" vs. profile "platform adoption" or "supporting adoption"; "customer relationships" vs. "executive relationship management" or managing a client portfolio; "competitive landscape" vs. "competitive positioning analysis" or "competitive analysis"; "strategic selling" vs. "strategic account planning" or "consultative selling"; "business cases" vs. "business-case development"; "customer-facing" vs. client-facing roles). Where the evidence supports it, use the posting's OWN wording, matched exactly (same words, same singular/plural, same hyphenation), as its own entry in SKILLS and, where it reads naturally, once in the summary or a bullet. Where the profile has NO evidence for a posting term (for example a technology or industry the candidate has never worked in), leave it out entirely - never add it to look like a better match. This is aligning the wording of skills the candidate really has, not keyword stuffing: do not repeat a term more than it needs.
+POSTING TERMINOLOGY (this is what lets a recruiter or ATS see that the skills are there): if a "POSTING TERMS TO INCLUDE" list is provided in the request, it is AUTHORITATIVE - every term on it must appear on the resume in its exact wording (in SKILLS, and where natural in the summary or a bullet), and no term from "POSTING TERMS WITH NO EVIDENCE" may appear anywhere. If no list is provided, work it out yourself as follows: before writing, read the job posting and list the key skill and keyword phrases it uses - in its requirements, responsibilities, overview, and any skill tags or keyword run-ins it contains. For EACH one, check the Career Profile for evidence of the same underlying skill, even when the profile words it differently (for example: posting "product adoption" vs. profile "platform adoption" or "supporting adoption"; "customer relationships" vs. "executive relationship management" or managing a client portfolio; "competitive landscape" vs. "competitive positioning analysis" or "competitive analysis"; "strategic selling" vs. "strategic account planning" or "consultative selling"; "business cases" vs. "business-case development"; "customer-facing" vs. client-facing roles). Where the evidence supports it, use the posting's OWN wording, matched exactly (same words, same singular/plural, same hyphenation), as its own entry in SKILLS and, where it reads naturally, once in the summary or a bullet. Where the profile has NO evidence for a posting term (for example a technology or industry the candidate has never worked in), leave it out entirely - never add it to look like a better match. This is aligning the wording of skills the candidate really has, not keyword stuffing: do not repeat a term more than it needs.
 
 NEVER STATE THE TARGET: do not write the target job's title, the employer's name, or any "Targeting," "Seeking," "Applying for," or "Objective" line anywhere on the resume. The headline and summary describe the candidate as they really are, using skills and experience from the Career Profile. A job title from the posting may appear only if the candidate genuinely held that exact title in the Career Profile.
 
@@ -157,6 +157,12 @@ BUILD_RESUME_USER_PROMPT_TEMPLATE = """CANDIDATE'S CAREER PROFILE (verified, alr
 
 TARGET JOB POSTING:
 {job_description}
+
+POSTING TERMS TO INCLUDE (each is backed by the candidate's real evidence; every one must appear on the resume in this exact wording):
+{terms_include}
+
+POSTING TERMS WITH NO EVIDENCE (never put these on the resume):
+{terms_exclude}
 
 CONFIRMED FACTS FROM THE GAP INTERVIEW (approved by the candidate - the only new content allowed):
 {facts_text}
@@ -353,15 +359,26 @@ def compare_to_job(profile_text: str, job_description: str) -> dict:
     )
 
 
-def build_tailored_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str) -> dict:
+def build_tailored_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, term_plan: list | None = None) -> dict:
     facts_text = (
         "\n".join(f"- ({f.get('category', '')}) {f.get('bullet_text', '')}" for f in confirmed_facts)
         if confirmed_facts
         else "(none confirmed - use only the Career Profile itself)"
     )
+    if term_plan is None:
+        terms_include = terms_exclude = "(no list provided - identify the posting's key terms yourself, per POSTING TERMINOLOGY)"
+    else:
+        include = [t for t in term_plan if t.get("support") in ("literal", "related")]
+        exclude = [t for t in term_plan if t.get("support") not in ("literal", "related")]
+        terms_include = "\n".join(
+            f"- {t['term']}  (evidence: {t['evidence'] or 'appears in the profile'})" for t in include
+        ) or "(none)"
+        terms_exclude = "\n".join(f"- {t['term']}" for t in exclude) or "(none)"
     user_prompt = BUILD_RESUME_USER_PROMPT_TEMPLATE.format(
         profile_text=profile_text,
         job_description=job_description,
+        terms_include=terms_include,
+        terms_exclude=terms_exclude,
         facts_text=facts_text,
         name=name,
         contact=contact,

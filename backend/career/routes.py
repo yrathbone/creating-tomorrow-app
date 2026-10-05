@@ -24,7 +24,8 @@ from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
-from career.job_match import JobMatchError, build_general_resume, build_tailored_resume, compare_to_job
+from career.job_match import JobMatchError, build_general_resume, compare_to_job
+from career.term_pipeline import build_checked_resume
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
@@ -953,7 +954,7 @@ async def job_build_resume(
 
     try:
         result = await run_in_threadpool(
-            build_tailored_resume, profile_text, req.job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
+            build_checked_resume, profile_text, req.job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
         )
     except JobMatchError as e:
         raise HTTPException(status_code=502, detail=str(e))
@@ -967,6 +968,7 @@ async def job_build_resume(
         **result["resume_data"],
         "skills_style": "grouped",
         "role_selection": result.get("role_selection") or [],
+        "term_report": result.get("term_report") or [],
     }
     version = ResumeVersion(
         career_profile_id=profile.id,
