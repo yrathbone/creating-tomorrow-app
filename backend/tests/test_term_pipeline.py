@@ -93,6 +93,13 @@ class Dedupe(unittest.TestCase):
         out = term_pipeline.dedupe_skills(resume)["skills"]
         self.assertEqual(out, ["Sales: Go-to-Market Playbook & Sales Enablement Development, Treasury & Cash Management Solutions"])
 
+    def test_semicolon_separated_skills_are_split_into_keywords(self):
+        resume = dict(BASE_RESUME, skills=[
+            "Core Capabilities: Analytical and Problem-Solving; Presentation Skills; CRM/Pipeline Management",
+        ])
+        out = term_pipeline.dedupe_skills(resume)["skills"]
+        self.assertEqual(out, ["Core Capabilities: Analytical and Problem-Solving, Presentation Skills, CRM/Pipeline Management"])
+
     def test_line_left_empty_is_dropped(self):
         resume = dict(BASE_RESUME, skills=["A: APIs", "B: apis"])
         self.assertEqual(term_pipeline.dedupe_skills(resume)["skills"], ["A: APIs"])

@@ -30,7 +30,7 @@ PLAN_SYSTEM_PROMPT = """You are Nova, a careful resume strategist. You are given
 
 2. For EACH term decide whether the candidate's evidence supports it:
 - "literal": the exact term (ignoring capitalization, plurals and hyphens) appears in the Career Profile or the confirmed facts.
-- "related": not literal, but the profile genuinely shows the same underlying skill or domain under different wording. Give the evidence. Examples: RFP responses support "proposal development"; being the technical advisor to treasury and IT teams supports "technical expertise"; training and coaching support "technical training"; demonstrating products and equipping sales teams supports "product education". Domain labels count when the work substantively involves that domain: building, integrating or selling payments or banking technology (APIs, ERP/TMS bank connectivity, payment rails, real-time payments such as Zelle or FastPayments, embedded finance) supports "financial technology" and "fintech"; working at a bank supports "banking" and "financial services". Role titles are evidence too: a title containing Sales, Account, Client, Relationship or Consultant supports sales experience, customer-facing work and customer relationships.
+- "related": not literal, but the profile genuinely shows the same underlying skill or domain under different wording. Give the evidence. Examples: RFP responses support "proposal development"; being the technical advisor to treasury and IT teams supports "technical expertise"; training and coaching support "technical training"; demonstrating products and equipping sales teams supports "product education"; directing the "full sales lifecycle" or an end-to-end sales engagement supports "sales cycle" and "sales process". Domain labels count when the work substantively involves that domain: building, integrating or selling payments or banking technology (APIs, ERP/TMS bank connectivity, payment rails, real-time payments such as Zelle or FastPayments, embedded finance) supports "financial technology" and "fintech"; working at a bank supports "banking" and "financial services". Role titles are evidence too: a title containing Sales, Account, Client, Relationship or Consultant supports sales experience, customer-facing work and customer relationships.
 - "none": no real support in the profile. Never stretch a term to make it fit; an honest "none" is the correct answer for something the candidate has not done.
 For "literal" and "related" give a short evidence note naming the role and the phrase or activity that proves it.
 
@@ -181,7 +181,7 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
 
 
 def _split_top_level(text: str) -> list[str]:
-    """Split on commas that are not inside parentheses, so
+    """Split on commas and semicolons that are not inside parentheses, so
     "Data Analytics (Tableau, Power BI), CRM" keeps its parenthetical whole."""
     parts, depth, cur = [], 0, []
     for ch in text:
@@ -189,7 +189,7 @@ def _split_top_level(text: str) -> list[str]:
             depth += 1
         elif ch == ")":
             depth = max(0, depth - 1)
-        if ch == "," and depth == 0:
+        if ch in ",;" and depth == 0:
             parts.append("".join(cur).strip())
             cur = []
         else:
