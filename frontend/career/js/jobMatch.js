@@ -667,9 +667,20 @@ document.getElementById("job-match-new-btn").addEventListener("click", resetJobT
 // shared global populated by history.js's loadScanHistory() (loaded
 // before this file), rather than fetching it again here.
 function restoreCurrentJobTarget() {
+  // The dashboard opens clean. The last comparison is kept, one click away,
+  // instead of taking over the page on every refresh.
+  const btn = document.getElementById("job-resume-last-btn");
   const latest = (typeof allScanHistory !== "undefined" ? allScanHistory : []).find((s) => s.scan_type === "job_comparison");
-  if (!latest || !latest.result_data || !latest.result_data.match_report) return;
+  if (!latest || !latest.result_data || !latest.result_data.match_report) {
+    btn.hidden = true;
+    return;
+  }
+  btn.textContent = "Pick up where I left off" + (latest.job_title ? ": " + latest.job_title : "");
+  btn.onclick = () => openJobTarget(latest);
+  btn.hidden = false;
+}
 
+function openJobTarget(latest) {
   const data = latest.result_data;
   jobState.jobDescription = data.job_description || "";
   jobState.matchReport = data.match_report;
