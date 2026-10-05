@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
 from career.job_match import JobMatchError, build_general_resume, compare_to_job
-from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check
+from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
@@ -445,6 +445,42 @@ async def list_skills(
         .all()
     )
     return [_skill_to_dict(s) for s in entries]
+
+
+@router.post("/skills-tidy-suggest")
+async def suggest_skill_tidy(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    """Read-only: propose short keyword names for saved skills whose names are
+    long. Nothing changes until the candidate approves each one in the page,
+    which saves through the normal PUT /skills/{id}."""
+    profile = get_career_profile_or_404(db, current_user)
+    entries = db.query(Skill).filter_by(career_profile_id=profile.id).order_by(Skill.created_at.desc()).all()
+    candidates = tidy_candidates([_skill_to_dict(s) for s in entries])
+    if not candidates:
+        return {"suggestions": []}
+
+    try:
+        keywords = await run_in_threadpool(suggest_skill_keywords, candidates)
+    except JobMatchError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+
+    suggestions = []
+    for s in candidates:
+        keyword = keywords.get(s["id"])
+        if not keyword or keyword.strip().lower() == s["name"].strip().lower():
+            continue
+        suggestions.append({
+            "id": s["id"],
+            "name": s["name"],
+            "source_text": s["source_text"],
+            "experience_id": s["experience_id"],
+            "keyword": keyword,
+        })
+    return {"suggestions": suggestions}
 
 
 def _get_skill_or_404(db: Session, profile: CareerProfile, skill_id: int) -> Skill:

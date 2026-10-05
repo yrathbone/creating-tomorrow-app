@@ -180,6 +180,72 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
     return terms
 
 
+TIDY_MIN_WORDS = 3  # names this long are probably labels or sentences, not keywords
+TIDY_MAX_KEYWORD_WORDS = 3
+
+TIDY_SYSTEM_PROMPT = """You shorten the NAMES of a candidate's saved skills into resume keywords. For each skill you get an id, its current name, and the sentence describing how it was used. Return, for each id, the short keyword a recruiter would search for: 1 to 3 words, a noun phrase (for example "Sales Enablement", "CRM", "Contract Negotiation", "RFP Responses", "Sales Forecasting", "Crisis Management").
+
+Rules:
+- Use only what the current name and sentence say. Never add a skill, tool, or claim that is not already there.
+- Never start with a verb or "ability to". Do not include the employer or role.
+- If the name is already a good short keyword, return it unchanged.
+- If the "skill" is really a certification or a goal rather than a skill, return the plain certification or topic name.
+Call the submit_skill_keywords tool. Do not respond with plain text."""
+
+TIDY_TOOL = {
+    "name": "submit_skill_keywords",
+    "description": "Submit a short keyword for each skill id.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "skills": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {"id": {"type": "integer"}, "keyword": {"type": "string"}},
+                    "required": ["id", "keyword"],
+                },
+            },
+        },
+        "required": ["skills"],
+    },
+}
+
+
+def tidy_candidates(skills: list[dict]) -> list[dict]:
+    """Saved skills whose name is longer than a keyword."""
+    return [s for s in skills if len(_WORD.findall((s.get("name") or "").lower())) >= TIDY_MIN_WORDS]
+
+
+def suggest_skill_keywords(skills: list[dict]) -> dict[int, str]:
+    """AI-proposed short names for the given skills ({id, name, source_text}).
+    Code guard: a suggestion that is empty, too long, or verb-first is dropped.
+    Nothing is saved; the candidate reviews every suggestion."""
+    if not skills:
+        return {}
+    listing = "\n".join(
+        f"- id {s['id']}: name: {s['name']} | sentence: {s.get('source_text') or '(none)'}" for s in skills
+    )
+    data = job_match._call_with_retry(
+        "career_skill_tidy",
+        TIDY_SYSTEM_PROMPT,
+        "SKILLS:\n" + listing,
+        TIDY_TOOL,
+        extract=lambda r: job_match._extract_tool_input(r, "submit_skill_keywords", ("skills",)),
+    )
+    valid_ids = {s["id"] for s in skills}
+    out: dict[int, str] = {}
+    for item in data.get("skills") or []:
+        try:
+            sid = int(item.get("id"))
+        except (TypeError, ValueError):
+            continue
+        keyword = _clean_item((item.get("keyword") or "").strip())
+        if sid in valid_ids and keyword and len(_WORD.findall(keyword.lower())) <= TIDY_MAX_KEYWORD_WORDS and not _looks_like_duty(keyword):
+            out[sid] = keyword
+    return out
+
+
 def keyword_check(profile_text: str, confirmed_facts: list, job_description: str) -> dict:
     """The optional pre-build "keyword check": the posting's key terms that are
     NOT literally in the profile, so the candidate can say which ones they

@@ -306,6 +306,15 @@
         <div id="certification-detail-list"></div>
 
         <h3>Skills</h3>
+        <p class="hint">A skill's name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
+        <button type="button" id="skill-tidy-btn" class="btn-secondary">Shorten long skill names</button>
+        <div id="skill-tidy-panel" hidden>
+          <p class="hint" id="skill-tidy-intro"></p>
+          <div id="skill-tidy-list"></div>
+          <div id="skill-tidy-error" class="error" hidden></div>
+          <button type="button" id="skill-tidy-apply-btn">Save the ones I've ticked</button>
+          <button type="button" id="skill-tidy-cancel-btn" class="btn-secondary">Close</button>
+        </div>
         <div id="skill-detail-list"></div>
 
         <h3>Job &amp; Skill Scan History</h3>
@@ -465,6 +474,7 @@
   <script src="js/resumeReview.js"></script>
   <script src="js/jobMatch.js"></script>
   <script src="js/skillScan.js"></script>
+  <script src="js/skillTidy.js"></script>
   <script src="js/history.js"></script>
   <script src="js/generalResume.js"></script>
 </body>

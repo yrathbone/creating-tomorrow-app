@@ -239,5 +239,28 @@ class KeywordCheck(unittest.TestCase):
         self.assertEqual(out["already_covered"], 1)
 
 
+class SkillTidy(unittest.TestCase):
+    SKILLS = [
+        {"id": 1, "name": "Sales Enablement/Training Content Creation", "source_text": "Created pitch decks."},
+        {"id": 2, "name": "Fintech", "source_text": None},
+        {"id": 3, "name": "Contract Negotiation & Pricing Authority", "source_text": "Negotiated terms."},
+        {"id": 4, "name": "Client Escalation/Crisis Management at Scale", "source_text": ""},
+    ]
+
+    def test_only_long_names_are_candidates(self):
+        self.assertEqual([s["id"] for s in term_pipeline.tidy_candidates(self.SKILLS)], [1, 3, 4])
+
+    def test_suggestions_are_guarded(self):
+        answer = {"skills": [
+            {"id": 1, "keyword": "Sales Enablement"},
+            {"id": 3, "keyword": "Negotiating contract terms with clients"},  # too long
+            {"id": 4, "keyword": "Managing client escalations"},  # verb-first
+            {"id": 99, "keyword": "Not Mine"},  # unknown id
+        ]}
+        with mock.patch.object(job_match, "_call_with_retry", return_value=answer):
+            out = term_pipeline.suggest_skill_keywords(term_pipeline.tidy_candidates(self.SKILLS))
+        self.assertEqual(out, {1: "Sales Enablement"})
+
+
 if __name__ == "__main__":
     unittest.main()
