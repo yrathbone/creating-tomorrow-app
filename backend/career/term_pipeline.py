@@ -180,6 +180,19 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
     return terms
 
 
+def keyword_check(profile_text: str, confirmed_facts: list, job_description: str) -> dict:
+    """The optional pre-build "keyword check": the posting's key terms that are
+    NOT literally in the profile, so the candidate can say which ones they
+    really have (and where it belongs) before the resume is built. Terms
+    already in the profile are only counted. "related" terms carry the evidence
+    the planner found; "none" terms have none. Nothing is saved here."""
+    terms = plan_terms(profile_text, facts_text_for(confirmed_facts), job_description)
+    rank = {"required": 0, "preferred": 1, "mentioned": 2}
+    needs = [t for t in terms if t["support"] != "literal"]
+    needs.sort(key=lambda t: (rank.get(t["importance"], 3), t["support"] != "related"))
+    return {"terms": needs, "already_covered": len(terms) - len(needs)}
+
+
 def _split_top_level(text: str) -> list[str]:
     """Split on commas and semicolons that are not inside parentheses, so
     "Data Analytics (Tableau, Power BI), CRM" keeps its parenthetical whole."""

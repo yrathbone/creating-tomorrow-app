@@ -26,6 +26,7 @@ const jobLoadingState = document.getElementById("job-loading-state");
 const jobMatchState = document.getElementById("job-match-state");
 const jobQuestionsState = document.getElementById("job-questions-state");
 const jobBuildFormState = document.getElementById("job-build-form-state");
+const jobKeywordsState = document.getElementById("job-keywords-state");
 const jobBuildLoadingState = document.getElementById("job-build-loading-state");
 const jobBuildDoneState = document.getElementById("job-build-done-state");
 
@@ -47,6 +48,7 @@ function hideAllJobStates() {
   jobMatchState.hidden = true;
   jobQuestionsState.hidden = true;
   jobBuildFormState.hidden = true;
+  jobKeywordsState.hidden = true;
   jobBuildLoadingState.hidden = true;
   jobBuildDoneState.hidden = true;
 }
@@ -333,6 +335,206 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
   }
 });
 
+// Optional keyword check before building: posting terms that are not in the
+// profile yet, each with the candidate's own choice - save it as a Skill
+// (optionally under a role, with a sentence on how it was used), use it for
+// this resume only, or skip. Nothing is saved until "Save my choices", and
+// nothing is assumed: "related" terms are only pre-selected as a suggestion.
+let keywordTerms = [];
+
+document.getElementById("job-keyword-check-btn").addEventListener("click", async () => {
+  const errorEl = document.getElementById("job-build-error");
+  errorEl.hidden = true;
+
+  hideAllJobStates();
+  jobLoadingState.hidden = false;
+  startProcessingState(jobLoadingState, [
+    "Reading the posting's key terms...",
+    "Checking them against your profile...",
+  ]);
+
+  try {
+    const res = await authedFetch("/api/career/job-keyword-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ job_description: jobState.jobDescription, confirmed_facts: jobState.discoveredFacts }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
+    }
+    const data = await res.json();
+    keywordTerms = data.terms || [];
+
+    stopProcessingState(jobLoadingState);
+    jobLoadingState.hidden = true;
+    if (keywordTerms.length === 0) {
+      showJobBuildForm();
+      showKeywordNote("Every key term in the posting is already backed by your profile. Nothing to add.");
+      return;
+    }
+    renderKeywordCards(data.already_covered || 0);
+    jobKeywordsState.hidden = false;
+  } catch (err) {
+    stopProcessingState(jobLoadingState);
+    showJobBuildForm();
+    errorEl.textContent = err.message || "Something went wrong checking the keywords.";
+    errorEl.hidden = false;
+  }
+});
+
+function showKeywordNote(text) {
+  const note = document.getElementById("job-keyword-saved-note");
+  note.textContent = text;
+  note.hidden = !text;
+}
+
+function renderKeywordCards(alreadyCovered) {
+  document.getElementById("job-keywords-intro").textContent =
+    alreadyCovered + " other key terms are already backed by your profile. For each term below, tell me honestly whether it's true for you. " +
+    "Anything you skip stays off your resume.";
+  const container = document.getElementById("job-keywords-list");
+  container.textContent = "";
+  document.getElementById("job-keywords-error").hidden = true;
+
+  keywordTerms.forEach((t, i) => {
+    const card = document.createElement("div");
+    card.className = "question-card";
+    card.dataset.index = String(i);
+
+    const title = document.createElement("p");
+    title.textContent = t.term + (t.importance && t.importance !== "mentioned" ? " (" + t.importance + ")" : "");
+    title.style.fontWeight = "600";
+    card.appendChild(title);
+
+    const why = document.createElement("p");
+    why.className = "hint";
+    why.style.fontWeight = "400";
+    why.textContent = t.support === "related" && t.evidence
+      ? "Your profile suggests this: " + t.evidence
+      : "Nothing in your profile mentions this yet.";
+    card.appendChild(why);
+
+    const select = document.createElement("select");
+    select.className = "keyword-action";
+    [
+      ["skip", "Skip — not me / not now"],
+      ["skill", "Yes — save to my Skills (used on every resume)"],
+      ["resume", "Yes — use on this resume only"],
+    ].forEach(([value, label]) => {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      select.appendChild(opt);
+    });
+    select.value = t.support === "related" ? "skill" : "skip";
+    card.appendChild(select);
+
+    const extra = document.createElement("div");
+    extra.className = "keyword-extra";
+
+    const roleLabel = document.createElement("label");
+    roleLabel.className = "field keyword-role-field";
+    roleLabel.innerHTML = "<span>Which role did this come from? (optional)</span>";
+    const roleSelect = document.createElement("select");
+    roleSelect.className = "keyword-role";
+    const none = document.createElement("option");
+    none.value = "";
+    none.textContent = "Not tied to one role";
+    roleSelect.appendChild(none);
+    (typeof allExperiences !== "undefined" ? allExperiences : []).forEach((e) => {
+      const opt = document.createElement("option");
+      opt.value = String(e.id);
+      opt.textContent = e.title + " — " + e.organization;
+      roleSelect.appendChild(opt);
+    });
+    roleLabel.appendChild(roleSelect);
+    extra.appendChild(roleLabel);
+
+    const sentenceLabel = document.createElement("label");
+    sentenceLabel.className = "field";
+    sentenceLabel.innerHTML = "<span>How you did it, in a sentence (optional, never printed in the Skills list)</span>";
+    const sentence = document.createElement("textarea");
+    sentence.className = "keyword-sentence";
+    sentence.rows = 2;
+    sentenceLabel.appendChild(sentence);
+    extra.appendChild(sentenceLabel);
+    card.appendChild(extra);
+
+    const sync = () => {
+      extra.hidden = select.value === "skip";
+      roleLabel.hidden = select.value !== "skill";
+    };
+    select.addEventListener("change", sync);
+    sync();
+
+    container.appendChild(card);
+  });
+}
+
+document.getElementById("job-keywords-back-btn").addEventListener("click", () => {
+  showJobBuildForm();
+});
+
+document.getElementById("job-keywords-apply-btn").addEventListener("click", async () => {
+  const errorEl = document.getElementById("job-keywords-error");
+  errorEl.hidden = true;
+  const btn = document.getElementById("job-keywords-apply-btn");
+  btn.disabled = true;
+
+  // Choices from an earlier pass are replaced, not stacked.
+  jobState.discoveredFacts = jobState.discoveredFacts.filter((f) => f.source !== "keyword_check");
+  let savedSkills = 0;
+  let resumeOnly = 0;
+  try {
+    const cards = document.querySelectorAll("#job-keywords-list .question-card");
+    for (const card of cards) {
+      const t = keywordTerms[Number(card.dataset.index)];
+      const action = card.querySelector(".keyword-action").value;
+      if (action === "skip") continue;
+      const sentence = card.querySelector(".keyword-sentence").value.trim();
+
+      if (action === "skill") {
+        const role = card.querySelector(".keyword-role").value;
+        const res = await authedFetch("/api/career/skills", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: t.term, source_text: sentence || null, experience_id: role ? Number(role) : null }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(formatErrorDetail(err.detail, `Couldn't save "${t.term}" (${res.status})`));
+        }
+        savedSkills += 1;
+        // Saved: flip the card to Skip so a retry after a later error can't save it twice.
+        const actionSelect = card.querySelector(".keyword-action");
+        actionSelect.value = "skip";
+        actionSelect.dispatchEvent(new Event("change"));
+      } else {
+        jobState.discoveredFacts.push({
+          category: t.term,
+          bullet_text: sentence || "Has real hands-on experience with " + t.term + ".",
+          source: "keyword_check",
+        });
+        resumeOnly += 1;
+      }
+    }
+  } catch (err) {
+    errorEl.textContent = err.message + (savedSkills ? " (" + savedSkills + " were already saved and are now set to Skip. Press Save again to finish the rest.)" : "");
+    errorEl.hidden = false;
+    btn.disabled = false;
+    return;
+  }
+
+  if (savedSkills && typeof loadSkills === "function") await loadSkills();
+  btn.disabled = false;
+  showJobBuildForm();
+  const parts = [];
+  if (savedSkills) parts.push(savedSkills + " saved to your Skills");
+  if (resumeOnly) parts.push(resumeOnly + " added for this resume only");
+  showKeywordNote(parts.length ? "Keyword choices: " + parts.join(", ") + ". Now build your resume." : "No keywords added.");
+});
+
 // Opens the Add a skill form with the posting term filled in, so a skill the
 // candidate really has (but never wrote down) becomes part of the profile and
 // is used in every later resume.
@@ -445,6 +647,8 @@ function resetJobTarget() {
   jobState.scanHistoryId = null;
   renderRoleSelection([]);
   renderTermReport([]);
+  showKeywordNote("");
+  keywordTerms = [];
   document.getElementById("job-description-input").value = "";
   document.getElementById("job-build-name").value = "";
   document.getElementById("job-build-contact").value = "";

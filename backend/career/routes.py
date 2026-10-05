@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
 from career.job_match import JobMatchError, build_general_resume, compare_to_job
-from career.term_pipeline import build_checked_resume, dedupe_skills
+from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
@@ -886,6 +886,37 @@ async def job_compare(
     db.refresh(scan)
 
     return {**result, "scan_history_id": scan.id}
+
+
+class JobKeywordCheckRequest(BaseModel):
+    job_description: str
+    confirmed_facts: list[dict] = []
+
+
+@router.post("/job-keyword-check")
+async def job_keyword_check(
+    req: JobKeywordCheckRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    """Optional step before building: which posting terms the profile does not
+    literally contain yet. Read-only; the candidate's choices are saved through
+    the normal /skills endpoint (or kept as confirmed facts for one resume)."""
+    job_description = req.job_description.strip()
+    if len(job_description) < MIN_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(status_code=400, detail="That job description looks too short to work with — please paste the full posting.")
+    if len(job_description) > MAX_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(status_code=400, detail=f"That job description is too long ({len(job_description)} characters, {MAX_JOB_DESCRIPTION_CHARS} max).")
+
+    profile = get_career_profile_or_404(db, current_user)
+    profile_text = _build_profile_text(db, profile)
+
+    try:
+        return await run_in_threadpool(keyword_check, profile_text, req.confirmed_facts, job_description)
+    except JobMatchError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
 
 class JobDiscoverRequest(BaseModel):

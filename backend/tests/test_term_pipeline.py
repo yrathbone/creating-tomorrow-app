@@ -218,5 +218,26 @@ class Pipeline(unittest.TestCase):
         self.assertIn("no list provided", dict(calls)["career_job_build_resume"])
 
 
+class KeywordCheck(unittest.TestCase):
+    def test_only_terms_missing_from_the_profile_are_returned_required_first(self):
+        answer = plan(
+            ("Fintech", "required", "literal", ""),
+            ("Pricing strategies", "preferred", "none", ""),
+            ("Technical expertise", "required", "related", "technical advisor at BofA"),
+            ("Sales cycle", "required", "none", ""),
+        )
+        with mock.patch.object(job_match, "_call_with_retry", return_value=answer):
+            out = term_pipeline.keyword_check(PROFILE, [], POSTING)
+        self.assertEqual([t["term"] for t in out["terms"]], ["Technical expertise", "Sales cycle", "Pricing strategies"])
+        self.assertEqual(out["already_covered"], 1)
+
+    def test_a_term_confirmed_as_a_fact_counts_as_covered(self):
+        facts = [{"category": "Sales cycle", "bullet_text": "Owned the sales cycle end to end."}]
+        with mock.patch.object(job_match, "_call_with_retry", return_value=plan(("Sales cycle", "required", "none", ""))):
+            out = term_pipeline.keyword_check(PROFILE, facts, POSTING)
+        self.assertEqual(out["terms"], [])
+        self.assertEqual(out["already_covered"], 1)
+
+
 if __name__ == "__main__":
     unittest.main()

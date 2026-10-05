@@ -2829,3 +2829,13 @@ main.dashboard-main {
   gap: 0.5rem;
   flex-shrink: 0;
 }
+
+.keyword-action,
+.keyword-role {
+  width: 100%;
+  padding: 0.55rem;
+  margin: 0.25rem 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}

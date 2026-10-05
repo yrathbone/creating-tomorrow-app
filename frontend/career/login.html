@@ -136,7 +136,18 @@
             <label class="field"><span>Your name</span><input type="text" id="job-build-name" required /></label>
             <label class="field"><span>Contact line</span><input type="text" id="job-build-contact" placeholder="City, ST | Phone | Email | LinkedIn" required /></label>
             <button type="button" id="job-build-btn">Build My Resume</button>
+            <button type="button" id="job-keyword-check-btn" class="btn-secondary">Check the posting's keywords first (optional)</button>
+            <p class="hint" id="job-keyword-saved-note" hidden></p>
             <div id="job-build-error" class="error" hidden></div>
+          </div>
+
+          <div id="job-keywords-state" hidden>
+            <h4>Keywords from the posting that aren't in your profile yet</h4>
+            <p class="hint" id="job-keywords-intro"></p>
+            <div id="job-keywords-list"></div>
+            <div id="job-keywords-error" class="error" hidden></div>
+            <button type="button" id="job-keywords-apply-btn">Save my choices</button>
+            <button type="button" id="job-keywords-back-btn" class="btn-secondary">Back without saving</button>
           </div>
 
           <div id="job-build-loading-state" class="processing-card" hidden aria-live="polite">
