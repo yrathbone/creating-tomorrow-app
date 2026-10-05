@@ -198,19 +198,53 @@ def _split_top_level(text: str) -> list[str]:
     return [p for p in parts if p]
 
 
+MAX_SKILL_WORDS = 4  # a skill is a keyword, not a sentence
+# Action verbs that start duties, not skills ("Taking Ownership of ...", "Articulate Business Value").
+_VERB_STARTS = {
+    "articulate", "address", "addressing", "translate", "translating", "taking", "working",
+    "selling", "managing", "leading", "driving", "ensuring", "delivering", "partnering", "owning",
+}
+_PART_SPLIT = re.compile(r"\s*(?:&|/|\+|\band\b)\s*")
+
+
+def _skill_word_count(item: str) -> int:
+    """Words in the longest part of a skill. A compound like
+    "Go-to-Market Playbook & Sales Enablement Development" is judged part by
+    part; a parenthetical like "(Tableau, Power BI)" is not counted."""
+    plain = re.sub(r"\([^)]*\)", " ", item.lower())
+    return max((len(_WORD.findall(p)) for p in _PART_SPLIT.split(plain)), default=0)
+
+
+# One-word or generic leftovers that say nothing on their own.
+_GENERIC = {"strategies", "best practices", "initiatives", "solutions", "capabilities"}
+
+
+def _clean_item(item: str) -> str:
+    """Strip a leading 'and'/'or' left behind when a list sentence was split on commas."""
+    return re.sub(r"^(?:and|or)\s+", "", item.strip(), flags=re.I)
+
+
+def _looks_like_duty(item: str) -> bool:
+    words = _WORD.findall(item.lower())
+    return bool(words) and (words[0] in _VERB_STARTS or normalize(item) in {normalize(g) for g in _GENERIC})
+
+
 def dedupe_skills(resume_data: dict) -> dict:
-    """Remove repeated skills (case, plural and hyphen insensitive) across the
-    grouped skills lines, and drop a line left with nothing."""
+    """Keep the skills section to keywords only: drop sentence-like entries
+    (more than MAX_SKILL_WORDS words outside parentheses), remove repeated
+    skills (case, plural and hyphen insensitive) across the grouped lines, and
+    drop a line left with nothing. The longer sentences stay in the profile as
+    reference; they are never printed here."""
     seen: set[str] = set()
     lines: list[str] = []
     for line in resume_data.get("skills") or []:
         label, sep, rest = line.partition(":")
         grouped = bool(sep) and len(label) <= 40
-        items = _split_top_level(rest if grouped else line)
+        items = [_clean_item(i) for i in _split_top_level(rest if grouped else line)]
         kept = []
         for item in items:
             key = normalize(item)
-            if key and key not in seen:
+            if key and key not in seen and _skill_word_count(item) <= MAX_SKILL_WORDS and not _looks_like_duty(item):
                 seen.add(key)
                 kept.append(item)
         if not kept:
@@ -269,6 +303,7 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         profile_text, job_description, confirmed_facts, name, contact, term_plan=terms
     )
     if not terms:
+        result["resume_data"] = dedupe_skills(result["resume_data"])
         result["term_report"] = []
         return result
 

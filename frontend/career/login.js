@@ -210,8 +210,8 @@ const SKILL_FIELD_DEFS = {
   summary: skillLabel,
   detail: (s) => s.source_text || "",
   fields: [
-    { key: "name", label: "Skill" },
-    { key: "source_text", label: "How it was used", multiline: true },
+    { key: "name", label: "Skill (a short keyword)" },
+    { key: "source_text", label: "How it was used (reference only, never printed on the resume)", multiline: true },
     {
       key: "experience_id",
       label: "Which role does this belong to?",

@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
 from career.job_match import JobMatchError, build_general_resume, compare_to_job
-from career.term_pipeline import build_checked_resume
+from career.term_pipeline import build_checked_resume, dedupe_skills
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
@@ -1015,6 +1015,7 @@ async def build_general_resume_route(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
+    result["resume_data"] = dedupe_skills(result["resume_data"])
     version = ResumeVersion(
         career_profile_id=profile.id,
         scan_history_id=None,

@@ -68,6 +68,31 @@ class Dedupe(unittest.TestCase):
         out = term_pipeline.dedupe_skills(resume)["skills"]
         self.assertEqual(out, ["Tools: Data Analytics (Tableau, Power BI, SQL), CRM"])
 
+    def test_sentence_like_entries_are_dropped_but_keywords_stay(self):
+        # Entries copied from a real output that were sentence fragments, not skills.
+        resume = dict(BASE_RESUME, skills=[
+            "Execution: Taking Ownership of Complex Initiatives, Working Across Multiple Functional Areas, "
+            "Project Management, Product Education, Technology-Enabled Financial Solutions",
+            "Technical: Selling or Supporting Complex Integrated Technology and Payment Solutions, APIs, "
+            "ERP/TMS & Bank Connectivity (SWIFT, ISO 20022, ACH, APIs)",
+        ])
+        out = term_pipeline.dedupe_skills(resume)["skills"]
+        self.assertEqual(out[0], "Execution: Project Management, Product Education, Technology-Enabled Financial Solutions")
+        self.assertEqual(out[1], "Technical: APIs, ERP/TMS & Bank Connectivity (SWIFT, ISO 20022, ACH, APIs)")
+
+    def test_leftover_and_or_prefixes_are_stripped(self):
+        resume = dict(BASE_RESUME, skills=["Comms: Verbal, Written, and Customer Communication Skills, Strategies, and Best Practices"])
+        out = term_pipeline.dedupe_skills(resume)["skills"]
+        self.assertEqual(out, ["Comms: Verbal, Written, Customer Communication Skills"])
+
+    def test_real_compound_skills_are_not_cut(self):
+        resume = dict(BASE_RESUME, skills=[
+            "Sales: Go-to-Market Playbook & Sales Enablement Development, Treasury & Cash Management Solutions, "
+            "Articulate Business Value, Managing Multiple Priorities",
+        ])
+        out = term_pipeline.dedupe_skills(resume)["skills"]
+        self.assertEqual(out, ["Sales: Go-to-Market Playbook & Sales Enablement Development, Treasury & Cash Management Solutions"])
+
     def test_line_left_empty_is_dropped(self):
         resume = dict(BASE_RESUME, skills=["A: APIs", "B: apis"])
         self.assertEqual(term_pipeline.dedupe_skills(resume)["skills"], ["A: APIs"])

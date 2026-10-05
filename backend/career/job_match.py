@@ -146,7 +146,7 @@ TITLES AND EMPLOYERS ARE EVIDENCE: a role title in the profile is itself proof o
 Build the resume:
 1. A POSITIONING HEADLINE: 2-3 short pipe-separated capitalized phrases capturing the candidate's professional identity relevant to this job, supported only by their real experience.
 2. A PROFESSIONAL SUMMARY (3-5 lines) connecting their real background to this specific posting.
-3. SKILLS: 3-4 short grouped lines, each in the form "Group label: skill, skill, skill" (for example "Payments & Integration: API Connectivity, ISO 20022, SWIFT" and "Domain & Management: Treasury Operations, Stakeholder Management"), typically 18-28 skills in total (every posting term the profile supports, plus other strong relevant skills), drawn from the Career Profile plus whatever the confirmed facts demonstrate, using exact standard terminology per the ATS note above wherever the evidence supports it. Each entry in the skills list is one whole grouped line.
+3. SKILLS: 3-4 short grouped lines, each in the form "Group label: skill, skill, skill" (for example "Payments & Integration: API Connectivity, ISO 20022, SWIFT" and "Domain & Management: Treasury Operations, Stakeholder Management"), typically 18-28 skills in total (every posting term the profile supports, plus other strong relevant skills), drawn from the Career Profile plus whatever the confirmed facts demonstrate, using exact standard terminology per the ATS note above wherever the evidence supports it. Each entry in the skills list is one whole grouped line. SKILLS ARE KEYWORDS ONLY: every skill is 1-4 words (for example "Consultative Selling," "API Integration," "Proposal Development"), never a sentence, never a phrase that starts with a verb. The longer sentences from the profile stay behind the scenes as your reference for what the candidate has done; they do not belong in the skills section.
 4. EXPERIENCE: only the roles given the FULL treatment above, each with trimmed, polished bullets and confirmed facts folded into the right role. OMITTED roles do not appear.
 5. EDUCATION and CERTIFICATIONS: pass through from the Career Profile unchanged.
 
@@ -244,7 +244,7 @@ TITLES AND EMPLOYERS ARE EVIDENCE: a role title in the profile is itself proof o
 Build the resume:
 1. A POSITIONING HEADLINE: 2-3 short pipe-separated capitalized phrases capturing the candidate's professional identity, supported only by their real experience.
 2. A PROFESSIONAL SUMMARY (3-5 lines) reflecting their real background as a whole.
-3. SKILLS: a polished, deduplicated list of skills/expertise phrases drawn from the Career Profile, using exact standard terminology per the ATS note above wherever the evidence supports it.
+3. SKILLS: a polished, deduplicated list of skills drawn from the Career Profile, using exact standard terminology per the ATS note above wherever the evidence supports it. Keywords only: each skill is 1-4 words, never a sentence and never a phrase that starts with a verb; the longer sentences in the profile are reference for you, not skills to print.
 4. EXPERIENCE: every role from the Career Profile, with polished bullets - no role dropped.
 5. EDUCATION and CERTIFICATIONS: pass through from the Career Profile unchanged.
 
