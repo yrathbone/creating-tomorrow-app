@@ -139,7 +139,7 @@ ATS TERMINOLOGY (applies most to the SKILLS section): applicant tracking systems
 
 POSTING TERMINOLOGY (this is what lets a recruiter or ATS see that the skills are there): before writing, read the job posting and list the key skill and keyword phrases it uses - in its requirements, responsibilities, overview, and any skill tags or keyword run-ins it contains. For EACH one, check the Career Profile for evidence of the same underlying skill, even when the profile words it differently (for example: posting "product adoption" vs. profile "platform adoption" or "supporting adoption"; "customer relationships" vs. "executive relationship management" or managing a client portfolio; "competitive landscape" vs. "competitive positioning analysis" or "competitive analysis"; "strategic selling" vs. "strategic account planning" or "consultative selling"; "business cases" vs. "business-case development"; "customer-facing" vs. client-facing roles). Where the evidence supports it, use the posting's OWN wording, matched exactly (same words, same singular/plural, same hyphenation), as its own entry in SKILLS and, where it reads naturally, once in the summary or a bullet. Where the profile has NO evidence for a posting term (for example a technology or industry the candidate has never worked in), leave it out entirely - never add it to look like a better match. This is aligning the wording of skills the candidate really has, not keyword stuffing: do not repeat a term more than it needs.
 
-TARGET TITLE: if a TARGET JOB TITLE is given, you may state it once as the candidate's target role, in the headline or the first line of the summary (for example "Targeting: <title>"). It must never appear as a title the candidate held, never inside an EXPERIENCE entry or bullet, and never be described as past work, unless that exact title is already in the Career Profile.
+NEVER STATE THE TARGET: do not write the target job's title, the employer's name, or any "Targeting," "Seeking," "Applying for," or "Objective" line anywhere on the resume. The headline and summary describe the candidate as they really are, using skills and experience from the Career Profile. A job title from the posting may appear only if the candidate genuinely held that exact title in the Career Profile.
 
 TITLES AND EMPLOYERS ARE EVIDENCE: a role title in the profile is itself proof of the core skills that title requires, even when no bullet repeats them. A title containing Sales, Account, Client, Relationship or Consultant (or managing a client-facing function) evidences sales experience, customer-facing work, and customer/client relationships; a multi-year history of such titles supports stating those skills plainly and confidently in SKILLS (for example "Sales Experience," "Customer-Facing Account Management," "Customer Relationships"). Treat them as supported - do not omit them because no single bullet uses the exact words. This applies only to skills the titles genuinely imply; never stretch a title to cover a different specialty.
 
@@ -157,8 +157,6 @@ BUILD_RESUME_USER_PROMPT_TEMPLATE = """CANDIDATE'S CAREER PROFILE (verified, alr
 
 TARGET JOB POSTING:
 {job_description}
-
-TARGET JOB TITLE: {target_job_title}
 
 CONFIRMED FACTS FROM THE GAP INTERVIEW (approved by the candidate - the only new content allowed):
 {facts_text}
@@ -355,7 +353,7 @@ def compare_to_job(profile_text: str, job_description: str) -> dict:
     )
 
 
-def build_tailored_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, target_job_title: str | None = None) -> dict:
+def build_tailored_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str) -> dict:
     facts_text = (
         "\n".join(f"- ({f.get('category', '')}) {f.get('bullet_text', '')}" for f in confirmed_facts)
         if confirmed_facts
@@ -364,7 +362,6 @@ def build_tailored_resume(profile_text: str, job_description: str, confirmed_fac
     user_prompt = BUILD_RESUME_USER_PROMPT_TEMPLATE.format(
         profile_text=profile_text,
         job_description=job_description,
-        target_job_title=target_job_title or "(not given)",
         facts_text=facts_text,
         name=name,
         contact=contact,
