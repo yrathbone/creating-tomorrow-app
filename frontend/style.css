@@ -3064,3 +3064,36 @@ main.dashboard-main {
 .skill-pick-list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .skill-pick-list li { margin: 0; padding: 0.3rem 0.7rem; border: 1px solid #b6c9ea; border-radius: 999px; background: #ffffff; }
 .skill-pick-list label { cursor: pointer; }
+
+/* One card per input option: the header button and its panel share one box. */
+.input-option {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.input-option:has(.input-option-toggle[aria-expanded="true"]) { border-color: var(--blue); }
+.input-option .input-option-toggle {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  position: relative;
+  padding-right: 3rem;
+}
+.input-option .input-option-toggle::after {
+  content: "\25BE";
+  position: absolute;
+  right: 1.25rem;
+  top: 1.25rem;
+  font-size: 1.2rem;
+  color: var(--blue);
+  transition: transform 0.15s ease;
+}
+.input-option .input-option-toggle[aria-expanded="true"]::after { transform: rotate(180deg); }
+.input-option .input-option-panel {
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  margin-top: 0;
+  background: #ffffff;
+}

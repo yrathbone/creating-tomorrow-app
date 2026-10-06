@@ -14,6 +14,7 @@ CareerProfile row are both set together, only by an explicit POST to
 /consent - no Career Profile data can exist before that, since there's no
 CareerProfile row yet for a child row to attach to.
 """
+import base64
 import re
 from datetime import date, datetime, timezone
 
@@ -37,6 +38,7 @@ from resume_builder import build_resume_bytes
 router = APIRouter()
 
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB - matches main.py's existing resume-upload limit
+MAX_PDF_UPLOAD_BYTES = 20 * 1024 * 1024  # a LinkedIn page printed to PDF is pictures of pages, so it is large
 
 
 def get_career_profile_or_404(db: Session, current_user: User) -> CareerProfile:
@@ -580,19 +582,24 @@ async def resume_start(
     db: Session = Depends(get_db_session),
 ):
     content = await resume_file.read()
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="File too large (5 MB max).")
+    is_pdf = (resume_file.filename or "").lower().endswith(".pdf")
+    if len(content) > (MAX_PDF_UPLOAD_BYTES if is_pdf else MAX_UPLOAD_BYTES):
+        raise HTTPException(status_code=413, detail="File too large (20 MB max for a PDF, 5 MB for other files).")
 
     try:
         resume_text = extract_text(resume_file.filename, content)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    pdf_document_b64 = None
     if not resume_text.strip():
-        raise HTTPException(status_code=400, detail="Could not extract any text from that file.")
+        if not is_pdf:
+            raise HTTPException(status_code=400, detail="Could not extract any text from that file.")
+        # A PDF made of page images (e.g. a page printed to PDF): the AI reads the pages instead.
+        pdf_document_b64 = base64.b64encode(content).decode("ascii")
 
     try:
-        result = await run_in_threadpool(start_resume_review, resume_text)
+        result = await run_in_threadpool(start_resume_review, resume_text, pdf_document_b64)
     except IngestionError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:

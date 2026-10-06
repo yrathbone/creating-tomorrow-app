@@ -204,15 +204,24 @@ def _extract_tool_input(response) -> dict:
     return data
 
 
-def start_resume_review(resume_text: str) -> dict:
+def start_resume_review(resume_text: str, pdf_document_b64: str | None = None) -> dict:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise IngestionError("ANTHROPIC_API_KEY is not set on the server.")
 
     client = anthropic.Anthropic()
-    user_prompt = RESTRUCTURE_USER_PROMPT_TEMPLATE.format(resume_text=resume_text)
+    user_prompt = RESTRUCTURE_USER_PROMPT_TEMPLATE.format(
+        resume_text=resume_text if resume_text.strip() else "(This document is a PDF of page images with no selectable text; read it from the attached pages.)"
+    )
 
     for attempt in range(2):  # original attempt + at most one retry
         prompt_for_this_attempt = user_prompt + (RETRY_NOTE if attempt > 0 else "")
+        content = prompt_for_this_attempt
+        if pdf_document_b64:
+            # A PDF with no selectable text: its pages are read as images.
+            content = [
+                {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_document_b64}},
+                {"type": "text", "text": prompt_for_this_attempt},
+            ]
         try:
             response = client.messages.create(
                 model=MODEL,
@@ -220,7 +229,7 @@ def start_resume_review(resume_text: str) -> dict:
                 system=RESTRUCTURE_SYSTEM_PROMPT,
                 tools=[RESTRUCTURE_TOOL],
                 tool_choice={"type": "tool", "name": "submit_resume_review"},
-                messages=[{"role": "user", "content": prompt_for_this_attempt}],
+                messages=[{"role": "user", "content": content}],
             )
         except anthropic.APIError as e:
             _diagnose("provider_error")

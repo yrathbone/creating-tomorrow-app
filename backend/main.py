@@ -284,6 +284,7 @@ async def api_elevate_finalize(req: ElevateFinalizeRequest):
     return result
 
 
+MAX_PDF_BYTES = 20 * 1024 * 1024  # a profile printed to PDF is pictures of pages, so it is large
 MAX_IMAGE_BYTES = 8 * 1024 * 1024  # 8 MB per screenshot
 MAX_TOTAL_IMAGE_BYTES = 24 * 1024 * 1024  # 24 MB combined across all screenshots
 ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp"}
@@ -325,14 +326,18 @@ async def api_profile_review(
         })
 
     pdf_text = ""
+    pdf_document_b64 = None
     if profile_pdf is not None:
         pdf_bytes = await profile_pdf.read()
-        if len(pdf_bytes) > MAX_UPLOAD_BYTES:
-            raise HTTPException(status_code=413, detail="That PDF is too large (5 MB max).")
+        if len(pdf_bytes) > MAX_PDF_BYTES:
+            raise HTTPException(status_code=413, detail="That PDF is too large (20 MB max).")
         try:
             pdf_text = extract_text(profile_pdf.filename, pdf_bytes)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
+        if not pdf_text.strip():
+            # No selectable text (e.g. a page printed to PDF): the AI reads the pages as images.
+            pdf_document_b64 = base64.b64encode(pdf_bytes).decode("ascii")
 
     pasted_parts = []
     if everything.strip():
@@ -349,7 +354,7 @@ async def api_profile_review(
                 pasted_parts.append(f"{label}:\n{value.strip()}")
     pasted_text = "\n\n".join(pasted_parts)
 
-    if not images and not pasted_text.strip() and not pdf_text.strip():
+    if not images and not pasted_text.strip() and not pdf_text.strip() and not pdf_document_b64:
         raise HTTPException(
             status_code=400,
             detail="I need at least one screenshot, some pasted profile text, or a profile PDF before I can give you a useful review.",
@@ -369,7 +374,7 @@ async def api_profile_review(
             raise HTTPException(status_code=400, detail=str(e))
 
     try:
-        result = await run_in_threadpool(review_profile, images, pasted_text, pdf_text, resume_text)
+        result = await run_in_threadpool(review_profile, images, pasted_text, pdf_text, resume_text, pdf_document_b64)
     except ProfileReviewError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:

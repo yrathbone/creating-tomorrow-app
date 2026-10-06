@@ -219,7 +219,7 @@ def _extract_tool_input(response) -> dict:
     return data
 
 
-def review_profile(images: list, pasted_text: str, pdf_text: str, resume_text: str = "") -> dict:
+def review_profile(images: list, pasted_text: str, pdf_text: str, resume_text: str = "", pdf_document_b64: str | None = None) -> dict:
     """images: list of {"media_type": "image/png"|"image/jpeg"|"image/webp", "data": <base64 str>}
     pasted_text: the combined pasted profile text (already assembled by main.py
                  from whichever fields were filled in), or "" if none.
@@ -239,6 +239,14 @@ def review_profile(images: list, pasted_text: str, pdf_text: str, resume_text: s
 
     if pdf_text.strip():
         content.append({"type": "text", "text": f"TEXT EXTRACTED FROM UPLOADED PROFILE PDF:\n{pdf_text.strip()}"})
+
+    if pdf_document_b64:
+        # A PDF with no selectable text: hand the PDF itself over so its pages are read as images.
+        content.append({"type": "text", "text": "UPLOADED PROFILE PDF (it has no selectable text, so read it from the attached pages):"})
+        content.append({
+            "type": "document",
+            "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_document_b64},
+        })
 
     if resume_text.strip():
         content.append({

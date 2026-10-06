@@ -44,6 +44,7 @@
       <p class="hint privacy-note">Your profile belongs to you. Only upload your own profile or information you have permission to use. You can remove personal information you don't want analyzed. We don't save your screenshots, PDF, or profile text — they're sent securely to our AI provider to generate your review, and are typically deleted from their systems within 30 days.</p>
 
       <div class="input-options">
+        <div class="input-option">
         <button type="button" class="mode-btn input-option-toggle" data-target="screenshots-panel" aria-expanded="false" aria-controls="screenshots-panel">
           <strong>Upload Profile Screenshots</strong>
           <span>Upload screenshots of the sections you'd like Guide to review.</span>
@@ -55,7 +56,9 @@
           </label>
           <div class="screenshot-thumbs" id="screenshot-thumbs"></div>
         </div>
+        </div>
 
+        <div class="input-option">
         <button type="button" class="mode-btn input-option-toggle" data-target="paste-panel" aria-expanded="false" aria-controls="paste-panel">
           <strong>Paste Your Profile</strong>
           <span>Paste your headline, About section, experience, skills, or any other profile text.</span>
@@ -74,7 +77,9 @@
             <textarea id="paste-everything" rows="10" placeholder="Paste your whole profile here — headline, About, experience, skills, whatever you have."></textarea>
           </label>
         </div>
+        </div>
 
+        <div class="input-option">
         <button type="button" class="mode-btn input-option-toggle" data-target="pdf-panel" aria-expanded="false" aria-controls="pdf-panel">
           <strong>Upload Profile PDF</strong>
           <span>Have a PDF copy of your profile? Upload it here.</span>
@@ -84,11 +89,13 @@
             <span>Profile PDF</span>
             <input type="file" id="pdf-input" accept=".pdf" />
           </label>
-          <p class="hint">On LinkedIn: open your own profile, choose <strong>More</strong> (or the Resources button), then <strong>Save to PDF</strong>. Upload that file here.</p>
+          <p class="hint">On LinkedIn: open your own profile, choose <strong>More</strong> (or the Resources button), then <strong>Save to PDF</strong>. Upload that file here. A PDF of printed pages works too, but it can take a little longer to read.</p>
           <p class="hint">Why not a link? LinkedIn does not let other websites read a profile from its address, so a pasted link would come back empty. The PDF, a paste, or screenshots give the review your real profile text.</p>
           <p class="hint" id="pdf-selected-name" hidden></p>
         </div>
+        </div>
 
+        <div class="input-option">
         <button type="button" class="mode-btn input-option-toggle" data-target="resume-panel" aria-expanded="false" aria-controls="resume-panel">
           <strong>Add Your Resume — Optional</strong>
           <span>Your LinkedIn profile above is still what gets reviewed — adding your resume just gives us more real detail to draw on for the suggested updated profile at the end.</span>
@@ -99,6 +106,7 @@
             <input type="file" id="resume-input" accept=".docx,.pdf,.txt" />
           </label>
           <p class="hint" id="resume-selected-name" hidden></p>
+        </div>
         </div>
       </div>
 
