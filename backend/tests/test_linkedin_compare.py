@@ -4,7 +4,7 @@ Run from the backend folder:  py -3.12 -m unittest discover -s tests -t .
 """
 import unittest
 
-from career.linkedin_compare import compare_skills
+from career.linkedin_compare import compare_roles, compare_skills
 
 REVIEW = {
     "headline": {"current": "Payments & Treasury Solutions | ERP/API Integrations"},
@@ -47,6 +47,34 @@ class CompareSkills(unittest.TestCase):
         self.assertEqual(compare_skills({}, ["Fintech"]), {"on_review_not_in_profile": [], "in_profile_not_on_linkedin": ["Fintech"]})
         self.assertEqual(compare_skills({"skills": "x"}, []), {"on_review_not_in_profile": [], "in_profile_not_on_linkedin": []})
         self.assertEqual(compare_skills({"skills": {"clearly_demonstrated": [5, None]}}, [])["on_review_not_in_profile"], [])
+
+
+class CompareRoles(unittest.TestCase):
+    REVIEW = {"suggested_full_profile": {"experience": [
+        {"title": "VP Treasury Account Manager", "organization": "Bank of America", "bullets": ["Managed complex commercial treasury relationships."]},
+        {"title": "Treasury Sales Analyst", "organization": "Wells Fargo", "bullets": ["Identified cross-sell opportunities.", "[This was cut off - worth expanding.]"]},
+        {"title": "Payment Sales Manager", "organization": "JPMorganChase", "bullets": []},
+    ]}}
+    EXISTING = [
+        {"title": "V.P., Treasury Account Manager", "organization": "Bank of America"},
+        {"title": "Treasury Payment Sales Manager", "organization": "JPMorgan Chase"},
+    ]
+
+    def test_only_roles_not_already_saved_are_returned(self):
+        out = compare_roles(self.REVIEW, self.EXISTING)
+        self.assertEqual([(r["title"], r["organization"]) for r in out], [("Treasury Sales Analyst", "Wells Fargo")])
+
+    def test_description_drops_bracketed_notes(self):
+        out = compare_roles(self.REVIEW, self.EXISTING)
+        self.assertEqual(out[0]["description"], "Identified cross-sell opportunities.")
+
+    def test_punctuation_in_titles_does_not_hide_a_match(self):
+        review = {"suggested_full_profile": {"experience": [{"title": "VP, Treasury Account Manager", "organization": "Bank of America", "bullets": []}]}}
+        self.assertEqual(compare_roles(review, self.EXISTING), [])
+
+    def test_missing_or_bad_data_is_harmless(self):
+        self.assertEqual(compare_roles({}, self.EXISTING), [])
+        self.assertEqual(compare_roles({"suggested_full_profile": {"experience": ["x", {"title": ""}]}}, []), [])
 
 
 if __name__ == "__main__":

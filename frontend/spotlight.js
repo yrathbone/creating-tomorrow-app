@@ -442,12 +442,15 @@ document.getElementById("step-results").addEventListener("click", (e) => {
 // and holds the token in memory only. Nothing is added to the profile unless
 // the person leaves it ticked and presses the button.
 let compareToken = null;
+let compareRoles = [];
 
 function resetCompare() {
   document.getElementById("compare-results").hidden = true;
   document.getElementById("compare-error").hidden = true;
   document.getElementById("compare-add-msg").hidden = true;
   document.getElementById("compare-profile-list").textContent = "";
+  document.getElementById("compare-roles-list").textContent = "";
+  document.getElementById("compare-roles-msg").hidden = true;
 }
 
 async function runCompare() {
@@ -467,6 +470,30 @@ async function runCompare() {
   const missingOnLinkedin = data.in_profile_not_on_linkedin || [];
   linkedinList.textContent = missingOnLinkedin.length ? missingOnLinkedin.join(", ") : "Nothing: every skill in your Career Profile shows up in your LinkedIn review.";
   copyBtn.hidden = missingOnLinkedin.length === 0;
+
+  // Roles on LinkedIn that aren't saved yet
+  compareRoles = data.roles_not_in_profile || [];
+  const rolesList = document.getElementById("compare-roles-list");
+  rolesList.textContent = "";
+  document.getElementById("compare-roles-msg").hidden = true;
+  compareRoles.forEach((role, i) => {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = true;
+    box.dataset.roleIndex = String(i);
+    label.appendChild(box);
+    label.appendChild(document.createTextNode(" " + role.title + (role.organization ? " — " + role.organization : "")));
+    li.appendChild(label);
+    rolesList.appendChild(li);
+  });
+  document.getElementById("compare-roles-add-btn").hidden = compareRoles.length === 0;
+  if (!compareRoles.length) {
+    const li = document.createElement("li");
+    li.textContent = "Nothing new: every role in your LinkedIn review is already in your Career Profile.";
+    rolesList.appendChild(li);
+  }
 
   const pickList = document.getElementById("compare-profile-list");
   pickList.textContent = "";
@@ -510,6 +537,46 @@ document.getElementById("compare-signin-form").addEventListener("submit", async 
   } catch (err) {
     showError(errorEl, (err && err.message) || "Couldn't sign in or compare. Please try again.");
   } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("compare-roles-add-btn").addEventListener("click", async () => {
+  const msg = document.getElementById("compare-roles-msg");
+  const btn = document.getElementById("compare-roles-add-btn");
+  btn.disabled = true;
+  let added = 0;
+  let failed = 0;
+  try {
+    for (const box of document.querySelectorAll("#compare-roles-list input[type=checkbox]")) {
+      if (!box.checked) continue;
+      const role = compareRoles[Number(box.dataset.roleIndex)];
+      const res = await fetch("/api/career/experiences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + compareToken },
+        body: JSON.stringify({
+          title: role.title,
+          organization: role.organization || "Not stated",
+          location: null,
+          start_date: null,
+          end_date: null,
+          description: role.description || null,
+        }),
+      });
+      if (res.ok) {
+        added += 1;
+        box.closest("li").remove(); // added roles leave the list
+      } else {
+        failed += 1;
+      }
+    }
+    const remaining = document.querySelectorAll("#compare-roles-list input[type=checkbox]").length;
+    if (added && remaining === 0) btn.hidden = true;
+    msg.textContent = added
+      ? added + (added === 1 ? " role" : " roles") + " added to your Career Profile. Open " + (added === 1 ? "it" : "them") + " on your dashboard (Roles tile) and add the dates."
+      : failed ? "Couldn't add that role. Please try again." : "Nothing was ticked.";
+  } finally {
+    msg.hidden = false;
     btn.disabled = false;
   }
 });
