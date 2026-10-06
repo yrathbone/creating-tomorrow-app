@@ -318,6 +318,27 @@ def _extract_tool_input(response, tool_name: str, required_keys: tuple) -> dict:
     return data
 
 
+def require_resume_shape(data: dict) -> dict:
+    """The model sometimes returns a list entry as plain text where an object
+    belongs (an experience entry, a role_selection item). Anything downstream
+    that calls .get() on it would crash, so reject it here as ValueError, which
+    _call_with_retry turns into its one retry."""
+    resume = data.get("resume_data")
+    if not isinstance(resume, dict):
+        raise ValueError("invalid_shape")
+    experience = resume.get("experience", [])
+    skills = resume.get("skills", [])
+    if (
+        not isinstance(experience, list) or any(not isinstance(j, dict) for j in experience)
+        or not isinstance(skills, list) or any(not isinstance(s, str) for s in skills)
+    ):
+        raise ValueError("invalid_shape")
+    selection = data.get("role_selection")
+    if selection is not None and (not isinstance(selection, list) or any(not isinstance(r, dict) for r in selection)):
+        data["role_selection"] = []  # advisory note only; never worth failing the build
+    return data
+
+
 def _call_with_retry(label: str, system_prompt: str, user_prompt: str, tool: dict, extract) -> dict:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise JobMatchError("ANTHROPIC_API_KEY is not set on the server.")
@@ -388,7 +409,7 @@ def build_tailored_resume(profile_text: str, job_description: str, confirmed_fac
         BUILD_RESUME_SYSTEM_PROMPT,
         user_prompt,
         BUILD_RESUME_TOOL,
-        extract=lambda r: _extract_tool_input(r, "submit_tailored_resume", ("resume_data",)),
+        extract=lambda r: require_resume_shape(_extract_tool_input(r, "submit_tailored_resume", ("resume_data",))),
     )
 
 
@@ -399,5 +420,5 @@ def build_general_resume(profile_text: str, name: str, contact: str) -> dict:
         GENERAL_RESUME_SYSTEM_PROMPT,
         user_prompt,
         GENERAL_RESUME_TOOL,
-        extract=lambda r: _extract_tool_input(r, "submit_general_resume", ("resume_data",)),
+        extract=lambda r: require_resume_shape(_extract_tool_input(r, "submit_general_resume", ("resume_data",))),
     )

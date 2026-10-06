@@ -239,6 +239,29 @@ class KeywordCheck(unittest.TestCase):
         self.assertEqual(out["already_covered"], 1)
 
 
+class MalformedAnswers(unittest.TestCase):
+    """Real failure seen live: a model answer with a plain-text list entry crashed
+    with "'str' object has no attribute 'get'". These must be rejected as ValueError
+    (which the retry wrapper handles), never reach .get()."""
+
+    def test_experience_entry_as_text_is_rejected(self):
+        bad = {"resume_data": dict(BASE_RESUME, experience=["Treasury Manager at BofA"])}
+        with self.assertRaises(ValueError):
+            job_match.require_resume_shape(bad)
+
+    def test_text_role_selection_is_dropped_not_fatal(self):
+        ok = {"resume_data": copy.deepcopy(BASE_RESUME), "role_selection": ["kept all roles"]}
+        self.assertEqual(job_match.require_resume_shape(ok)["role_selection"], [])
+
+    def test_text_term_entry_is_rejected(self):
+        with self.assertRaises(ValueError):
+            term_pipeline._require_term_shape({"terms": ["Fintech", {"term": "API"}]})
+
+    def test_good_shapes_pass(self):
+        job_match.require_resume_shape({"resume_data": copy.deepcopy(BASE_RESUME)})
+        term_pipeline._require_term_shape(plan(("Fintech", "required", "literal", "")))
+
+
 class SkillTidy(unittest.TestCase):
     SKILLS = [
         {"id": 1, "name": "Sales Enablement/Training Content Creation", "source_text": "Created pitch decks."},

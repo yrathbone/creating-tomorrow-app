@@ -470,7 +470,8 @@ function renderKeywordCards(alreadyCovered) {
       opt.textContent = label;
       select.appendChild(opt);
     });
-    select.value = t.support === "related" ? "skill" : "skip";
+    // Always starts on Skip: nothing is saved to the profile unless the candidate picks it.
+    select.value = "skip";
     card.appendChild(select);
 
     const extra = document.createElement("div");

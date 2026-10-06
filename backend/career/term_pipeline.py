@@ -139,6 +139,15 @@ def facts_text_for(confirmed_facts: list) -> str:
     return "\n".join(f"- ({f.get('category', '')}) {f.get('bullet_text', '')}" for f in confirmed_facts)
 
 
+def _require_term_shape(data: dict) -> dict:
+    """A term list entry returned as plain text would crash plan_terms; reject
+    it as ValueError so the model gets its one retry (see job_match)."""
+    terms = data.get("terms")
+    if not isinstance(terms, list) or any(not isinstance(t, dict) for t in terms):
+        raise ValueError("invalid_shape")
+    return data
+
+
 def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list[dict]:
     user_prompt = PLAN_USER_TEMPLATE.format(
         profile_text=profile_text, facts_text=facts_text, job_description=job_description
@@ -148,7 +157,7 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
         PLAN_SYSTEM_PROMPT,
         user_prompt,
         PLAN_TOOL,
-        extract=lambda r: job_match._extract_tool_input(r, "submit_term_plan", ("terms",)),
+        extract=lambda r: _require_term_shape(job_match._extract_tool_input(r, "submit_term_plan", ("terms",))),
     )
 
     evidence_pool = profile_text + "\n" + facts_text
@@ -353,7 +362,7 @@ def add_missing_terms(resume_data: dict, missing: list[dict]) -> dict | None:
         REVISE_SYSTEM_PROMPT,
         user_prompt,
         REVISE_TOOL,
-        extract=lambda r: job_match._extract_tool_input(r, "submit_revised_resume", ("resume_data",)),
+        extract=lambda r: job_match.require_resume_shape(job_match._extract_tool_input(r, "submit_revised_resume", ("resume_data",))),
     )
     revised = data.get("resume_data") or {}
     required = ("name", "contact", "headline", "summary", "skills", "experience", "education")
