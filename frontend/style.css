@@ -3014,3 +3014,7 @@ main.dashboard-main {
 .history-fit-badge.fit-b { background: var(--blue); }
 .history-fit-badge.fit-c { background: #b86e00; }
 .history-fit-badge.fit-d { background: #c2410c; }
+
+.back-link { text-align: left; margin: 0 0 1rem; font-size: 0.95rem; }
+.back-link a { color: var(--blue); font-weight: 600; text-decoration: none; }
+.back-link a:hover { text-decoration: underline; }
