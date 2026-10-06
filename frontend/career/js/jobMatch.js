@@ -17,6 +17,8 @@ const jobState = {
   tailoredResumeData: null,
   scanHistoryId: null,
   jobFit: null,
+  jobTitle: "",
+  resumeVersionId: null,
 };
 let currentJobQuestions = [];
 const JOB_MAX_ROUNDS = 4;
@@ -103,6 +105,7 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
 
     renderJobMatch(data.match_report);
     jobState.jobFit = data.job_fit || null;
+    jobState.jobTitle = data.job_title || "";
     renderJobFit(jobState.jobFit);
 
     stopProcessingState(jobLoadingState);
@@ -371,6 +374,8 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     }
     const data = await res.json();
     jobState.tailoredResumeData = data.resume_data;
+    jobState.resumeVersionId = data.resume_version_id || null;
+    resetAppliedBlock();
     renderRoleSelection(data.role_selection || []);
     renderTermReport(data.term_report || []);
     renderMatchGrade(data.term_report || []);
@@ -751,6 +756,51 @@ function renderRoleSelection(selection) {
   }
 }
 
+// "I applied for this job": the app can't know the candidate applied, so this is
+// their own one-click entry into the application tracker (applications.js).
+function resetAppliedBlock() {
+  document.getElementById("job-applied-form").hidden = true;
+  document.getElementById("job-applied-msg").hidden = true;
+  const btn = document.getElementById("job-applied-btn");
+  btn.disabled = false;
+  btn.hidden = false;
+}
+
+document.getElementById("job-applied-btn").addEventListener("click", () => {
+  // The comparison's label is usually "Job Title at Company": split it as a starting point.
+  const label = jobState.jobTitle || "";
+  const at = label.lastIndexOf(" at ");
+  document.getElementById("job-applied-title").value = at > 0 ? label.slice(0, at) : label;
+  document.getElementById("job-applied-company").value = at > 0 ? label.slice(at + 4) : "";
+  document.getElementById("job-applied-date").value = todayIso();
+  document.getElementById("job-applied-form").hidden = false;
+  document.getElementById("job-applied-btn").hidden = true;
+});
+
+document.getElementById("job-applied-cancel-btn").addEventListener("click", resetAppliedBlock);
+
+document.getElementById("job-applied-save-btn").addEventListener("click", async () => {
+  const msg = document.getElementById("job-applied-msg");
+  const saveBtn = document.getElementById("job-applied-save-btn");
+  saveBtn.disabled = true;
+  try {
+    await addApplication({
+      job_title: document.getElementById("job-applied-title").value,
+      company: document.getElementById("job-applied-company").value,
+      applied_on: document.getElementById("job-applied-date").value || null,
+      scan_history_id: jobState.scanHistoryId,
+      resume_version_id: jobState.resumeVersionId,
+    });
+    document.getElementById("job-applied-form").hidden = true;
+    msg.textContent = "Added to your tracker. Find it under Applications in your Career Snapshot, and update it when you hear back.";
+  } catch (err) {
+    msg.textContent = err.message || "Couldn't add that application.";
+  } finally {
+    msg.hidden = false;
+    saveBtn.disabled = false;
+  }
+});
+
 document.getElementById("job-download-btn").addEventListener("click", async () => {
   if (!jobState.tailoredResumeData) return;
   try {
@@ -790,6 +840,9 @@ function resetJobTarget() {
   jobState.tailoredResumeData = null;
   jobState.scanHistoryId = null;
   jobState.jobFit = null;
+  jobState.jobTitle = "";
+  jobState.resumeVersionId = null;
+  resetAppliedBlock();
   renderJobFit(null);
   document.getElementById("job-fit-after").hidden = true;
   renderRoleSelection([]);
@@ -841,6 +894,7 @@ function openJobTarget(latest) {
 
   renderJobMatch(jobState.matchReport);
   jobState.jobFit = data.job_fit || null;
+  jobState.jobTitle = latest.job_title || data.job_title || "";
   renderJobFit(jobState.jobFit);
   hideAllJobStates();
   jobMatchState.hidden = false;

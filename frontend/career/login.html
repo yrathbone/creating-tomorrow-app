@@ -67,7 +67,7 @@
         <button type="button" id="nav-career-profile-btn" class="dashboard-tab">Career Profile</button>
         <span class="dashboard-tab" aria-disabled="true">Jobs</span>
         <span class="dashboard-tab" aria-disabled="true">Resumes</span>
-        <span class="dashboard-tab" aria-disabled="true">Applications</span>
+        <button type="button" id="nav-applications-btn" class="dashboard-tab">Applications</button>
         <a href="../spotlight.html" class="dashboard-tab">LinkedIn</a>
       </div>
 
@@ -188,6 +188,21 @@
             <section class="snapshot-panel" id="panel-history" hidden>
         <h3>Job &amp; Skill Scan History</h3>
         <div id="scan-history-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-applications" hidden>
+              <h3>Applications</h3>
+              <p class="hint">Jobs you've applied for. Come back and update each one: no response, interview, rejection or offer.</p>
+              <p id="application-summary" class="application-summary"></p>
+              <button type="button" id="application-add-toggle-btn" class="btn-secondary">+ Add an application by hand</button>
+              <form id="application-form" hidden>
+                <label class="field"><span>Job title</span><input type="text" id="application-title" required /></label>
+                <label class="field"><span>Company</span><input type="text" id="application-company" /></label>
+                <label class="field"><span>Date applied</span><input type="date" id="application-date" /></label>
+                <button type="submit">Add to my tracker</button>
+                <div id="application-form-error" class="error" hidden></div>
+              </form>
+              <div id="application-list"></div>
             </section>
 
             <section class="snapshot-panel" id="panel-resumes" hidden>
@@ -343,6 +358,18 @@
             <p class="success">Your tailored resume is ready.</p>
             <button type="button" id="job-download-btn">Download Resume (.docx)</button>
             <button type="button" id="job-start-over-btn" class="btn-secondary">Compare Another Job</button>
+
+            <div id="job-applied-block" class="applied-block">
+              <button type="button" id="job-applied-btn" class="btn-gold">I applied for this job: add it to my tracker</button>
+              <div id="job-applied-form" hidden>
+                <label class="field"><span>Job title</span><input type="text" id="job-applied-title" /></label>
+                <label class="field"><span>Company</span><input type="text" id="job-applied-company" /></label>
+                <label class="field"><span>Date applied</span><input type="date" id="job-applied-date" /></label>
+                <button type="button" id="job-applied-save-btn">Add to my tracker</button>
+                <button type="button" id="job-applied-cancel-btn" class="btn-secondary">Cancel</button>
+              </div>
+              <p class="hint" id="job-applied-msg" hidden></p>
+            </div>
 
             <div id="job-match-grade-block" class="match-grade" hidden>
               <div class="match-grade-letter" id="job-match-grade-letter"></div>
@@ -586,6 +613,7 @@
   <script src="js/skillScan.js"></script>
   <script src="js/skillTidy.js"></script>
   <script src="js/history.js"></script>
+  <script src="js/applications.js"></script>
   <script src="js/generalResume.js"></script>
 </body>
 </html>

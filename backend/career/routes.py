@@ -14,7 +14,8 @@ CareerProfile row are both set together, only by an explicit POST to
 /consent - no Career Profile data can exist before that, since there's no
 CareerProfile row yet for a child row to attach to.
 """
-from datetime import datetime, timezone
+import re
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -30,7 +31,7 @@ from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_ch
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
-from models import CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
+from models import Application, CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
 from resume_builder import build_resume_bytes
 
 router = APIRouter()
@@ -1340,6 +1341,132 @@ async def download_resume_version(
     )
 
 
+# --- Application tracker: jobs the candidate says they applied for. The app
+# can't know they applied, so every row is entered by them (usually one click
+# from the finished-resume screen). Ownership-scoped like everything else;
+# linked scan/resume ids are checked against the profile, never trusted.
+
+APPLICATION_STATUSES = ("applied", "no_response", "interview", "rejected", "offer")
+_ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+class ApplicationIn(BaseModel):
+    job_title: str
+    company: str | None = None
+    applied_on: str | None = None
+    status: str = "applied"
+    notes: str | None = None
+    scan_history_id: int | None = None
+    resume_version_id: int | None = None
+
+
+def _application_to_dict(a: Application) -> dict:
+    return {
+        "id": a.id,
+        "job_title": a.job_title,
+        "company": a.company,
+        "applied_on": a.applied_on,
+        "status": a.status,
+        "notes": a.notes,
+        "scan_history_id": a.scan_history_id,
+        "resume_version_id": a.resume_version_id,
+        "status_updated_at": a.status_updated_at.isoformat() if a.status_updated_at else None,
+        "created_at": a.created_at.isoformat() if a.created_at else None,
+    }
+
+
+def _validated_application_fields(db: Session, profile: CareerProfile, req: ApplicationIn) -> dict:
+    title = req.job_title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Please enter the job title.")
+    if req.status not in APPLICATION_STATUSES:
+        raise HTTPException(status_code=400, detail="That status isn't one of the options.")
+    applied_on = (req.applied_on or "").strip() or date.today().isoformat()
+    if not _ISO_DATE.match(applied_on):
+        raise HTTPException(status_code=400, detail="Please enter the date applied as a valid date.")
+    scan = _validate_scan_history_id(db, profile, req.scan_history_id)
+    resume_id = None
+    if req.resume_version_id is not None:
+        owned = db.query(ResumeVersion).filter_by(id=req.resume_version_id, career_profile_id=profile.id).one_or_none()
+        if owned is None:
+            raise HTTPException(status_code=400, detail="That resume no longer exists.")
+        resume_id = owned.id
+    return {
+        "job_title": title,
+        "company": (req.company or "").strip() or None,
+        "applied_on": applied_on,
+        "status": req.status,
+        "notes": (req.notes or "").strip() or None,
+        "scan_history_id": scan.id if scan else None,
+        "resume_version_id": resume_id,
+    }
+
+
+@router.post("/applications")
+async def create_application(
+    req: ApplicationIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = Application(career_profile_id=profile.id, **_validated_application_fields(db, profile, req))
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return _application_to_dict(entry)
+
+
+@router.get("/applications")
+async def list_applications(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entries = (
+        db.query(Application)
+        .filter_by(career_profile_id=profile.id)
+        .order_by(Application.applied_on.desc(), Application.id.desc())
+        .all()
+    )
+    return [_application_to_dict(a) for a in entries]
+
+
+@router.put("/applications/{application_id}")
+async def update_application(
+    application_id: int,
+    req: ApplicationIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = db.query(Application).filter_by(id=application_id, career_profile_id=profile.id).one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Application not found.")
+    fields = _validated_application_fields(db, profile, req)
+    if fields["status"] != entry.status:
+        entry.status_updated_at = datetime.now(timezone.utc)
+    for key, value in fields.items():
+        setattr(entry, key, value)
+    db.commit()
+    db.refresh(entry)
+    return _application_to_dict(entry)
+
+
+@router.delete("/applications/{application_id}")
+async def delete_application(
+    application_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = db.query(Application).filter_by(id=application_id, career_profile_id=profile.id).one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Application not found.")
+    db.delete(entry)
+    db.commit()
+    return {"deleted": True}
+
+
 @router.get("/export")
 async def export_career_profile(
     current_user: User = Depends(get_current_user),
@@ -1358,8 +1485,15 @@ async def export_career_profile(
     scans = db.query(ScanHistory).filter_by(career_profile_id=profile.id).order_by(ScanHistory.created_at.desc()).all()
     resumes = db.query(ResumeVersion).filter_by(career_profile_id=profile.id).order_by(ResumeVersion.created_at.desc()).all()
 
+    try:
+        applications = db.query(Application).filter_by(career_profile_id=profile.id).order_by(Application.applied_on.desc()).all()
+    except Exception:
+        db.rollback()  # applications table not migrated yet: the backup still works without it
+        applications = []
+
     return {
         "exported_at": datetime.now(timezone.utc).isoformat(),
+        "applications": [_application_to_dict(a) for a in applications],
         "experiences": [_experience_to_dict(e) for e in experiences],
         "education": [_education_to_dict(e) for e in education],
         "certifications": [_certification_to_dict(c) for c in certifications],

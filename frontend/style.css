@@ -3018,3 +3018,29 @@ main.dashboard-main {
 .back-link { text-align: left; margin: 0 0 1rem; font-size: 0.95rem; }
 .back-link a { color: var(--blue); font-weight: 600; text-decoration: none; }
 .back-link a:hover { text-decoration: underline; }
+
+/* --- Application tracker --------------------------------------------- */
+.dashboard-main { --c-applications: #4338ca; --c-applications-bg: #eceafc; }
+.stat-applications { background: var(--c-applications-bg); border-color: var(--c-applications); }
+.stat-applications .stat-number { color: var(--c-applications); }
+.stat-applications.active { background: var(--c-applications); }
+#panel-applications { border-left-color: var(--c-applications); }
+
+.application-summary { font-weight: 600; color: var(--navy); margin: 0.25rem 0 0.75rem; }
+.application-card { border-left: 5px solid var(--border); }
+.application-card.app-status-applied { border-left-color: #6b7280; }
+.application-card.app-status-no_response { border-left-color: #b86e00; }
+.application-card.app-status-interview { border-left-color: #1f7a3f; }
+.application-card.app-status-rejected { border-left-color: #b3261e; }
+.application-card.app-status-offer { border-left-color: #4338ca; }
+.application-status {
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0.25rem 0 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+.application-notes { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; }
+.application-nudge { color: #8a5300; }
+.applied-block { margin-top: 1.25rem; }

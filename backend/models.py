@@ -209,3 +209,28 @@ class ResumeVersion(Base):
 
     career_profile: Mapped["CareerProfile"] = relationship(back_populates="resume_versions")
     scan_history: Mapped["ScanHistory | None"] = relationship(back_populates="resume_versions")
+
+
+class Application(Base):
+    """A job the candidate says they actually applied for - a simple tracker
+    they come back to and update (no response, interview, rejection, offer).
+    Entered by the candidate (the app can't know they applied), usually from
+    the finished-resume screen; scan_history_id / resume_version_id link back
+    to the comparison and resume it came from when there is one (nullable:
+    an application can also be added by hand). applied_on is an ISO
+    "YYYY-MM-DD" string from a date input, matching how this codebase
+    already stores dates as text.
+    """
+    __tablename__ = "applications"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"))
+    scan_history_id: Mapped[int | None] = mapped_column(ForeignKey("scan_histories.id", ondelete="SET NULL"), nullable=True)
+    resume_version_id: Mapped[int | None] = mapped_column(ForeignKey("resume_versions.id", ondelete="SET NULL"), nullable=True)
+    job_title: Mapped[str] = mapped_column(String)
+    company: Mapped[str | None] = mapped_column(String, nullable=True)
+    applied_on: Mapped[str] = mapped_column(String)  # YYYY-MM-DD
+    status: Mapped[str] = mapped_column(String, default="applied")  # applied | no_response | interview | rejected | offer
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+    status_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

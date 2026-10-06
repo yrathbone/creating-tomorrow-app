@@ -452,6 +452,7 @@ function updateDashboardSummary() {
     statRow.textContent = "";
     const scans = typeof allScanHistory !== "undefined" ? allScanHistory.length : 0;
     const resumes = typeof allResumeVersions !== "undefined" ? allResumeVersions.length : 0;
+    const applied = typeof allApplications !== "undefined" ? allApplications.length : 0;
     // Each tile opens its own list inside the snapshot (key -> #panel-<key>).
     const stats = [
       { key: "roles", number: allExperiences.length, label: allExperiences.length === 1 ? "Role" : "Roles" },
@@ -460,6 +461,7 @@ function updateDashboardSummary() {
       { key: "skills", number: allSkills.length, label: allSkills.length === 1 ? "Skill" : "Skills" },
       { key: "history", number: scans, label: scans === 1 ? "Job & Skill Scan" : "Job & Skill Scans" },
       { key: "resumes", number: resumes, label: resumes === 1 ? "Resume Built" : "Resumes Built" },
+      { key: "applications", number: applied, label: applied === 1 ? "Application" : "Applications" },
     ];
     for (const s of stats) {
       const card = document.createElement("button");
@@ -474,15 +476,6 @@ function updateDashboardSummary() {
       lbl.textContent = s.label;
       card.appendChild(num);
       card.appendChild(lbl);
-      statRow.appendChild(card);
-    }
-    // Not built yet / lives elsewhere: shown so they aren't forgotten.
-    for (const [label, note] of [["Applications", "Coming soon"], ["Career Direction", "Coming soon"]]) {
-      const card = document.createElement("div");
-      card.className = "stat-card stat-soon";
-      card.setAttribute("aria-disabled", "true");
-      card.innerHTML = '<span class="stat-number">&mdash;</span><span class="stat-label"></span>';
-      card.querySelector(".stat-label").textContent = label + " (" + note.toLowerCase() + ")";
       statRow.appendChild(card);
     }
     const li = document.createElement("a");
@@ -562,6 +555,7 @@ async function showProfileStep() {
   await loadSkills();
   await loadScanHistory();
   await loadResumeVersions();
+  if (typeof loadApplications === "function") await loadApplications();
   if (typeof restoreCurrentJobTarget === "function") restoreCurrentJobTarget();
 }
 
@@ -578,6 +572,9 @@ function revealCareerProfileSections(scrollToId) {
 
 document.getElementById("update-profile-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-editor");
+});
+document.getElementById("nav-applications-btn").addEventListener("click", () => {
+  openSnapshotPanel("applications", false);
 });
 document.getElementById("nav-career-profile-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-detail");
