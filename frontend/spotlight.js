@@ -529,11 +529,17 @@ document.getElementById("compare-add-btn").addEventListener("click", async () =>
       });
       if (res.ok) {
         added += 1;
-        box.checked = false;
-        box.disabled = true;
+        // Added skills leave the list so nothing looks unfinished or broken.
+        box.closest("li").remove();
       }
     }
-    msg.textContent = added ? added + (added === 1 ? " skill" : " skills") + " added to your Career Profile." : "Nothing was ticked.";
+    const remaining = document.querySelectorAll("#compare-profile-list input[type=checkbox]").length;
+    if (added && remaining === 0) {
+      btn.hidden = true;
+      msg.textContent = added + (added === 1 ? " skill" : " skills") + " added to your Career Profile. Nothing left to add.";
+    } else {
+      msg.textContent = added ? added + (added === 1 ? " skill" : " skills") + " added to your Career Profile. The rest are still waiting for your tick." : "Nothing was ticked.";
+    }
   } finally {
     msg.hidden = false;
     btn.disabled = false;
