@@ -262,6 +262,62 @@ class MalformedAnswers(unittest.TestCase):
         term_pipeline._require_term_shape(plan(("Fintech", "required", "literal", "")))
 
 
+class WordingPhrases(unittest.TestCase):
+    """Context phrases from the posting ("sales setting") are not skills: kept out of
+    SKILLS by code, not forced in by the fix-up, and not counted as problems."""
+
+    def plan_with_phrase(self):
+        return {"terms": [
+            {"term": "Fintech", "kind": "skill", "importance": "required", "support": "literal", "evidence": ""},
+            {"term": "sales setting", "kind": "phrase", "importance": "mentioned", "support": "related", "evidence": "title Sales"},
+        ]}
+
+    def test_kind_defaults_to_skill_and_phrase_is_kept(self):
+        with mock.patch.object(job_match, "_call_with_retry", return_value=self.plan_with_phrase()):
+            out = term_pipeline.plan_terms(PROFILE, "(none confirmed)", POSTING)
+        self.assertEqual([(t["term"], t["kind"]) for t in out], [("Fintech", "skill"), ("sales setting", "phrase")])
+        with mock.patch.object(job_match, "_call_with_retry", return_value=plan(("Fintech", "required", "literal", ""))):
+            self.assertEqual(term_pipeline.plan_terms(PROFILE, "(none confirmed)", POSTING)[0]["kind"], "skill")
+
+    def test_phrase_is_removed_from_skills_and_not_forced_in(self):
+        built = copy.deepcopy(BASE_RESUME)
+        built["skills"] = ["Payments: Fintech, sales setting, API Connectivity"]
+        calls = []
+
+        def fake(label, system_prompt, user_prompt, tool, extract):
+            calls.append(label)
+            if label == "career_term_plan":
+                return self.plan_with_phrase()
+            if label == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(built), "role_selection": []}
+            raise AssertionError(label)  # no fix-up call is allowed for a missing phrase
+
+        with mock.patch.object(job_match, "_call_with_retry", side_effect=fake):
+            result = term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Jane Doe", "x@y.com")
+        self.assertEqual(calls, ["career_term_plan", "career_job_build_resume"])
+        self.assertEqual(result["resume_data"]["skills"], ["Payments: Fintech, API Connectivity"])
+        status = {r["term"]: r["status"] for r in result["term_report"]}
+        self.assertEqual(status, {"Fintech": "on_resume", "sales setting": "wording_unused"})
+
+    def test_build_prompt_lists_phrases_separately_from_skills(self):
+        built = copy.deepcopy(BASE_RESUME)
+        built["skills"] = ["Payments: Fintech"]
+        captured = {}
+
+        def fake(label, system_prompt, user_prompt, tool, extract):
+            if label == "career_term_plan":
+                return self.plan_with_phrase()
+            captured["prompt"] = user_prompt
+            return {"resume_data": copy.deepcopy(built), "role_selection": []}
+
+        with mock.patch.object(job_match, "_call_with_retry", side_effect=fake):
+            term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Jane Doe", "x@y.com")
+        include_part = captured["prompt"].split("POSTING WORDING TO USE NATURALLY")[0]
+        wording_part = captured["prompt"].split("POSTING WORDING TO USE NATURALLY")[1].split("POSTING TERMS WITH NO EVIDENCE")[0]
+        self.assertNotIn("sales setting", include_part.split("POSTING TERMS TO INCLUDE")[1])
+        self.assertIn("- sales setting", wording_part)
+
+
 class SkillTidy(unittest.TestCase):
     SKILLS = [
         {"id": 1, "name": "Sales Enablement/Training Content Creation", "source_text": "Created pitch decks."},

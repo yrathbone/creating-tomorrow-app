@@ -26,11 +26,11 @@ SUPPORTED = ("literal", "related")
 
 PLAN_SYSTEM_PROMPT = """You are Nova, a careful resume strategist. You are given a job posting and a candidate's verified Career Profile (plus any facts the candidate confirmed in an interview about this posting). Produce a TERM PLAN.
 
-1. List the key skill, keyword, tool, domain and requirement phrases the posting uses, in the posting's OWN exact wording. Read requirements, responsibilities, the overview, preferred qualifications, and any skill tags or keyword run-ins (several short tags run together with no spaces, for example "clear communicationstakeholder managementproblem-solving" - split them into separate terms). Include domain and industry terms (for example fintech, financial technology, financial services, banking) and tools or technologies. Every term must be a SHORT keyword phrase a recruiter would search for: a skill, tool, technology, domain or requirement written as a noun phrase of at most 4 words (for example "proposal development," "technical expertise," "financial products," "pricing strategies," "client onboarding"). Do NOT list duties, sentences or sentence fragments (not "taking ownership of complex initiatives," not "translate complex technical concepts into clear business value," not "address technical objections"); if a duty contains a real skill, list just the short skill. Skip generic filler unless the posting states it as a requirement. At most 30 terms, most important first. Judge importance from the posting's own language: "required" (must-have or a key requirement), "preferred" (nice-to-have), or "mentioned".
+1. List the key skill, keyword, tool, domain and requirement phrases the posting uses, in the posting's OWN exact wording. Read requirements, responsibilities, the overview, preferred qualifications, and any skill tags or keyword run-ins (several short tags run together with no spaces, for example "clear communicationstakeholder managementproblem-solving" - split them into separate terms). Include domain and industry terms (for example fintech, financial technology, financial services, banking) and tools or technologies. Every term must be a SHORT keyword phrase a recruiter would search for: a skill, tool, technology, domain or requirement written as a noun phrase of at most 4 words (for example "proposal development," "technical expertise," "financial products," "pricing strategies," "client onboarding"). Do NOT list duties, sentences or sentence fragments (not "taking ownership of complex initiatives," not "translate complex technical concepts into clear business value," not "address technical objections"); if a duty contains a real skill, list just the short skill. Skip generic filler unless the posting states it as a requirement. At most 30 terms, most important first. Judge importance from the posting's own language: "required" (must-have or a key requirement), "preferred" (nice-to-have), or "mentioned". Also give each term a kind: "skill" = a skill, tool, system, method or industry/domain a recruiter would list in a skills section (for example "proposal development," "ERP integrations," "fintech," "customer success"); "phrase" = context or duty wording that is not a skill by itself (for example "sales setting," "difficult customers," "business sense," "achieving targets and goals," "large, global, complex organizations," "complex projects and programs"). Do list the skill or domain inside the posting's own job title as a term (for example "customer success" for a Customer Success Manager role); the posting's title is a strong signal of what it wants.
 
 2. For EACH term decide whether the candidate's evidence supports it:
 - "literal": the exact term (ignoring capitalization, plurals and hyphens) appears in the Career Profile or the confirmed facts.
-- "related": not literal, but the profile genuinely shows the same underlying skill or domain under different wording. Give the evidence. Examples: RFP responses support "proposal development"; being the technical advisor to treasury and IT teams supports "technical expertise"; training and coaching support "technical training"; demonstrating products and equipping sales teams supports "product education"; directing the "full sales lifecycle" or an end-to-end sales engagement supports "sales cycle" and "sales process". Domain labels count when the work substantively involves that domain: building, integrating or selling payments or banking technology (APIs, ERP/TMS bank connectivity, payment rails, real-time payments such as Zelle or FastPayments, embedded finance) supports "financial technology" and "fintech"; working at a bank supports "banking" and "financial services". Role titles are evidence too: a title containing Sales, Account, Client, Relationship or Consultant supports sales experience, customer-facing work and customer relationships.
+- "related": not literal, but the profile genuinely shows the same underlying skill or domain under different wording. Give the evidence. Examples: RFP responses support "proposal development"; being the technical advisor to treasury and IT teams supports "technical expertise"; training and coaching support "technical training"; demonstrating products and equipping sales teams supports "product education"; directing the "full sales lifecycle" or an end-to-end sales engagement supports "sales cycle" and "sales process"; account management, client onboarding, adoption and post-sales or renewal work supports "customer success". Domain labels count when the work substantively involves that domain: building, integrating or selling payments or banking technology (APIs, ERP/TMS bank connectivity, payment rails, real-time payments such as Zelle or FastPayments, embedded finance) supports "financial technology" and "fintech"; working at a bank supports "banking" and "financial services". Role titles are evidence too: a title containing Sales, Account, Client, Relationship or Consultant supports sales experience, customer-facing work and customer relationships.
 - "none": no real support in the profile. Never stretch a term to make it fit; an honest "none" is the correct answer for something the candidate has not done.
 For "literal" and "related" give a short evidence note naming the role and the phrase or activity that proves it.
 
@@ -60,6 +60,7 @@ PLAN_TOOL = {
                     "properties": {
                         "term": {"type": "string", "description": "The posting's exact wording."},
                         "importance": {"type": "string", "enum": ["required", "preferred", "mentioned"]},
+                        "kind": {"type": "string", "enum": ["skill", "phrase"]},
                         "support": {"type": "string", "enum": ["literal", "related", "none"]},
                         "evidence": {"type": "string", "description": "Role and phrase/activity that supports it; empty if none."},
                     },
@@ -180,8 +181,10 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
         if support == "related" and not evidence:
             support = "none"  # "related" without a stated reason is not evidence
 
+        kind = "phrase" if raw.get("kind") == "phrase" else "skill"
         terms.append({
             "term": term,
+            "kind": kind,
             "importance": raw.get("importance", "mentioned"),
             "support": support,
             "evidence": evidence,
@@ -263,7 +266,8 @@ def keyword_check(profile_text: str, confirmed_facts: list, job_description: str
     the planner found; "none" terms have none. Nothing is saved here."""
     terms = plan_terms(profile_text, facts_text_for(confirmed_facts), job_description)
     rank = {"required": 0, "preferred": 1, "mentioned": 2}
-    needs = [t for t in terms if t["support"] != "literal"]
+    # Context phrases are never worth a question; only real skills are asked about.
+    needs = [t for t in terms if t["support"] != "literal" and t.get("kind") != "phrase"]
     needs.sort(key=lambda t: (rank.get(t["importance"], 3), t["support"] != "related"))
     return {"terms": needs, "already_covered": len(terms) - len(needs)}
 
@@ -317,13 +321,14 @@ def _looks_like_duty(item: str) -> bool:
     return bool(words) and (words[0] in _VERB_STARTS or normalize(item) in {normalize(g) for g in _GENERIC})
 
 
-def dedupe_skills(resume_data: dict) -> dict:
+def dedupe_skills(resume_data: dict, wording_terms: set[str] | None = None) -> dict:
     """Keep the skills section to keywords only: drop sentence-like entries
     (more than MAX_SKILL_WORDS words outside parentheses), remove repeated
     skills (case, plural and hyphen insensitive) across the grouped lines, and
     drop a line left with nothing. The longer sentences stay in the profile as
-    reference; they are never printed here."""
-    seen: set[str] = set()
+    reference; they are never printed here. wording_terms are normalized posting
+    phrases (context wording, not skills) that must never appear in this section."""
+    seen: set[str] = set(wording_terms or ())
     lines: list[str] = []
     for line in resume_data.get("skills") or []:
         label, sep, rest = line.partition(":")
@@ -376,7 +381,10 @@ def add_missing_terms(resume_data: dict, missing: list[dict]) -> dict | None:
 def _status(t: dict) -> str:
     if t["support"] not in SUPPORTED:
         return "not_in_profile"
-    return "on_resume" if t.get("on_resume") else "not_placed"
+    if t.get("on_resume"):
+        return "on_resume"
+    # Context wording is only used where a sentence already says it; not using it is fine.
+    return "wording_unused" if t.get("kind") == "phrase" else "not_placed"
 
 
 def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str) -> dict:
@@ -395,20 +403,24 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         result["term_report"] = []
         return result
 
-    resume = dedupe_skills(result["resume_data"])
+    # Context phrases ("sales setting", "difficult customers") are never skills:
+    # the code removes them from SKILLS even if the model put them there.
+    wording = {normalize(t["term"]) for t in terms if t.get("kind") == "phrase"}
+    resume = dedupe_skills(result["resume_data"], wording)
     check_placement(resume, terms)
-    missing = [t for t in terms if t["support"] in SUPPORTED and not t["on_resume"]]
+    # Only real skills are forced in by the fix-up; phrases are used only where natural.
+    missing = [t for t in terms if t["support"] in SUPPORTED and not t["on_resume"] and t.get("kind") != "phrase"]
     if missing:
         try:
             revised = add_missing_terms(resume, missing)
         except JobMatchError:
             revised = None
         if revised:
-            resume = dedupe_skills({**resume, **revised})
+            resume = dedupe_skills({**resume, **revised}, wording)
             check_placement(resume, terms)
     result["resume_data"] = resume
     result["term_report"] = [
-        {"term": t["term"], "importance": t["importance"], "support": t["support"],
+        {"term": t["term"], "kind": t.get("kind", "skill"), "importance": t["importance"], "support": t["support"],
          "evidence": t["evidence"], "status": _status(t)}
         for t in terms
     ]

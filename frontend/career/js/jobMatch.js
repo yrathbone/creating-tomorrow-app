@@ -593,6 +593,8 @@ function prefillSkillFromTerm(term) {
 // "Still worth addressing": posting terms the profile does not support yet
 // (required ones first), plus any that are supported but could not be placed.
 function renderTermReport(report) {
+  // Context wording the builder chose not to use is neutral: not a problem, not counted.
+  report = report.filter((r) => r.status !== "wording_unused");
   const block = document.getElementById("job-term-report-block");
   const summary = document.getElementById("job-term-summary");
   const missingList = document.getElementById("job-term-missing-list");
@@ -658,6 +660,7 @@ function computeMatchGrade(report) {
   let got = 0;
   let total = 0;
   for (const r of report) {
+    if (r.status === "wording_unused") continue;
     const w = weight[r.importance] ?? 1;
     total += w;
     if (r.status === "on_resume") got += w;
