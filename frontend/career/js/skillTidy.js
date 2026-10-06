@@ -4,6 +4,33 @@
 // change is reviewed here and saved through the normal PUT /skills/{id}.
 // Relies on authedFetch()/formatErrorDetail()/loadSkills() from login.js.
 
+// Quick add: one short keyword, saved straight to the skill bank.
+document.getElementById("skill-quick-add-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = document.getElementById("skill-quick-add-input");
+  const msg = document.getElementById("skill-quick-add-msg");
+  const name = input.value.trim();
+  if (!name) return;
+  msg.hidden = false;
+  if (name.split(/\s+/).length > 4) {
+    msg.textContent = "Keep a skill to a short keyword (up to 4 words). Put longer detail in the skill's edit form.";
+    return;
+  }
+  const res = await authedFetch("/api/career/skills", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, source_text: null, experience_id: null }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    msg.textContent = formatErrorDetail(err.detail, "Couldn't save that skill.");
+    return;
+  }
+  input.value = "";
+  msg.textContent = '"' + name + '" added. Use Edit on it to attach a role or a sentence.';
+  if (typeof loadSkills === "function") await loadSkills();
+});
+
 let tidySuggestions = [];
 
 const skillTidyPanel = document.getElementById("skill-tidy-panel");

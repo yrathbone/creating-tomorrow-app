@@ -139,6 +139,13 @@
             <button type="button" id="job-build-btn">Build My Resume</button>
             <button type="button" id="job-keyword-check-btn" class="btn-secondary">Check the posting's keywords first (optional)</button>
             <p class="hint" id="job-keyword-saved-note" hidden></p>
+            <label class="field">
+              <span>Add a term for this resume</span>
+              <input type="text" id="job-extra-term-input" placeholder="e.g. Sales process" maxlength="60" autocomplete="off" />
+            </label>
+            <p class="hint">Only add something that is true for you. It will be printed on this resume if the job calls for it.</p>
+            <button type="button" id="job-extra-term-resume-btn" class="btn-secondary">Use on this resume only</button>
+            <button type="button" id="job-extra-term-skill-btn" class="btn-secondary">Save to my Skills</button>
             <div id="job-build-error" class="error" hidden></div>
           </div>
 
@@ -308,6 +315,14 @@
 
         <h3>Skills</h3>
         <p class="hint">A skill's name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
+        <form id="skill-quick-add-form">
+          <label class="field">
+            <span>Quick add a skill</span>
+            <input type="text" id="skill-quick-add-input" placeholder="e.g. Technical expertise" maxlength="60" autocomplete="off" />
+          </label>
+          <button type="submit" class="btn-secondary">Add to my skills</button>
+          <p class="hint" id="skill-quick-add-msg" hidden></p>
+        </form>
         <button type="button" id="skill-tidy-btn" class="btn-secondary">Shorten long skill names</button>
         <div id="skill-tidy-panel" hidden>
           <p class="hint" id="skill-tidy-intro"></p>

@@ -383,6 +383,49 @@ document.getElementById("job-keyword-check-btn").addEventListener("click", async
   }
 });
 
+// Free-text "add a term" on the build screen: a term the candidate types is
+// confirmed by them, so it counts as evidence and the build must print it
+// when the posting asks for it. Either one resume only, or saved to Skills.
+async function addExtraTerm(saveToSkills) {
+  const input = document.getElementById("job-extra-term-input");
+  const errorEl = document.getElementById("job-build-error");
+  errorEl.hidden = true;
+  const term = input.value.trim();
+  if (!term) return;
+  if (term.split(/\s+/).length > 4) {
+    errorEl.textContent = "Keep it to a short keyword (up to 4 words), like \"Sales process\".";
+    errorEl.hidden = false;
+    return;
+  }
+  if (saveToSkills) {
+    const res = await authedFetch("/api/career/skills", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: term, source_text: null, experience_id: null }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      errorEl.textContent = formatErrorDetail(err.detail, "Couldn't save that skill.");
+      errorEl.hidden = false;
+      return;
+    }
+    if (typeof loadSkills === "function") await loadSkills();
+    showKeywordNote('"' + term + '" saved to your Skills.');
+  } else {
+    jobState.discoveredFacts = jobState.discoveredFacts.filter((f) => f.source !== "typed_term" || f.category.toLowerCase() !== term.toLowerCase());
+    jobState.discoveredFacts.push({
+      category: term,
+      bullet_text: "Has real hands-on experience with " + term + ".",
+      source: "typed_term",
+    });
+    showKeywordNote('"' + term + '" added for this resume only.');
+  }
+  input.value = "";
+}
+
+document.getElementById("job-extra-term-resume-btn").addEventListener("click", () => addExtraTerm(false));
+document.getElementById("job-extra-term-skill-btn").addEventListener("click", () => addExtraTerm(true));
+
 function showKeywordNote(text) {
   const note = document.getElementById("job-keyword-saved-note");
   note.textContent = text;
