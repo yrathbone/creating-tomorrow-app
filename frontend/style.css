@@ -2839,3 +2839,92 @@ main.dashboard-main {
   border-radius: 8px;
   font: inherit;
 }
+
+/* --- Dashboard colour: tiles, accents, hero (2026-10-06) --------------- */
+/* One accent per Career Snapshot tile. Text on tinted backgrounds uses the
+   darker -ink shade so it stays readable (site is light-theme only). */
+.dashboard-main {
+  --c-roles: #0047ab;          --c-roles-bg: #e6eefb;
+  --c-education: #6a3fb5;      --c-education-bg: #efe9fa;
+  --c-certifications: #0b7f75; --c-certifications-bg: #e2f4f1;
+  --c-skills: #b86e00;         --c-skills-bg: #fdf0d9;
+  --c-history: #c2410c;        --c-history-bg: #fdebe0;
+  --c-resumes: #1f7a3f;        --c-resumes-bg: #e3f4e8;
+}
+
+.dashboard-hero {
+  background: linear-gradient(135deg, var(--sky-top) 0%, #ffffff 60%, #fff6e3 100%);
+  border: 1px solid var(--blue-light);
+  border-radius: 16px;
+  padding: 1.75rem 1.75rem 1.5rem;
+}
+
+.dashboard-grid > .card {
+  border-top: 4px solid var(--blue-light);
+}
+.dashboard-grid > .snapshot-card { border-top-color: var(--blue); }
+.dashboard-grid > #general-resume-card { border-top-color: var(--gold); }
+
+.stat-row .stat-card {
+  font: inherit;
+  cursor: pointer;
+  border-width: 1px;
+  border-top-width: 5px;
+  text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.stat-row .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(15, 42, 82, 0.12); }
+.stat-row .stat-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.stat-roles          { background: var(--c-roles-bg);          border-color: var(--c-roles); }
+.stat-education      { background: var(--c-education-bg);      border-color: var(--c-education); }
+.stat-certifications { background: var(--c-certifications-bg); border-color: var(--c-certifications); }
+.stat-skills         { background: var(--c-skills-bg);         border-color: var(--c-skills); }
+.stat-history        { background: var(--c-history-bg);        border-color: var(--c-history); }
+.stat-resumes        { background: var(--c-resumes-bg);        border-color: var(--c-resumes); }
+
+.stat-roles .stat-number          { color: var(--c-roles); }
+.stat-education .stat-number      { color: var(--c-education); }
+.stat-certifications .stat-number { color: var(--c-certifications); }
+.stat-skills .stat-number         { color: var(--c-skills); }
+.stat-history .stat-number        { color: var(--c-history); }
+.stat-resumes .stat-number        { color: var(--c-resumes); }
+
+/* Open tile: filled with its own colour. */
+.stat-roles.active          { background: var(--c-roles); }
+.stat-education.active      { background: var(--c-education); }
+.stat-certifications.active { background: var(--c-certifications); }
+.stat-skills.active         { background: var(--c-skills); }
+.stat-history.active        { background: var(--c-history); }
+.stat-resumes.active        { background: var(--c-resumes); }
+.stat-row .stat-card.active .stat-number,
+.stat-row .stat-card.active .stat-label { color: #ffffff; }
+
+/* Coming soon / link tiles */
+.stat-row .stat-soon {
+  cursor: default;
+  opacity: 0.6;
+  border-style: dashed;
+  background: var(--bg);
+  border-color: var(--border);
+}
+.stat-row .stat-soon:hover { transform: none; box-shadow: none; }
+.stat-row .stat-linkedin { background: #e8f1fb; border-color: #0a66c2; }
+.stat-row .stat-linkedin .stat-number { color: #0a66c2; font-style: italic; }
+
+/* The list that opens under a tile */
+.snapshot-panel {
+  margin-top: 1.25rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--blue);
+  border-radius: 12px;
+  background: #fbfcfe;
+}
+.snapshot-panel h3:first-child { margin-top: 0; }
+#panel-roles          { border-left-color: var(--c-roles); }
+#panel-education      { border-left-color: var(--c-education); }
+#panel-certifications { border-left-color: var(--c-certifications); }
+#panel-skills         { border-left-color: var(--c-skills); }
+#panel-history        { border-left-color: var(--c-history); }
+#panel-resumes        { border-left-color: var(--c-resumes); }

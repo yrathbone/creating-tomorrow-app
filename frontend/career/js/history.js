@@ -9,12 +9,14 @@
 // the most recent job_comparison entry to restore "Current Job Target" on
 // page load, without a second fetch.
 let allScanHistory = [];
+let allResumeVersions = [];
 
 async function loadScanHistory() {
   const res = await authedFetch("/api/career/scan-history");
   const entries = await res.json();
   const list = Array.isArray(entries) ? entries : [];
   allScanHistory = list;
+  if (typeof updateDashboardSummary === "function") updateDashboardSummary();
 
   const container = document.getElementById("scan-history-list");
   if (!container) return;
@@ -84,6 +86,8 @@ async function loadResumeVersions() {
   const res = await authedFetch("/api/career/resume-versions");
   const entries = await res.json();
   const list = Array.isArray(entries) ? entries : [];
+  allResumeVersions = list;
+  if (typeof updateDashboardSummary === "function") updateDashboardSummary();
 
   const container = document.getElementById("resume-version-list");
   if (!container) return;

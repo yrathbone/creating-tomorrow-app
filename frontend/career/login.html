@@ -83,6 +83,106 @@
       </div>
 
       <div class="dashboard-grid">
+        <div class="card span-2 snapshot-card">
+          <div class="dashboard-card-header"><h2>Career Snapshot</h2></div>
+          <p class="hint">Click a tile to open it. Click it again to close it.</p>
+          <div class="stat-row" id="career-stat-row"></div>
+
+          <div id="snapshot-panels">
+            <section class="snapshot-panel" id="panel-roles" hidden>
+        <h3>Experience</h3>
+        <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
+          <button type="button" id="sort-newest-btn" class="btn-secondary">Newest first</button>
+          <button type="button" id="sort-oldest-btn" class="btn-secondary">Oldest first</button>
+        </div>
+        <div id="experience-detail-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-education" hidden>
+        <h3>Education</h3>
+        <div id="education-detail-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-certifications" hidden>
+        <h3>Certifications</h3>
+        <div id="certification-detail-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-skills" hidden>
+        <h3>Skills</h3>
+        <p class="hint">A skill's name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
+        <form id="skill-quick-add-form">
+          <label class="field">
+            <span>Quick add a skill</span>
+            <input type="text" id="skill-quick-add-input" placeholder="e.g. Technical expertise" maxlength="60" autocomplete="off" />
+          </label>
+          <button type="submit" class="btn-secondary">Add to my skills</button>
+          <p class="hint" id="skill-quick-add-msg" hidden></p>
+        </form>
+        <button type="button" id="skill-tidy-btn" class="btn-secondary">Shorten long skill names</button>
+        <div id="skill-tidy-panel" hidden>
+          <p class="hint" id="skill-tidy-intro"></p>
+          <div id="skill-tidy-list"></div>
+          <div id="skill-tidy-error" class="error" hidden></div>
+          <button type="button" id="skill-tidy-apply-btn">Save the ones I've ticked</button>
+          <button type="button" id="skill-tidy-cancel-btn" class="btn-secondary">Close</button>
+        </div>
+        <div id="skill-detail-list"></div>
+<h3>Scan for missing skills</h3>
+        <div id="skill-scan-start">
+          <button type="button" id="skill-scan-btn" class="btn-secondary">Scan for Missing Skills</button>
+          <p class="hint">Reviews your whole profile against what's typical for your kinds of roles, and asks about anything that looks like a real blind spot.</p>
+        </div>
+
+        <div id="skill-scan-loading" class="processing-card" hidden aria-live="polite">
+          <p class="processing-status"></p>
+          <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
+        </div>
+
+        <div id="skill-scan-questions" hidden>
+          <p id="skill-scan-summary"></p>
+          <div id="skill-scan-questions-list"></div>
+          <div id="skill-scan-questions-error" class="error" hidden></div>
+          <button type="button" id="skill-scan-questions-submit-btn">Continue</button>
+          <button type="button" id="skill-scan-questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
+        </div>
+
+        <div id="skill-scan-complete" hidden>
+          <p class="success">Your Career Profile already looks well-rounded for the kinds of roles it shows — nothing new stood out this time.</p>
+          <p id="skill-scan-complete-summary" class="hint"></p>
+          <p class="hint">Add more experience or run the scan again later and it'll pick up from there.</p>
+          <button type="button" id="skill-scan-complete-ok-btn" class="btn-secondary">OK</button>
+        </div>
+
+        <div id="skill-scan-review" hidden>
+          <h3>Add these to your profile?</h3>
+          <p class="hint">Choose which role each one belongs to, or remove it.</p>
+          <div id="skill-scan-facts-list"></div>
+          <button type="button" id="skill-scan-save-btn">Save to My Career Profile</button>
+          <button type="button" id="skill-scan-cancel-btn" class="btn-secondary">Cancel</button>
+          <div id="skill-scan-save-error" class="error" hidden></div>
+        </div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-history" hidden>
+        <h3>Job &amp; Skill Scan History</h3>
+        <div id="scan-history-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-resumes" hidden>
+        <h3>Resumes Built</h3>
+        <div id="resume-version-list"></div>
+            </section>
+
+          </div>
+
+          <h3 style="margin-top:1.5rem;">Recently Confirmed</h3>
+          <ul id="recently-confirmed-list"></ul>
+
+        <button type="button" id="export-profile-btn" class="btn-secondary">Download my Career Profile (backup)</button>
+        <div id="export-profile-error" class="error" hidden></div>
+        </div>
+
         <div class="card span-2">
           <div class="dashboard-card-header"><h2>Current Job Target</h2></div>
 
@@ -186,7 +286,7 @@
           </div>
         </div>
 
-        <div class="card" id="general-resume-card">
+        <div class="card span-2" id="general-resume-card">
           <div class="dashboard-card-header"><h2>General Resume</h2></div>
 
           <div id="general-resume-empty">
@@ -214,140 +314,7 @@
           </div>
         </div>
 
-        <div class="card span-2">
-          <div class="dashboard-card-header"><h2>Career Snapshot</h2></div>
-          <div class="stat-row" id="career-stat-row"></div>
-          <h3 style="margin-top:1.5rem;">Recently Confirmed</h3>
-          <ul id="recently-confirmed-list"></ul>
-        </div>
-
-        <div class="card">
-          <div class="dashboard-card-header"><h2>Career Profile</h2></div>
-          <p class="hint">Most recent roles</p>
-          <div id="role-preview-list"></div>
-          <button type="button" id="view-full-profile-btn" class="btn-secondary">View Full Career Profile</button>
-        </div>
-
-        <div class="card">
-          <div class="dashboard-card-header"><h2>Skills</h2></div>
-          <div id="dashboard-skills-list"></div>
-          <button type="button" id="view-skills-btn" class="btn-secondary">View All Skills</button>
-        </div>
-
-        <div class="card">
-          <div class="dashboard-card-header"><h2>Applications</h2></div>
-          <p class="hint">Jobs you apply to through your Career Profile will appear here.</p>
-          <span class="btn-secondary" aria-disabled="true" style="opacity:0.6; cursor:default;">View Applications <span class="coming-soon">Coming soon</span></span>
-        </div>
-
-        <div class="card">
-          <div class="dashboard-card-header"><h2>Education &amp; Certifications</h2></div>
-          <div id="dashboard-education-list"></div>
-          <div id="dashboard-certifications-list"></div>
-        </div>
-
-        <div class="card">
-          <div class="dashboard-card-header"><h2>Career Direction</h2></div>
-          <p class="hint">Tell us what kinds of opportunities you're looking for. Creating Tomorrow can use this alongside your verified experience.</p>
-          <p class="hint">Coming soon.</p>
-        </div>
-
-        <div class="card span-2">
-          <div class="dashboard-card-header"><h2>LinkedIn</h2></div>
-          <p class="hint">Use your verified Career Profile to strengthen the way your experience appears on LinkedIn.</p>
-          <a href="../spotlight.html" class="btn-secondary">Refine My LinkedIn</a>
-        </div>
       </div>
-
-      <section class="card" id="career-profile-detail" hidden style="margin-top:2rem;">
-        <h2>Career Profile</h2>
-        <p class="hint">Everything you've confirmed so far. Edit or delete anything below.</p>
-
-        <button type="button" id="export-profile-btn" class="btn-secondary">Download my Career Profile (backup)</button>
-        <div id="export-profile-error" class="error" hidden></div>
-
-        <div id="skill-scan-start">
-          <button type="button" id="skill-scan-btn" class="btn-secondary">Scan for Missing Skills</button>
-          <p class="hint">Reviews your whole profile against what's typical for your kinds of roles, and asks about anything that looks like a real blind spot.</p>
-        </div>
-
-        <div id="skill-scan-loading" class="processing-card" hidden aria-live="polite">
-          <p class="processing-status"></p>
-          <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
-        </div>
-
-        <div id="skill-scan-questions" hidden>
-          <p id="skill-scan-summary"></p>
-          <div id="skill-scan-questions-list"></div>
-          <div id="skill-scan-questions-error" class="error" hidden></div>
-          <button type="button" id="skill-scan-questions-submit-btn">Continue</button>
-          <button type="button" id="skill-scan-questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
-        </div>
-
-        <div id="skill-scan-complete" hidden>
-          <p class="success">Your Career Profile already looks well-rounded for the kinds of roles it shows — nothing new stood out this time.</p>
-          <p id="skill-scan-complete-summary" class="hint"></p>
-          <p class="hint">Add more experience or run the scan again later and it'll pick up from there.</p>
-          <button type="button" id="skill-scan-complete-ok-btn" class="btn-secondary">OK</button>
-        </div>
-
-        <div id="skill-scan-review" hidden>
-          <h3>Add these to your profile?</h3>
-          <p class="hint">Choose which role each one belongs to, or remove it.</p>
-          <div id="skill-scan-facts-list"></div>
-          <button type="button" id="skill-scan-save-btn">Save to My Career Profile</button>
-          <button type="button" id="skill-scan-cancel-btn" class="btn-secondary">Cancel</button>
-          <div id="skill-scan-save-error" class="error" hidden></div>
-        </div>
-
-        <h3>Experience</h3>
-        <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
-          <button type="button" id="sort-newest-btn" class="btn-secondary">Newest first</button>
-          <button type="button" id="sort-oldest-btn" class="btn-secondary">Oldest first</button>
-        </div>
-        <div id="experience-detail-list"></div>
-
-        <h3>Education</h3>
-        <div id="education-detail-list"></div>
-
-        <h3>Certifications</h3>
-        <div id="certification-detail-list"></div>
-
-        <h3>Skills</h3>
-        <p class="hint">A skill's name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
-        <form id="skill-quick-add-form">
-          <label class="field">
-            <span>Quick add a skill</span>
-            <input type="text" id="skill-quick-add-input" placeholder="e.g. Technical expertise" maxlength="60" autocomplete="off" />
-          </label>
-          <button type="submit" class="btn-secondary">Add to my skills</button>
-          <p class="hint" id="skill-quick-add-msg" hidden></p>
-        </form>
-        <button type="button" id="skill-tidy-btn" class="btn-secondary">Shorten long skill names</button>
-        <div id="skill-tidy-panel" hidden>
-          <p class="hint" id="skill-tidy-intro"></p>
-          <div id="skill-tidy-list"></div>
-          <div id="skill-tidy-error" class="error" hidden></div>
-          <button type="button" id="skill-tidy-apply-btn">Save the ones I've ticked</button>
-          <button type="button" id="skill-tidy-cancel-btn" class="btn-secondary">Close</button>
-        </div>
-        <div id="skill-detail-list"></div>
-
-        <h3>Job &amp; Skill Scan History</h3>
-        <div id="scan-history-list"></div>
-
-        <h3>Resumes Built</h3>
-        <div id="resume-version-list"></div>
-
-        <h3>Technologies &amp; Achievements</h3>
-        <p class="hint">Not yet tracked as their own separate evidence — for now they're part of your role descriptions above. Tracking these individually is planned.</p>
-
-        <h3>Languages</h3>
-        <p class="hint">Not yet tracked. Planned for a future update.</p>
-
-        <h3>Geographic / International Experience</h3>
-        <p class="hint">Not yet tracked. Planned for a future update.</p>
-      </section>
 
       <section class="card" id="career-profile-editor" hidden style="margin-top:2rem;">
       <h2>Add to My Career Profile</h2>

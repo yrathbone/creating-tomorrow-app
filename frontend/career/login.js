@@ -431,29 +431,65 @@ async function loadSkills() {
   updateDashboardSummary();
 }
 
+// Career Snapshot tiles: one panel open at a time inside the snapshot card.
+let activeSnapshotPanel = null;
+
+function openSnapshotPanel(key, toggle) {
+  activeSnapshotPanel = toggle && activeSnapshotPanel === key ? null : key;
+  document.querySelectorAll(".snapshot-panel").forEach((p) => { p.hidden = p.id !== "panel-" + activeSnapshotPanel; });
+  document.querySelectorAll("#career-stat-row [data-panel]").forEach((b) => b.classList.toggle("active", b.dataset.panel === activeSnapshotPanel));
+  if (activeSnapshotPanel) document.getElementById("panel-" + activeSnapshotPanel).scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+document.getElementById("career-stat-row").addEventListener("click", (e) => {
+  const tile = e.target.closest("[data-panel]");
+  if (tile) openSnapshotPanel(tile.dataset.panel, true);
+});
+
 function updateDashboardSummary() {
   const statRow = document.getElementById("career-stat-row");
   if (statRow) {
     statRow.textContent = "";
+    const scans = typeof allScanHistory !== "undefined" ? allScanHistory.length : 0;
+    const resumes = typeof allResumeVersions !== "undefined" ? allResumeVersions.length : 0;
+    // Each tile opens its own list inside the snapshot (key -> #panel-<key>).
     const stats = [
-      [allExperiences.length, allExperiences.length === 1 ? "Role" : "Roles"],
-      [allEducation.length, "Education"],
-      [allCertifications.length, allCertifications.length === 1 ? "Certification" : "Certifications"],
-      [allSkills.length, allSkills.length === 1 ? "Skill" : "Skills"],
+      { key: "roles", number: allExperiences.length, label: allExperiences.length === 1 ? "Role" : "Roles" },
+      { key: "education", number: allEducation.length, label: "Education" },
+      { key: "certifications", number: allCertifications.length, label: allCertifications.length === 1 ? "Certification" : "Certifications" },
+      { key: "skills", number: allSkills.length, label: allSkills.length === 1 ? "Skill" : "Skills" },
+      { key: "history", number: scans, label: scans === 1 ? "Job & Skill Scan" : "Job & Skill Scans" },
+      { key: "resumes", number: resumes, label: resumes === 1 ? "Resume Built" : "Resumes Built" },
     ];
-    for (const [number, label] of stats) {
-      const card = document.createElement("div");
-      card.className = "stat-card";
+    for (const s of stats) {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "stat-card stat-" + s.key + (activeSnapshotPanel === s.key ? " active" : "");
+      card.dataset.panel = s.key;
       const num = document.createElement("span");
       num.className = "stat-number";
-      num.textContent = String(number);
+      num.textContent = String(s.number);
       const lbl = document.createElement("span");
       lbl.className = "stat-label";
-      lbl.textContent = label;
+      lbl.textContent = s.label;
       card.appendChild(num);
       card.appendChild(lbl);
       statRow.appendChild(card);
     }
+    // Not built yet / lives elsewhere: shown so they aren't forgotten.
+    for (const [label, note] of [["Applications", "Coming soon"], ["Career Direction", "Coming soon"]]) {
+      const card = document.createElement("div");
+      card.className = "stat-card stat-soon";
+      card.setAttribute("aria-disabled", "true");
+      card.innerHTML = '<span class="stat-number">&mdash;</span><span class="stat-label"></span>';
+      card.querySelector(".stat-label").textContent = label + " (" + note.toLowerCase() + ")";
+      statRow.appendChild(card);
+    }
+    const li = document.createElement("a");
+    li.className = "stat-card stat-linkedin";
+    li.href = "../spotlight.html";
+    li.innerHTML = '<span class="stat-number">in</span><span class="stat-label">Refine My LinkedIn</span>';
+    statRow.appendChild(li);
   }
 
   const recentList = document.getElementById("recently-confirmed-list");
@@ -479,96 +515,6 @@ function updateDashboardSummary() {
         const li = document.createElement("li");
         li.textContent = item.text;
         recentList.appendChild(li);
-      }
-    }
-  }
-
-  const rolePreview = document.getElementById("role-preview-list");
-  if (rolePreview) {
-    rolePreview.textContent = "";
-    if (allExperiences.length === 0) {
-      const p = document.createElement("p");
-      p.className = "hint";
-      p.textContent = "No roles yet — add one or upload a resume to get started.";
-      rolePreview.appendChild(p);
-    } else {
-      const newestFirst = allExperiences.slice().sort((a, b) => parseDateForSort(b.start_date) - parseDateForSort(a.start_date));
-      for (const exp of newestFirst.slice(0, 3)) {
-        const item = document.createElement("div");
-        item.className = "role-preview-item";
-        const title = document.createElement("div");
-        title.className = "role-title";
-        title.textContent = exp.title;
-        const org = document.createElement("div");
-        org.className = "role-org";
-        org.textContent = exp.organization;
-        item.appendChild(title);
-        item.appendChild(org);
-        const dates = [exp.start_date, exp.end_date].filter(Boolean).join(" – ");
-        if (dates) {
-          const datesEl = document.createElement("div");
-          datesEl.className = "role-dates";
-          datesEl.textContent = dates;
-          item.appendChild(datesEl);
-        }
-        rolePreview.appendChild(item);
-      }
-    }
-  }
-
-  const dashEdu = document.getElementById("dashboard-education-list");
-  const dashCert = document.getElementById("dashboard-certifications-list");
-  if (dashEdu) {
-    dashEdu.textContent = "";
-    if (allEducation.length === 0) {
-      const p = document.createElement("p");
-      p.className = "hint";
-      p.textContent = "No education added yet.";
-      dashEdu.appendChild(p);
-    } else {
-      for (const entry of allEducation) {
-        const p = document.createElement("p");
-        p.textContent = educationLabel(entry);
-        dashEdu.appendChild(p);
-      }
-    }
-  }
-  if (dashCert) {
-    dashCert.textContent = "";
-    if (allCertifications.length === 0) {
-      const p = document.createElement("p");
-      p.className = "hint";
-      p.textContent = "No certifications added yet.";
-      dashCert.appendChild(p);
-    } else {
-      for (const entry of allCertifications) {
-        const p = document.createElement("p");
-        p.textContent = certificationLabel(entry);
-        dashCert.appendChild(p);
-      }
-    }
-  }
-
-  const dashSkills = document.getElementById("dashboard-skills-list");
-  if (dashSkills) {
-    dashSkills.textContent = "";
-    if (allSkills.length === 0) {
-      const p = document.createElement("p");
-      p.className = "hint";
-      p.textContent = "No skills yet — add one or run a skill scan to get started.";
-      dashSkills.appendChild(p);
-    } else {
-      const preview = allSkills.slice(0, 8);
-      for (const entry of preview) {
-        const p = document.createElement("p");
-        p.textContent = skillLabel(entry);
-        dashSkills.appendChild(p);
-      }
-      if (allSkills.length > preview.length) {
-        const more = document.createElement("p");
-        more.className = "hint";
-        more.textContent = "+ " + (allSkills.length - preview.length) + " more";
-        dashSkills.appendChild(more);
       }
     }
   }
@@ -620,22 +566,21 @@ async function showProfileStep() {
 }
 
 function revealCareerProfileSections(scrollToId) {
-  document.getElementById("career-profile-detail").hidden = false;
-  document.getElementById("career-profile-editor").hidden = false;
-  document.getElementById(scrollToId).scrollIntoView({ behavior: "smooth", block: "start" });
+  if (scrollToId === "career-profile-editor") {
+    const editor = document.getElementById("career-profile-editor");
+    editor.hidden = false;
+    editor.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  // Everything else lives in the Career Snapshot tiles now.
+  openSnapshotPanel(scrollToId === "skill-detail-list" ? "skills" : "roles", false);
 }
 
-document.getElementById("view-full-profile-btn").addEventListener("click", () => {
-  revealCareerProfileSections("career-profile-detail");
-});
 document.getElementById("update-profile-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-editor");
 });
 document.getElementById("nav-career-profile-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-detail");
-});
-document.getElementById("view-skills-btn").addEventListener("click", () => {
-  revealCareerProfileSections("skill-detail-list");
 });
 document.getElementById("upload-resume-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-editor");
