@@ -79,9 +79,9 @@
       </div>
 
       <div class="dashboard-grid">
-        <div class="card span-2 snapshot-card">
-          <div class="dashboard-card-header"><h2>Career Snapshot</h2></div>
-          <p class="hint">Click a tile to open it. Click it again to close it.</p>
+        <div class="card span-2 snapshot-card profile-card">
+          <div class="dashboard-card-header"><h2>Your Career Profile</h2></div>
+          <p class="hint">What you've done: the evidence everything else is built from. Click a tile to open it, and again to close it.</p>
           <div class="stat-row" id="career-stat-row"></div>
 
           <div id="snapshot-panels">
@@ -180,32 +180,6 @@
           <div id="skill-scan-save-error" class="error" hidden></div>
         </div>
             </section>
-
-            <section class="snapshot-panel" id="panel-history" hidden>
-        <h3>Job &amp; Skill Scan History</h3>
-        <div id="scan-history-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-applications" hidden>
-              <h3>Applications</h3>
-              <p class="hint">Jobs you've applied for. Come back and update each one: no response, interview, rejection or offer.</p>
-              <p id="application-summary" class="application-summary"></p>
-              <button type="button" id="application-add-toggle-btn" class="btn-secondary">+ Add an application by hand</button>
-              <form id="application-form" hidden>
-                <label class="field"><span>Job title</span><input type="text" id="application-title" required /></label>
-                <label class="field"><span>Company</span><input type="text" id="application-company" /></label>
-                <label class="field"><span>Date applied</span><input type="date" id="application-date" /></label>
-                <button type="submit">Add to my tracker</button>
-                <div id="application-form-error" class="error" hidden></div>
-              </form>
-              <div id="application-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-resumes" hidden>
-        <h3>Resumes Built</h3>
-        <div id="resume-version-list"></div>
-            </section>
-
           </div>
 
           <h3 style="margin-top:1.5rem;">Recently Confirmed</h3>
@@ -391,6 +365,39 @@
               <p class="hint">The most recent roles that matter for this job keep their strongest bullets. Older or less relevant roles are left off to keep the resume short; your summary can still reflect your full years of experience. Left off something you want? Tell me and I'll adjust.</p>
               <ul id="job-role-selection-list"></ul>
             </div>
+          </div>
+        </div>
+
+        <div class="card span-2 snapshot-card activity-card">
+          <div class="dashboard-card-header"><h2>Your Activity</h2></div>
+          <p class="hint">What you've done with it: job scans, resumes you built, jobs you applied for, and your LinkedIn.</p>
+          <div class="stat-row" id="activity-stat-row"></div>
+
+          <div id="activity-panels">
+            <section class="snapshot-panel" id="panel-history" hidden>
+        <h3>Job &amp; Skill Scan History</h3>
+        <div id="scan-history-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-resumes" hidden>
+        <h3>Resumes Built</h3>
+        <div id="resume-version-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-applications" hidden>
+              <h3>Applications</h3>
+              <p class="hint">Jobs you've applied for. Come back and update each one: no response, interview, rejection or offer.</p>
+              <p id="application-summary" class="application-summary"></p>
+              <button type="button" id="application-add-toggle-btn" class="btn-secondary">+ Add an application by hand</button>
+              <form id="application-form" hidden>
+                <label class="field"><span>Job title</span><input type="text" id="application-title" required /></label>
+                <label class="field"><span>Company</span><input type="text" id="application-company" /></label>
+                <label class="field"><span>Date applied</span><input type="date" id="application-date" /></label>
+                <button type="submit">Add to my tracker</button>
+                <div id="application-form-error" class="error" hidden></div>
+              </form>
+              <div id="application-list"></div>
+            </section>
           </div>
         </div>
 

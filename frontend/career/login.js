@@ -437,52 +437,63 @@ let activeSnapshotPanel = null;
 function openSnapshotPanel(key, toggle) {
   activeSnapshotPanel = toggle && activeSnapshotPanel === key ? null : key;
   document.querySelectorAll(".snapshot-panel").forEach((p) => { p.hidden = p.id !== "panel-" + activeSnapshotPanel; });
-  document.querySelectorAll("#career-stat-row [data-panel]").forEach((b) => b.classList.toggle("active", b.dataset.panel === activeSnapshotPanel));
+  document.querySelectorAll(".stat-row [data-panel]").forEach((b) => b.classList.toggle("active", b.dataset.panel === activeSnapshotPanel));
   if (activeSnapshotPanel) document.getElementById("panel-" + activeSnapshotPanel).scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-document.getElementById("career-stat-row").addEventListener("click", (e) => {
-  const tile = e.target.closest("[data-panel]");
-  if (tile) openSnapshotPanel(tile.dataset.panel, true);
-});
+// Both tile rows (Your Career Profile and Your Activity) open their panels the same way.
+for (const rowId of ["career-stat-row", "activity-stat-row"]) {
+  document.getElementById(rowId).addEventListener("click", (e) => {
+    const tile = e.target.closest("[data-panel]");
+    if (tile) openSnapshotPanel(tile.dataset.panel, true);
+  });
+}
 
 function updateDashboardSummary() {
   const statRow = document.getElementById("career-stat-row");
-  if (statRow) {
+  const activityRow = document.getElementById("activity-stat-row");
+  if (statRow && activityRow) {
     statRow.textContent = "";
+    activityRow.textContent = "";
     const scans = typeof allScanHistory !== "undefined" ? allScanHistory.length : 0;
     const resumes = typeof allResumeVersions !== "undefined" ? allResumeVersions.length : 0;
     const applied = typeof allApplications !== "undefined" ? allApplications.length : 0;
-    // Each tile opens its own list inside the snapshot (key -> #panel-<key>).
-    const stats = [
+    // Each tile opens its own list right under its row (key -> #panel-<key>).
+    const profileStats = [
       { key: "roles", number: allExperiences.length, label: allExperiences.length === 1 ? "Role" : "Roles" },
       { key: "education", number: allEducation.length, label: "Education" },
       { key: "certifications", number: allCertifications.length, label: allCertifications.length === 1 ? "Certification" : "Certifications" },
       { key: "skills", number: allSkills.length, label: allSkills.length === 1 ? "Skill" : "Skills" },
+    ];
+    const activityStats = [
       { key: "history", number: scans, label: scans === 1 ? "Job & Skill Scan" : "Job & Skill Scans" },
       { key: "resumes", number: resumes, label: resumes === 1 ? "Resume Built" : "Resumes Built" },
       { key: "applications", number: applied, label: applied === 1 ? "Application" : "Applications" },
     ];
-    for (const s of stats) {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = "stat-card stat-" + s.key + (activeSnapshotPanel === s.key ? " active" : "");
-      card.dataset.panel = s.key;
-      const num = document.createElement("span");
-      num.className = "stat-number";
-      num.textContent = String(s.number);
-      const lbl = document.createElement("span");
-      lbl.className = "stat-label";
-      lbl.textContent = s.label;
-      card.appendChild(num);
-      card.appendChild(lbl);
-      statRow.appendChild(card);
-    }
+    const addTiles = (row, stats) => {
+      for (const s of stats) {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "stat-card stat-" + s.key + (activeSnapshotPanel === s.key ? " active" : "");
+        card.dataset.panel = s.key;
+        const num = document.createElement("span");
+        num.className = "stat-number";
+        num.textContent = String(s.number);
+        const lbl = document.createElement("span");
+        lbl.className = "stat-label";
+        lbl.textContent = s.label;
+        card.appendChild(num);
+        card.appendChild(lbl);
+        row.appendChild(card);
+      }
+    };
+    addTiles(statRow, profileStats);
+    addTiles(activityRow, activityStats);
     const li = document.createElement("a");
     li.className = "stat-card stat-linkedin";
     li.href = "../spotlight.html";
     li.innerHTML = '<span class="stat-number">in</span><span class="stat-label">Refine My LinkedIn</span>';
-    statRow.appendChild(li);
+    activityRow.appendChild(li);
   }
 
   const recentList = document.getElementById("recently-confirmed-list");

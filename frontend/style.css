@@ -3235,3 +3235,7 @@ main.dashboard-main {
 /* Gold accents use the brand gold everywhere */
 .btn-gold { background: #e2a126; border-color: #cf9020; color: #101318; }
 .btn-gold:hover { background: #d4961e; }
+
+/* Your Career Profile (evidence) and Your Activity (what you did with it) */
+.dashboard-grid > .activity-card { border-top-color: #4338ca; }
+.activity-card .hint, .profile-card .hint { margin-top: 0; }
