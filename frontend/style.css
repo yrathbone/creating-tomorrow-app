@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
-  --blue: #0047ab; /* Cobalt Blue */
-  --navy: #0f2a52; /* deep headline blue */
+  --blue: #0847c7; /* brand blue: matches the home page buttons and links */
+  --navy: #102d55; /* brand navy: matches the home page headline */
   --blue-light: #d3e0f5;
   --sky-top: #eaf1fc;
   --sky-bottom: #ffffff;
@@ -11,7 +11,7 @@
   --card-bg: #ffffff;
   --border: #e1e6ea;
   --error: #b3261e;
-  --gold: #f0ac3f; /* matches the logo's rising-wave accent */
+  --gold: #e2a126; /* brand gold: matches the home page accent and button */
   --gold-ink: #4a3200;
 }
 
@@ -2844,7 +2844,7 @@ main.dashboard-main {
 /* One accent per Career Snapshot tile. Text on tinted backgrounds uses the
    darker -ink shade so it stays readable (site is light-theme only). */
 .dashboard-main {
-  --c-roles: #0047ab;          --c-roles-bg: #e6eefb;
+  --c-roles: #0847c7;          --c-roles-bg: #e6eefb;
   --c-education: #6a3fb5;      --c-education-bg: #efe9fa;
   --c-certifications: #0b7f75; --c-certifications-bg: #e2f4f1;
   --c-skills: #b86e00;         --c-skills-bg: #fdf0d9;
@@ -3188,3 +3188,50 @@ main.dashboard-main {
 .spotlight-page #step-input .guide-intro-line { background: linear-gradient(135deg, #e8f1fb 0%, #fff6e3 100%); border-radius: 12px; padding: 1rem 1.1rem; }
 .spotlight-page #step-input .privacy-note { background: #eef6f0; border: 1px solid #b6dcc1; border-left: 5px solid #1f7a3f; border-radius: 10px; color: #2d4a38; }
 .spotlight-page #review-btn:not(:disabled) { background: linear-gradient(135deg, #0a66c2, #0847c7); }
+
+/* --- One look across the home page, dashboard and LinkedIn pages --------- */
+/* Same headline treatment as the home hero: heavy, tight, navy then gold. */
+.dashboard-hero h1,
+.spotlight-page .page-header h1 {
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+.dashboard-hero h1 { font-size: 2.4rem; margin: 0 0 0.75rem; }
+@media (min-width: 640px) { .dashboard-hero h1 { font-size: 3rem; } }
+.dashboard-hero .hero-h1-line1,
+.dashboard-hero .hero-h1-line2 { display: inline; }
+.dashboard-hero .hero-h1-line1 { color: #102d55; }
+.dashboard-hero .hero-h1-line2 { color: #e2a126; }
+@media (min-width: 640px) {
+  .dashboard-hero .hero-h1-line1,
+  .dashboard-hero .hero-h1-line2 { display: block; }
+}
+.gold-text { color: #e2a126; }
+.dashboard-hero p { font-size: 1.1rem; color: #404957; }
+
+/* Hero buttons: the same pill buttons as the home page */
+.dashboard-hero-actions .btn-primary,
+.dashboard-hero-actions .btn-secondary,
+.dashboard-hero-actions .btn-linkedin {
+  padding: 14px 26px;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 2px solid transparent;
+  box-shadow: none;
+}
+.dashboard-hero-actions .btn-primary { background: #0847c7; color: #ffffff; }
+.dashboard-hero-actions .btn-primary:hover { background: #063594; opacity: 1; }
+.dashboard-hero-actions .btn-linkedin { background: #0a66c2; color: #ffffff; border-color: #0a66c2; }
+.dashboard-hero-actions #general-resume-hero-btn { background: #e2a126; color: #101318; border-color: #e2a126; }
+.dashboard-hero-actions #general-resume-hero-btn:hover { background: #cf9020; opacity: 1; }
+.dashboard-hero-actions #update-profile-btn { background: #ffffff; color: #0847c7; border-color: #0847c7; }
+.dashboard-hero-actions #update-profile-btn:hover { background: #eef3fc; opacity: 1; }
+
+/* Cards: the home page's rounded, soft-shadow look */
+.dashboard-grid > .card { border-radius: 18px; box-shadow: 0 2px 14px rgba(16, 45, 85, 0.06); }
+.spotlight-page .page-header .tagline { font-size: 1.05rem; }
+
+/* Gold accents use the brand gold everywhere */
+.btn-gold { background: #e2a126; border-color: #cf9020; color: #101318; }
+.btn-gold:hover { background: #d4961e; }

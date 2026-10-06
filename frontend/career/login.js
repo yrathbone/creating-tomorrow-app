@@ -573,12 +573,6 @@ function revealCareerProfileSections(scrollToId) {
 document.getElementById("update-profile-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-editor");
 });
-document.getElementById("nav-applications-btn").addEventListener("click", () => {
-  openSnapshotPanel("applications", false);
-});
-document.getElementById("nav-career-profile-btn").addEventListener("click", () => {
-  revealCareerProfileSections("career-profile-detail");
-});
 // The same import flow serves a resume and a LinkedIn export; only the wording differs.
 function openImportFlow(fromLinkedIn) {
   revealCareerProfileSections("career-profile-editor");
