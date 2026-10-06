@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
 from career.job_match import JobMatchError, build_general_resume, compare_to_job
+from career.job_fit import compute_job_fit
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
@@ -903,6 +904,9 @@ async def job_compare(
         raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
 
     job_title = (result.get("job_title") or "").strip() or None
+    # Computed in code from the requirement lists (None if the model omitted the met list).
+    job_fit = compute_job_fit(result["match_report"])
+    result["job_fit"] = job_fit
     scan = ScanHistory(
         career_profile_id=profile.id,
         scan_type="job_comparison",
@@ -911,6 +915,7 @@ async def job_compare(
         result_data={
             "job_description": job_description,
             "match_report": result["match_report"],
+            "job_fit": job_fit,
             "categories": result.get("categories") or [],
             "questions": result.get("questions") or [],
             "job_title": job_title,
@@ -922,6 +927,21 @@ async def job_compare(
     db.refresh(scan)
 
     return {**result, "scan_history_id": scan.id}
+
+
+class JobFitRequest(BaseModel):
+    match_report: dict
+    confirmed_facts: list[dict] = []
+
+
+@router.post("/job-fit")
+async def job_fit(
+    req: JobFitRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Recalculates the Job Fit after the gap interview: gaps the candidate
+    confirmed count as met. Pure code, no AI call and no saved data."""
+    return {"job_fit": compute_job_fit(req.match_report, req.confirmed_facts)}
 
 
 class JobKeywordCheckRequest(BaseModel):

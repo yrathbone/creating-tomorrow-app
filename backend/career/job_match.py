@@ -39,7 +39,7 @@ Do four things:
 
 1. ASSESS how well the Career Profile matches the job posting, honestly, as "Low", "Average", or "High", the way a discerning human recruiter would - NOT by counting keyword overlap and NOT with a letter grade or numeric score. Call out cases where a word or phrase appears in both the profile and the posting but means something different in context (e.g. "cash management" at a retail bank branch vs. as a corporate treasury product). Be calibrated: most real comparisons should land as "Average". Be encouraging in TONE, never by inflating the ASSESSMENT. Frame any gap as "not yet evidenced" or "worth exploring," never as something wrong with the person - an unconfirmed qualification is a statement about the profile's current evidence, not about them.
 
-2. Enumerate the posting's QUALIFICATION REQUIREMENTS exhaustively - go through the actual posting text and identify every distinct skill, experience, credential, or qualification it states or clearly implies, not just the first few that stand out. Classify each one's IMPORTANCE based on the posting's own language: "required" (stated as required/must-have, or essential to the role as described) or "preferred" (stated as preferred/nice-to-have/a plus). For each requirement the Career Profile does not yet clearly evidence, record it as a REQUIRED QUALIFICATION GAP with that importance, marked "missing" or "partial," with a plain explanation. Leave out requirements the profile already clearly evidences - this list should end up being every genuine gap, not a sampled few, so nothing important silently slips through.
+2. Enumerate the posting's QUALIFICATION REQUIREMENTS exhaustively - go through the actual posting text and identify every distinct skill, experience, credential, or qualification it states or clearly implies, not just the first few that stand out. Classify each one's IMPORTANCE based on the posting's own language: "required" (stated as required/must-have, or essential to the role as described) or "preferred" (stated as preferred/nice-to-have/a plus). For each requirement the Career Profile does not yet clearly evidence, record it as a REQUIRED QUALIFICATION GAP with that importance, marked "missing" or "partial," with a plain explanation. Leave out of that gap list the requirements the profile already clearly evidences - the gap list should end up being every genuine gap, not a sampled few, so nothing important silently slips through. For each gap also give a one-sentence HOW TO CLOSE: what would honestly evidence it (for example a certification, a course, or a kind of role), never claiming anything about the candidate. Separately, record every requirement the Career Profile already clearly evidences as REQUIREMENTS MET, with its importance, using the same exhaustive pass over the posting: a requirement belongs in exactly one of the two lists, and together they must cover the whole posting, because a fit score is computed from them.
 
 3. Write a FIRST BATCH of yes/no discovery questions to find out if the candidate actually has relevant experience that just isn't in their profile yet - specific and grounded in this posting's actual requirements, never generic. PRIORITIZE "required"-importance gaps first; only include "preferred"-importance gaps in this first batch if there's room after covering every required gap. Include at most 6 questions in this first batch - if there are more required gaps than fit, the remaining ones will be covered in follow-up rounds (see below), never dropped. Each question must be answerable honestly with yes/no. Never assume yes. This batch must never be empty when there are real gaps to explore, and must never skip a required-importance gap in favor of a preferred one.
 
@@ -80,8 +80,21 @@ MATCH_REPORT_PROPS = {
                 },
                 "status": {"type": "string", "enum": ["missing", "partial"]},
                 "explanation": {"type": "string"},
+                "how_to_close": {"type": "string", "description": "One sentence: what would honestly evidence this (certification, course, kind of role). No claims about the candidate."},
             },
             "required": ["requirement", "importance", "status", "explanation"],
+        },
+    },
+    "requirements_met": {
+        "type": "array",
+        "description": "Every posting requirement the profile already clearly evidences (the gap list holds the rest).",
+        "items": {
+            "type": "object",
+            "properties": {
+                "requirement": {"type": "string"},
+                "importance": {"type": "string", "enum": ["required", "preferred"]},
+            },
+            "required": ["requirement", "importance"],
         },
     },
 }
@@ -99,7 +112,7 @@ COMPARE_TOOL = {
             "match_report": {
                 "type": "object",
                 "properties": MATCH_REPORT_PROPS,
-                "required": ["match_level", "match_rationale", "strengths", "required_qualification_gaps"],
+                "required": ["match_level", "match_rationale", "strengths", "required_qualification_gaps", "requirements_met"],
             },
             "categories": {"type": "array", "items": {"type": "string"}},
             "questions": {

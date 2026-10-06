@@ -252,6 +252,18 @@
           </div>
 
           <div id="job-match-state" hidden>
+            <div id="job-fit-block" class="match-grade" hidden>
+              <div class="match-grade-letter" id="job-fit-letter"></div>
+              <div class="match-grade-text">
+                <strong id="job-fit-title"></strong>
+                <p id="job-fit-verdict"></p>
+                <p class="hint">Job Fit: how much of what this posting asks for your profile already shows (required items count the most). It's about whether to apply, not a score to chase. Other tools score differently.</p>
+              </div>
+            </div>
+            <div id="job-fit-close-block" hidden>
+              <h4>What would close the gaps</h4>
+              <ul id="job-fit-close-list"></ul>
+            </div>
             <p><strong>Match: </strong><span id="job-match-level"></span></p>
             <p id="job-match-rationale"></p>
             <div id="job-strengths-block">
@@ -275,6 +287,7 @@
           </div>
 
           <div id="job-build-form-state" hidden>
+            <p class="hint" id="job-fit-after" hidden></p>
             <h4>A couple details for the resume header</h4>
             <label class="field"><span>Your name</span><input type="text" id="job-build-name" required /></label>
             <label class="field"><span>Contact line</span><input type="text" id="job-build-contact" placeholder="City, ST | Phone | Email | LinkedIn" required /></label>

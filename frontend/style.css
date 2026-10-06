@@ -3007,3 +3007,10 @@ main.dashboard-main {
 @media (max-width: 560px) {
   .match-grade { flex-direction: column; align-items: flex-start; }
 }
+
+/* Job Fit letter badge on Job & Skill Scan History cards */
+.history-fit-badge { color: #ffffff; font-weight: 700; }
+.history-fit-badge.fit-a { background: #1f7a3f; }
+.history-fit-badge.fit-b { background: var(--blue); }
+.history-fit-badge.fit-c { background: #b86e00; }
+.history-fit-badge.fit-d { background: #c2410c; }

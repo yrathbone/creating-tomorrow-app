@@ -16,6 +16,7 @@ const jobState = {
   matchReport: null,
   tailoredResumeData: null,
   scanHistoryId: null,
+  jobFit: null,
 };
 let currentJobQuestions = [];
 const JOB_MAX_ROUNDS = 4;
@@ -101,6 +102,8 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
     currentJobQuestions = data.questions || [];
 
     renderJobMatch(data.match_report);
+    jobState.jobFit = data.job_fit || null;
+    renderJobFit(jobState.jobFit);
 
     stopProcessingState(jobLoadingState);
     jobLoadingState.hidden = true;
@@ -113,6 +116,55 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
     errorEl.hidden = false;
   }
 });
+
+// Job Fit: does this JOB match the candidate (computed on the server from the
+// comparison's requirement lists). Shown as a letter and a band, with what would
+// honestly close the biggest gaps. Separate from the resume's Keyword Match grade.
+function renderJobFit(fit) {
+  const block = document.getElementById("job-fit-block");
+  const closeBlock = document.getElementById("job-fit-close-block");
+  const closeList = document.getElementById("job-fit-close-list");
+  closeList.textContent = "";
+  block.hidden = !fit;
+  closeBlock.hidden = true;
+  block.className = "match-grade" + (fit ? " match-grade-" + fit.letter.toLowerCase() : "");
+  if (!fit) return;
+  document.getElementById("job-fit-letter").textContent = fit.letter;
+  document.getElementById("job-fit-title").textContent = "Job Fit: " + fit.title + " (" + fit.band + " of what the posting asks)";
+  document.getElementById("job-fit-verdict").textContent = fit.verdict;
+  const gaps = fit.open_gaps || [];
+  closeBlock.hidden = gaps.length === 0;
+  for (const g of gaps) {
+    const li = document.createElement("li");
+    li.textContent = g.requirement + (g.importance === "required" ? " (required)" : " (preferred)") + (g.how_to_close ? " — " + g.how_to_close : "");
+    closeList.appendChild(li);
+  }
+}
+
+// After the gap interview, gaps the candidate confirmed count as met.
+async function refreshJobFit() {
+  const note = document.getElementById("job-fit-after");
+  note.hidden = true;
+  if (!jobState.jobFit || !jobState.matchReport || !jobState.discoveredFacts.length) return;
+  try {
+    const res = await authedFetch("/api/career/job-fit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ match_report: jobState.matchReport, confirmed_facts: jobState.discoveredFacts }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.job_fit) return;
+    const before = jobState.jobFit;
+    jobState.jobFit = data.job_fit;
+    renderJobFit(data.job_fit);
+    note.textContent = "Job Fit after your answers: " + data.job_fit.letter + " (" + data.job_fit.band + ")" +
+      (data.job_fit.letter !== before.letter ? ", up from " + before.letter + "." : ".");
+    note.hidden = false;
+  } catch (err) {
+    // The fit is informational; never block building the resume on it.
+  }
+}
 
 function renderJobMatch(matchReport) {
   document.getElementById("job-match-level").textContent = matchReport.match_level;
@@ -254,6 +306,7 @@ async function submitJobAnswers(forceFinish) {
 
     if (data.stage === "confirm") {
       jobState.discoveredFacts = data.discovered_facts || [];
+      await refreshJobFit();
       showJobBuildForm();
     } else {
       currentJobQuestions = data.questions || [];
@@ -736,6 +789,9 @@ function resetJobTarget() {
   jobState.matchReport = null;
   jobState.tailoredResumeData = null;
   jobState.scanHistoryId = null;
+  jobState.jobFit = null;
+  renderJobFit(null);
+  document.getElementById("job-fit-after").hidden = true;
   renderRoleSelection([]);
   renderTermReport([]);
   renderMatchGrade([]);
@@ -784,6 +840,8 @@ function openJobTarget(latest) {
   currentJobQuestions = data.questions || [];
 
   renderJobMatch(jobState.matchReport);
+  jobState.jobFit = data.job_fit || null;
+  renderJobFit(jobState.jobFit);
   hideAllJobStates();
   jobMatchState.hidden = false;
 }

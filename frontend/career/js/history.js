@@ -45,6 +45,14 @@ async function loadScanHistory() {
     actions.className = "list-row-actions";
 
     if (entry.scan_type === "job_comparison") {
+      const fit = (entry.result_data || {}).job_fit;
+      if (fit && fit.letter) {
+        const fitBadge = document.createElement("span");
+        fitBadge.className = "history-match-badge history-fit-badge fit-" + fit.letter.toLowerCase();
+        fitBadge.textContent = "Fit " + fit.letter;
+        fitBadge.title = fit.title + " (" + fit.band + ")";
+        actions.appendChild(fitBadge);
+      }
       const matchLevel = ((entry.result_data || {}).match_report || {}).match_level || "";
       if (matchLevel) {
         const badge = document.createElement("span");
