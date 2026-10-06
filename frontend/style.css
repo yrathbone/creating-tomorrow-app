@@ -3097,3 +3097,56 @@ main.dashboard-main {
   margin-top: 0;
   background: #ffffff;
 }
+
+/* --- LinkedIn (Spotlight) page colour ------------------------------------ */
+.spotlight-page .page-header {
+  max-width: 1040px;
+  margin: 1.25rem auto 1.5rem;
+  padding: 2rem 1.5rem 1.75rem;
+  background: linear-gradient(135deg, #e3eefb 0%, #ffffff 55%, #fff3d9 100%);
+  border: 1px solid var(--blue-light);
+  border-top: 5px solid #0a66c2;
+  border-radius: 16px;
+}
+.spotlight-page .page-header h1 { color: var(--navy); }
+.spotlight-page .page-header .guide-eyebrow { color: #0a66c2; letter-spacing: 0.12em; font-weight: 700; }
+.spotlight-page .page-header .tagline { color: #3d4b5c; }
+.spotlight-page #review-btn { background: #0a66c2; border-color: #0a66c2; }
+.spotlight-page .input-option-toggle strong { color: #0a66c2; }
+
+/* Report sections: one accent per block, green for what works, amber for what could be clearer */
+.spotlight-page .report-block {
+  border-left: 5px solid var(--blue);
+  padding-left: 1.1rem;
+  margin-bottom: 1.75rem;
+}
+.spotlight-page #results-sections > .report-block:nth-of-type(1) { border-left-color: #0a66c2; }
+.spotlight-page #results-sections > .report-block:nth-of-type(2) { border-left-color: #6a3fb5; }
+.spotlight-page #results-sections > .report-block:nth-of-type(3) { border-left-color: #0b7f75; }
+.spotlight-page #results-sections > .report-block:nth-of-type(4) { border-left-color: #c2410c; }
+.spotlight-page #results-sections > .report-block:nth-of-type(5) { border-left-color: #b86e00; }
+.spotlight-page #results-sections > .report-block:nth-of-type(6) { border-left-color: #1f7a3f; }
+.spotlight-page #results-sections > .report-block:nth-of-type(7) { border-left-color: #0a66c2; background: #f3f8fe; }
+.spotlight-page #results-sections > .report-block:nth-of-type(8) { border-left-color: #4338ca; background: #f4f3fd; }
+
+#fi-working, #headline-working, #about-working, #exp-working, #skills-clear { list-style: none; padding-left: 0; }
+#fi-working li, #headline-working li, #about-working li, #exp-working li, #skills-clear li {
+  background: #eef8f1;
+  border-left: 4px solid #1f7a3f;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.45rem;
+}
+#fi-clearer, #headline-clearer, #about-clearer, #exp-lost, #exp-suggestions, #skills-possible, #skills-needs-more { list-style: none; padding-left: 0; }
+#fi-clearer li, #headline-clearer li, #about-clearer li, #exp-lost li, #exp-suggestions li, #skills-possible li, #skills-needs-more li {
+  background: #fff7e6;
+  border-left: 4px solid #d99410;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.45rem;
+}
+.spotlight-page .suggested-text-block { background: #f3f8fe; border: 1px solid #b9d3f0; border-radius: 12px; padding: 1rem 1.1rem; margin: 1rem 0; }
+.spotlight-page .suggested-text-block h4 { color: #0a66c2; margin-top: 0; }
+.spotlight-page .strength-card { border-left: 5px solid #1f7a3f; background: #f3fbf6; }
+.sample-todo { color: #8a5300; font-style: italic; list-style: none; }
+.compare-linkedin-list { padding: 0.75rem 1rem; background: #f4f3fd; border: 1px solid #cfcaf5; border-radius: 10px; }

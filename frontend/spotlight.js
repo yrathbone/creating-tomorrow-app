@@ -210,6 +210,7 @@ function fillList(elementId, items) {
 
 function renderResults(data) {
   lastReviewData = data;
+  resetCompare();
   const insufficientBlock = document.getElementById("insufficient-info-block");
   const resultsSections = document.getElementById("results-sections");
 
@@ -252,7 +253,11 @@ function renderResults(data) {
     detail: "about-detail",
   });
   if (data.about && data.about.supplied) {
-    document.getElementById("about-suggested").textContent = data.about.suggested_revision || "";
+    const sampleAbout = data.suggested_full_profile && data.suggested_full_profile.about;
+    const aboutText = data.about.suggested_revision || sampleAbout || "";
+    document.getElementById("about-suggested").textContent = aboutText;
+    // No text at all: hide the empty box and its Copy button instead of showing a blank.
+    document.getElementById("about-suggested").closest(".suggested-text-block").hidden = !aboutText;
   }
 
   // 4. Experience
@@ -329,13 +334,49 @@ function renderResults(data) {
       (role.bullets || []).forEach((b) => {
         const li = document.createElement("li");
         li.textContent = b;
+        // A [bracketed note] is a reminder to finish the sentence on LinkedIn, not text to paste.
+        if (isSampleNote(b)) {
+          li.className = "sample-todo";
+          li.textContent = "To finish on LinkedIn: " + b.replace(/^\s*\[|\]\s*$/g, "");
+        }
         ul.appendChild(li);
       });
       card.appendChild(ul);
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "btn-secondary copy-btn";
+      copyBtn.textContent = "Copy this role";
+      copyBtn.dataset.copyText = roleCopyText(role);
+      card.appendChild(copyBtn);
       expContainer.appendChild(card);
     });
   }
 }
+
+// --- Sample profile copy helpers -------------------------------------------
+function isSampleNote(text) {
+  return /^\s*\[.*\]\s*$/.test(text || "");
+}
+
+function roleCopyText(role) {
+  const bullets = (role.bullets || []).filter((b) => !isSampleNote(b)).map((b) => "\u2022 " + b);
+  const heading = role.organization ? `${role.title} \u2014 ${role.organization}` : role.title;
+  return [heading, ...bullets].join("\n");
+}
+
+function wholeProfileCopyText(sample) {
+  const parts = [];
+  if (sample.headline) parts.push("HEADLINE\n" + sample.headline);
+  if (sample.about) parts.push("ABOUT\n" + sample.about);
+  const roles = (sample.experience || []).map(roleCopyText);
+  if (roles.length) parts.push("EXPERIENCE\n\n" + roles.join("\n\n"));
+  return parts.join("\n\n");
+}
+
+document.getElementById("sample-copy-all-btn").addEventListener("click", (e) => {
+  if (!lastReviewData || !lastReviewData.suggested_full_profile) return;
+  copyToClipboard(e.currentTarget, wholeProfileCopyText(lastReviewData.suggested_full_profile), null);
+});
 
 function renderSection(sectionData, prefix, ids) {
   const note = document.getElementById(ids.note);
@@ -362,28 +403,141 @@ function renderSection(sectionData, prefix, ids) {
 // .catch() the button would just silently do nothing, leaving the person
 // unsure whether it worked. The fallback selects the text so they can still
 // copy it manually with their own keyboard shortcut.
-document.getElementById("step-results").addEventListener("click", (e) => {
-  const btn = e.target.closest(".copy-btn");
-  if (!btn) return;
-  const target = document.getElementById(btn.dataset.copyTarget);
-  if (!target) return;
-
+function copyToClipboard(btn, text, fallbackTarget) {
   const original = btn.textContent;
   navigator.clipboard
-    .writeText(target.textContent)
+    .writeText(text)
     .then(() => {
       btn.textContent = "Copied!";
       setTimeout(() => (btn.textContent = original), 1500);
     })
     .catch(() => {
-      const range = document.createRange();
-      range.selectNodeContents(target);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      btn.textContent = "Selected — press Ctrl+C";
+      if (fallbackTarget) {
+        const range = document.createRange();
+        range.selectNodeContents(fallbackTarget);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      btn.textContent = fallbackTarget ? "Selected \u2014 press Ctrl+C" : "Couldn't copy \u2014 select the text instead";
       setTimeout(() => (btn.textContent = original), 2500);
     });
+}
+
+document.getElementById("step-results").addEventListener("click", (e) => {
+  const btn = e.target.closest(".copy-btn");
+  if (!btn) return;
+  if (btn.dataset.copyText !== undefined) {
+    copyToClipboard(btn, btn.dataset.copyText, null);
+    return;
+  }
+  const target = document.getElementById(btn.dataset.copyTarget);
+  if (!target) return;
+  copyToClipboard(btn, target.textContent, target);
+});
+
+// --- Compare with the signed-in person's Career Profile skills -------------
+// The public review can't know who is looking, and sign-in tokens are never kept
+// in the browser (see career/js/auth.js), so this section asks for a sign-in
+// and holds the token in memory only. Nothing is added to the profile unless
+// the person leaves it ticked and presses the button.
+let compareToken = null;
+
+function resetCompare() {
+  document.getElementById("compare-results").hidden = true;
+  document.getElementById("compare-error").hidden = true;
+  document.getElementById("compare-add-msg").hidden = true;
+  document.getElementById("compare-profile-list").textContent = "";
+}
+
+async function runCompare() {
+  const res = await fetch("/api/career/linkedin-skill-compare", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + compareToken },
+    body: JSON.stringify({ review: lastReviewData }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Request failed (${res.status})`);
+  }
+  const data = await res.json();
+
+  const linkedinList = document.getElementById("compare-linkedin-list");
+  const copyBtn = document.getElementById("compare-copy-btn");
+  const missingOnLinkedin = data.in_profile_not_on_linkedin || [];
+  linkedinList.textContent = missingOnLinkedin.length ? missingOnLinkedin.join(", ") : "Nothing: every skill in your Career Profile shows up in your LinkedIn review.";
+  copyBtn.hidden = missingOnLinkedin.length === 0;
+
+  const pickList = document.getElementById("compare-profile-list");
+  pickList.textContent = "";
+  const fresh = data.on_review_not_in_profile || [];
+  for (const name of fresh) {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = true;
+    box.dataset.skill = name;
+    label.appendChild(box);
+    label.appendChild(document.createTextNode(" " + name));
+    li.appendChild(label);
+    pickList.appendChild(li);
+  }
+  document.getElementById("compare-add-btn").hidden = fresh.length === 0;
+  if (!fresh.length) {
+    const li = document.createElement("li");
+    li.textContent = "Nothing new: your Career Profile already has the skills your LinkedIn shows.";
+    pickList.appendChild(li);
+  }
+  document.getElementById("compare-results").hidden = false;
+}
+
+document.getElementById("compare-signin-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("compare-signin-btn");
+  const errorEl = document.getElementById("compare-error");
+  errorEl.hidden = true;
+  if (!lastReviewData) return;
+  btn.disabled = true;
+  try {
+    const { accessToken } = await signIn(
+      document.getElementById("compare-email").value.trim(),
+      document.getElementById("compare-password").value
+    );
+    compareToken = accessToken;
+    document.getElementById("compare-password").value = "";
+    await runCompare();
+  } catch (err) {
+    showError(errorEl, (err && err.message) || "Couldn't sign in or compare. Please try again.");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("compare-add-btn").addEventListener("click", async () => {
+  const msg = document.getElementById("compare-add-msg");
+  const btn = document.getElementById("compare-add-btn");
+  btn.disabled = true;
+  let added = 0;
+  try {
+    for (const box of document.querySelectorAll("#compare-profile-list input[type=checkbox]")) {
+      if (!box.checked) continue;
+      const res = await fetch("/api/career/skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + compareToken },
+        body: JSON.stringify({ name: box.dataset.skill, source_text: null, experience_id: null }),
+      });
+      if (res.ok) {
+        added += 1;
+        box.checked = false;
+        box.disabled = true;
+      }
+    }
+    msg.textContent = added ? added + (added === 1 ? " skill" : " skills") + " added to your Career Profile." : "Nothing was ticked.";
+  } finally {
+    msg.hidden = false;
+    btn.disabled = false;
+  }
 });
 
 // --- Download report ---------------------------------------------------------

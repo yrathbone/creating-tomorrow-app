@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="logo-icon.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="spotlight-page">
   <nav class="site-nav">
     <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
     <div class="nav-links">
@@ -224,16 +224,42 @@
 
         <div class="report-block" id="sample-profile-block" hidden>
           <h3>Sample Updated Profile</h3>
-          <p class="hint">One way to put these suggestions together — feel free to use, adapt, or ignore any of it.</p>
+          <p class="hint">One way to put these suggestions together — feel free to use, adapt, or ignore any of it. Each box has its own Copy button, ready to paste into LinkedIn.</p>
+          <button type="button" class="btn-linkedin" id="sample-copy-all-btn">Copy my whole updated profile</button>
           <div class="suggested-text-block" id="sample-profile-headline-block" hidden>
             <h4>Headline</h4>
             <p id="sample-profile-headline"></p>
+            <button type="button" class="btn-secondary copy-btn" data-copy-target="sample-profile-headline">Copy headline</button>
           </div>
           <div class="suggested-text-block" id="sample-profile-about-block" hidden>
             <h4>About</h4>
             <p id="sample-profile-about"></p>
+            <button type="button" class="btn-secondary copy-btn" data-copy-target="sample-profile-about">Copy About</button>
           </div>
           <div id="sample-profile-experience"></div>
+        </div>
+
+        <div class="report-block" id="profile-compare-block">
+          <h3>Compare with your Creating Tomorrow profile</h3>
+          <p class="hint">Sign in to see which skills in your Career Profile your LinkedIn doesn't show yet, and which skills your LinkedIn shows that aren't in your Career Profile. Your review isn't saved, and nothing is added without your tick.</p>
+          <form id="compare-signin-form">
+            <label class="field"><span>Email</span><input type="email" id="compare-email" autocomplete="username" required /></label>
+            <label class="field"><span>Password</span><input type="password" id="compare-password" autocomplete="current-password" required /></label>
+            <button type="submit" id="compare-signin-btn">Sign in and compare</button>
+          </form>
+          <div id="compare-error" class="error" hidden></div>
+          <div id="compare-results" hidden>
+            <h4>Add these to your LinkedIn Skills</h4>
+            <p class="hint">Saved in your Career Profile, but your LinkedIn review never mentions them.</p>
+            <p id="compare-linkedin-list" class="compare-linkedin-list"></p>
+            <button type="button" class="btn-secondary copy-btn" data-copy-target="compare-linkedin-list" id="compare-copy-btn">Copy this list</button>
+
+            <h4>Add these to your Career Profile</h4>
+            <p class="hint">Your LinkedIn shows these, but they aren't in your Career Profile yet. Untick any you don't want.</p>
+            <ul id="compare-profile-list" class="skill-pick-list"></ul>
+            <button type="button" id="compare-add-btn">Add ticked skills to my profile</button>
+            <p class="hint" id="compare-add-msg" hidden></p>
+          </div>
         </div>
       </div>
 
@@ -247,6 +273,8 @@
     <p>Creating Tomorrow provides free career education and tools. We don't save your profile information — it's sent securely to our AI provider to generate your review, and is typically deleted from their systems within 30 days.</p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.20/dist/amazon-cognito-identity.min.js"></script>
+  <script src="career/js/auth.js"></script>
   <script src="loading.js"></script>
   <script src="spotlight.js"></script>
 </body>

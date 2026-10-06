@@ -28,6 +28,7 @@ from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
 from career.job_match import JobMatchError, build_general_resume, compare_to_job
 from career.job_fit import compute_job_fit
+from career.linkedin_compare import compare_skills
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
@@ -935,6 +936,24 @@ async def job_compare(
     db.refresh(scan)
 
     return {**result, "scan_history_id": scan.id}
+
+
+class LinkedInSkillCompareRequest(BaseModel):
+    review: dict
+
+
+@router.post("/linkedin-skill-compare")
+async def linkedin_skill_compare(
+    req: LinkedInSkillCompareRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    """Compares the public LinkedIn review's skills with the signed-in person's
+    saved skills. Read-only and no AI call; adding anything to the profile goes
+    through the normal POST /skills."""
+    profile = get_career_profile_or_404(db, current_user)
+    names = [s.name for s in db.query(Skill).filter_by(career_profile_id=profile.id).all()]
+    return compare_skills(req.review, names)
 
 
 class JobFitRequest(BaseModel):
