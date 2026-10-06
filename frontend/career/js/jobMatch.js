@@ -320,6 +320,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     jobState.tailoredResumeData = data.resume_data;
     renderRoleSelection(data.role_selection || []);
     renderTermReport(data.term_report || []);
+    renderMatchGrade(data.term_report || []);
 
     stopProcessingState(jobBuildLoadingState);
     jobBuildLoadingState.hidden = true;
@@ -629,11 +630,54 @@ function renderTermReport(report) {
   }
 
   includedDetails.hidden = onResume.length === 0;
-  for (const item of onResume) {
+  const summaryEl = includedDetails.querySelector("summary");
+  if (summaryEl) summaryEl.textContent = "On your resume (" + onResume.length + "): terms from the posting";
+  for (const item of onResume.slice().sort(byRank)) {
+    // A chip per term (required ones first); the evidence is on hover.
     const li = document.createElement("li");
-    li.textContent = item.term + (item.evidence ? " — " + item.evidence : "");
+    li.textContent = item.term;
+    if (item.importance === "required") li.classList.add("term-chip-required");
+    if (item.evidence) li.title = item.evidence;
     includedList.appendChild(li);
   }
+}
+
+// A rough letter grade for how much of the posting's key terms are on the
+// resume - deliberately a band, not a precise score. Required terms count
+// 3x, preferred 2x, others 1x. Terms the profile can't honestly support
+// count as misses (that's the point: they should stay off the resume).
+const MATCH_GRADES = [
+  { min: 90, letter: "A", band: "90%+", title: "Strong match", text: "Nearly every key term in the posting is on your resume." },
+  { min: 80, letter: "B", band: "80–89%", title: "Good match", text: "Most key terms are on your resume. A few are missing; see below." },
+  { min: 70, letter: "C", band: "70–79%", title: "Fair match", text: "Many key terms are on your resume, but several the posting asks for are not." },
+  { min: 0, letter: "D", band: "under 70%", title: "Weak match", text: "A lot of what the posting asks for isn't on this resume yet. Check the list below for terms you can honestly add." },
+];
+
+function computeMatchGrade(report) {
+  const weight = { required: 3, preferred: 2, mentioned: 1 };
+  let got = 0;
+  let total = 0;
+  for (const r of report) {
+    const w = weight[r.importance] ?? 1;
+    total += w;
+    if (r.status === "on_resume") got += w;
+  }
+  if (total === 0) return null;
+  const pct = Math.round((got / total) * 100);
+  return { pct, ...MATCH_GRADES.find((g) => pct >= g.min) };
+}
+
+function renderMatchGrade(report) {
+  const block = document.getElementById("job-match-grade-block");
+  const grade = report && report.length ? computeMatchGrade(report) : null;
+  block.hidden = !grade;
+  block.className = "match-grade" + (grade ? " match-grade-" + grade.letter.toLowerCase() : "");
+  if (!grade) return;
+  document.getElementById("job-match-grade-letter").textContent = grade.letter;
+  document.getElementById("job-match-grade-title").textContent = grade.title + " (" + grade.band + " of key terms)";
+  document.getElementById("job-match-grade-explain").textContent = grade.text;
+  document.getElementById("job-match-grade-note").textContent =
+    "Based on the key terms we found in this posting and what your profile honestly supports. Other scoring tools may pick different terms, and terms you don't have should stay off.";
 }
 
 // Shows which roles kept their full bullets and which were shortened to one
@@ -691,6 +735,7 @@ function resetJobTarget() {
   jobState.scanHistoryId = null;
   renderRoleSelection([]);
   renderTermReport([]);
+  renderMatchGrade([]);
   showKeywordNote("");
   keywordTerms = [];
   document.getElementById("job-description-input").value = "";

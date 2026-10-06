@@ -2928,3 +2928,82 @@ main.dashboard-main {
 #panel-skills         { border-left-color: var(--c-skills); }
 #panel-history        { border-left-color: var(--c-history); }
 #panel-resumes        { border-left-color: var(--c-resumes); }
+
+/* --- Build screen: gold "check keywords" button, match grade, term chips --- */
+.btn-gold {
+  background: var(--gold);
+  color: var(--gold-ink);
+  border: 2px solid #d99410;
+  font-weight: 700;
+}
+.btn-gold:hover { background: #f5b95a; }
+
+.match-grade {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-left-width: 6px;
+  background: #fbfcfe;
+}
+.match-grade-letter {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: var(--muted);
+}
+.match-grade-text p { margin: 0.25rem 0 0; }
+.match-grade-text .hint { font-size: 0.82rem; }
+.match-grade-a { border-left-color: #1f7a3f; background: #eef8f1; }
+.match-grade-a .match-grade-letter { background: #1f7a3f; }
+.match-grade-b { border-left-color: var(--blue); background: #eef3fc; }
+.match-grade-b .match-grade-letter { background: var(--blue); }
+.match-grade-c { border-left-color: #d99410; background: #fff7e6; }
+.match-grade-c .match-grade-letter { background: #b86e00; }
+.match-grade-d { border-left-color: #c2410c; background: #fdf0e8; }
+.match-grade-d .match-grade-letter { background: #c2410c; }
+
+.term-chips-box {
+  margin: 1rem 0;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid #b9e0c5;
+  border-radius: 12px;
+  background: #f3fbf6;
+}
+.term-chips-box summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #1f5f36;
+}
+.term-chips {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.term-chips li {
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #8fcfa4;
+  color: #1f5f36;
+  font-size: 0.88rem;
+}
+.term-chips li::before { content: "\2713\00a0"; font-weight: 700; }
+.term-chips li.term-chip-required { background: #1f7a3f; border-color: #1f7a3f; color: #ffffff; font-weight: 600; }
+@media (max-width: 560px) {
+  .match-grade { flex-direction: column; align-items: flex-start; }
+}
