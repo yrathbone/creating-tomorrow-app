@@ -13,6 +13,7 @@ const resumeState = {
   history: [],
   roundNumber: 1,
   discoveredFacts: [],
+  skills: [],
 };
 let currentResumeQuestions = [];
 const RESUME_MAX_ROUNDS = 4;
@@ -230,6 +231,7 @@ function loadDraftIntoState(draft) {
   resumeState.categories = draft.categories || [];
   resumeState.history = draft.history || [];
   resumeState.discoveredFacts = draft.discovered_facts || [];
+  resumeState.skills = [];  // not kept in the saved draft; re-import to see skills again
   resumeState.roundNumber = draft.round_number || 1;
   document.getElementById("resume-analysis-summary").textContent = draft.analysis_summary || "";
 
@@ -260,13 +262,19 @@ resumeUploadForm.addEventListener("submit", async (e) => {
   resumeUploadError.hidden = true;
 
   const fileInput = document.getElementById("resume-file");
-  if (!fileInput.files.length) {
-    showResumeError(resumeUploadError, "Please choose a resume file.");
+  // A file wins; otherwise pasted text is sent the same way, as a small .txt file.
+  const pasted = document.getElementById("resume-paste-text").value.trim();
+  let uploadFile = fileInput.files.length ? fileInput.files[0] : null;
+  if (!uploadFile && pasted.length >= 100) {
+    uploadFile = new File([pasted], "pasted-profile.txt", { type: "text/plain" });
+  }
+  if (!uploadFile) {
+    showResumeError(resumeUploadError, pasted ? "That's a bit short. Paste more of your profile or resume." : "Please choose a file, or paste your profile or resume text.");
     return;
   }
 
   const formData = new FormData();
-  formData.append("resume_file", fileInput.files[0]);
+  formData.append("resume_file", uploadFile);
 
   resumeUploadBtn.disabled = true;
   resumeUploadState.hidden = true;
@@ -292,6 +300,7 @@ resumeUploadForm.addEventListener("submit", async (e) => {
     resumeState.history = [];
     resumeState.roundNumber = 1;
     resumeState.discoveredFacts = [];
+    resumeState.skills = data.skills || [];
     currentResumeQuestions = data.questions || [];
 
     document.getElementById("resume-analysis-summary").textContent = data.analysis_summary || "";
@@ -492,7 +501,9 @@ function renderResumeReview() {
 
   renderResumeEducation();
   renderResumeCertifications();
+  renderResumeSkills();
   renderResumeFacts();
+  renderImportMatchNote();
 }
 
 function renderResumeEducation() {
@@ -582,6 +593,58 @@ function renderResumeCertifications() {
   });
 }
 
+// Skills the document lists that are NOT already in the profile. Skills that
+// match one already saved are counted and hidden, so nothing is duplicated.
+// Each new skill is a checkbox the candidate controls; nothing saves until
+// they press Save.
+function skillAlreadySaved(name) {
+  const key = normalizeKey(name);
+  return (typeof allSkills !== "undefined" ? allSkills : []).some((s) => normalizeKey(s.name) === key);
+}
+
+function renderResumeSkills() {
+  const block = document.getElementById("resume-skills-block");
+  const list = document.getElementById("resume-skills-list");
+  const note = document.getElementById("resume-skills-note");
+  list.textContent = "";
+  const found = resumeState.skills || [];
+  block.hidden = found.length === 0;
+  if (!found.length) return;
+
+  const fresh = found.filter((n) => !skillAlreadySaved(n));
+  resumeState.newSkills = fresh;
+  const dup = found.length - fresh.length;
+  note.textContent = fresh.length
+    ? fresh.length + " new skill" + (fresh.length === 1 ? "" : "s") + " from your document. Untick any you don't want." + (dup ? " " + dup + " you already have " + (dup === 1 ? "is" : "are") + " not shown." : "")
+    : "All " + found.length + " skills in your document are already in your profile. Nothing to add.";
+  for (const name of fresh) {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = true;
+    box.dataset.skill = name;
+    label.appendChild(box);
+    label.appendChild(document.createTextNode(" " + name));
+    li.appendChild(label);
+    list.appendChild(li);
+  }
+}
+
+// One line up top: how much of this document is already in the profile.
+function renderImportMatchNote() {
+  const el = document.getElementById("resume-match-note");
+  const parts = [];
+  const roleMatches = resumeState.roles.filter((r) => findBestExperienceMatch(r)).length;
+  if (resumeState.roles.length) parts.push(roleMatches + " of " + resumeState.roles.length + " roles match ones you already have");
+  const eduMatches = resumeState.education.filter((e) => findBestEducationMatch(e)).length;
+  if (resumeState.education.length) parts.push(eduMatches + " of " + resumeState.education.length + " education entries");
+  const certMatches = resumeState.certifications.filter((c) => findBestCertificationMatch(c)).length;
+  if (resumeState.certifications.length) parts.push(certMatches + " of " + resumeState.certifications.length + " certifications");
+  el.hidden = parts.length === 0;
+  el.textContent = parts.length ? "Already in your profile: " + parts.join(", ") + ". Matches are preselected as updates, so they won't be duplicated; change any you disagree with." : "";
+}
+
 function renderResumeFacts() {
   const factsContainer = document.getElementById("resume-facts-list");
   factsContainer.innerHTML = "";
@@ -665,7 +728,20 @@ document.getElementById("resume-save-btn").addEventListener("click", async () =>
     }
     const saved = await res.json();
 
+    // New skills the candidate left ticked, saved one by one through the normal skills route.
+    let skillsAdded = 0;
+    for (const box of document.querySelectorAll("#resume-skills-list input[type=checkbox]")) {
+      if (!box.checked) continue;
+      const skillRes = await authedFetch("/api/career/skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: box.dataset.skill, source_text: null, experience_id: null }),
+      });
+      if (skillRes.ok) skillsAdded += 1;
+    }
+
     resumeReviewState.hidden = true;
+    resumeState.skills = [];
     resumeState.roles = [];
     resumeState.education = [];
     resumeState.certifications = [];
@@ -677,13 +753,15 @@ document.getElementById("resume-save-btn").addEventListener("click", async () =>
     const parts = [];
     if (saved.created_count) parts.push(saved.created_count + " new");
     if (saved.updated_count) parts.push(saved.updated_count + " updated in your existing profile");
+    if (skillsAdded) parts.push(skillsAdded + (skillsAdded === 1 ? " skill" : " skills") + " added");
     document.getElementById("resume-save-summary-text").textContent =
-      (parts.length ? parts.join(", ") : "Your changes were") + " saved to your Career Profile.";
+      parts.length ? "Saved to your Career Profile: " + parts.join(", ") + "." : "Your changes were saved to your Career Profile.";
     document.getElementById("resume-save-summary").hidden = false;
 
     await loadExperiences();
     await loadEducation();
     await loadCertifications();
+    if (skillsAdded && typeof loadSkills === "function") await loadSkills();
   } catch (err) {
     showResumeError(saveError, err.message || "Something went wrong saving your roles.");
   } finally {

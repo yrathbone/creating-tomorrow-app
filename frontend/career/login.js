@@ -579,10 +579,16 @@ document.getElementById("nav-applications-btn").addEventListener("click", () => 
 document.getElementById("nav-career-profile-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-detail");
 });
-document.getElementById("upload-resume-btn").addEventListener("click", () => {
+// The same import flow serves a resume and a LinkedIn export; only the wording differs.
+function openImportFlow(fromLinkedIn) {
   revealCareerProfileSections("career-profile-editor");
   document.getElementById("mode-resume-btn").click();
-});
+  document.getElementById("resume-upload-heading").textContent = fromLinkedIn ? "Import from LinkedIn" : "Upload your resume";
+  document.getElementById("resume-linkedin-tip").hidden = !fromLinkedIn;
+}
+
+document.getElementById("upload-resume-btn").addEventListener("click", () => openImportFlow(false));
+document.getElementById("import-linkedin-btn").addEventListener("click", () => openImportFlow(true));
 
 document.getElementById("mode-manual-btn").addEventListener("click", () => {
   document.getElementById("manual-entry-section").hidden = false;

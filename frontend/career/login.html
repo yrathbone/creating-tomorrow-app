@@ -76,6 +76,7 @@
         <p>Your Career Profile keeps the experience you've verified so you don't have to rebuild your history every time you apply.</p>
         <div class="dashboard-hero-actions">
           <button type="button" id="upload-resume-btn" class="btn-primary">Upload My Resume</button>
+          <button type="button" id="import-linkedin-btn" class="btn-linkedin">Import from LinkedIn</button>
           <span class="btn-primary" aria-disabled="true" style="opacity:0.6; cursor:default;">+ Add a Job <span class="coming-soon">Coming soon</span></span>
           <button type="button" id="general-resume-hero-btn" class="btn-secondary">Build a General Resume</button>
           <button type="button" id="update-profile-btn" class="btn-secondary">Update My Career Profile</button>
@@ -512,13 +513,18 @@
         </div>
 
         <div id="resume-upload-state" hidden>
-          <h3>Upload your resume</h3>
+          <h3 id="resume-upload-heading">Upload your resume</h3>
           <p class="hint">We'll pull out each role, then ask a few quick questions to surface experience your resume may not fully capture — nothing is added to your profile until you confirm it.</p>
           <form id="resume-upload-form">
             <label class="field">
-              <span>Resume file</span>
-              <input type="file" id="resume-file" accept=".docx,.pdf,.txt" required />
+              <span>Resume or LinkedIn profile file (.docx, .pdf or .txt)</span>
+              <input type="file" id="resume-file" accept=".docx,.pdf,.txt" />
             </label>
+            <label class="field">
+              <span>Or paste the text instead (for example your LinkedIn profile)</span>
+              <textarea id="resume-paste-text" rows="5" placeholder="Paste your profile or resume text here..."></textarea>
+            </label>
+            <p class="hint" id="resume-linkedin-tip" hidden><strong>Importing from LinkedIn?</strong> On your own LinkedIn profile choose <strong>More</strong>, then <strong>Save to PDF</strong>, and upload that file (or paste your text). Only what's new to your Career Profile is added; anything that matches a role, school, certification or skill you already have is shown for you to confirm, never duplicated. To also see how well your LinkedIn reads, use <a href="../spotlight.html">the LinkedIn review</a>.</p>
             <button type="submit" id="resume-upload-btn">Analyze My Resume</button>
           </form>
           <div id="resume-upload-error" class="error" hidden></div>
@@ -561,6 +567,7 @@
         <div id="resume-review-state" hidden>
           <h3>Review your roles</h3>
           <p class="hint">Edit anything that's not quite right before saving.</p>
+          <p class="import-match-note" id="resume-match-note" hidden></p>
           <div id="resume-roles-list"></div>
 
           <div id="resume-education-block" hidden>
@@ -571,6 +578,12 @@
           <div id="resume-certifications-block" hidden>
             <h3>Certifications</h3>
             <div id="resume-certifications-list"></div>
+          </div>
+
+          <div id="resume-skills-block" hidden>
+            <h3>Skills found</h3>
+            <p class="hint" id="resume-skills-note"></p>
+            <ul id="resume-skills-list" class="skill-pick-list"></ul>
           </div>
 
           <div id="resume-facts-block">

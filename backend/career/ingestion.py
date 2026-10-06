@@ -39,7 +39,7 @@ RESTRUCTURE_SYSTEM_PROMPT = """You are Nova, a thoughtful career strategist revi
 
 You are given raw text extracted from someone's resume (it may be in any order or layout - it's just extracted text).
 
-Do five things:
+Do six things:
 
 1. Extract each ROLE (job, internship, or distinct position) faithfully into the schema below. Preserve all real content - do not invent, embellish, polish, or infer anything not in the source text. This is a faithful transcription step, not a rewrite: keep the candidate's own wording for bullets. Write start_date/end_date in numeric MM/YY format, keeping "Present"/"Current" as-is for an ongoing role. If a field genuinely isn't stated (e.g. no location given), leave it null rather than guessing.
 
@@ -51,7 +51,9 @@ Do five things:
 
 5. Infer 2-4 CATEGORIES of experience specific to THIS resume - not a generic checklist (for example: someone in banking might warrant categories like treasury products supported or senior client contacts; someone in technology might warrant systems/platforms used or stakeholder collaboration - generalize to whatever this resume's actual field is). For those categories, write the FIRST BATCH of 4-6 yes/no discovery questions - specific, resume-grounded questions about responsibilities, scope, or accomplishments that are common in this candidate's apparent field but that this resume doesn't currently mention. Each must be answerable honestly with yes/no. Never assume yes. 4-6 questions is the right size for a first batch, not more. This batch must never be empty - even a thorough, detailed resume always has more underneath it worth asking about (scope, scale, stakeholders, tools, outcomes); write at least 4 questions every time, no exceptions.
 
-Call the submit_resume_review tool with the extracted roles, education, certifications, analysis, categories, and first question batch. Do not respond with plain text."""
+6. Extract the SKILLS the document explicitly lists (for example a Skills or Top Skills section, or a "Skills:" line - common on LinkedIn profile exports). Return each one as a short keyword exactly as listed, 1-4 words. Never infer a skill from a job duty or title; if the document lists no skills, return an empty list.
+
+Call the submit_resume_review tool with the extracted roles, education, certifications, skills, analysis, categories, and first question batch. Do not respond with plain text."""
 
 RESTRUCTURE_USER_PROMPT_TEMPLATE = """RESUME TEXT (raw extraction, order may be jumbled):
 {resume_text}
@@ -116,6 +118,11 @@ RESTRUCTURE_TOOL = {
                     "required": ["name", "issuer", "date"],
                 },
             },
+            "skills": {
+                "type": "array",
+                "description": "Skills the document explicitly lists, each a 1-4 word keyword. Empty if none are listed.",
+                "items": {"type": "string"},
+            },
             "analysis_summary": {"type": "string"},
             "categories": {"type": "array", "items": {"type": "string"}},
             "questions": {
@@ -139,6 +146,30 @@ RESTRUCTURE_TOOL = {
 
 class IngestionError(Exception):
     pass
+
+
+MAX_IMPORTED_SKILLS = 60
+MAX_IMPORTED_SKILL_WORDS = 4
+
+
+def clean_skills(raw) -> list[str]:
+    """Skills listed in an imported document, as clean keywords: trimmed,
+    1-4 words, no repeats (case-insensitive). Anything sentence-like or not
+    text is dropped; the candidate still reviews every one before it is saved."""
+    if not isinstance(raw, list):
+        return []
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in raw:
+        if not isinstance(item, str):
+            continue
+        name = " ".join(item.split()).strip(" .;,-")
+        key = name.lower()
+        if not name or len(name) > 60 or len(name.split()) > MAX_IMPORTED_SKILL_WORDS or key in seen:
+            continue
+        seen.add(key)
+        out.append(name)
+    return out[:MAX_IMPORTED_SKILLS]
 
 
 def _diagnose(category: str) -> None:
@@ -197,7 +228,9 @@ def start_resume_review(resume_text: str) -> dict:
 
         log_usage("career_resume_start", response)
         try:
-            return _extract_tool_input(response)
+            data = _extract_tool_input(response)
+            data["skills"] = clean_skills(data.get("skills"))
+            return data
         except ValueError as e:
             _diagnose(str(e))
 

@@ -3044,3 +3044,23 @@ main.dashboard-main {
 .application-notes { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; }
 .application-nudge { color: #8a5300; }
 .applied-block { margin-top: 1.25rem; }
+
+/* --- LinkedIn import ---------------------------------------------------- */
+.btn-linkedin {
+  background: #0a66c2;
+  color: #ffffff;
+  border: 2px solid #0a66c2;
+  font-weight: 700;
+}
+.btn-linkedin:hover { background: #084f96; }
+.import-match-note {
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: #eef3fc;
+  border: 1px solid var(--blue-light);
+  color: var(--navy);
+  font-size: 0.92rem;
+}
+.skill-pick-list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.skill-pick-list li { margin: 0; padding: 0.3rem 0.7rem; border: 1px solid #b6c9ea; border-radius: 999px; background: #ffffff; }
+.skill-pick-list label { cursor: pointer; }
