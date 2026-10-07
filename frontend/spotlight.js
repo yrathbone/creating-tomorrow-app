@@ -437,10 +437,11 @@ document.getElementById("step-results").addEventListener("click", (e) => {
 });
 
 // --- Compare with the signed-in person's Career Profile skills -------------
-// The public review can't know who is looking, and sign-in tokens are never kept
-// in the browser (see career/js/auth.js), so this section asks for a sign-in
-// and holds the token in memory only. Nothing is added to the profile unless
-// the person leaves it ticked and presses the button.
+// The public review can't know who is looking, so this section asks for a sign-in.
+// This page uses the access token from that sign-in from memory only (compareToken),
+// but the sign-in library also keeps the session in this browser tab's sessionStorage,
+// not localStorage, until the tab closes (see career/js/auth.js). Nothing is added to the
+// profile unless the person leaves it ticked and presses the button.
 let compareToken = null;
 let compareRoles = [];
 

@@ -36,15 +36,72 @@ const skillForm = document.getElementById("skill-form");
 const skillError = document.getElementById("skill-error");
 const skillSubmitBtn = document.getElementById("skill-submit-btn");
 
-// Kept in memory only, never persisted - a hard refresh means signing in
-// again (Deliverable C's deliberate MVP tradeoff).
+// The access token for the current request, in memory only. The session itself
+// lives in the Cognito SDK's tab-scoped sessionStorage (see js/auth.js); before
+// each call we ask the SDK for the current session, which refreshes expired
+// tokens for us. Phase 1B replaced "a refresh means signing in again".
 let currentAccessToken = null;
+let sessionEnding = false;
+const AUTH_NOTICE_KEY = "ct.auth-notice";
 
-function authedFetch(path, options = {}) {
-  const headers = Object.assign({}, options.headers, {
-    Authorization: "Bearer " + currentAccessToken,
-  });
-  return fetch(path, Object.assign({}, options, { headers }));
+const SESSION_ENDED_MESSAGE = "Your session has ended. Please sign in again.";
+
+// A failure that says nothing about the session itself (offline, throttled, Cognito
+// hiccup): keep whatever is stored and let the person try again.
+function isTransientAuthError(err) {
+  const code = err && err.code;
+  return code === "NetworkError" || code === "TooManyRequestsException" || code === "InternalErrorException" || code === "LimitExceededException";
+}
+
+// The session can't be restored or refreshed: drop the local session, forget the
+// in-memory token, and reload so every in-memory piece of the dashboard is gone
+// and the signed-out login page is shown (with a short note).
+function endSessionAndShowLogin(message) {
+  if (sessionEnding) return;
+  sessionEnding = true;
+  clearCognitoSessionKeys();
+  currentAccessToken = null;
+  try { window.sessionStorage.setItem(AUTH_NOTICE_KEY, message || SESSION_ENDED_MESSAGE); } catch (e) { /* no notice */ }
+  window.location.reload();
+}
+
+async function authedFetch(path, options = {}) {
+  const send = (token) => {
+    const headers = Object.assign({}, options.headers, { Authorization: "Bearer " + token });
+    return fetch(path, Object.assign({}, options, { headers }));
+  };
+
+  let token;
+  try {
+    token = (await getValidSession()).getAccessToken().getJwtToken();
+  } catch (err) {
+    if (!isTransientAuthError(err)) endSessionAndShowLogin();
+    throw new Error(isTransientAuthError(err) ? "Couldn't reach the sign-in service. Please try again." : SESSION_ENDED_MESSAGE);
+  }
+  currentAccessToken = token;
+  let res = await send(token);
+
+  if (res.status === 401) {
+    // The browser thought the token was valid but the server did not: ask the SDK for
+    // one fresh token and retry once. If that fails too, the session is over.
+    let retryToken = null;
+    try {
+      retryToken = (await forceRefreshSession()).getAccessToken().getJwtToken();
+    } catch (err) {
+      if (isTransientAuthError(err)) throw new Error("Couldn't reach the sign-in service. Please try again.");
+    }
+    if (!retryToken) {
+      endSessionAndShowLogin();
+      throw new Error(SESSION_ENDED_MESSAGE);
+    }
+    currentAccessToken = retryToken;
+    res = await send(retryToken);
+    if (res.status === 401) {
+      endSessionAndShowLogin();
+      throw new Error(SESSION_ENDED_MESSAGE);
+    }
+  }
+  return res;
 }
 
 // Populated by loadExperiences/loadEducation/loadCertifications - the one
@@ -547,10 +604,14 @@ document.getElementById("export-profile-btn").addEventListener("click", async ()
 function showConsentStep() {
   document.getElementById("step-login").hidden = true;
   document.getElementById("step-consent").hidden = false;
+  document.getElementById("session-check").hidden = true;
+  document.getElementById("nav-signout").hidden = false;
 }
 
 async function showProfileStep() {
   document.getElementById("step-login").hidden = true;
+  document.getElementById("session-check").hidden = true;
+  document.getElementById("nav-signout").hidden = false;
   document.getElementById("step-consent").hidden = true;
   document.getElementById("step-profile").hidden = false;
   document.getElementById("page-header").hidden = true;
@@ -599,6 +660,79 @@ document.getElementById("mode-resume-btn").addEventListener("click", async () =>
   document.getElementById("manual-entry-section").hidden = true;
   document.getElementById("resume-entry-section").hidden = false;
   await checkForResumeDraft();
+});
+
+// Sign Out: the SDK's own sign-out plus removal of every SDK key in this tab, then a
+// reload so the dashboard's in-memory state is gone and the login form shows.
+document.getElementById("nav-signout").addEventListener("click", async (e) => {
+  e.preventDefault();
+  if (sessionEnding) return;
+  sessionEnding = true;
+  e.currentTarget.setAttribute("aria-disabled", "true");
+  try {
+    await signOutCurrentUser();
+  } finally {
+    currentAccessToken = null;
+    window.location.replace("login.html");
+  }
+});
+
+function showLoginForm(message) {
+  document.getElementById("session-check").hidden = true;
+  document.getElementById("nav-signout").hidden = true;
+  document.getElementById("page-header").hidden = false;
+  document.getElementById("step-login").hidden = false;
+  if (message) {
+    loginError.textContent = message;
+    loginError.hidden = false;
+  }
+}
+
+// On load: if this tab holds a saved Cognito session, restore it through the SDK and
+// go straight to the dashboard; otherwise show the normal login form. The SDK and the
+// backend decide whether the session is valid - the stored keys are only a hint.
+async function restoreSession() {
+  let notice = null;
+  try {
+    notice = window.sessionStorage.getItem(AUTH_NOTICE_KEY);
+    window.sessionStorage.removeItem(AUTH_NOTICE_KEY);
+  } catch (e) { /* no notice */ }
+
+  if (!hasStoredSessionKeys()) {
+    showLoginForm(notice);
+    return;
+  }
+  try {
+    const res = await authedFetch("/api/career/me");
+    if (!res.ok) throw new Error("Couldn't load your account. Please try again.");
+    const me = await res.json();
+    if (me.consent_given) {
+      await showProfileStep();
+    } else {
+      showConsentStep();
+    }
+  } catch (err) {
+    if (sessionEnding) return; // the page is being reloaded to the signed-out state
+    showLoginForm((err && err.message) || "Couldn't restore your session. Please sign in.");
+  }
+}
+
+// While a saved session is being checked, keep the login form from flashing.
+if (hasStoredSessionKeys()) {
+  document.getElementById("step-login").hidden = true;
+  document.getElementById("page-header").hidden = true;
+  document.getElementById("session-check").hidden = false;
+}
+if (document.readyState === "loading") {
+  // The other dashboard scripts load after this one; wait for all of them.
+  document.addEventListener("DOMContentLoaded", restoreSession);
+} else {
+  restoreSession();
+}
+
+// Back/forward can bring back an in-memory copy of the dashboard from before Sign Out.
+window.addEventListener("pageshow", (e) => {
+  if (e.persisted && !hasStoredSessionKeys()) window.location.reload();
 });
 
 loginForm.addEventListener("submit", async (e) => {
