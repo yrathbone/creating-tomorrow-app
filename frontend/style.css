@@ -3239,3 +3239,67 @@ main.dashboard-main {
 /* Your Career Profile (evidence) and Your Activity (what you did with it) */
 .dashboard-grid > .activity-card { border-top-color: #4338ca; }
 .activity-card .hint, .profile-card .hint { margin-top: 0; }
+
+/* --- Themed palette: brand blue + navy + gold, with an indigo accent ------- */
+/* Brand blue #0847c7 stays the main colour. The indigo accent (#1719c0) is the
+   "action" colour; navy anchors; gold is the warm highlight. */
+:root {
+  --indigo: #1719c0;
+  --indigo-soft: #e6e6fa;
+  --indigo-ink: #101090;
+}
+.dashboard-main {
+  --c-applications: #1719c0;
+  --c-applications-bg: #ececfb;
+}
+
+/* Each card carries one theme colour: top edge, heading highlight */
+.dashboard-grid > .card {
+  --card-accent: var(--blue);
+  --card-accent-soft: #dbe6fb;
+  border-top-color: var(--card-accent);
+}
+.dashboard-grid > .profile-card { --card-accent: #0847c7; --card-accent-soft: #dbe6fb; }
+.dashboard-grid > .job-card     { --card-accent: #1719c0; --card-accent-soft: #e2e2f8; }
+.dashboard-grid > .resume-card  { --card-accent: #e2a126; --card-accent-soft: #fbeccb; }
+.dashboard-grid > .activity-card{ --card-accent: #102d55; --card-accent-soft: #dde5ef; }
+.dashboard-grid > .card { border-top-color: var(--card-accent); }
+
+/* Highlighter-style underline in the card's own colour */
+.dashboard-grid > .card .dashboard-card-header h2 {
+  display: inline;
+  background: linear-gradient(transparent 62%, var(--card-accent-soft) 62%);
+  padding: 0 0.15em;
+  margin-left: -0.15em;
+}
+
+/* Current Job Target is the action area, so it wears the accent */
+.job-card .btn-secondary,
+.job-card #job-resume-last-btn { border-color: var(--indigo); color: var(--indigo); }
+.job-card #job-target-add-btn { background: var(--indigo); }
+.job-card #job-target-add-btn:hover { background: var(--indigo-ink); opacity: 1; }
+.job-card .match-grade-b .match-grade-letter { background: var(--indigo); }
+
+/* Hero: a faint indigo wash joins the sky and gold */
+.dashboard-hero { background: linear-gradient(135deg, #e9ebff 0%, #ffffff 58%, #fff3d9 100%); }
+
+/* The "Recently confirmed" list inside the Skills tile */
+.recent-heading { margin: 0.9rem 0 0.35rem; color: var(--navy); }
+.recent-skills {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.recent-skills li {
+  margin: 0;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: var(--indigo-soft);
+  color: var(--indigo-ink);
+  font-size: 0.88rem;
+  border: 1px solid #cfcff3;
+}
+.recent-skills li.hint { background: none; border: none; padding: 0; color: var(--muted); }

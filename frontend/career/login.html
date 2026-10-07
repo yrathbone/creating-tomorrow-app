@@ -107,6 +107,8 @@
             <section class="snapshot-panel" id="panel-skills" hidden>
         <h3>Skills</h3>
         <p class="hint">A skill's name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
+        <h4 class="recent-heading">Recently confirmed</h4>
+        <ul id="recently-confirmed-list" class="recent-skills"></ul>
         <form id="skill-quick-add-form">
           <label class="field">
             <span>Quick add a skill</span>
@@ -182,14 +184,11 @@
             </section>
           </div>
 
-          <h3 style="margin-top:1.5rem;">Recently Confirmed</h3>
-          <ul id="recently-confirmed-list"></ul>
-
         <button type="button" id="export-profile-btn" class="btn-secondary">Download my Career Profile (backup)</button>
         <div id="export-profile-error" class="error" hidden></div>
         </div>
 
-        <div class="card span-2">
+        <div class="card span-2 job-card">
           <div class="dashboard-card-header"><h2>Current Job Target</h2></div>
 
           <div id="job-target-empty">
@@ -368,40 +367,7 @@
           </div>
         </div>
 
-        <div class="card span-2 snapshot-card activity-card">
-          <div class="dashboard-card-header"><h2>Your Activity</h2></div>
-          <p class="hint">What you've done with it: job scans, resumes you built, jobs you applied for, and your LinkedIn.</p>
-          <div class="stat-row" id="activity-stat-row"></div>
-
-          <div id="activity-panels">
-            <section class="snapshot-panel" id="panel-history" hidden>
-        <h3>Job &amp; Skill Scan History</h3>
-        <div id="scan-history-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-resumes" hidden>
-        <h3>Resumes Built</h3>
-        <div id="resume-version-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-applications" hidden>
-              <h3>Applications</h3>
-              <p class="hint">Jobs you've applied for. Come back and update each one: no response, interview, rejection or offer.</p>
-              <p id="application-summary" class="application-summary"></p>
-              <button type="button" id="application-add-toggle-btn" class="btn-secondary">+ Add an application by hand</button>
-              <form id="application-form" hidden>
-                <label class="field"><span>Job title</span><input type="text" id="application-title" required /></label>
-                <label class="field"><span>Company</span><input type="text" id="application-company" /></label>
-                <label class="field"><span>Date applied</span><input type="date" id="application-date" /></label>
-                <button type="submit">Add to my tracker</button>
-                <div id="application-form-error" class="error" hidden></div>
-              </form>
-              <div id="application-list"></div>
-            </section>
-          </div>
-        </div>
-
-        <div class="card span-2" id="general-resume-card">
+        <div class="card span-2 resume-card" id="general-resume-card">
           <div class="dashboard-card-header"><h2>General Resume</h2></div>
 
           <div id="general-resume-empty">
@@ -450,6 +416,39 @@
           </div>
         </div>
 
+
+        <div class="card span-2 snapshot-card activity-card">
+          <div class="dashboard-card-header"><h2>Your Activity</h2></div>
+          <p class="hint">What you've done with it: job scans, resumes you built, jobs you applied for, and your LinkedIn.</p>
+          <div class="stat-row" id="activity-stat-row"></div>
+
+          <div id="activity-panels">
+            <section class="snapshot-panel" id="panel-history" hidden>
+        <h3>Job &amp; Skill Scan History</h3>
+        <div id="scan-history-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-resumes" hidden>
+        <h3>Resumes Built</h3>
+        <div id="resume-version-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-applications" hidden>
+              <h3>Applications</h3>
+              <p class="hint">Jobs you've applied for. Come back and update each one: no response, interview, rejection or offer.</p>
+              <p id="application-summary" class="application-summary"></p>
+              <button type="button" id="application-add-toggle-btn" class="btn-secondary">+ Add an application by hand</button>
+              <form id="application-form" hidden>
+                <label class="field"><span>Job title</span><input type="text" id="application-title" required /></label>
+                <label class="field"><span>Company</span><input type="text" id="application-company" /></label>
+                <label class="field"><span>Date applied</span><input type="date" id="application-date" /></label>
+                <button type="submit">Add to my tracker</button>
+                <div id="application-form-error" class="error" hidden></div>
+              </form>
+              <div id="application-list"></div>
+            </section>
+          </div>
+        </div>
       </div>
 
       <section class="card" id="career-profile-editor" hidden style="margin-top:2rem;">

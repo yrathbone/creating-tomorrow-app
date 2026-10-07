@@ -496,28 +496,23 @@ function updateDashboardSummary() {
     activityRow.appendChild(li);
   }
 
+  // Recently confirmed lives in the Skills tile and lists the newest skills.
   const recentList = document.getElementById("recently-confirmed-list");
   if (recentList) {
     recentList.textContent = "";
-    const combined = [
-      ...allExperiences.map((e) => ({ text: e.title + " — " + e.organization, created_at: e.created_at })),
-      ...allEducation.map((e) => ({ text: e.institution, created_at: e.created_at })),
-      ...allCertifications.map((e) => ({ text: e.name, created_at: e.created_at })),
-      ...allSkills.map((e) => ({ text: e.name, created_at: e.created_at })),
-    ]
-      .filter((item) => item.created_at)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    const newest = allSkills
+      .filter((skill) => skill.created_at)
+      .sort((x, y) => new Date(y.created_at) - new Date(x.created_at))
       .slice(0, 5);
-
-    if (combined.length === 0) {
+    if (newest.length === 0) {
       const li = document.createElement("li");
       li.className = "hint";
-      li.textContent = "We don't have enough information yet — add a role, resume, or credential to get started.";
+      li.textContent = "No skills yet. Add one below or run a skill scan.";
       recentList.appendChild(li);
     } else {
-      for (const item of combined) {
+      for (const skill of newest) {
         const li = document.createElement("li");
-        li.textContent = item.text;
+        li.textContent = skill.name;
         recentList.appendChild(li);
       }
     }
