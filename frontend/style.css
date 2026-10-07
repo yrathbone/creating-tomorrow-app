@@ -3303,3 +3303,28 @@ main.dashboard-main {
   border: 1px solid #cfcff3;
 }
 .recent-skills li.hint { background: none; border: none; padding: 0; color: var(--muted); }
+
+/* --- Account entry point (Phase 1): public site <-> Career Profile ---------
+   New classes only; used by the public pages' header and the homepage hero.
+   The dashboard does not use either class. */
+.nav-links a.nav-account {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hero-signin {
+  margin: 14px 0 0;
+  font-size: 0.95rem;
+  color: #404957;
+}
+
+.hero-signin a {
+  color: #0847c7;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hero-signin a:hover {
+  color: #063594;
+}
