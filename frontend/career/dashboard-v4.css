@@ -741,7 +741,7 @@ body.dashboard-v4 .dashboard-grid > .activity-card::after {
 body.dashboard-v4 main.dashboard-main::after {
   content: "";
   display: block;
-  height: 190px;
+  height: 214px;
   margin-top: var(--v4-gap);
   border-radius: var(--v4-radius);
   background:
@@ -749,7 +749,7 @@ body.dashboard-v4 main.dashboard-main::after {
     var(--v4-city-art) 50% 58% / cover no-repeat,
     #ffffff;
   border: 1px solid #dfe5f1;
-  box-shadow: var(--v4-shadow), var(--v4-lit), inset 0 -46px 56px -46px rgba(10, 42, 122, 0.28);
+  box-shadow: var(--v4-shadow), var(--v4-lit), 0 22px 54px -28px rgba(239, 174, 9, 0.5), inset 0 -46px 56px -46px rgba(10, 42, 122, 0.28);
 }
 @media (max-width: 640px) {
   body.dashboard-v4 main.dashboard-main::after { height: 130px; background-position: 66% 58%; }

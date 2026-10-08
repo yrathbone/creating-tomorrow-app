@@ -52,16 +52,18 @@ img { max-width: 100%; height: auto; display: block; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem 1.5rem;
+  gap: 0.5rem 1rem;
   flex-wrap: wrap;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0.7rem 1.5rem;
+  max-width: none;
+  margin: 0;
+  padding: 0.9rem max(1.5rem, calc((100% - 1120px) / 2 + 1.5rem));
+  background: #ffffff;
+  border-bottom: 1px solid var(--line-soft);
 }
-.hv-logo { display: flex; align-items: center; gap: 0.55rem; text-decoration: none; font-weight: 800; font-size: 1.15rem; color: var(--ink); letter-spacing: -0.01em; }
+.hv-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; font-weight: 800; font-size: 1.35rem; line-height: 1.15; color: var(--ink); }
 .hv-logo img { height: 38px; width: auto; }
-.hv-logo b { color: var(--gold-text); font-weight: 800; }
-.hv-links { display: flex; flex-wrap: wrap; gap: 0.1rem 0.25rem; margin-right: auto; margin-left: 1rem; }
+.hv-logo b { color: #996300; font-weight: 800; }
+.hv-links { display: flex; flex-wrap: wrap; gap: 0.1rem 0.25rem; margin-right: 0; margin-left: auto; }
 .hv-links a { text-decoration: none; font-size: 0.92rem; font-weight: 600; padding: 0.45rem 0.7rem; border-bottom: 2px solid transparent; }
 .hv-links a:hover { color: var(--blue); }
 .hv-links a.is-active { border-bottom-color: var(--gold); }
@@ -83,6 +85,9 @@ img { max-width: 100%; height: auto; display: block; }
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .hv-btn:hover { transform: translateY(-1px); }
+.hv-btn:active { transform: none; }
+.hv-btn:focus-visible { outline: 3px solid rgba(10, 53, 168, 0.28); outline-offset: 2px; }
+.hv-btn-outline:hover, .hv-btn-outline:active, .hv-btn-outline:focus-visible { background: linear-gradient(180deg, #ffffff 0%, #f3f6fc 100%); color: var(--blue); }
 .hv-btn-sm { padding: 0.5rem 1rem; font-size: 0.9rem; }
 .hv-btn-primary { background: linear-gradient(180deg, #1a50cf 0%, #0a35a8 100%); color: #ffffff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 12px -5px rgba(10, 53, 168, 0.55); }
 .hv-btn-primary:hover { background: linear-gradient(180deg, #1448c4 0%, #072a86 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 9px 16px -6px rgba(10, 53, 168, 0.6); }
@@ -93,7 +98,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* ---------- Hero: one raised card, copy on the left, the person on the right ---------- */
 .hv-hero {
-  max-width: 1132px;
+  max-width: 1072px;
   width: calc(100% - 3rem);
   margin: 0.5rem auto 0;
   display: grid;
@@ -102,7 +107,7 @@ img { max-width: 100%; height: auto; display: block; }
   background: linear-gradient(120deg, #ffffff 40%, var(--cream) 100%);
   border: 1px solid #dfe5f1;
   border-radius: var(--radius);
-  box-shadow: var(--shadow), var(--lit);
+  box-shadow: var(--shadow), var(--lit), 0 22px 54px -26px rgba(239, 174, 9, 0.55);
   overflow: hidden;
 }
 .hv-hero-copy { padding: 1.6rem 1rem 1.6rem 2.25rem; align-self: center; }
@@ -111,12 +116,59 @@ img { max-width: 100%; height: auto; display: block; }
 .hv-hero p { margin: 0 0 1.2rem; max-width: 28rem; font-size: 1.02rem; color: #3d4963; }
 .hv-cta { display: flex; flex-wrap: wrap; gap: 0.7rem; }
 .hv-hero-photo { position: relative; min-height: 250px; }
-.hv-hero-photo > img:first-child { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.hv-hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #fdfbf6 0%, rgba(253, 251, 246, 0) 24%); pointer-events: none; }
+.hv-hero-photo > img:first-child { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 30%; }
+.hv-hero-photo::before { content: ""; position: absolute; inset: 0; z-index: 1; background: radial-gradient(ellipse at 6% 38%, rgba(255, 207, 110, 0.55) 0%, rgba(255, 207, 110, 0) 55%); mix-blend-mode: soft-light; pointer-events: none; }
+.hv-hero-photo::after { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(90deg, #fdfbf6 0%, rgba(253, 251, 246, 0) 24%); pointer-events: none; }
 
 /* ---------- Sections ---------- */
-.hv-section { max-width: 1180px; margin: 1.5rem auto 0; padding: 0 1.5rem; }
-.hv-h2 { margin: 0 0 0.8rem; font-size: 1.15rem; font-weight: 750; letter-spacing: -0.015em; }
+.hv-section { max-width: 1120px; margin: 1.5rem auto 0; padding: 0 1.5rem; }
+.hv-h2 { display: flex; align-items: center; gap: 0.65rem; margin: 0 0 0.8rem; font-size: 1.15rem; font-weight: 750; letter-spacing: -0.015em; }
+.hv-h2::before {
+  content: "";
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--hv-badge-bg, #bcd0fb) var(--hv-badge-icon) center / 64% no-repeat;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -4px 7px rgba(10, 42, 122, 0.14), 0 0 0 1px rgba(10, 42, 122, 0.14), 0 7px 13px -5px rgba(20, 33, 61, 0.34);
+}
+#how-h { --hv-badge-bg: #bcd0fb; --hv-badge-icon: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%231d4ed8%22 stroke-width=%222.4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%226%22 cy=%2219%22 r=%223%22/%3E%3Cpath d=%22M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15%22/%3E%3Ccircle cx=%2218%22 cy=%225%22 r=%223%22/%3E%3C/svg%3E"); }
+#tools-h { --hv-badge-bg: #fbd170; --hv-badge-icon: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23b45309%22 stroke-width=%222.4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%223%22 width=%227%22 height=%227%22 rx=%221%22/%3E%3Crect x=%2214%22 y=%223%22 width=%227%22 height=%227%22 rx=%221%22/%3E%3Crect x=%2214%22 y=%2214%22 width=%227%22 height=%227%22 rx=%221%22/%3E%3Crect x=%223%22 y=%2214%22 width=%227%22 height=%227%22 rx=%221%22/%3E%3C/svg%3E"); }
+
+/* Context strip: three short statements, one slim raised bar divided in three (not boxes) */
+.hv-values {
+  max-width: 1072px;
+  width: calc(100% - 3rem);
+  margin: 0.9rem auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), var(--lit);
+}
+.hv-values { border-top: 3px solid var(--gold); }
+.hv-value { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1.1rem; }
+.hv-value + .hv-value { border-left: 1px solid var(--line-soft); }
+.hv-value b { display: block; font-size: 0.93rem; line-height: 1.25; }
+.hv-value span { display: block; font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+.hv-value svg {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 9px;
+  border-radius: 50%;
+  fill: none;
+  stroke: #1d4ed8;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  background: linear-gradient(180deg, #ffffff 0%, #e8effb 100%);
+  box-shadow: inset 0 1px 0 #ffffff, inset 0 -3px 5px rgba(10, 42, 122, 0.10), 0 0 0 1px rgba(10, 42, 122, 0.16), 0 5px 10px -4px rgba(20, 33, 61, 0.30);
+}
+.v-blue { stroke: #1d4ed8 !important; }
+.v-gold { stroke: #b45309 !important; }
+.v-green { stroke: #047857 !important; }
 
 /* Tools: six small raised cards, each with its own colored glossy icon */
 .hv-tools { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; }
@@ -155,79 +207,91 @@ img { max-width: 100%; height: auto; display: block; }
 .t-mint { background: var(--mint); --tool: #047857; }
 .t-blush { background: var(--blush); --tool: #be185d; }
 
-/* ---------- Bottom row: How it works (left) + the Chicago picture with the promise (right) ---------- */
-.hv-bottom {
-  max-width: 1180px;
-  margin: 1.5rem auto 0;
-  padding: 0 1.5rem;
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  gap: 0.9rem;
-  align-items: stretch;
-}
+/* ---------- How It Works: number + big colored icon, arrows between, title and explanation below ---------- */
 .hv-how {
   position: relative;
-  padding: 1.1rem 1.4rem 1.2rem;
+  margin-top: 1.1rem;
+  padding: 1.1rem 1.6rem 1.25rem;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
   border: 1px solid var(--line);
+  border-top: 3px solid var(--blue);
   border-radius: var(--radius);
   box-shadow: var(--shadow), var(--lit);
 }
-.hv-how { display: flex; flex-direction: column; }
-.hv-how .hv-steps { flex: 1; align-content: space-around; }
-.hv-sprout { position: absolute; top: 0.7rem; right: 1rem; width: 44px; height: auto; filter: drop-shadow(0 3px 7px rgba(20, 33, 61, 0.25)); }
-.hv-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.85rem; }
-.hv-steps li { display: flex; gap: 0.8rem; align-items: flex-start; }
+.hv-section.hv-how { max-width: 1072px; width: calc(100% - 3rem); padding-left: 1.6rem; padding-right: 1.6rem; }
+.hv-how .hv-h2 { margin-bottom: 0.1rem; font-size: 1.3rem; }
+.hv-how-sub { margin: 0 0 0.95rem calc(40px + 0.65rem); color: #3d4963; font-size: 0.95rem; }
+.hv-sprout { position: absolute; top: 0.7rem; right: 1.4rem; width: 42px; height: auto; filter: drop-shadow(0 3px 7px rgba(20, 33, 61, 0.25)); }
+.hv-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3.2rem; }
+.hv-steps li { position: relative; }
+.hv-step-top { display: flex; align-items: center; gap: 1.1rem; margin-bottom: 0.6rem; }
 .hv-step-n {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   font-weight: 800;
-  font-size: 0.9rem;
-  color: #ffffff;
-  background: linear-gradient(180deg, #2a62e0 0%, #0a35a8 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 5px 9px -4px rgba(10, 53, 168, 0.55);
+  font-size: 1.15rem;
+  color: #1d4ed8;
+  background: #e3ecfd;
+  box-shadow: inset 0 1px 0 #ffffff, 0 4px 9px -4px rgba(29, 78, 216, 0.4);
 }
-.hv-steps li:nth-child(2) .hv-step-n { background: linear-gradient(180deg, #f8c43a 0%, #e8a309 100%); color: #2b1d00; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 5px 9px -4px rgba(196, 135, 5, 0.6); }
-.hv-steps li:nth-child(3) .hv-step-n { background: linear-gradient(180deg, #10a37a 0%, #047857 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 5px 9px -4px rgba(4, 120, 87, 0.55); }
-.hv-steps b { display: block; font-size: 0.97rem; margin-bottom: 0.1rem; }
-.hv-steps p { margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.4; }
+.hv-steps li:nth-child(2) .hv-step-n { color: #b45309; background: #fdecc2; box-shadow: inset 0 1px 0 #ffffff, 0 4px 9px -4px rgba(180, 83, 9, 0.4); }
+.hv-steps li:nth-child(3) .hv-step-n { color: #4338ca; background: #e6e5fb; box-shadow: inset 0 1px 0 #ffffff, 0 4px 9px -4px rgba(67, 56, 202, 0.4); }
+.hv-step-icon { width: 46px; height: 46px; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 4px 5px rgba(20, 33, 61, 0.18)); }
+.hv-step-icon.v-blue { stroke: #1d4ed8; }
+.hv-step-icon.v-gold { stroke: #d9960b; }
+.hv-step-icon.v-navy { stroke: #1b2f7a; }
+/* a thin arrow in the gap between steps, so they read as a flow and not as more tool cards */
+.hv-steps li:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  top: 0.35rem;
+  right: -2.4rem;
+  width: 1.6rem;
+  text-align: center;
+  font-size: 1.5rem;
+  line-height: 1.6;
+  font-weight: 300;
+  color: #7b87a3;
+}
+.hv-steps b { display: block; font-size: 1.02rem; margin-bottom: 0.2rem; }
+.hv-steps p { margin: 0; font-size: 0.9rem; color: #3d4963; line-height: 1.45; }
 
-/* The Chicago picture sits at the right of the bottom row; the promise reads over its calm left side */
+/* ---------- Quote: a single centered line with a gold rule either side (no box) ---------- */
+.hv-quote { max-width: 1072px; width: calc(100% - 3rem); margin: 1.2rem auto 0; padding: 0; text-align: center; }
+.hv-quote blockquote { margin: 0; display: flex; align-items: center; justify-content: center; gap: 1.2rem; }
+.hv-quote blockquote::before,
+.hv-quote blockquote::after { content: ""; flex: 1 1 0; max-width: 220px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(239, 174, 9, 0), rgba(239, 174, 9, 0.85)); }
+.hv-quote blockquote::after { transform: scaleX(-1); }
+.hv-quote p { margin: 0; font-size: clamp(1.15rem, 2vw, 1.55rem); font-style: italic; font-weight: 650; letter-spacing: -0.01em; color: var(--ink); }
+.hv-quote figcaption { margin-top: 0.3rem; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; color: var(--gold-text); }
+
+/* ---------- Bottom: a full-width Chicago band; the promise reads over its calm left side ---------- */
+.hv-bottom { max-width: 1120px; margin: 1.1rem auto 0; padding: 0 1.5rem; }
 .hv-closing {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 318px;
-  align-items: flex-start;
+  min-height: 214px;
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid #dfe5f1;
-  background: #ffffff;
-  box-shadow: var(--shadow), var(--lit);
-}
-/* the picture fades up into the white behind the words (mask), so there is no hard edge */
-.hv-closing::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  aspect-ratio: 1800 / 576;
-  background: var(--hv-closing-image) center / cover no-repeat;
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 42%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 42%);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 255, 255, 0.94) 31%, rgba(255, 255, 255, 0.5) 41%, rgba(255, 255, 255, 0) 55%),
+    var(--hv-closing-image) 50% 62% / cover no-repeat,
+    #ffffff;
+  box-shadow: var(--shadow), var(--lit), 0 22px 54px -28px rgba(239, 174, 9, 0.5);
 }
 .hv-closing::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 -46px 56px -46px rgba(10, 42, 122, 0.28); }
-.hv-closing-inner { position: relative; z-index: 1; padding: 1.25rem 1.6rem 0; max-width: 30rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-start; }
-.hv-closing h2 { margin: 0; font-size: clamp(1.35rem, 2.1vw, 1.8rem); line-height: 1.12; font-weight: 800; letter-spacing: -0.03em; color: var(--ink); }
+.hv-closing-inner { position: relative; z-index: 1; padding: 1.1rem 2.25rem; max-width: 29rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-start; }
+.hv-closing h2 { margin: 0; font-size: clamp(1.3rem, 1.9vw, 1.6rem); line-height: 1.14; font-weight: 800; letter-spacing: -0.03em; color: var(--ink); }
 .hv-closing h2 span { color: var(--gold-text); }
 .hv-closing p { margin: 0; color: #3d4963; font-size: 0.95rem; }
 
-.hv-footer { max-width: 1180px; margin: 1.25rem auto 0; padding: 1rem 1.5rem 1.75rem; text-align: center; color: var(--muted); font-size: 0.86rem; }
+.hv-footer { max-width: 1120px; margin: 1.25rem auto 0; padding: 1rem 1.5rem 1.75rem; text-align: center; color: var(--muted); font-size: 0.86rem; }
 .hv-footer p { margin: 0; }
 .hv-footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
 
@@ -239,7 +303,6 @@ img { max-width: 100%; height: auto; display: block; }
 /* ---------- Tablet and phone ---------- */
 @media (max-width: 1000px) {
   .hv-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .hv-bottom { grid-template-columns: 1fr; }
   .hv-hero-copy { padding-left: 1.75rem; }
 }
 @media (max-width: 800px) {
@@ -250,8 +313,26 @@ img { max-width: 100%; height: auto; display: block; }
   .hv-hero-photo { min-height: 190px; }
   .hv-hero-photo::after { background: linear-gradient(180deg, #fdfbf6 0%, rgba(253, 251, 246, 0) 22%); }
   .hv-section, .hv-bottom { padding: 0 1rem; }
-  .hv-closing { min-height: 300px; }
-  .hv-closing::before { aspect-ratio: auto; height: 190px; background-position: 66% bottom; }
+  .hv-section.hv-how { width: calc(100% - 2rem); padding-left: 1.1rem; padding-right: 1.1rem; }
+  .hv-steps { grid-template-columns: 1fr; gap: 1.1rem; }
+  .hv-quote { width: calc(100% - 2rem); }
+  .hv-quote blockquote::before, .hv-quote blockquote::after { display: none; }
+  .hv-values { grid-template-columns: 1fr; width: calc(100% - 2rem); }
+  .hv-value + .hv-value { border-left: 0; border-top: 1px solid var(--line-soft); }
+  .hv-steps li:not(:last-child)::after { display: none; }
+  .hv-sprout { right: 1rem; }
+  .hv-closing { min-height: 330px; align-items: flex-start; background: #ffffff; }
+  .hv-closing::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 190px;
+    background: var(--hv-closing-image) 62% bottom / cover no-repeat;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 42%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 42%);
+  }
   .hv-closing-inner { max-width: none; padding: 1.25rem 1.25rem 0; }
 }
 @media (max-width: 520px) {

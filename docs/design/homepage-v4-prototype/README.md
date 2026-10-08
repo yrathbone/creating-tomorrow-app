@@ -8,9 +8,9 @@ Status: design approved on 2026-10-09; waiting for final photography and mascot 
 
 ## What is here
 - `home-v4.html` / `home-v4.css`: the prototype in the dashboard's look (raised cards, glossy colored icons, gradient buttons):
-  hero, six compact tool cards, then ONE bottom row: How It Works on the left, the Chicago 2150 picture with the promise on the right.
+  hero, six compact tool cards, a short 'what we stand for' strip, How It Works (number + icon + arrow flow), an Alan Kay quote, the six tools, and a full-width Chicago 2150 band with the promise at the bottom.
   Close to one screen at desktop width. The dashboard preview box was removed on purpose.
-- `img/hero-placeholder.jpg`: PLACEHOLDER portrait (a crop from the approved mockup).
+- `img/hero-man.jpg`: hero portrait (concept image, a man looking up with the Chicago skyline behind him). `img/hero-placeholder.jpg` is the older woman placeholder, no longer used. Licence check needed before launch.
 - `img/chicago-2150.jpg`: concept image of a future Chicago from Grant Park (caption cropped off). Needs a licence check or a commissioned replacement before launch.
 
 ## To preview it locally

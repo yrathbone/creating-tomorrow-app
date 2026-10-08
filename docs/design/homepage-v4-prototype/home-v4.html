@@ -40,10 +40,60 @@
         </div>
       </div>
       <div class="hv-hero-photo">
-        <!-- ASSET SLOT: hero portrait. Replace img/hero-placeholder.jpg (and its alt text) with the final licensed photograph. -->
-        <img src="img/hero-placeholder.jpg" alt="A young professional smiling at her laptop, with the Chicago skyline behind her" width="560" height="336" />
+        <!-- ASSET SLOT: hero portrait. Replace img/hero-man.jpg (and its alt text) with the final licensed photograph. -->
+        <img src="img/hero-man.jpg" alt="A man smiling and looking up toward the future, with the Chicago skyline and lakefront behind him" width="1400" height="788" />
       </div>
     </section>
+
+    <!-- Context: what we stand for, in three short lines -->
+    <section class="hv-values" aria-label="What we stand for">
+      <div class="hv-value">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="v-blue"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div><b>Evidence-first guidance</b><span>Tools based on what works in real job markets.</span></div>
+      </div>
+      <div class="hv-value">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="v-gold"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M15 14.4c.6-.3 1.2-.4 2-.4 2.2 0 3.8 1.5 3.8 4"/></svg>
+        <div><b>Supportive and judgment-free</b><span>A welcoming space for every background.</span></div>
+      </div>
+      <div class="hv-value">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="v-green"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/><path d="M12 15c0-3-2.2-5-6-5 0 3.2 2.2 5 6 5z"/></svg>
+        <div><b>Practical tools to move forward</b><span>Clear, actionable help you can use today.</span></div>
+      </div>
+    </section>
+
+    <!-- How It Works: three steps, each with a number and a big colored icon, joined by arrows -->
+    <section class="hv-section hv-how" id="how" aria-labelledby="how-h">
+      <!-- ASSET SLOT: small mascot accent. Replace ../mascot-icon.png with the final production mascot asset. -->
+      <img class="hv-sprout" src="../mascot-icon.png" alt="" width="52" height="52" />
+      <h2 id="how-h" class="hv-h2">How It Works</h2>
+      <p class="hv-how-sub">Get started in minutes and take meaningful steps toward your goals.</p>
+      <ol class="hv-steps" aria-labelledby="how-h">
+        <li>
+          <div class="hv-step-top"><span class="hv-step-n">1</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="hv-step-icon v-blue"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h5M9.5 16h5"/></svg></div>
+          <b>Tell us where you are</b>
+          <p>Share a bit about your background, goals, and the kind of work you're looking for.</p>
+        </li>
+        <li>
+          <div class="hv-step-top"><span class="hv-step-n">2</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="hv-step-icon v-gold"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></div>
+          <b>Build your next version</b>
+          <p>Use our free tools to create and improve your resume, explore job matches, and build your skills.</p>
+        </li>
+        <li>
+          <div class="hv-step-top"><span class="hv-step-n">3</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="hv-step-icon v-navy"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
+          <b>Move forward with confidence</b>
+          <p>Apply with a stronger resume, practice for interviews, and take your next step.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Quote: one line of inspiration between How It Works and the tools -->
+    <figure class="hv-quote">
+      <blockquote><p>“The best way to predict the future is to invent it.”</p></blockquote>
+      <figcaption>— Alan Kay</figcaption>
+    </figure>
 
     <!-- Tools: six small, clean cards -->
     <section class="hv-section" id="tools" aria-labelledby="tools-h">
@@ -58,18 +108,8 @@
       </div>
     </section>
 
-    <!-- Bottom row: How it works on the left, the Chicago picture with the promise on the right -->
-    <section class="hv-bottom" id="how" aria-label="How it works and our promise">
-      <div class="hv-how">
-        <!-- ASSET SLOT: small mascot accent. Replace ../mascot-icon.png with the final production mascot asset. -->
-        <img class="hv-sprout" src="../mascot-icon.png" alt="" width="52" height="52" />
-        <h2 id="how-h" class="hv-h2">How it works</h2>
-        <ol class="hv-steps" aria-labelledby="how-h">
-          <li><span class="hv-step-n">1</span><div><b>Tell us where you are</b><p>Share your background and the kind of work you want.</p></div></li>
-          <li><span class="hv-step-n">2</span><div><b>Build your next version</b><p>Use the free tools to improve your resume and skills.</p></div></li>
-          <li><span class="hv-step-n">3</span><div><b>Move forward with confidence</b><p>Apply with a stronger resume and practise for interviews.</p></div></li>
-        </ol>
-      </div>
+    <!-- Bottom: the Chicago band with the promise -->
+    <section class="hv-bottom" aria-label="Our promise">
       <!-- ASSET SLOT: Chicago picture. Swap the one CSS variable --hv-closing-image (home-v4.css) for the final file. -->
       <div class="hv-closing" role="group" aria-labelledby="close-h">
         <div class="hv-closing-inner">
