@@ -27,3 +27,8 @@ and delete the copy afterwards (never commit it under `frontend/`).
 ## When converting the real homepage
 Re-create this design in `frontend/index.html` using the existing homepage content and tools (Guide Me must open the existing Guide),
 keep the same copy, and do not ship the placeholder images.
+
+## Status update (2026-10-07)
+The live homepage (`frontend/index.html` + `frontend/home-v4.css`, pictures in `frontend/img/home/`) is now built from this design.
+Differences from this prototype: Career Basics replaces the "what we stand for" strip; the header is the shared site header (same as the dashboard);
+"Guide Me" opens the existing Guide modal (guide.js, data-guide-open buttons). This folder stays as the design reference.

@@ -89,7 +89,17 @@ function closeGuide() {
   guideModal.hidden = true;
 }
 
-document.getElementById("guide-open-btn").addEventListener("click", openGuide);
+// Any "Guide Me" / "Talk to Guide" button can carry data-guide-open (the redesigned homepage uses
+// these); the original id-based entry points below still work if a page has them.
+document.querySelectorAll("[data-guide-open]").forEach((el) => {
+  el.addEventListener("click", (e) => {
+    e.preventDefault();
+    openGuide();
+  });
+});
+
+const guideOpenBtn = document.getElementById("guide-open-btn");
+if (guideOpenBtn) guideOpenBtn.addEventListener("click", openGuide);
 
 // The mascot image and headline are also click/keyboard entry points into
 // Guide (not the whole teaser section) - both use role="button" +
@@ -102,13 +112,11 @@ function activateOnEnterOrSpace(e, handler) {
   }
 }
 
-const guideMascot = document.getElementById("guide-character-slot");
-guideMascot.addEventListener("click", openGuide);
-guideMascot.addEventListener("keydown", (e) => activateOnEnterOrSpace(e, openGuide));
-
-const guideHeadline = document.getElementById("guide-headline-open");
-guideHeadline.addEventListener("click", openGuide);
-guideHeadline.addEventListener("keydown", (e) => activateOnEnterOrSpace(e, openGuide));
+[document.getElementById("guide-character-slot"), document.getElementById("guide-headline-open")].forEach((el) => {
+  if (!el) return; // the redesigned homepage has no mascot/headline teaser
+  el.addEventListener("click", openGuide);
+  el.addEventListener("keydown", (e) => activateOnEnterOrSpace(e, openGuide));
+});
 
 document.getElementById("guide-close-btn").addEventListener("click", closeGuide);
 document.getElementById("guide-back-btn").addEventListener("click", () => {
