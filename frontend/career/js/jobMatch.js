@@ -877,7 +877,7 @@ function restoreCurrentJobTarget() {
     btn.hidden = true;
     return;
   }
-  btn.textContent = "Pick up where I left off" + (latest.job_title ? ": " + latest.job_title : "");
+  btn.textContent = latest.job_title ? "Continue: " + latest.job_title : "Pick up where I left off";
   btn.onclick = () => openJobTarget(latest);
   btn.hidden = false;
 }

@@ -1,0 +1,187 @@
+/* Creating Tomorrow homepage, Version 4 prototype (local only, not linked from the live site).
+   Standalone stylesheet: it does not load or change ../style.css. White page, navy and gold,
+   thin lines, modest radii, restrained pastels, one real person in the hero and one in the
+   closing band. The mascot is a small accent only. */
+
+:root {
+  --ink: #14213d;
+  --muted: #5a6478;
+  --blue: #0a35a8;
+  --blue-deep: #072a86;
+  --gold: #efae09;
+  --gold-text: #a96f00;
+  --line: #e6e9ef;
+  --line-soft: #eef0f5;
+  --cream: #fdfaf3;
+  --sky: #f3f7fd;
+  --lavender: #f6f4fc;
+  --mint: #f1f8f3;
+  --butter: #fdf8ea;
+  --blush: #fdf3f0;
+  --navy: #0f1f4a;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(20, 33, 61, 0.04), 0 4px 14px rgba(20, 33, 61, 0.04);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  background: #ffffff;
+  line-height: 1.55;
+}
+a { color: inherit; }
+img { max-width: 100%; height: auto; display: block; }
+.hv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.hv-protobar { margin: 0; padding: 0.4rem 1rem; background: #fff6dc; color: #5b4300; text-align: center; font-size: 0.8rem; border-bottom: 1px solid #f1e3bd; }
+
+/* ---------- Header ---------- */
+.hv-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  flex-wrap: wrap;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
+}
+.hv-logo { display: flex; align-items: center; gap: 0.55rem; text-decoration: none; font-weight: 800; font-size: 1.15rem; color: var(--ink); letter-spacing: -0.01em; }
+.hv-logo img { height: 38px; width: auto; }
+.hv-logo b { color: var(--gold-text); font-weight: 800; }
+.hv-links { display: flex; flex-wrap: wrap; gap: 0.1rem 0.25rem; margin-right: auto; margin-left: 1rem; }
+.hv-links a { text-decoration: none; font-size: 0.92rem; font-weight: 600; padding: 0.45rem 0.7rem; border-bottom: 2px solid transparent; }
+.hv-links a:hover { color: var(--blue); }
+.hv-links a.is-active { border-bottom-color: var(--gold); }
+.hv-nav-actions { display: flex; align-items: center; gap: 0.9rem; }
+.hv-signin { text-decoration: none; font-weight: 650; font-size: 0.92rem; color: var(--blue); }
+.hv-signin:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* ---------- Buttons ---------- */
+.hv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.4rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.97rem;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+}
+.hv-btn-sm { padding: 0.5rem 1rem; font-size: 0.9rem; }
+.hv-btn-primary { background: var(--blue); color: #ffffff; }
+.hv-btn-primary:hover { background: var(--blue-deep); }
+.hv-btn-outline { background: #ffffff; color: var(--blue); border-color: #c3cde6; }
+.hv-btn-outline:hover { background: var(--sky); border-color: var(--blue); }
+.hv-btn-gold { background: var(--gold); color: #2b1d00; }
+.hv-btn-gold:hover { background: #dc9f00; }
+
+/* ---------- Hero ---------- */
+.hv-hero {
+  max-width: 1180px;
+  margin: 0.75rem auto 0;
+  padding: 0 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2.25rem;
+  align-items: center;
+}
+.hv-hero-copy { padding: 1.25rem 0; }
+.hv-hero h1 { margin: 0 0 0.9rem; font-size: clamp(2.1rem, 4vw, 3.15rem); line-height: 1.04; font-weight: 800; letter-spacing: -0.035em; }
+.hv-hero h1 span { color: var(--gold-text); }
+.hv-hero p { margin: 0 0 1.4rem; max-width: 28rem; font-size: 1.02rem; color: var(--muted); }
+.hv-cta { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+.hv-hero-photo { position: relative; border-radius: var(--radius); overflow: hidden; min-height: 280px; box-shadow: var(--shadow); }
+.hv-hero-photo > img:first-child { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 560 / 336; }
+.hv-hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0) 22%); pointer-events: none; }
+.hv-sprout { position: absolute; right: 0.9rem; bottom: 0.8rem; width: 46px; height: auto; z-index: 1; filter: drop-shadow(0 2px 6px rgba(20, 33, 61, 0.2)); }
+
+/* ---------- Sections ---------- */
+.hv-section { max-width: 1180px; margin: 3.5rem auto 0; padding: 0 1.5rem; }
+.hv-h2 { margin: 0 0 1.25rem; font-size: 1.45rem; font-weight: 750; letter-spacing: -0.02em; }
+.hv-sub { margin: -0.75rem 0 1.25rem; color: var(--muted); font-size: 0.95rem; }
+.hv-section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+.hv-link { color: var(--blue); font-weight: 700; text-decoration: none; font-size: 0.95rem; margin-bottom: 1.25rem; }
+.hv-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* Tools */
+.hv-tools { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; }
+.hv-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 0.9rem 0.9rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.hv-tool:hover { border-color: #c9d3ea; box-shadow: var(--shadow); }
+.hv-tool svg { width: 20px; height: 20px; fill: none; stroke: var(--blue); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 0.45rem; opacity: 0.85; }
+.hv-tool b { font-size: 0.98rem; }
+.hv-tool span { font-size: 0.83rem; color: var(--muted); line-height: 1.4; }
+.t-sky { background: var(--sky); } .t-butter { background: var(--butter); } .t-lavender { background: var(--lavender); } .t-mint { background: var(--mint); } .t-blush { background: var(--blush); }
+
+/* How it works */
+.hv-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; border-top: 1px solid var(--line-soft); padding-top: 1.5rem; }
+.hv-steps li { display: flex; gap: 0.9rem; align-items: flex-start; }
+.hv-step-n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--sky); color: var(--blue); font-weight: 800; font-size: 0.88rem; display: grid; place-items: center; }
+.hv-steps b { display: block; font-size: 0.98rem; margin-bottom: 0.15rem; }
+.hv-steps p { margin: 0; font-size: 0.9rem; color: var(--muted); }
+
+/* Closing band: the strongest brand moment, a twilight Chicago skyline with one promise */
+.hv-closing {
+  max-width: 1180px;
+  margin: 4.5rem auto 0;
+  min-height: 330px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius);
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    linear-gradient(90deg, rgba(8, 18, 52, 0.92) 0%, rgba(8, 18, 52, 0.62) 42%, rgba(8, 18, 52, 0.08) 88%),
+    url("img/chicago-twilight-placeholder.jpg") center 38% / cover no-repeat;
+  box-shadow: 0 10px 34px rgba(8, 18, 52, 0.18);
+}
+.hv-closing-inner { padding: 3rem 3.25rem; max-width: 46rem; display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; }
+.hv-closing h2 { margin: 0; font-size: clamp(1.8rem, 3.2vw, 2.6rem); line-height: 1.12; font-weight: 800; letter-spacing: -0.03em; }
+.hv-closing h2 span { color: var(--gold); }
+.hv-closing p { margin: 0; color: #d6ddf2; font-size: 1.05rem; }
+.hv-btn-lg { padding: 0.85rem 1.7rem; font-size: 1rem; margin-top: 0.4rem; }
+
+.hv-footer { max-width: 1180px; margin: 3.5rem auto 0; padding: 1.5rem 1.5rem 3rem; border-top: 1px solid var(--line-soft); text-align: center; color: var(--muted); font-size: 0.88rem; }
+.hv-footer p { margin: 0; }
+.hv-footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
+
+/* ---------- Tablet and phone ---------- */
+@media (max-width: 1000px) {
+  .hv-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hv-hero { gap: 1.5rem; }
+}
+@media (max-width: 800px) {
+  .hv-nav { padding: 0.75rem 1rem; }
+  .hv-links { order: 3; margin: 0; width: 100%; }
+  .hv-hero { grid-template-columns: 1fr; padding: 0 1rem; margin-top: 0.25rem; }
+  .hv-hero-copy { padding: 1rem 0 0; }
+  .hv-hero-photo { min-height: 0; }
+  .hv-hero-photo > img:first-child { height: auto; }
+  .hv-hero-photo::after { background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0) 18%); }
+  .hv-section { margin-top: 3rem; padding: 0 1rem; }
+  .hv-steps { grid-template-columns: 1fr; gap: 1.1rem; }
+  .hv-closing { margin: 3rem 1rem 0; min-height: 300px; }
+  .hv-closing-inner { padding: 2rem 1.5rem; }
+  .hv-closing { background: linear-gradient(180deg, rgba(8, 18, 52, 0.86) 0%, rgba(8, 18, 52, 0.55) 60%, rgba(8, 18, 52, 0.25) 100%), url("img/chicago-twilight-placeholder.jpg") 62% center / cover no-repeat; }
+}
+@media (max-width: 520px) {
+  .hv-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hv-nav-actions { gap: 0.6rem; }
+  .hv-nav-actions .hv-btn { display: none; } /* the hero already has Guide Me */
+  .hv-logo { font-size: 1.05rem; }
+  .hv-links a { padding: 0.35rem 0.5rem; font-size: 0.88rem; }
+}

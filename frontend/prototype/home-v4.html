@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Creating Tomorrow — Homepage Version 4 prototype</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="../logo-icon.png" />
+  <link rel="stylesheet" href="home-v4.css" />
+</head>
+<body>
+  <p class="hv-protobar">Local visual prototype, not published. The portrait and the twilight Chicago skyline are placeholders (cropped and graded from your reference images): replace them with licensed or commissioned Chicago photography before launch.</p>
+
+  <header class="hv-nav">
+    <a href="../index.html" class="hv-logo"><img src="../logo-icon.png" alt="" /><span>Creating <b>Tomorrow</b></span></a>
+    <nav class="hv-links" aria-label="Main">
+      <a href="home-v4.html" class="is-active">Home</a>
+      <a href="#how">How It Works</a>
+      <a href="#tools">Tools</a>
+      <a href="../learn.html">Learn</a>
+      <a href="../videos.html">Videos</a>
+      <a href="../about.html">About</a>
+    </nav>
+    <div class="hv-nav-actions">
+      <a href="../career/login.html" class="nav-account hv-signin">Sign In</a>
+      <a href="../index.html" class="hv-btn hv-btn-primary hv-btn-sm">Guide Me <span aria-hidden="true">→</span></a>
+    </div>
+  </header>
+  <script src="../auth-nav.js"></script>
+
+  <main>
+    <!-- Hero: one person, one city, one line of copy -->
+    <section class="hv-hero">
+      <div class="hv-hero-copy">
+        <h1>See your value.<br /><span>Build your future.</span></h1>
+        <p>Free career tools to help you see your experience clearly and take the next step.</p>
+        <div class="hv-cta">
+          <a href="../index.html" class="hv-btn hv-btn-primary">Guide Me <span aria-hidden="true">→</span></a>
+          <a href="#tools" class="hv-btn hv-btn-outline">Explore Tools</a>
+        </div>
+      </div>
+      <div class="hv-hero-photo">
+        <img src="img/hero-placeholder.jpg" alt="A young professional smiling at her laptop, with the Chicago skyline behind her" width="560" height="336" />
+        <img class="hv-sprout" src="../mascot-icon.png" alt="" width="52" height="52" />
+      </div>
+    </section>
+
+    <!-- Tools: six small, clean cards -->
+    <section class="hv-section" id="tools" aria-labelledby="tools-h">
+      <h2 id="tools-h" class="hv-h2">Six free tools, one next step</h2>
+      <div class="hv-tools">
+        <a class="hv-tool t-sky" href="../scratch.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h5M9.5 16h5"/></svg><b>Beginning</b><span>Build your first resume.</span></a>
+        <a class="hv-tool t-butter" href="../tool.html?mode=refine"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg><b>Refine</b><span>Strengthen the resume you have.</span></a>
+        <a class="hv-tool t-lavender" href="../tool.html?mode=analyze"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg><b>Right Fit</b><span>Compare your resume to a job.</span></a>
+        <a class="hv-tool t-mint" href="../elevate.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M11 20V4M17 20v-6"/><path d="M2.5 20.5h19"/></svg><b>Elevate</b><span>Find experience you left out.</span></a>
+        <a class="hv-tool t-sky" href="../spotlight.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg><b>Spotlight</b><span>Strengthen your LinkedIn.</span></a>
+        <a class="hv-tool t-blush" href="../prepare.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg><b>Prepare</b><span>Get ready for interviews.</span></a>
+      </div>
+    </section>
+
+    <!-- How it works: compact three steps -->
+    <section class="hv-section" id="how" aria-labelledby="how-h">
+      <h2 id="how-h" class="hv-h2">How it works</h2>
+      <ol class="hv-steps">
+        <li><span class="hv-step-n">1</span><div><b>Tell us where you are</b><p>Share your background and the kind of work you want.</p></div></li>
+        <li><span class="hv-step-n">2</span><div><b>Build your next version</b><p>Use the free tools to improve your resume and skills.</p></div></li>
+        <li><span class="hv-step-n">3</span><div><b>Move forward with confidence</b><p>Apply with a stronger resume and practise for interviews.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- Closing: the brand promise, over a twilight Chicago skyline -->
+    <section class="hv-closing" aria-labelledby="close-h">
+      <div class="hv-closing-inner">
+        <h2 id="close-h">We don't invent your value.<br /><span>We help you see it.</span></h2>
+        <p>Real tools. Real support. A brighter tomorrow is possible.</p>
+        <a href="../tool.html" class="hv-btn hv-btn-gold hv-btn-lg">Start your journey <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="hv-footer">
+    <p>Creating Tomorrow: free career tools and guidance. <a href="../about.html">About</a> · <a href="../learn.html">Learn</a> · <a href="../videos.html">Videos</a></p>
+  </footer>
+</body>
+</html>

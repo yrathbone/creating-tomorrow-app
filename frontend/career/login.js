@@ -521,6 +521,7 @@ function updateDashboardSummary() {
       { key: "education", number: allEducation.length, label: "Education" },
       { key: "certifications", number: allCertifications.length, label: allCertifications.length === 1 ? "Certification" : "Certifications" },
       { key: "skills", number: allSkills.length, label: allSkills.length === 1 ? "Skill" : "Skills" },
+      { key: "languages", number: typeof allLanguages !== "undefined" ? allLanguages.length : 0, label: typeof allLanguages !== "undefined" && allLanguages.length === 1 ? "Language" : "Languages" },
     ];
     const activityStats = [
       { key: "history", number: scans, label: scans === 1 ? "Job & Skill Scan" : "Job & Skill Scans" },
@@ -609,6 +610,7 @@ function showConsentStep() {
 }
 
 async function showProfileStep() {
+  document.body.classList.add("dashboard-v4");
   document.getElementById("step-login").hidden = true;
   document.getElementById("session-check").hidden = true;
   document.getElementById("nav-signout").hidden = false;
@@ -624,6 +626,7 @@ async function showProfileStep() {
   await loadResumeVersions();
   if (typeof loadApplications === "function") await loadApplications();
   if (typeof restoreCurrentJobTarget === "function") restoreCurrentJobTarget();
+  if (typeof loadLanguages === "function") await loadLanguages();
   if (typeof loadProfileBasics === "function") await loadProfileBasics();
 }
 
@@ -679,6 +682,7 @@ document.getElementById("nav-signout").addEventListener("click", async (e) => {
 });
 
 function showLoginForm(message) {
+  document.body.classList.remove("dashboard-v4");
   document.getElementById("session-check").hidden = true;
   document.getElementById("nav-signout").hidden = true;
   document.getElementById("page-header").hidden = false;
@@ -720,6 +724,7 @@ async function restoreSession() {
 
 // While a saved session is being checked, keep the login form from flashing.
 if (hasStoredSessionKeys()) {
+  document.body.classList.add("dashboard-v4");
   document.getElementById("step-login").hidden = true;
   document.getElementById("page-header").hidden = true;
   document.getElementById("session-check").hidden = false;

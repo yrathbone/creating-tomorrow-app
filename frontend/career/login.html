@@ -7,6 +7,7 @@
   <meta name="description" content="Log in to your Creating Tomorrow Career Profile account." />
   <link rel="icon" type="image/png" href="../logo-icon.png" />
   <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="dashboard-v4.css" />
 </head>
 <body>
   <nav class="site-nav">
@@ -16,7 +17,7 @@
       <a href="../learn.html">Learn</a>
       <a href="../videos.html">Videos</a>
       <a href="../about.html">About</a>
-      <a href="login.html" class="nav-active">My Dashboard</a>
+      <a href="login.html" class="nav-active">My Career</a>
       <a href="../tool.html" class="nav-cta">Career Tools →</a>
       <a href="login.html" id="nav-signout" class="nav-signout" hidden>Sign Out</a>
     </div>
@@ -71,14 +72,55 @@
 
       <div class="dashboard-hero" id="dashboard-top">
         <h1><span class="hero-h1-line1">Your Career,</span> <span class="hero-h1-line2">in One Place.</span></h1>
-        <p>Your Career Profile keeps the experience you've verified so you don't have to rebuild your history every time you apply.</p>
+        <p>Save your story. Build your resume.</p>
         <div class="dashboard-hero-actions">
           <button type="button" id="upload-resume-btn" class="btn-primary">Upload My Resume</button>
           <button type="button" id="import-linkedin-btn" class="btn-linkedin">Import from LinkedIn</button>
           <button type="button" id="general-resume-hero-btn" class="btn-secondary">Build a General Resume</button>
           <button type="button" id="update-profile-btn" class="btn-secondary">Update My Career Profile</button>
         </div>
+        <img class="dh-mascot" src="../mascot-welcome.png" alt="" width="245" height="291" />
       </div>
+
+      <section class="cp-status" id="career-profile-status" aria-label="Career Profile">
+        <div class="cp-row">
+          <div class="cp-id">
+            <span class="cp-avatar" id="cp-avatar" aria-hidden="true"></span>
+            <div class="cp-id-text">
+              <strong id="cp-name">Your name</strong>
+              <span id="cp-contact">Add your contact line</span>
+            </div>
+          </div>
+          <div class="mc-progress" id="career-progress">
+            <img class="mc-progress-mascot" src="../mascot-icon.png" alt="" width="56" height="56" />
+            <div class="mc-progress-body">
+              <p class="mc-progress-title" id="career-progress-title">Career foundation</p>
+              <p class="mc-progress-sub" id="career-progress-sub"></p>
+              <div class="mc-progress-bar" id="career-progress-bar" role="img" aria-label="Career foundation progress">
+                <span data-step="header"></span><span data-step="roles"></span><span data-step="education"></span><span data-step="certifications"></span><span data-step="skills"></span><span data-step="languages"></span>
+              </div>
+            </div>
+          </div>
+          <p class="cp-evidence" id="cp-evidence"></p>
+          <button type="button" id="edit-profile-btn" class="btn-secondary cp-edit" aria-expanded="false" aria-controls="profile-basics-form">Edit Profile</button>
+        </div>
+
+        <form id="profile-basics-form" class="mc-identity" autocomplete="off" hidden>
+          <div class="mc-identity-text">
+            <h3>Your resume header</h3>
+            <p class="hint">Saved once, then filled in for you whenever you build a resume.</p>
+          </div>
+          <div class="mc-identity-fields">
+            <label class="field"><span>Your name</span><input type="text" id="profile-display-name" maxlength="200" placeholder="As it should appear on a resume" /></label>
+            <label class="field"><span>Contact line</span><input type="text" id="profile-contact-line" maxlength="400" placeholder="City, ST | Phone | Email | LinkedIn" /></label>
+          </div>
+          <div class="mc-identity-actions">
+            <button type="submit" id="profile-basics-save-btn">Save</button>
+            <button type="button" id="profile-basics-cancel-btn" class="btn-secondary">Cancel</button>
+            <span class="hint" id="profile-basics-msg" role="status" hidden></span>
+          </div>
+        </form>
+      </section>
 
       <div class="dashboard-grid">
         <div class="card span-2 job-card">
@@ -310,8 +352,11 @@
         </div>
 
         <div class="card span-2 snapshot-card profile-card">
-          <div class="dashboard-card-header"><h2>Your Career Profile</h2></div>
+          <div class="dashboard-card-header">
+            <h2>My Career</h2>
+          </div>
           <p class="hint">What you've done: the evidence everything else is built from. Click a tile to open it, and again to close it.</p>
+
           <div class="stat-row" id="career-stat-row"></div>
 
           <div id="snapshot-panels">
@@ -411,6 +456,27 @@
           <button type="button" id="skill-scan-cancel-btn" class="btn-secondary">Cancel</button>
           <div id="skill-scan-save-error" class="error" hidden></div>
         </div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-languages" hidden>
+              <h3>Languages</h3>
+              <p class="hint">Languages you speak, read, or write, and how well. Add only what is true for you.</p>
+              <form id="language-form">
+                <div class="field-row">
+                  <label class="field"><span>Language</span><input type="text" id="language-name" maxlength="60" placeholder="e.g. Spanish" autocomplete="off" required /></label>
+                  <label class="field"><span>Proficiency (optional)</span><input type="text" id="language-proficiency" maxlength="80" list="language-proficiency-options" placeholder="e.g. Professional working proficiency" autocomplete="off" /></label>
+                </div>
+                <datalist id="language-proficiency-options">
+                  <option value="Native or bilingual"></option>
+                  <option value="Full professional proficiency"></option>
+                  <option value="Professional working proficiency"></option>
+                  <option value="Limited working proficiency"></option>
+                  <option value="Elementary proficiency"></option>
+                </datalist>
+                <button type="submit" id="language-submit-btn">Add language</button>
+                <div id="language-error" class="error" hidden></div>
+              </form>
+              <div id="language-detail-list"></div>
             </section>
           </div>
 
@@ -625,6 +691,8 @@
   <script src="../loading.js"></script>
   <script src="login.js"></script>
   <script src="js/profileBasics.js"></script>
+  <script src="js/languages.js"></script>
+  <script src="js/dashboardVisuals.js"></script>
   <script src="js/resumeReview.js"></script>
   <script src="js/jobMatch.js"></script>
   <script src="js/skillScan.js"></script>
