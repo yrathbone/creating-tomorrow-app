@@ -234,6 +234,16 @@
             <h4>A couple details for the resume header</h4>
             <label class="field"><span>Your name</span><input type="text" id="job-build-name" required /></label>
             <label class="field"><span>Contact line</span><input type="text" id="job-build-contact" placeholder="City, ST | Phone | Email | LinkedIn" required /></label>
+            <label class="field resume-layout-field">
+              <span>Resume layout</span>
+              <select id="job-build-layout" data-resume-layout>
+                <option value="classic">Classic: centered, shaded headings</option>
+                <option value="modern">Modern: clean, left-aligned, navy accents</option>
+                <option value="traditional">Traditional: serif, conservative</option>
+              </select>
+            </label>
+            <button type="button" class="btn-secondary resume-layout-default" data-layout-default="job-build-layout" data-layout-msg="job-build-layout-msg">Make this my default</button>
+            <span class="hint resume-layout-msg" id="job-build-layout-msg" role="status" hidden></span>
             <button type="button" id="job-build-btn">Build My Resume</button>
             <button type="button" id="job-keyword-check-btn" class="btn-gold">Check the posting's keywords first (optional)</button>
             <p class="hint" id="job-keyword-saved-note" hidden></p>
@@ -347,6 +357,16 @@
           <div id="general-resume-form" hidden>
             <label class="field"><span>Your name</span><input type="text" id="general-resume-name" required /></label>
             <label class="field"><span>Contact line</span><input type="text" id="general-resume-contact" placeholder="City, ST | Phone | Email | LinkedIn" required /></label>
+            <label class="field resume-layout-field">
+              <span>Resume layout</span>
+              <select id="general-build-layout" data-resume-layout>
+                <option value="classic">Classic: centered, shaded headings</option>
+                <option value="modern">Modern: clean, left-aligned, navy accents</option>
+                <option value="traditional">Traditional: serif, conservative</option>
+              </select>
+            </label>
+            <button type="button" class="btn-secondary resume-layout-default" data-layout-default="general-build-layout" data-layout-msg="general-build-layout-msg">Make this my default</button>
+            <span class="hint resume-layout-msg" id="general-build-layout-msg" role="status" hidden></span>
             <button type="button" id="general-resume-build-btn">Build My Resume</button>
             <button type="button" id="general-resume-cancel-btn" class="btn-secondary">Cancel</button>
             <div id="general-resume-error" class="error" hidden></div>
@@ -547,6 +567,7 @@
 
             <section class="snapshot-panel" id="panel-resumes" hidden>
         <h3>Resumes Built</h3>
+        <p class="hint" id="resume-layout-status" role="status" hidden></p>
         <div id="resume-version-list"></div>
             </section>
 

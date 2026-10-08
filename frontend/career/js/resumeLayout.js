@@ -58,6 +58,14 @@ async function savePreferredLayout(layout) {
   }
 }
 
+// The layout chosen on a build screen is the one the download screen starts on.
+function carryLayoutChoice(fromId, toId) {
+  if (typeof document === "undefined") return;
+  const from = document.getElementById(fromId);
+  const to = document.getElementById(toId);
+  if (from && to) to.value = from.value;
+}
+
 // "Make this my default" buttons next to the download menus.
 if (typeof document !== "undefined") {
   document.querySelectorAll("[data-layout-default]").forEach((btn) => {

@@ -191,6 +191,25 @@ function renderResumeCards() {
       layout.appendChild(opt);
     }
     if (typeof preferredResumeLayout !== "undefined") layout.value = preferredResumeLayout;
+    const makeDefault = visualButton("Make default", "btn-secondary vcard-btn", async () => {
+      const status = document.getElementById("resume-layout-status");
+      makeDefault.disabled = true;
+      makeDefault.textContent = "Saving...";
+      const result = typeof savePreferredLayout === "function" ? await savePreferredLayout(layout.value) : { ok: false, message: "Couldn't save that right now." };
+      if (status) {
+        status.textContent = result.ok ? layoutSavedMessage(result.layout) : result.message;
+        status.hidden = false;
+      }
+      if (!result.ok) syncDefault();
+    });
+    // the button says so when the menu already shows the saved default
+    const syncDefault = () => {
+      const isDefault = typeof preferredResumeLayout !== "undefined" && layout.value === preferredResumeLayout;
+      makeDefault.textContent = isDefault ? "✓ Your default" : "Make default";
+      makeDefault.disabled = isDefault;
+    };
+    layout.addEventListener("change", syncDefault);
+    syncDefault();
     grid.appendChild(buildVisualCard({
       kind: "resume",
       tone: info.kind === "tailored" ? "fair" : "good",
@@ -201,6 +220,7 @@ function renderResumeCards() {
       footerText: "Built " + shortDate(entry.created_at),
       actions: [
         visualButton("Download again", "btn-secondary vcard-btn", () => downloadResumeVersion(entry, (entry.resume_data || {}).name, layout.value)),
+        makeDefault,
         visualButton("Delete", "entry-remove-btn", async () => {
           await authedFetch("/api/career/resume-versions/" + entry.id, { method: "DELETE" });
           await loadResumeVersions();

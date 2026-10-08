@@ -73,6 +73,7 @@ document.getElementById("general-resume-build-btn").addEventListener("click", as
     stopProcessingState(generalResumeLoading);
     hideAllGeneralResumeStates();
     generalResumeDone.hidden = false;
+    carryLayoutChoice("general-build-layout", "general-resume-template");
     if (typeof loadResumeVersions === "function") loadResumeVersions();
   } catch (err) {
     stopProcessingState(generalResumeLoading);

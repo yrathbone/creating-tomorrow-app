@@ -74,7 +74,7 @@ test("a wrong name is never sent as-is, and a failed save keeps the old choice a
 test("every dashboard layout menu starts on the saved choice and has a way to change it", () => {
   const html = read("login.html");
   const selects = [...html.matchAll(/<select id="([^"]+)" data-resume-layout>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(selects.sort(), ["general-resume-template", "job-resume-template", "profile-resume-layout"]);
+  assert.deepStrictEqual(selects.sort(), ["general-build-layout", "general-resume-template", "job-build-layout", "job-resume-template", "profile-resume-layout"]);
   for (const [select, msg] of [["job-resume-template", "job-layout-msg"], ["general-resume-template", "general-layout-msg"]]) {
     assert.ok(html.includes(`data-layout-default="${select}" data-layout-msg="${msg}"`), `${select}: Make this my default button`);
     assert.ok(html.includes(`id="${msg}"`));
@@ -85,4 +85,48 @@ test("every dashboard layout menu starts on the saved choice and has a way to ch
   assert.ok(login.indexOf("loadResumeLayoutPreference()") > -1 && login.indexOf("loadResumeLayoutPreference()") < login.indexOf("await loadResumeVersions()"));
   assert.match(read("js", "history.js"), /layout\.value = preferredResumeLayout/);
   assert.match(read("js", "profileBasics.js"), /savePreferredLayout\(layoutSelect\.value\)/);
+});
+
+// ---- the choice is offered where people actually are (build screens and Resumes Built cards) ----
+
+test("both build screens offer a layout menu and 'Make this my default' before the Build button", () => {
+  const html = read("login.html");
+  for (const [prefix, buildBtn] of [["job", "job-build-btn"], ["general", "general-resume-build-btn"]]) {
+    const select = html.indexOf(`id="${prefix}-build-layout"`);
+    const button = html.indexOf(`data-layout-default="${prefix}-build-layout"`);
+    const build = html.indexOf(`id="${buildBtn}"`);
+    assert.ok(select > 0 && button > 0 && build > 0, prefix);
+    assert.ok(select < build && button < build, `${prefix}: the menu comes before Build My Resume`);
+    assert.ok(html.includes(`data-layout-msg="${prefix}-build-layout-msg"`) && html.includes(`id="${prefix}-build-layout-msg"`), prefix);
+    assert.match(html.slice(select - 60, select + 40), /data-resume-layout|resume-layout-field|select/);
+  }
+});
+
+test("every data-layout-default button points at a real menu and a real message line", () => {
+  const html = read("login.html");
+  for (const m of html.matchAll(/data-layout-default="([^"]+)" data-layout-msg="([^"]+)"/g)) {
+    assert.ok(html.includes(`id="${m[1]}"`), `no menu ${m[1]}`);
+    assert.ok(html.includes(`id="${m[2]}"`), `no message ${m[2]}`);
+  }
+});
+
+test("the layout chosen on a build screen is the one the download screen starts on", () => {
+  const els = { from: { value: "modern" }, to: { value: "classic" } };
+  const sandbox = { document: { getElementById: (id) => els[id] || null, querySelectorAll: () => [] }, authedFetch: async () => ({ ok: true, json: async () => ({}) }) };
+  vm.createContext(sandbox);
+  vm.runInContext(read("js", "resumeLayout.js"), sandbox);
+  sandbox.carryLayoutChoice("from", "to");
+  assert.strictEqual(els.to.value, "modern");
+  sandbox.carryLayoutChoice("missing", "to"); // quietly does nothing
+  assert.strictEqual(els.to.value, "modern");
+  assert.match(read("js", "jobMatch.js"), /carryLayoutChoice\("job-build-layout", "job-resume-template"\)/);
+  assert.match(read("js", "generalResume.js"), /carryLayoutChoice\("general-build-layout", "general-resume-template"\)/);
+});
+
+test("each Resumes Built card can set its menu's layout as the default, and shows when it already is", () => {
+  const src = read("js", "history.js");
+  assert.match(src, /visualButton\("Make default"/);
+  assert.match(src, /savePreferredLayout\(layout\.value\)/);
+  assert.match(src, /Your default/);
+  assert.match(read("login.html"), /id="resume-layout-status"/);
 });

@@ -384,6 +384,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     stopProcessingState(jobBuildLoadingState);
     jobBuildLoadingState.hidden = true;
     jobBuildDoneState.hidden = false;
+    carryLayoutChoice("job-build-layout", "job-resume-template");
     if (typeof loadScanHistory === "function") loadScanHistory();
     if (typeof loadResumeVersions === "function") loadResumeVersions();
   } catch (err) {
