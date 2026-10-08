@@ -24,6 +24,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import Response
 from pydantic import BaseModel
+from sqlalchemy import inspect
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 
@@ -1761,3 +1762,52 @@ async def export_career_profile(
     if languages_unavailable:
         result["languages_unavailable"] = "Languages could not be included: the database upgrade (migration 0008) has not been applied."
     return result
+
+
+class DeleteAccountIn(BaseModel):
+    confirm: str
+
+
+DELETE_CONFIRM_WORD = "DELETE"
+
+
+def _delete_rows(db: Session, model, **filters) -> int:
+    """Bulk-delete rows. A table that does not exist yet (migrations are applied by hand) counts as 0. It is
+    looked for up front, with no savepoint, so the whole deletion stays one plain transaction on any database."""
+    if not inspect(db.connection()).has_table(model.__tablename__):
+        return 0
+    return db.query(model).filter_by(**filters).delete(synchronize_session=False)
+
+
+@router.post("/account/delete")
+async def delete_my_account(
+    body: DeleteAccountIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    """Permanently erase the signed-in person's saved data and their account row here. Whose data this is comes only
+    from the verified token (like every route in this file). The person must send the word DELETE so a stray
+    request cannot do it. It is a POST (not DELETE) because some proxies drop bodies on DELETE. The browser then
+    removes the sign-in account itself; this route never sees or needs the password.
+
+    Order matters: children before parents (skills point at roles, resumes at scans). Everything happens in one
+    transaction, so it is all erased or none of it is."""
+    if body.confirm.strip() != DELETE_CONFIRM_WORD:
+        raise HTTPException(status_code=400, detail=f"To delete everything, send the word {DELETE_CONFIRM_WORD}.")
+
+    counts = {}
+    user_id = current_user.id
+    profile_id = db.query(CareerProfile.id).filter_by(user_id=user_id).scalar()
+    if profile_id is not None:
+        for key, model in (
+            ("applications", Application), ("resume_versions", ResumeVersion), ("scan_history", ScanHistory),
+            ("skills", Skill), ("experiences", Experience), ("education", Education),
+            ("certifications", Certification), ("languages", Language), ("drafts", ResumeIngestionDraft),
+        ):
+            counts[key] = _delete_rows(db, model, career_profile_id=profile_id)
+        db.query(CareerProfile).filter_by(id=profile_id).delete(synchronize_session=False)
+    db.query(User).filter_by(id=user_id).delete(synchronize_session=False)
+    db.commit()
+    db.expunge_all()
+    logger.info("Account and saved data deleted by their owner (internal id %s): %s", user_id, counts)
+    return {"deleted": True, "counts": counts}

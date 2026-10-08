@@ -142,6 +142,19 @@ function signOutCurrentUser() {
   return revoked.then(clearCognitoSessionKeys, clearCognitoSessionKeys);
 }
 
+// Permanently removes the signed-in person's own sign-in account from Cognito (the SDK's deleteUser, which
+// needs their valid session). Only called after their saved data has been erased on our side.
+function deleteCurrentCognitoUser() {
+  return new Promise((resolve, reject) => {
+    const cognitoUser = userPool.getCurrentUser();
+    if (!cognitoUser) return reject(new Error("No saved session."));
+    cognitoUser.getSession((err, session) => {
+      if (err || !session) return reject(err || new Error("No saved session."));
+      cognitoUser.deleteUser((deleteErr) => (deleteErr ? reject(deleteErr) : resolve()));
+    });
+  });
+}
+
 function signUp(email, password) {
   const attributeList = [
     new AmazonCognitoIdentity.CognitoUserAttribute({ Name: "email", Value: email }),

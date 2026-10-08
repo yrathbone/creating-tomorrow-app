@@ -222,6 +222,14 @@ class TrustPages(unittest.TestCase):
         self.assertNotIn("Privacy · Terms · Delete My Data (coming soon", login)
         self.assertIn('href="../privacy.html"', login)
 
+    def test_privacy_and_terms_describe_the_real_self_serve_deletion(self):
+        privacy, terms = read("privacy.html"), read("terms.html")
+        for needle in ("Your Data", "Delete my data and account", "type DELETE", "cannot be undone"):
+            self.assertIn(needle, privacy, needle)
+        self.assertNotIn("A button that does this by itself is on our list", privacy)
+        self.assertIn("delete yours yourself from your dashboard", terms)
+        self.assertNotIn("self-serve button is coming", read("career/login.html"))
+
     def test_trust_pages_are_in_the_sitemap_and_not_hidden_from_search(self):
         sitemap = read("sitemap.xml")
         for page in TRUST_PAGES:

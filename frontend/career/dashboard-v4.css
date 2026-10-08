@@ -225,7 +225,7 @@ body.dashboard-v4 .dashboard-grid > .resume-card { border-top: 3px solid var(--v
 /* ---------- Buttons inside the cards ---------- */
 body.dashboard-v4 .dashboard-grid > .card button,
 body.dashboard-v4 #career-profile-editor button { font-family: inherit; border-radius: var(--v4-radius-sm); }
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn),
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger),
 body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn) {
   background: var(--v4-blue);
   color: #ffffff;
@@ -234,7 +234,7 @@ body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-r
   font-size: 0.92rem;
   font-weight: 650;
 }
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):hover { background: var(--v4-blue-deep); opacity: 1; }
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger):hover { background: var(--v4-blue-deep); opacity: 1; }
 body.dashboard-v4 .dashboard-grid > .card .btn-secondary,
 body.dashboard-v4 #career-profile-editor .btn-secondary {
   background: #ffffff;
@@ -652,7 +652,7 @@ body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card.active {
 body.dashboard-v4 .cp-avatar { background: linear-gradient(145deg, #ffffff, #d6e4ff); box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(10, 53, 168, 0.16), 0 5px 10px -4px rgba(20, 33, 61, 0.30); }
 
 /* Buttons: a lit top edge and a soft drop, still the same sizes and labels */
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn),
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger),
 body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn),
 body.dashboard-v4 #upload-resume-btn,
 body.dashboard-v4 #job-target-add-btn {
@@ -660,7 +660,7 @@ body.dashboard-v4 #job-target-add-btn {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 12px -5px rgba(10, 53, 168, 0.55);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):hover,
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger):hover,
 body.dashboard-v4 #upload-resume-btn:hover,
 body.dashboard-v4 #job-target-add-btn:hover {
   background-image: linear-gradient(180deg, #1448c4 0%, #072a86 100%);
@@ -1074,3 +1074,38 @@ body.dashboard-v4 .next-step-btn:focus-visible { outline: 3px solid var(--v4-blu
   body.dashboard-v4 .dash-panel > .next-step { order: -1; border-top: 0; border-bottom: 1px solid var(--v4-line-soft); padding: 0.9rem 1.1rem 1rem; }
   body.dashboard-v4 .next-step-btn { width: 100%; }
 }
+
+/* ---------- Hero: two buttons, the rest as quiet links (the next-step card does the guiding) ---------- */
+body.dashboard-v4 .dashboard-hero-links { grid-column: 1; margin: 0.55rem 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.1rem 0.7rem; position: relative; z-index: 1; color: var(--v4-muted); }
+body.dashboard-v4 .dashboard-hero-links #import-linkedin-btn,
+body.dashboard-v4 .dashboard-hero-links #update-profile-btn {
+  width: auto; min-height: 0; margin: 0; padding: 0.25rem 0.1rem; background: none; border: 0; border-radius: 4px; box-shadow: none;
+  color: var(--v4-blue); font-family: inherit; font-size: 0.93rem; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; transform: none; opacity: 1; cursor: pointer;
+}
+body.dashboard-v4 .dashboard-hero-links #import-linkedin-btn:hover,
+body.dashboard-v4 .dashboard-hero-links #update-profile-btn:hover { background: none; color: var(--v4-blue-deep); text-decoration-thickness: 2px; transform: none; }
+body.dashboard-v4 .dashboard-hero-links #import-linkedin-btn:focus-visible,
+body.dashboard-v4 .dashboard-hero-links #update-profile-btn:focus-visible { outline: 3px solid var(--v4-blue-ring); outline-offset: 2px; }
+
+/* ---------- Your Data: delete my data and account ---------- */
+body.dashboard-v4 .data-card .hint { max-width: 40rem; }
+body.dashboard-v4 .btn-danger-outline { color: #9b1c1c; background: #ffffff; border: 1.5px solid #e3b4b4; border-radius: var(--v4-radius-sm); min-height: 40px; padding: 0.5rem 1.1rem; font-weight: 650; }
+body.dashboard-v4 .btn-danger-outline:hover { background: #fdf3f3; border-color: #c94a4a; opacity: 1; }
+body.dashboard-v4 .delete-panel { margin-top: 1rem; padding: 1.1rem 1.25rem 1.2rem; background: #fffafa; border: 1px solid #f0c9c9; border-radius: var(--v4-radius-sm); max-width: 44rem; }
+body.dashboard-v4 .delete-panel h3 { margin: 0 0 0.4rem; font-family: var(--font-serif); font-size: var(--fs-lg); color: #7a1414; }
+body.dashboard-v4 .delete-panel ul { margin: 0.3rem 0 0.8rem; padding-left: 1.2rem; }
+body.dashboard-v4 .delete-panel li { margin: 0.25rem 0; }
+body.dashboard-v4 .delete-panel .field input { max-width: 16rem; text-transform: uppercase; letter-spacing: 0.08em; }
+body.dashboard-v4 .delete-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; }
+body.dashboard-v4 .btn-danger { min-height: 44px; padding: 0.55rem 1.3rem; font-family: inherit; font-size: 0.95rem; font-weight: 700; color: #ffffff; background: linear-gradient(180deg, #c93a3a 0%, #a32020 100%); border: 0; border-radius: var(--v4-radius-sm); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 12px -5px rgba(163, 32, 32, 0.55); cursor: pointer; }
+body.dashboard-v4 .btn-danger:hover:not(:disabled) { background: linear-gradient(180deg, #b93030 0%, #8f1818 100%); }
+body.dashboard-v4 .btn-danger:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+body.dashboard-v4 .btn-danger:focus-visible { outline: 3px solid rgba(163, 32, 32, 0.3); outline-offset: 2px; }
+@media (max-width: 640px) { body.dashboard-v4 .delete-actions button { width: 100%; } }
+
+/* the danger buttons keep their own colours whatever the general card-button rules say */
+body.dashboard-v4 #delete-account-start-btn { color: #9b1c1c; background: #ffffff; border: 1.5px solid #e3b4b4; box-shadow: none; }
+body.dashboard-v4 #delete-account-start-btn:hover { background: #fdf3f3; border-color: #c94a4a; color: #7a1414; }
+body.dashboard-v4 #delete-confirm-btn { color: #ffffff; background: linear-gradient(180deg, #c93a3a 0%, #a32020 100%); border: 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 12px -5px rgba(163, 32, 32, 0.55); }
+body.dashboard-v4 #delete-confirm-btn:hover:not(:disabled) { background: linear-gradient(180deg, #b93030 0%, #8f1818 100%); }
+body.dashboard-v4 #delete-confirm-btn:disabled { opacity: 0.45; box-shadow: none; }

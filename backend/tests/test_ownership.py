@@ -149,7 +149,7 @@ class TokenVerification(OwnershipTestCase):
     def test_every_career_route_rejects_a_request_with_no_token(self):
         routes = [r for r in router.routes if isinstance(r, APIRoute)]
         # 43 routes through Phase 2A + 4 language routes + 2 profile routes (GET/PUT /profile) in Phase 2B = 49, + 2 resume-layout routes (GET/PUT /resume-layout, migration 0009) = 51
-        self.assertEqual(len(routes), 51, "a route was added or removed: update this guard on purpose")
+        self.assertEqual(len(routes), 52, "a route was added or removed: update this guard on purpose")  # 52 = 51 + POST /account/delete
         offenders = []
         for r in routes:
             method = sorted(r.methods - {"HEAD", "OPTIONS"})[0]
