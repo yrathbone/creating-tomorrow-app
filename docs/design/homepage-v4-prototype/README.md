@@ -18,6 +18,7 @@ To view it, temporarily copy this folder to `frontend/prototype/`, run the site,
 and delete the copy afterwards (never commit it under `frontend/`).
 
 ## Asset replacements still to do
+(Full specs, file names and exactly where each one is wired: see `ASSETS.md`.)
 1. Replace the hero portrait with commissioned or licensed photography.
 2. Replace the twilight Chicago image with commissioned or licensed Chicago photography (Grant Park / Museum Campus views).
 3. Replace the low-resolution mascot crops (`frontend/mascot-welcome.png`, `frontend/mascot-icon.png`) with final production assets.

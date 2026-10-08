@@ -4,6 +4,8 @@
    closing band. The mascot is a small accent only. */
 
 :root {
+  /* ASSET SLOT: the twilight Chicago image behind the closing quote. Swap this one line for the final file. */
+  --hv-closing-image: url("img/chicago-twilight-placeholder.jpg");
   --ink: #14213d;
   --muted: #5a6478;
   --blue: #0a35a8;
@@ -146,7 +148,7 @@ img { max-width: 100%; height: auto; display: block; }
   color: #ffffff;
   background:
     linear-gradient(90deg, rgba(8, 18, 52, 0.92) 0%, rgba(8, 18, 52, 0.62) 42%, rgba(8, 18, 52, 0.08) 88%),
-    url("img/chicago-twilight-placeholder.jpg") center 38% / cover no-repeat;
+    var(--hv-closing-image) center 38% / cover no-repeat;
   box-shadow: 0 10px 34px rgba(8, 18, 52, 0.18);
 }
 .hv-closing-inner { padding: 3rem 3.25rem; max-width: 46rem; display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; }
@@ -176,7 +178,7 @@ img { max-width: 100%; height: auto; display: block; }
   .hv-steps { grid-template-columns: 1fr; gap: 1.1rem; }
   .hv-closing { margin: 3rem 1rem 0; min-height: 300px; }
   .hv-closing-inner { padding: 2rem 1.5rem; }
-  .hv-closing { background: linear-gradient(180deg, rgba(8, 18, 52, 0.86) 0%, rgba(8, 18, 52, 0.55) 60%, rgba(8, 18, 52, 0.25) 100%), url("img/chicago-twilight-placeholder.jpg") 62% center / cover no-repeat; }
+  .hv-closing { background: linear-gradient(180deg, rgba(8, 18, 52, 0.86) 0%, rgba(8, 18, 52, 0.55) 60%, rgba(8, 18, 52, 0.25) 100%), var(--hv-closing-image) 62% center / cover no-repeat; }
 }
 @media (max-width: 520px) {
   .hv-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
