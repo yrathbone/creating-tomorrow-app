@@ -139,11 +139,13 @@ async def no_cache_for_frontend(request, call_next):
     return response
 
 
-# Security headers on every response. The first five are enforced now. The Content-Security-Policy is
-# Report-Only on purpose: it lists what the pages are known to load (their own files, the Cognito
-# sign-in library from jsDelivr, the sign-in service, YouTube videos) and the browser's console reports
-# anything outside that list WITHOUT blocking it. Once a full sign-in has been tried with a clean
-# console, change the header name to "Content-Security-Policy" to enforce it.
+# Security headers on every response, all enforced. The Content-Security-Policy lists what the pages are
+# known to load (their own files, the Cognito sign-in library from jsDelivr, the sign-in service, YouTube
+# videos); the browser blocks anything outside that list. It ran Report-Only first and was enforced on
+# 2026-10-08 after a signed-in walk-through of the live dashboard showed a clean console.
+# To roll back to log-only, change the header name below to "Content-Security-Policy-Report-Only".
+# If a new outside address is ever needed (a new script host, a video site), add it to the list here and
+# to test_the_csp_lists_every_outside_address_the_pages_really_use.
 CONTENT_SECURITY_POLICY = "; ".join([
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
@@ -163,7 +165,7 @@ SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
-    "Content-Security-Policy-Report-Only": CONTENT_SECURITY_POLICY,
+    "Content-Security-Policy": CONTENT_SECURITY_POLICY,
 }
 
 

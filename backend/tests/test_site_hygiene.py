@@ -56,17 +56,17 @@ class SecurityHeaders(unittest.TestCase):
                 self.assertEqual(h["referrer-policy"], "strict-origin-when-cross-origin")
                 self.assertIn("max-age=", h["strict-transport-security"])
                 self.assertIn("camera=()", h["permissions-policy"])
-                self.assertIn("content-security-policy-report-only", h)
+                self.assertIn("content-security-policy", h)
 
-    def test_csp_is_report_only_for_now_and_never_allows_plugins_or_framing(self):
+    def test_csp_is_enforced_and_never_allows_plugins_or_framing(self):
         h = self.client.get("/").headers
-        self.assertNotIn("content-security-policy", h, "enforce the policy only after a real sign-in is verified (see main.py)")
-        csp = h["content-security-policy-report-only"]
+        self.assertNotIn("content-security-policy-report-only", h, "the policy is enforced now (see main.py for how to roll back)")
+        csp = h["content-security-policy"]
         for must in ("default-src 'self'", "object-src 'none'", "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'"):
             self.assertIn(must, csp)
 
     def test_the_csp_lists_every_outside_address_the_pages_really_use(self):
-        csp = self.client.get("/").headers["content-security-policy-report-only"]
+        csp = self.client.get("/").headers["content-security-policy"]
         hosts = set()
         for name, page in all_html():
             for url in re.findall(r'(?:<script[^>]+src|<iframe[^>]+src|<link rel="stylesheet"[^>]+href)="(https://[^"]+)"', page):
