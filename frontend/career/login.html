@@ -70,6 +70,7 @@
 
     <section id="step-profile" hidden>
 
+      <div class="dash-panel">
       <div class="dashboard-hero" id="dashboard-top">
         <h1><span class="hero-h1-line1">Your Career,</span> <span class="hero-h1-line2">in One Place.</span></h1>
         <p>Save your story. Build your resume.</p>
@@ -113,6 +114,13 @@
           <div class="mc-identity-fields">
             <label class="field"><span>Your name</span><input type="text" id="profile-display-name" maxlength="200" placeholder="As it should appear on a resume" /></label>
             <label class="field"><span>Contact line</span><input type="text" id="profile-contact-line" maxlength="400" placeholder="City, ST | Phone | Email | LinkedIn" /></label>
+            <label class="field"><span>Preferred resume layout</span>
+              <select id="profile-resume-layout" data-resume-layout>
+                <option value="classic">Classic: centered, shaded headings</option>
+                <option value="modern">Modern: clean, left-aligned, navy accents</option>
+                <option value="traditional">Traditional: serif, conservative</option>
+              </select>
+            </label>
           </div>
           <div class="mc-identity-actions">
             <button type="submit" id="profile-basics-save-btn">Save</button>
@@ -262,12 +270,14 @@
             <p class="success">Your tailored resume is ready.</p>
             <label class="field resume-layout-field">
               <span>Resume layout</span>
-              <select id="job-resume-template">
+              <select id="job-resume-template" data-resume-layout>
                 <option value="classic">Classic: centered, shaded headings</option>
                 <option value="modern">Modern: clean, left-aligned, navy accents</option>
                 <option value="traditional">Traditional: serif, conservative</option>
               </select>
             </label>
+            <button type="button" class="btn-secondary resume-layout-default" data-layout-default="job-resume-template" data-layout-msg="job-layout-msg">Make this my default</button>
+            <span class="hint resume-layout-msg" id="job-layout-msg" role="status" hidden></span>
             <button type="button" id="job-download-btn">Download Resume (.docx)</button>
             <button type="button" id="job-start-over-btn" class="btn-secondary">Compare Another Job</button>
 
@@ -356,12 +366,14 @@
             <p class="success">Your general resume is ready.</p>
             <label class="field resume-layout-field">
               <span>Resume layout</span>
-              <select id="general-resume-template">
+              <select id="general-resume-template" data-resume-layout>
                 <option value="classic">Classic: centered, shaded headings</option>
                 <option value="modern">Modern: clean, left-aligned, navy accents</option>
                 <option value="traditional">Traditional: serif, conservative</option>
               </select>
             </label>
+            <button type="button" class="btn-secondary resume-layout-default" data-layout-default="general-resume-template" data-layout-msg="general-layout-msg">Make this my default</button>
+            <span class="hint resume-layout-msg" id="general-layout-msg" role="status" hidden></span>
             <button type="button" id="general-resume-download-btn">Download Resume (.docx)</button>
             <button type="button" id="general-resume-again-btn" class="btn-secondary">Build Again</button>
           </div>
@@ -543,6 +555,7 @@
           </div>
         </div>
       </div>
+      </div>
 
       <section class="card" id="career-profile-editor" hidden style="margin-top:2rem;">
       <h2>Add to My Career Profile</h2>
@@ -715,6 +728,7 @@
   <script src="js/auth.js"></script>
   <script src="../loading.js"></script>
   <script src="js/visualCards.js"></script>
+  <script src="js/resumeLayout.js"></script>
   <script src="login.js"></script>
   <script src="js/profileBasics.js"></script>
   <script src="js/languages.js"></script>

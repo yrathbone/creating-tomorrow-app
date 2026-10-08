@@ -190,6 +190,7 @@ function renderResumeCards() {
       opt.textContent = label;
       layout.appendChild(opt);
     }
+    if (typeof preferredResumeLayout !== "undefined") layout.value = preferredResumeLayout;
     grid.appendChild(buildVisualCard({
       kind: "resume",
       tone: info.kind === "tailored" ? "fair" : "good",

@@ -10,7 +10,7 @@ const read = (...p) => fs.readFileSync(path.join(FRONTEND, ...p), "utf8");
 const LAYOUTS = ["classic", "modern", "traditional"];
 
 function optionValues(html, selectId) {
-  const m = html.match(new RegExp(`<select id="${selectId}">([\\s\\S]*?)</select>`));
+  const m = html.match(new RegExp(`<select id="${selectId}"[^>]*>([\\s\\S]*?)</select>`));
   assert.ok(m, `missing select #${selectId}`);
   return [...m[1].matchAll(/<option value="([^"]+)"/g)].map((x) => x[1]);
 }

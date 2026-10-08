@@ -1006,3 +1006,37 @@ body.dashboard-v4 .vtone-neutral { --tone: #8993a8; --tone-bg: #eef1f6; }
 /* resume layout menus */
 body.dashboard-v4 .vcard .vcard-select { width: 100%; margin: 0.25rem 0 0.35rem; padding: 0.5rem 0.6rem; border: 1px solid #d9dee9; border-radius: 8px; background: #ffffff; font: inherit; font-size: 0.88rem; color: var(--v4-ink); }
 body.dashboard-v4 .resume-layout-field { max-width: 22rem; margin: 0.4rem 0 0.7rem; }
+
+/* "Make this my default" next to the download menus */
+body.dashboard-v4 .dashboard-grid > .card button.resume-layout-default { margin: 0 0.6rem 0.7rem 0; min-height: 34px; padding: 0.3rem 0.9rem; font-size: 0.85rem; }
+body.dashboard-v4 .resume-layout-msg { display: inline-block; margin: 0 0 0.7rem; }
+
+/* ===== One box: the hero, the profile strip and the four cards share one panel, divided by thin lines
+   (the same layout as the homepage). The cards inside lose their own borders, shadows and colored top edges. ===== */
+body.dashboard-v4 .dash-panel {
+  margin: 0 0 var(--v4-gap);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  border: 1px solid var(--v4-line);
+  border-radius: var(--v4-radius);
+  box-shadow: var(--v4-shadow), var(--v4-lit), 0 22px 54px -26px rgba(239, 174, 9, 0.45);
+  overflow: hidden;
+}
+body.dashboard-v4 .dash-panel > .dashboard-hero { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+body.dashboard-v4 .dash-panel > .cp-status { margin: 0; background: transparent; border: 0; border-top: 1px solid var(--v4-line-soft); border-radius: 0; box-shadow: none; }
+body.dashboard-v4 .dash-panel > .dashboard-grid { gap: 0; }
+body.dashboard-v4 .dash-panel > .dashboard-grid > .card {
+  background: transparent;
+  background-image: none;
+  border: 0;
+  border-top: 1px solid var(--v4-line-soft);
+  border-radius: 0;
+  box-shadow: none;
+}
+@media (min-width: 1000px) {
+  body.dashboard-v4 .dash-panel > .dashboard-grid > .job-card { border-right: 1px solid var(--v4-line-soft); }
+}
+/* the old coloured top edges of the two top cards are replaced by the same thin lines as the rest */
+body.dashboard-v4 .dash-panel > .dashboard-grid > .job-card,
+body.dashboard-v4 .dash-panel > .dashboard-grid > .resume-card { border-top: 1px solid var(--v4-line-soft); }
+/* the main stylesheet colours the General Resume card's top edge by its id; inside the one box it is a thin line like the others */
+body.dashboard-v4 .dash-panel > .dashboard-grid > #general-resume-card { border-top-color: var(--v4-line-soft); }

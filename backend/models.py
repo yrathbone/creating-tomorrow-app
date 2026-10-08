@@ -47,6 +47,9 @@ class CareerProfile(Base):
     # has not been upgraded yet; only the /profile routes read or write them.
     display_name: Mapped[str | None] = mapped_column(String, nullable=True, deferred=True, server_default=text("NULL"))
     contact_line: Mapped[str | None] = mapped_column(String, nullable=True, deferred=True, server_default=text("NULL"))
+    # Preferred resume layout (migration 0009), same safety treatment: only /resume-layout and the
+    # download route read or write it, so everything else works before the upgrade is applied.
+    preferred_resume_layout: Mapped[str | None] = mapped_column(String, nullable=True, deferred=True, server_default=text("NULL"))
 
     user: Mapped["User"] = relationship(back_populates="career_profile")
     experiences: Mapped[list["Experience"]] = relationship(back_populates="career_profile")

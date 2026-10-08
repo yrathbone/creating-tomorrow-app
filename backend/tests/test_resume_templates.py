@@ -163,7 +163,8 @@ class DownloadRoutes(unittest.TestCase):
         from career.routes import download_resume_version
         params = inspect.signature(download_resume_version).parameters
         self.assertIn("template", params)
-        self.assertEqual(params["template"].default, "classic")
+        # no explicit choice means "the person's saved layout" (see test_resume_layout.py)
+        self.assertIsNone(params["template"].default)
 
 
 if __name__ == "__main__":

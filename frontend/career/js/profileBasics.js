@@ -66,8 +66,15 @@ if (typeof document !== "undefined" && document.getElementById("profile-basics-f
       document.getElementById("profile-display-name").value,
       document.getElementById("profile-contact-line").value
     );
+    // the preferred resume layout rides along with the header form
+    const layoutSelect = document.getElementById("profile-resume-layout");
+    let layoutNote = "";
+    if (result.ok && layoutSelect && typeof savePreferredLayout === "function" && layoutSelect.value !== preferredResumeLayout) {
+      const layoutResult = await savePreferredLayout(layoutSelect.value);
+      if (!layoutResult.ok) layoutNote = " Layout: " + layoutResult.message;
+    }
     btn.disabled = false;
-    msg.textContent = result.ok ? "Saved." : result.message;
+    msg.textContent = (result.ok ? "Saved." : result.message) + layoutNote;
     msg.className = result.ok ? "hint mc-saved" : "hint error";
     msg.hidden = false;
     if (result.ok) {

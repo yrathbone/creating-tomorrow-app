@@ -47,9 +47,9 @@ _MISSING_SCHEMA_HINTS = ("no such table", "no such column", "does not exist", "u
 
 
 @contextmanager
-def schema_upgrade_guard(db: Session, what: str):
-    """Migration 0008 (languages table, display_name/contact_line) is applied by hand
-    (`alembic upgrade head`). Until then these features must say so plainly instead of
+def schema_upgrade_guard(db: Session, what: str, migration: str = "0008"):
+    """Migrations 0008 (languages table, display_name/contact_line) and 0009 (preferred resume layout)
+    are applied by hand (`alembic upgrade head`). Until then these features must say so plainly instead of
     failing mysteriously or pretending to work: a missing table/column becomes a logged
     503 naming what is not upgraded. Any other database error is re-raised untouched."""
     try:
@@ -60,7 +60,7 @@ def schema_upgrade_guard(db: Session, what: str):
             logger.error("Database schema not upgraded for %s (run `alembic upgrade head`): %s", what, e.__class__.__name__)
             raise HTTPException(
                 status_code=503,
-                detail=f"{what} are not available yet: the database upgrade (migration 0008) has not been applied.",
+                detail=f"{what} are not available yet: the database upgrade (migration {migration}) has not been applied.",
             ) from e
         raise
 
@@ -1375,7 +1375,7 @@ async def delete_resume_version(
 async def download_resume_version(
     resume_version_id: int,
     ats_mode: bool = False,
-    template: str = "classic",
+    template: str | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
 ):
@@ -1383,7 +1383,7 @@ async def download_resume_version(
     entry = _get_resume_version_or_404(db, profile, resume_version_id)
 
     try:
-        docx_bytes = build_resume_bytes(entry.resume_data, ats_mode=ats_mode, template=template)
+        docx_bytes = build_resume_bytes(entry.resume_data, ats_mode=ats_mode, template=template or _preferred_layout(db, profile))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to build resume: {e}")
 
@@ -1567,6 +1567,55 @@ async def update_profile(
         db.commit()
         db.refresh(profile)
         return _profile_basics(profile)
+
+
+# --- Preferred resume layout (migration 0009): pick it once, every download menu starts on it.
+# A separate route from /profile on purpose: until the upgrade is applied only this feature waits,
+# the name/contact fields keep working. Ownership comes only from the token.
+
+RESUME_LAYOUTS = ("classic", "modern", "traditional")
+
+
+class ResumeLayoutIn(BaseModel):
+    layout: str | None = None
+
+
+def _preferred_layout(db: Session, profile: CareerProfile) -> str:
+    """The saved layout, or Classic when none is saved or the upgrade has not been applied yet.
+    Never raises: a download must still work."""
+    try:
+        value = profile.preferred_resume_layout
+    except (OperationalError, ProgrammingError):
+        db.rollback()
+        return "classic"
+    return value if value in RESUME_LAYOUTS else "classic"
+
+
+@router.get("/resume-layout")
+async def get_resume_layout(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    with schema_upgrade_guard(db, "The preferred resume layout", "0009"):
+        value = profile.preferred_resume_layout
+        return {"layout": value if value in RESUME_LAYOUTS else "classic"}
+
+
+@router.put("/resume-layout")
+async def update_resume_layout(
+    req: ResumeLayoutIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    layout = (req.layout or "").strip().lower() or "classic"
+    if layout not in RESUME_LAYOUTS:
+        raise HTTPException(status_code=400, detail="Choose one of: " + ", ".join(RESUME_LAYOUTS) + ".")
+    profile = get_career_profile_or_404(db, current_user)
+    with schema_upgrade_guard(db, "The preferred resume layout", "0009"):
+        profile.preferred_resume_layout = None if layout == "classic" else layout
+        db.commit()
+        return {"layout": layout}
 
 
 # --- Languages (migration 0008) ------------------------------------------------

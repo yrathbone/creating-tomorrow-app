@@ -684,6 +684,7 @@ async function showProfileStep() {
   await loadEducation();
   await loadCertifications();
   await loadSkills();
+  if (typeof loadResumeLayoutPreference === "function") await loadResumeLayoutPreference();
   await loadScanHistory();
   await loadResumeVersions();
   if (typeof loadApplications === "function") await loadApplications();
