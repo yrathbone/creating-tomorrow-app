@@ -77,3 +77,10 @@ test("Career Basics is back: four guide tiles that open real articles, plus the 
   const data = read("learn-data.js");
   for (const slug of slugs) assert.ok(data.includes(slug), `article ${slug} is not in learn-data.js`);
 });
+
+test("the homepage says it is free for everyone, right under the hero buttons", () => {
+  const hero = html.slice(html.indexOf('class="hv-hero"'), html.indexOf('class="hv-hero-photo"'));
+  assert.match(hero, /Free for everyone\./);
+  assert.match(hero, /No paywall\./);
+  assert.ok(hero.indexOf("hv-cta") < hero.indexOf("hv-free"), "the line sits after the buttons");
+});

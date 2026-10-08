@@ -17,6 +17,35 @@ const APPLICATION_STATUS_LABELS = {
   offer: "Offer",
 };
 
+// The board view: one column per status, in the order a search usually moves.
+const APPLICATION_BOARD_COLUMNS = ["applied", "interview", "offer", "no_response", "rejected"];
+
+// Pure helper (unit-tested): { status: [entries...] } with every column present, newest first.
+function groupApplicationsByStatus(apps) {
+  const groups = {};
+  for (const status of APPLICATION_BOARD_COLUMNS) groups[status] = [];
+  for (const entry of apps || []) {
+    const status = groups[entry.status] ? entry.status : "applied";
+    groups[status].push(entry);
+  }
+  for (const status of APPLICATION_BOARD_COLUMNS) {
+    groups[status].sort((a, b) => String(b.applied_on || "").localeCompare(String(a.applied_on || "")));
+  }
+  return groups;
+}
+
+// List or Board: remembered for this tab only (sessionStorage, like the sign-in).
+let applicationView = "list";
+try {
+  if (typeof sessionStorage !== "undefined" && sessionStorage.getItem("ct_application_view") === "board") applicationView = "board";
+} catch (err) { /* storage blocked: stay on the list */ }
+
+function setApplicationView(view) {
+  applicationView = view === "board" ? "board" : "list";
+  try { sessionStorage.setItem("ct_application_view", applicationView); } catch (err) { /* ignore */ }
+  renderApplications();
+}
+
 function daysSince(isoDate) {
   const then = new Date(isoDate + "T00:00:00");
   if (isNaN(then)) return null;
@@ -85,6 +114,7 @@ function renderApplications() {
   const summary = document.getElementById("application-summary");
   if (!list || !summary) return;
   list.textContent = "";
+  syncApplicationViewToggle();
 
   if (applicationsUnavailable) {
     summary.textContent = "";
@@ -106,6 +136,11 @@ function renderApplications() {
     p.className = "hint";
     p.textContent = "Nothing tracked yet. After you build a resume for a job and apply, press \"I applied for this job\" to add it here.";
     list.appendChild(p);
+    return;
+  }
+
+  if (applicationView === "board") {
+    renderApplicationBoard(list);
     return;
   }
 
@@ -185,30 +220,166 @@ function renderApplications() {
   }
 }
 
-// Add by hand
-document.getElementById("application-add-toggle-btn").addEventListener("click", () => {
-  const form = document.getElementById("application-form");
-  form.hidden = !form.hidden;
-  if (!form.hidden) {
-    document.getElementById("application-date").value = todayIso();
-    document.getElementById("application-title").focus();
-  }
-});
+// The List / Board switch is only shown when there is something to show.
+function syncApplicationViewToggle() {
+  const toggle = document.getElementById("application-view-toggle");
+  if (!toggle) return;
+  toggle.hidden = applicationsUnavailable || allApplications.length === 0;
+  const listBtn = document.getElementById("application-view-list");
+  const boardBtn = document.getElementById("application-view-board");
+  if (listBtn) listBtn.setAttribute("aria-pressed", String(applicationView === "list"));
+  if (boardBtn) boardBtn.setAttribute("aria-pressed", String(applicationView === "board"));
+}
 
-document.getElementById("application-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const errorEl = document.getElementById("application-form-error");
-  errorEl.hidden = true;
+// Moves an application to another column. Used by drag and drop and by the "Move to" menu.
+async function moveApplication(entry, status) {
+  if (!entry || entry.status === status) return;
   try {
-    await addApplication({
-      job_title: document.getElementById("application-title").value,
-      company: document.getElementById("application-company").value,
-      applied_on: document.getElementById("application-date").value || null,
-    });
-    document.getElementById("application-form").reset();
-    document.getElementById("application-form").hidden = true;
+    await saveApplication(entry, { status });
   } catch (err) {
-    errorEl.textContent = err.message;
-    errorEl.hidden = false;
+    window.alert(err.message);
+    renderApplications();
   }
-});
+}
+
+// Board: five columns, a card per application. Notes and Delete stay in List view.
+function renderApplicationBoard(container) {
+  const groups = groupApplicationsByStatus(allApplications);
+  const board = document.createElement("div");
+  board.className = "app-board";
+
+  for (const status of APPLICATION_BOARD_COLUMNS) {
+    const col = document.createElement("section");
+    col.className = "app-col app-col-" + status;
+    col.setAttribute("aria-label", APPLICATION_STATUS_LABELS[status]);
+
+    const head = document.createElement("h4");
+    head.className = "app-col-head";
+    const name = document.createElement("span");
+    name.textContent = APPLICATION_STATUS_LABELS[status];
+    const count = document.createElement("span");
+    count.className = "app-col-count";
+    count.textContent = String(groups[status].length);
+    head.appendChild(name);
+    head.appendChild(count);
+    col.appendChild(head);
+
+    const body = document.createElement("div");
+    body.className = "app-col-body";
+    body.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      body.classList.add("app-drop");
+    });
+    body.addEventListener("dragleave", () => body.classList.remove("app-drop"));
+    body.addEventListener("drop", (e) => {
+      e.preventDefault();
+      body.classList.remove("app-drop");
+      const id = e.dataTransfer && e.dataTransfer.getData("text/plain");
+      const entry = allApplications.find((a) => String(a.id) === String(id));
+      moveApplication(entry, status);
+    });
+
+    if (groups[status].length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "app-col-empty";
+      empty.textContent = "Nothing here";
+      body.appendChild(empty);
+    }
+
+    for (const entry of groups[status]) {
+      const card = document.createElement("article");
+      card.className = "app-card";
+      card.draggable = true;
+      card.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", String(entry.id));
+        e.dataTransfer.effectAllowed = "move";
+        card.classList.add("app-dragging");
+      });
+      card.addEventListener("dragend", () => card.classList.remove("app-dragging"));
+
+      const title = document.createElement("strong");
+      title.className = "app-card-title";
+      title.textContent = entry.job_title;
+      card.appendChild(title);
+
+      if (entry.company) {
+        const company = document.createElement("span");
+        company.className = "app-card-company";
+        company.textContent = entry.company;
+        card.appendChild(company);
+      }
+
+      const days = daysSince(entry.applied_on);
+      const when = document.createElement("span");
+      when.className = "app-card-when";
+      when.textContent = days !== null && days >= 0 ? (days === 0 ? "Applied today" : "Applied " + days + (days === 1 ? " day ago" : " days ago")) : "Applied " + entry.applied_on;
+      card.appendChild(when);
+
+      if (entry.status === "applied" && days !== null && days >= 14) {
+        const nudge = document.createElement("span");
+        nudge.className = "app-card-nudge";
+        nudge.textContent = "No word in " + days + " days. Follow up?";
+        card.appendChild(nudge);
+      }
+
+      // The menu does the same job as dragging: for keyboards, phones and screen readers.
+      const move = document.createElement("select");
+      move.className = "app-card-move";
+      move.setAttribute("aria-label", "Move " + entry.job_title + " to");
+      for (const s of APPLICATION_BOARD_COLUMNS) {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = (s === entry.status ? "" : "Move to: ") + APPLICATION_STATUS_LABELS[s];
+        move.appendChild(opt);
+      }
+      move.value = entry.status;
+      move.addEventListener("change", () => moveApplication(entry, move.value));
+      card.appendChild(move);
+
+      body.appendChild(card);
+    }
+
+    col.appendChild(body);
+    board.appendChild(col);
+  }
+
+  const tip = document.createElement("p");
+  tip.className = "hint app-board-tip";
+  tip.textContent = "Drag a card to a new column, or use the menu on the card. Switch to List to add notes or delete an application.";
+  container.appendChild(board);
+  container.appendChild(tip);
+}
+
+if (typeof document !== "undefined" && document.getElementById("application-add-toggle-btn")) {
+  // List / Board switch
+  document.getElementById("application-view-list").addEventListener("click", () => setApplicationView("list"));
+  document.getElementById("application-view-board").addEventListener("click", () => setApplicationView("board"));
+
+  // Add by hand
+  document.getElementById("application-add-toggle-btn").addEventListener("click", () => {
+    const form = document.getElementById("application-form");
+    form.hidden = !form.hidden;
+    if (!form.hidden) {
+      document.getElementById("application-date").value = todayIso();
+      document.getElementById("application-title").focus();
+    }
+  });
+
+  document.getElementById("application-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById("application-form-error");
+    errorEl.hidden = true;
+    try {
+      await addApplication({
+        job_title: document.getElementById("application-title").value,
+        company: document.getElementById("application-company").value,
+        applied_on: document.getElementById("application-date").value || null,
+      });
+      document.getElementById("application-form").reset();
+      document.getElementById("application-form").hidden = true;
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+    }
+  });
+}

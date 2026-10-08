@@ -754,3 +754,97 @@ body.dashboard-v4 main.dashboard-main::after {
 @media (max-width: 640px) {
   body.dashboard-v4 main.dashboard-main::after { height: 130px; background-position: 66% 58%; }
 }
+
+/* ===== Applications: List / Board switch and the board view ===== */
+body.dashboard-v4 .app-view-toggle {
+  display: inline-flex;
+  margin: 0.8rem 0 0.6rem;
+  padding: 3px;
+  gap: 2px;
+  background: var(--v4-sky);
+  border: 1px solid var(--v4-line);
+  border-radius: 10px;
+}
+body.dashboard-v4 .dashboard-grid > .card .app-view-toggle button {
+  min-height: 34px;
+  padding: 0.3rem 1.1rem;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: var(--v4-muted);
+  border: 0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+body.dashboard-v4 .dashboard-grid > .card .app-view-toggle button[aria-pressed="true"] {
+  background: #ffffff;
+  color: var(--v4-blue);
+  box-shadow: 0 1px 3px rgba(20, 33, 61, 0.14);
+}
+body.dashboard-v4 .dashboard-grid > .card .app-view-toggle button:hover { background: rgba(255, 255, 255, 0.7); transform: none; }
+body.dashboard-v4 .dashboard-grid > .card .app-view-toggle button[aria-pressed="true"]:hover { background: #ffffff; }
+
+body.dashboard-v4 .app-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+  align-items: start;
+}
+body.dashboard-v4 .app-col {
+  --col: #cfd6e6;
+  background: #f8fafd;
+  border: 1px solid var(--v4-line);
+  border-top: 3px solid var(--col);
+  border-radius: 12px;
+  padding: 0.55rem 0.5rem 0.6rem;
+  min-width: 0;
+}
+body.dashboard-v4 .app-col-applied { --col: var(--v4-blue); }
+body.dashboard-v4 .app-col-interview { --col: var(--v4-gold); }
+body.dashboard-v4 .app-col-offer { --col: #1a6144; }
+body.dashboard-v4 .app-col-no_response { --col: #9aa3b7; }
+body.dashboard-v4 .app-col-rejected { --col: #c2603f; }
+body.dashboard-v4 .app-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin: 0 0.2rem 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: var(--v4-ink);
+}
+body.dashboard-v4 .app-col-count { min-width: 1.5rem; padding: 0 0.4rem; text-align: center; font-size: 0.78rem; font-weight: 750; color: var(--v4-muted); background: #ffffff; border: 1px solid var(--v4-line); border-radius: 999px; }
+body.dashboard-v4 .app-col-body { display: grid; gap: 0.5rem; min-height: 64px; padding: 0.15rem; border-radius: 10px; transition: background-color 0.15s ease; }
+body.dashboard-v4 .app-col-body.app-drop { background: rgba(10, 53, 168, 0.07); outline: 2px dashed rgba(10, 53, 168, 0.35); outline-offset: -2px; }
+body.dashboard-v4 .app-col-empty { margin: 0.6rem 0.2rem; font-size: 0.8rem; color: #8993a8; text-align: center; }
+body.dashboard-v4 .app-card {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.65rem 0.6rem;
+  background: #ffffff;
+  border: 1px solid var(--v4-line);
+  border-radius: 10px;
+  box-shadow: var(--v4-lit), 0 1px 2px rgba(20, 33, 61, 0.05), 0 6px 12px -8px rgba(20, 33, 61, 0.2);
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+body.dashboard-v4 .app-card:hover { transform: translateY(-2px); box-shadow: var(--v4-lit), var(--v4-shadow-lift); }
+body.dashboard-v4 .app-card.app-dragging { opacity: 0.5; cursor: grabbing; }
+body.dashboard-v4 .app-card-title { font-size: 0.88rem; line-height: 1.25; color: var(--v4-ink); overflow-wrap: anywhere; }
+body.dashboard-v4 .app-card-company { font-size: 0.82rem; color: #46506a; overflow-wrap: anywhere; }
+body.dashboard-v4 .app-card-when { font-size: 0.76rem; color: var(--v4-muted); }
+body.dashboard-v4 .app-card-nudge { font-size: 0.76rem; font-weight: 650; color: #a96f00; }
+body.dashboard-v4 .app-card-move { margin-top: 0.35rem; width: 100%; padding: 0.3rem 0.4rem; font-family: inherit; font-size: 0.78rem; color: var(--v4-ink); background: #f8fafd; border: 1px solid #d9dee9; border-radius: 8px; }
+body.dashboard-v4 .app-board-tip { margin-top: 0.6rem; }
+@media (max-width: 1100px) {
+  body.dashboard-v4 .app-board { grid-template-columns: repeat(5, minmax(150px, 1fr)); overflow-x: auto; padding-bottom: 0.4rem; }
+}
+@media (max-width: 800px) {
+  body.dashboard-v4 .app-board { grid-template-columns: 1fr; overflow-x: visible; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.dashboard-v4 .app-card, body.dashboard-v4 .app-col-body { transition: none; }
+  body.dashboard-v4 .app-card:hover { transform: none; }
+}
