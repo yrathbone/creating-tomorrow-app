@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="home-v4.css" />
 </head>
 <body>
-  <p class="hv-protobar">Local visual prototype, not published. The portrait and the twilight Chicago skyline are placeholders (cropped and graded from your reference images): replace them with licensed or commissioned Chicago photography before launch.</p>
+  <p class="hv-protobar">Local visual prototype, not published. The portrait is a placeholder; the Chicago 2150 picture is a concept image. Both need licensed or commissioned artwork before launch.</p>
 
   <header class="hv-nav">
     <a href="../index.html" class="hv-logo"><img src="../logo-icon.png" alt="" /><span>Creating <b>Tomorrow</b></span></a>
@@ -42,8 +42,6 @@
       <div class="hv-hero-photo">
         <!-- ASSET SLOT: hero portrait. Replace img/hero-placeholder.jpg (and its alt text) with the final licensed photograph. -->
         <img src="img/hero-placeholder.jpg" alt="A young professional smiling at her laptop, with the Chicago skyline behind her" width="560" height="336" />
-        <!-- ASSET SLOT: small mascot accent. Replace ../mascot-icon.png with the final production mascot asset. -->
-        <img class="hv-sprout" src="../mascot-icon.png" alt="" width="52" height="52" />
       </div>
     </section>
 
@@ -60,22 +58,25 @@
       </div>
     </section>
 
-    <!-- How it works: compact three steps -->
-    <section class="hv-section" id="how" aria-labelledby="how-h">
-      <h2 id="how-h" class="hv-h2">How it works</h2>
-      <ol class="hv-steps">
-        <li><span class="hv-step-n">1</span><div><b>Tell us where you are</b><p>Share your background and the kind of work you want.</p></div></li>
-        <li><span class="hv-step-n">2</span><div><b>Build your next version</b><p>Use the free tools to improve your resume and skills.</p></div></li>
-        <li><span class="hv-step-n">3</span><div><b>Move forward with confidence</b><p>Apply with a stronger resume and practise for interviews.</p></div></li>
-      </ol>
-    </section>
-
-    <!-- Closing: the brand promise, over a twilight Chicago skyline -->
-    <section class="hv-closing" aria-labelledby="close-h">
-      <div class="hv-closing-inner">
-        <h2 id="close-h">We don't invent your value.<br /><span>We help you see it.</span></h2>
-        <p>Real tools. Real support. A brighter tomorrow is possible.</p>
-        <a href="../tool.html" class="hv-btn hv-btn-gold hv-btn-lg">Start your journey <span aria-hidden="true">→</span></a>
+    <!-- Bottom row: How it works on the left, the Chicago picture with the promise on the right -->
+    <section class="hv-bottom" id="how" aria-label="How it works and our promise">
+      <div class="hv-how">
+        <!-- ASSET SLOT: small mascot accent. Replace ../mascot-icon.png with the final production mascot asset. -->
+        <img class="hv-sprout" src="../mascot-icon.png" alt="" width="52" height="52" />
+        <h2 id="how-h" class="hv-h2">How it works</h2>
+        <ol class="hv-steps" aria-labelledby="how-h">
+          <li><span class="hv-step-n">1</span><div><b>Tell us where you are</b><p>Share your background and the kind of work you want.</p></div></li>
+          <li><span class="hv-step-n">2</span><div><b>Build your next version</b><p>Use the free tools to improve your resume and skills.</p></div></li>
+          <li><span class="hv-step-n">3</span><div><b>Move forward with confidence</b><p>Apply with a stronger resume and practise for interviews.</p></div></li>
+        </ol>
+      </div>
+      <!-- ASSET SLOT: Chicago picture. Swap the one CSS variable --hv-closing-image (home-v4.css) for the final file. -->
+      <div class="hv-closing" role="group" aria-labelledby="close-h">
+        <div class="hv-closing-inner">
+          <h2 id="close-h">We don't invent your value.<br /><span>We help you see it.</span></h2>
+          <p>Real tools. Real support. A brighter tomorrow is possible.</p>
+          <a href="../tool.html" class="hv-btn hv-btn-gold">Start your journey <span aria-hidden="true">→</span></a>
+        </div>
       </div>
     </section>
   </main>
