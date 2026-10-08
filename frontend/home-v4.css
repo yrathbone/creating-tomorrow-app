@@ -296,11 +296,11 @@ body.home-v4 .hv-note-link:hover { text-decoration: underline; text-underline-of
 body.home-v4 .hv-panel {
   max-width: 1072px;
   width: calc(100% - 3rem);
-  margin: 1.3rem auto 0;
+  margin: 0.5rem auto 0;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow), var(--lit);
+  box-shadow: var(--shadow), var(--lit), 0 22px 54px -26px rgba(239, 174, 9, 0.45);
   overflow: hidden;
 }
 body.home-v4 .hv-panel > .hv-section.hv-card {
@@ -314,6 +314,11 @@ body.home-v4 .hv-panel > .hv-section.hv-card {
   box-shadow: none;
 }
 body.home-v4 .hv-panel > .hv-section.hv-card + .hv-section.hv-card { border-top: 1px solid var(--line-soft); }
+/* the hero is the top of the same box: no card of its own, no gap, and the picture reaches the corner */
+body.home-v4 .hv-panel > .hv-hero { width: auto; max-width: none; margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+/* her line sits in the space between the hero and How It Works */
+body.home-v4 .hv-panel > .hv-quote { width: auto; max-width: none; margin: 0; padding: 1.1rem 1.8rem 1.15rem; border-top: 1px solid var(--line-soft); }
+body.home-v4 .hv-panel > .hv-quote + .hv-section.hv-card { border-top: 1px solid var(--line-soft); }
 
 /* ---------- Bottom: a full-width Chicago band; the promise reads over its calm left side ---------- */
 .hv-bottom { max-width: 1120px; margin: 1.1rem auto 0; padding: 0 1.5rem; }

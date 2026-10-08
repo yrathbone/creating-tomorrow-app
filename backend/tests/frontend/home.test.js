@@ -117,3 +117,16 @@ test("the section headings are warm, and the ids that links and tests rely on ar
   for (const id of ["how", "basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
   assert.match(html, /href="#tools"/); // Explore Tools and step 2 still jump to the tools
 });
+
+test("the hero and the sections below it are one box, with her line in the space between", () => {
+  const panel = html.indexOf('<div class="hv-panel">');
+  const hero = html.indexOf('<section class="hv-hero">');
+  const quote = html.indexOf('class="hv-quote hv-quote-top"');
+  const how = html.indexOf('id="how"');
+  const band = html.indexOf('class="hv-bottom"');
+  assert.ok(panel > -1 && panel < hero && hero < quote && quote < how && how < band, "order: panel, hero, her line, How It Works, band");
+  assert.match(html, /You can’t become what you can’t picture\. Let’s picture it together\./);
+  assert.ok(html.slice(0, panel).indexOf('class="hv-hero"') === -1, "no hero outside the box");
+  const css = read("home-v4.css");
+  assert.match(css, /\.hv-panel > \.hv-hero \{ width: auto;/);
+});
