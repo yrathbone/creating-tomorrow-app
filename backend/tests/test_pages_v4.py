@@ -107,6 +107,13 @@ class SmallFixes(unittest.TestCase):
         self.assertIn('statusSelect.name = "application-status"', apps)
         self.assertIn('move.name = "application-move"', apps)
 
+    def test_the_guide_call_to_action_buttons_wrap_instead_of_overflowing(self):
+        css = read("style.css")
+        m = re.search(r"\.final-cta \.hero-ctas \{([^}]*)\}", css)
+        self.assertTrue(m)
+        self.assertIn("max-width: 100%", m.group(1))
+        self.assertIn("flex: 0 1 auto", m.group(1))
+
 
 if __name__ == "__main__":
     unittest.main()
