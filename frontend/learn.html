@@ -25,8 +25,10 @@
   <link rel="manifest" href="site.webmanifest" />
   <meta name="theme-color" content="#ffffff" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="home-v4.css" />
+  <link rel="stylesheet" href="pages-v4.css" />
 </head>
-<body>
+<body class="pages-v4">
   <nav class="site-nav">
     <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
     <div class="nav-links">
@@ -40,50 +42,42 @@
   </nav>
   <script src="auth-nav.js"></script>
 
-  <header class="learn-hub-hero">
-    <h1>Learn</h1>
-    <p class="learn-hub-subtitle">Understand how hiring works &mdash; and how to explain what you can do.</p>
-  </header>
-
-  <main class="learn-hub-main">
-    <div class="learn-hub-intro">
-      <span class="learn-hub-intro-accent"></span>
-      <p class="learn-hub-kicker">Career Basics</p>
-      <p class="learn-hub-intro-sub">Four simple lessons. Start anywhere.</p>
-    </div>
-
-    <div class="learn-hub-grid">
-      <a href="article.html?slug=what-is-ats" class="learn-hub-card">
-        <span class="learn-hub-card-accent"></span>
-        <p class="learn-hub-card-category">ATS Basics</p>
-        <h2>What Is an ATS, Really?</h2>
-        <p class="learn-hub-card-desc">Understand what happens after you submit a resume.</p>
-        <span class="learn-hub-card-read">Read <span class="learn-hub-card-arrow">→</span></span>
-      </a>
-
-      <a href="article.html?slug=resume-calling-card" class="learn-hub-card">
-        <span class="learn-hub-card-accent"></span>
-        <p class="learn-hub-card-category">Resume Basics</p>
-        <h2>Your Resume Is Your Calling Card</h2>
-        <p class="learn-hub-card-desc">Keep your career story ready before you need it.</p>
-        <span class="learn-hub-card-read">Read <span class="learn-hub-card-arrow">→</span></span>
-      </a>
-
-      <a href="article.html?slug=honest-self-marketing" class="learn-hub-card">
-        <span class="learn-hub-card-accent"></span>
-        <p class="learn-hub-card-category">LinkedIn Basics</p>
-        <h2>Your LinkedIn Profile Is Your Professional Story</h2>
-        <p class="learn-hub-card-desc">Learn to present your experience clearly &mdash; without exaggerating it.</p>
-        <span class="learn-hub-card-read">Read <span class="learn-hub-card-arrow">→</span></span>
-      </a>
-
-      <a href="article.html?slug=how-we-grade" class="learn-hub-card">
-        <span class="learn-hub-card-accent"></span>
-        <p class="learn-hub-card-category">Interview Basics</p>
-        <h2>Prepare Stories, Not Perfect Answers</h2>
-        <p class="learn-hub-card-desc">Research the role, organize your experience, and walk in prepared &mdash; not scripted.</p>
-        <span class="learn-hub-card-read">Read <span class="learn-hub-card-arrow">→</span></span>
-      </a>
+  <main class="pv-main">
+    <div class="pv-panel">
+      <header class="pv-head">
+        <h1>Learn</h1>
+        <p>Understand how hiring works &mdash; and how to explain what you can do.</p>
+      </header>
+      <section class="pv-band" aria-labelledby="basics-h">
+        <h2 id="basics-h" class="hv-h2">Career basics</h2>
+        <p class="pv-sub">Four simple lessons. Start anywhere.</p>
+      <div class="hv-guides pv-guides">
+        <a class="hv-guide hv-t-sky" href="article.html?slug=what-is-ats">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></span><span class="hv-vtype">ATS Basics</span></span>
+          <b>What Is an ATS, Really?</b>
+          <span class="hv-vdesc">Understand what happens after you submit a resume.</span>
+          <span class="hv-vfoot">Read the guide <span aria-hidden="true">→</span></span>
+        </a>
+        <a class="hv-guide hv-t-butter" href="article.html?slug=resume-calling-card">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h5M9.5 16h5"/></svg></span><span class="hv-vtype">Resume Basics</span></span>
+          <b>Your Resume Is Your Calling Card</b>
+          <span class="hv-vdesc">Keep your career story ready before you need it.</span>
+          <span class="hv-vfoot">Read the guide <span aria-hidden="true">→</span></span>
+        </a>
+        <a class="hv-guide hv-t-lavender" href="article.html?slug=honest-self-marketing">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg></span><span class="hv-vtype">LinkedIn Basics</span></span>
+          <b>Your LinkedIn Profile Is Your Professional Story</b>
+          <span class="hv-vdesc">Present your experience clearly — without exaggerating it.</span>
+          <span class="hv-vfoot">Read the guide <span aria-hidden="true">→</span></span>
+        </a>
+        <a class="hv-guide hv-t-mint" href="article.html?slug=how-we-grade">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></span><span class="hv-vtype">Interview Basics</span></span>
+          <b>Prepare Stories, Not Perfect Answers</b>
+          <span class="hv-vdesc">Walk into an interview prepared — not scripted.</span>
+          <span class="hv-vfoot">Read the guide <span aria-hidden="true">→</span></span>
+        </a>
+      </div>
+      </section>
     </div>
   </main>
 

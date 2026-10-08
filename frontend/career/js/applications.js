@@ -172,6 +172,7 @@ function buildApplicationCard(entry) {
 
   const statusSelect = document.createElement("select");
   statusSelect.className = "application-status";
+  statusSelect.name = "application-status";
   statusSelect.setAttribute("aria-label", "Status for " + entry.job_title);
   for (const [value, label] of Object.entries(APPLICATION_STATUS_LABELS)) {
     const opt = document.createElement("option");
@@ -337,6 +338,7 @@ function renderApplicationBoard(container) {
       // The menu does the same job as dragging: for keyboards, phones and screen readers.
       const move = document.createElement("select");
       move.className = "app-card-move";
+      move.name = "application-move";
       move.setAttribute("aria-label", "Move " + entry.job_title + " to");
       for (const s of APPLICATION_BOARD_COLUMNS) {
         const opt = document.createElement("option");

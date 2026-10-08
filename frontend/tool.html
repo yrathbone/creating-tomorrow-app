@@ -25,8 +25,10 @@
   <link rel="manifest" href="site.webmanifest" />
   <meta name="theme-color" content="#ffffff" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="home-v4.css" />
+  <link rel="stylesheet" href="pages-v4.css" />
 </head>
-<body>
+<body class="pages-v4">
   <nav class="site-nav">
     <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
     <div class="nav-links">
@@ -46,31 +48,43 @@
   </header>
 
   <main>
-    <section id="step-mode" class="card">
-      <div class="mode-choices">
-        <a href="scratch.html" class="mode-btn">
-          <strong>Beginning</strong>
-          <span>Build your first resume.</span>
+    <section id="step-mode" class="card pv-panel pv-band">
+      <div class="mode-choices hv-tools pv-tools">
+        <a class="mode-btn hv-tool hv-t-sky" href="scratch.html">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h5M9.5 16h5"/></svg></span><span class="hv-vtype">Create</span></span>
+          <b>Beginning</b>
+          <span class="hv-vdesc">Build your first resume.</span>
+          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
         </a>
-        <button type="button" class="mode-btn" id="mode-refine" data-mode="refine">
-          <strong>Refine</strong>
-          <span>Strengthen the resume you already have.</span>
+        <button type="button" class="mode-btn hv-tool hv-t-butter" id="mode-refine" data-mode="refine">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></span><span class="hv-vtype">Improve</span></span>
+          <b>Refine</b>
+          <span class="hv-vdesc">Strengthen the resume you already have.</span>
+          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
         </button>
-        <button type="button" class="mode-btn" id="mode-analyze" data-mode="analyze">
-          <strong>Right Fit</strong>
-          <span>Compare your resume to a job.</span>
+        <button type="button" class="mode-btn hv-tool hv-t-lavender" id="mode-analyze" data-mode="analyze">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg></span><span class="hv-vtype">Match</span></span>
+          <b>Right Fit</b>
+          <span class="hv-vdesc">Compare your resume to a job.</span>
+          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
         </button>
-        <a href="elevate.html" class="mode-btn">
-          <strong>Elevate</strong>
-          <span>Find experience you may have left out.</span>
+        <a class="mode-btn hv-tool hv-t-mint" href="elevate.html">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M11 20V4M17 20v-6"/><path d="M2.5 20.5h19"/></svg></span><span class="hv-vtype">Discover</span></span>
+          <b>Elevate</b>
+          <span class="hv-vdesc">Find experience you may have left out.</span>
+          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
         </a>
-        <a href="spotlight.html" class="mode-btn">
-          <strong>Spotlight</strong>
-          <span>Strengthen your LinkedIn profile.</span>
+        <a class="mode-btn hv-tool hv-t-sky" href="spotlight.html">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg></span><span class="hv-vtype">LinkedIn</span></span>
+          <b>Spotlight</b>
+          <span class="hv-vdesc">Strengthen your LinkedIn profile.</span>
+          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
         </a>
-        <a href="prepare.html" class="mode-btn">
-          <strong>Prepare</strong>
-          <span>Get ready for interview questions.</span>
+        <a class="mode-btn hv-tool hv-t-blush" href="prepare.html">
+          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></span><span class="hv-vtype">Interview</span></span>
+          <b>Prepare</b>
+          <span class="hv-vdesc">Get ready for interview questions.</span>
+          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
         </a>
       </div>
     </section>

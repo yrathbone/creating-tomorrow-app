@@ -38,11 +38,11 @@
       <form id="signup-form">
         <label class="field">
           <span>Email</span>
-          <input type="email" id="signup-email" required />
+          <input type="email" id="signup-email" name="email" autocomplete="email" required />
         </label>
         <label class="field">
           <span>Password</span>
-          <input type="password" id="signup-password" minlength="8" required />
+          <input type="password" id="signup-password" name="new-password" autocomplete="new-password" minlength="8" required />
           <span class="hint">At least 8 characters.</span>
         </label>
         <button type="submit" id="signup-btn">Create Account</button>

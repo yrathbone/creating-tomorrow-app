@@ -183,6 +183,7 @@ function renderResumeCards() {
     const info = resumeCardInfo(entry, allScanHistory);
     const layout = document.createElement("select");
     layout.className = "vcard-select";
+    layout.name = "resume-layout";
     layout.setAttribute("aria-label", "Layout for " + info.title);
     for (const [value, label] of RESUME_LAYOUTS) {
       const opt = document.createElement("option");
