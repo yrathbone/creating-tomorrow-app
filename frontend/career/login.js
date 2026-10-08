@@ -830,6 +830,19 @@ function newPasswordProblem(password, again) {
   return "";
 }
 
+// Pure (unit-tested): turns the sign-in service's reset errors into plain words. Never says whether an email has an account.
+function passwordResetMessage(err) {
+  const code = err && err.code;
+  if (code === "CodeMismatchException") return "That code isn't right. Check the email and try again.";
+  if (code === "ExpiredCodeException") return "That code has expired. Choose \"Send a new code\" and use the newest email.";
+  if (code === "LimitExceededException" || code === "TooManyRequestsException") return "Too many tries. Please wait a few minutes and try again.";
+  if (code === "InvalidPasswordException") return (err && err.message) || "That password isn't strong enough. Try a longer one.";
+  if (code === "InvalidParameterException" || code === "NotAuthorizedException") {
+    return "We can't reset this password online yet. If you haven't logged in for the first time, use the temporary password from your invitation. Otherwise, email us and we'll help.";
+  }
+  return (err && err.message) || "Something went wrong. Please try again.";
+}
+
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   loginError.hidden = true;
@@ -1031,5 +1044,105 @@ skillForm.addEventListener("submit", async (e) => {
     skillError.hidden = false;
   } finally {
     skillSubmitBtn.disabled = false;
+  }
+});
+
+// ---- Forgot password (Cognito emails a code; the browser sends it back with the new password) ----
+let resetEmail = "";
+const forgotCard = document.getElementById("step-forgot");
+const forgotError = document.getElementById("forgot-error");
+const forgotRequestForm = document.getElementById("forgot-request-form");
+const forgotConfirmForm = document.getElementById("forgot-confirm-form");
+
+function showForgotCard() {
+  document.getElementById("step-login").hidden = true;
+  document.getElementById("login-notice").hidden = true;
+  forgotError.hidden = true;
+  forgotRequestForm.hidden = false;
+  forgotConfirmForm.hidden = true;
+  forgotCard.hidden = false;
+  const typed = document.getElementById("login-email").value.trim();
+  const box = document.getElementById("forgot-email");
+  if (typed && !box.value) box.value = typed;
+  box.focus();
+}
+
+function backToLogin(notice) {
+  forgotCard.hidden = true;
+  document.getElementById("step-login").hidden = false;
+  const noticeEl = document.getElementById("login-notice");
+  noticeEl.textContent = notice || "";
+  noticeEl.hidden = !notice;
+  loginError.hidden = true;
+  if (notice) document.getElementById("login-password").focus();
+}
+
+// Asks for a code. A person we cannot find looks exactly like one we can, so this never reveals who has an account.
+async function sendResetCode() {
+  try {
+    await requestPasswordReset(resetEmail);
+  } catch (err) {
+    if (!err || err.code !== "UserNotFoundException") throw err;
+  }
+}
+
+document.getElementById("forgot-open-btn").addEventListener("click", showForgotCard);
+document.getElementById("forgot-back-btn").addEventListener("click", () => backToLogin(""));
+
+forgotRequestForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  forgotError.hidden = true;
+  const btn = document.getElementById("forgot-request-btn");
+  resetEmail = document.getElementById("forgot-email").value.trim();
+  if (!resetEmail) return;
+  btn.disabled = true;
+  try {
+    await sendResetCode();
+    forgotRequestForm.hidden = true;
+    forgotConfirmForm.hidden = false;
+    document.getElementById("forgot-code").focus();
+  } catch (err) {
+    forgotError.textContent = passwordResetMessage(err);
+    forgotError.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("forgot-resend-btn").addEventListener("click", async () => {
+  forgotError.hidden = true;
+  const sent = document.getElementById("forgot-sent-message");
+  try {
+    await sendResetCode();
+    sent.textContent = "We sent a new code. Use the newest email; older codes stop working.";
+  } catch (err) {
+    forgotError.textContent = passwordResetMessage(err);
+    forgotError.hidden = false;
+  }
+});
+
+forgotConfirmForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  forgotError.hidden = true;
+  const btn = document.getElementById("forgot-confirm-btn");
+  const password = document.getElementById("forgot-new-password").value;
+  const problem = newPasswordProblem(password, document.getElementById("forgot-new-password-confirm").value);
+  if (problem) {
+    forgotError.textContent = problem;
+    forgotError.hidden = false;
+    return;
+  }
+  btn.disabled = true;
+  try {
+    await confirmPasswordReset(resetEmail, document.getElementById("forgot-code").value.trim(), password);
+    forgotConfirmForm.reset();
+    document.getElementById("login-email").value = resetEmail;
+    document.getElementById("login-password").value = "";
+    backToLogin("Your password has been changed. Log in with your new password.");
+  } catch (err) {
+    forgotError.textContent = passwordResetMessage(err);
+    forgotError.hidden = false;
+  } finally {
+    btn.disabled = false;
   }
 });

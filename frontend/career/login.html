@@ -38,6 +38,7 @@
     <p class="hint" id="session-check" role="status" style="text-align:center;" hidden>Checking your session…</p>
     <section class="card" id="step-login">
       <h2>Email and password</h2>
+      <div id="login-notice" class="success" role="status" hidden></div>
       <form id="login-form">
         <label class="field">
           <span>Email</span>
@@ -49,8 +50,41 @@
         </label>
         <button type="submit" id="login-btn">Log In</button>
       </form>
+      <p class="login-help"><button type="button" id="forgot-open-btn" class="link-button">Forgot your password?</button> <span aria-hidden="true">·</span> <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20sign-in%20help">Trouble signing in? Email us</a></p>
       <p class="hint">Career Profile is in <strong>beta testing</strong> and is <strong>by invitation only</strong>. If you were invited, log in with the email address and temporary password from your invitation; you will choose your own password the first time. Want an invitation? <a href="register.html">Find out how</a>.</p>
       <div id="login-error" class="error" hidden></div>
+    </section>
+
+    <section class="card" id="step-forgot" hidden>
+      <h2>Reset your password</h2>
+      <form id="forgot-request-form">
+        <p>Type the email address you log in with. We will email you a 6-digit code.</p>
+        <label class="field">
+          <span>Email</span>
+          <input type="email" id="forgot-email" name="email" autocomplete="username" required />
+        </label>
+        <button type="submit" id="forgot-request-btn">Send me a code</button>
+      </form>
+      <form id="forgot-confirm-form" hidden>
+        <p id="forgot-sent-message" role="status">If that email has a Career Profile account, a 6-digit code is on its way. It can take a minute or two; check your spam folder.</p>
+        <label class="field">
+          <span>6-digit code</span>
+          <input type="text" id="forgot-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="12" required />
+        </label>
+        <label class="field">
+          <span>New password</span>
+          <input type="password" id="forgot-new-password" name="new-password" autocomplete="new-password" minlength="8" required />
+          <span class="hint">At least 8 characters.</span>
+        </label>
+        <label class="field">
+          <span>Type it again</span>
+          <input type="password" id="forgot-new-password-confirm" name="new-password-confirm" autocomplete="new-password" minlength="8" required />
+        </label>
+        <button type="submit" id="forgot-confirm-btn">Save new password</button>
+        <p class="login-help"><button type="button" id="forgot-resend-btn" class="link-button">Send a new code</button></p>
+      </form>
+      <p class="login-help"><button type="button" id="forgot-back-btn" class="link-button">Back to log in</button> <span aria-hidden="true">·</span> <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20sign-in%20help">Need help? Email us</a></p>
+      <div id="forgot-error" class="error" role="alert" hidden></div>
     </section>
 
     <section class="card" id="step-newpassword" hidden>
@@ -617,6 +651,12 @@
               <div id="application-list"></div>
             </section>
           </div>
+        </div>
+
+        <div class="card span-2 feedback-card" id="feedback-card">
+          <div class="dashboard-card-header"><h2>Tell us how it went</h2></div>
+          <p class="hint">Career Profile is in beta, so your honest feedback shapes what we build next. What worked, what confused you, what broke: all of it helps. Please don't include passwords or private details.</p>
+          <a id="feedback-link" class="btn-secondary feedback-btn" href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20beta%20feedback&amp;body=What%20were%20you%20trying%20to%20do%3F%0A%0A%0AWhat%20happened%3F%0A%0A%0AWhat%20did%20you%20expect%3F%0A%0A">Send feedback by email</a>
         </div>
 
         <div class="card span-2 data-card" id="your-data-card">

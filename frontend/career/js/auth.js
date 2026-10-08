@@ -222,3 +222,27 @@ function signIn(email, password) {
     });
   });
 }
+
+// "Forgot password": Cognito emails a code to the person's verified address (nothing is sent
+// from our server). The page then sends the code back with the new password. The SDK reports
+// "code sent" through inputVerificationCode and only calls onSuccess after the reset is done.
+function requestPasswordReset(email) {
+  const cognitoUser = newCognitoUser(email);
+  return new Promise((resolve, reject) => {
+    cognitoUser.forgotPassword({
+      onSuccess: () => resolve(),
+      onFailure: (err) => reject(err),
+      inputVerificationCode: () => resolve(),
+    });
+  });
+}
+
+function confirmPasswordReset(email, code, newPassword) {
+  const cognitoUser = newCognitoUser(email);
+  return new Promise((resolve, reject) => {
+    cognitoUser.confirmPassword(code, newPassword, {
+      onSuccess: () => resolve(),
+      onFailure: (err) => reject(err),
+    });
+  });
+}
