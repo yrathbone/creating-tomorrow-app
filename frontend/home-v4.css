@@ -150,40 +150,45 @@ body.home-v4 .hv-btn-gold:hover { background: linear-gradient(180deg, #f2b823 0%
 
 /* Tools: six small raised cards, each with its own colored glossy icon */
 .hv-tools { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; }
-.hv-tool {
+.hv-tool, .hv-guide {
   --tool: #1d4ed8;
+  --tool-bg: #e3ebfb;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.35rem;
   padding: 0.8rem 0.9rem 0.85rem;
-  border: 1px solid var(--line-soft);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--tool);
   border-radius: 12px;
   text-decoration: none;
-  box-shadow: var(--lit), 0 1px 2px rgba(20, 33, 61, 0.05), 0 6px 14px -8px rgba(20, 33, 61, 0.14);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  box-shadow: var(--lit), 0 1px 2px rgba(20, 33, 61, 0.05), 0 8px 16px -10px rgba(20, 33, 61, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.hv-tool:hover { transform: translateY(-3px); border-color: #c9d3ea; box-shadow: var(--lit), var(--shadow-lift); }
-.hv-tool svg {
-  width: 38px;
-  height: 38px;
-  padding: 8px;
-  margin-bottom: 0.4rem;
-  border-radius: 50%;
-  fill: none;
-  stroke: var(--tool);
-  stroke-width: 2.3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  background: linear-gradient(180deg, #ffffff 0%, #e8effb 100%);
-  box-shadow: inset 0 1px 0 #ffffff, inset 0 -3px 5px rgba(10, 42, 122, 0.10), 0 0 0 1px rgba(10, 42, 122, 0.16), 0 5px 10px -4px rgba(20, 33, 61, 0.30);
+.hv-tool:hover, .hv-guide:hover { transform: translateY(-3px); border-color: #c9d3ea; border-top-color: var(--tool); box-shadow: var(--lit), var(--shadow-lift); }
+.hv-tool:active, .hv-guide:active { transform: none; }
+.hv-tool:focus-visible, .hv-guide:focus-visible { outline: 3px solid rgba(10, 53, 168, 0.28); outline-offset: 2px; }
+.hv-vtop { display: flex; align-items: center; gap: 0.5rem; }
+.hv-vicon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--tool-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(20, 33, 61, 0.08);
 }
-.hv-tool b { font-size: 0.97rem; }
-.hv-tool span { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
-.hv-t-sky { background: var(--sky); --tool: #1d4ed8; }
-.hv-t-butter { background: var(--butter); --tool: #b45309; }
-.hv-t-lavender { background: var(--lavender); --tool: #6d28d9; }
-.hv-t-mint { background: var(--mint); --tool: #047857; }
-.hv-t-blush { background: var(--blush); --tool: #be185d; }
+.hv-vicon svg { width: 20px; height: 20px; fill: none; stroke: var(--tool); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.hv-vtype { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--tool); }
+.hv-tool b, .hv-guide b { font-size: 0.98rem; line-height: 1.25; color: var(--ink); }
+.hv-vdesc { font-size: 0.85rem; line-height: 1.4; color: var(--muted); }
+.hv-vfoot { margin-top: auto; padding-top: 0.5rem; font-size: 0.85rem; font-weight: 700; color: var(--blue); }
+.hv-t-sky { --tool: #1d4ed8; --tool-bg: #e3ebfb; }
+.hv-t-butter { --tool: #b45309; --tool-bg: #fdf0d3; }
+.hv-t-lavender { --tool: #6d28d9; --tool-bg: #ece6fb; }
+.hv-t-mint { --tool: #047857; --tool-bg: #e3f3e8; }
+.hv-t-blush { --tool: #be185d; --tool-bg: #fce7f1; }
 
 /* ---------- Career Basics: four clickable guide tiles in a green-topped card ---------- */
 .hv-basics {
@@ -199,25 +204,6 @@ body.home-v4 .hv-btn-gold:hover { background: linear-gradient(180deg, #f2b823 0%
 .hv-basics .hv-h2 { margin-bottom: 0.1rem; font-size: 1.3rem; }
 .hv-basics-sub { margin: 0 0 0.85rem calc(40px + 0.65rem); color: #3d4963; font-size: 0.92rem; }
 .hv-guides { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
-.hv-guide {
-  --tool: #1d4ed8;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.9rem 1rem 0.95rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  text-decoration: none;
-  box-shadow: var(--lit), 0 1px 2px rgba(20, 33, 61, 0.05), 0 6px 14px -8px rgba(20, 33, 61, 0.14);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-}
-.hv-guide:hover { transform: translateY(-3px); border-color: #c9d3ea; box-shadow: var(--lit), var(--shadow-lift); }
-.hv-guide:active { transform: none; }
-.hv-guide:focus-visible { outline: 3px solid rgba(10, 53, 168, 0.28); outline-offset: 2px; }
-.hv-guide-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--tool); }
-.hv-guide b { font-size: 1rem; line-height: 1.25; color: var(--ink); }
-.hv-guide-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
-.hv-guide-read { margin-top: auto; padding-top: 0.55rem; font-size: 0.88rem; font-weight: 700; color: var(--blue); }
 body.home-v4 .hv-seeall { display: inline-block; margin-top: 0.9rem; font-weight: 700; font-size: 0.95rem; color: var(--blue); text-decoration: none; }
 body.home-v4 .hv-seeall:hover { text-decoration: underline; text-underline-offset: 4px; }
 
