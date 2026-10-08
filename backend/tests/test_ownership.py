@@ -148,12 +148,13 @@ class OwnershipTestCase(unittest.TestCase):
 class TokenVerification(OwnershipTestCase):
     def test_every_career_route_rejects_a_request_with_no_token(self):
         routes = [r for r in router.routes if isinstance(r, APIRoute)]
-        self.assertEqual(len(routes), 43, "a route was added or removed: update this guard on purpose")
+        # 43 routes through Phase 2A + 4 language routes + 2 profile routes (GET/PUT /profile) in Phase 2B = 49
+        self.assertEqual(len(routes), 49, "a route was added or removed: update this guard on purpose")
         offenders = []
         for r in routes:
             method = sorted(r.methods - {"HEAD", "OPTIONS"})[0]
             path = r.path.replace("{experience_id}", "1").replace("{education_id}", "1").replace("{certification_id}", "1") \
-                .replace("{skill_id}", "1").replace("{scan_history_id}", "1").replace("{resume_version_id}", "1").replace("{application_id}", "1")
+                .replace("{skill_id}", "1").replace("{scan_history_id}", "1").replace("{resume_version_id}", "1").replace("{application_id}", "1").replace("{language_id}", "1")
             res = self.client.request(method, "/api/career" + path, json={})
             if res.status_code != 401:
                 offenders.append((method, r.path, res.status_code))
@@ -165,7 +166,7 @@ class TokenVerification(OwnershipTestCase):
         for r in routes:
             method = sorted(r.methods - {"HEAD", "OPTIONS"})[0]
             path = r.path.replace("{experience_id}", "1").replace("{education_id}", "1").replace("{certification_id}", "1") \
-                .replace("{skill_id}", "1").replace("{scan_history_id}", "1").replace("{resume_version_id}", "1").replace("{application_id}", "1")
+                .replace("{skill_id}", "1").replace("{scan_history_id}", "1").replace("{resume_version_id}", "1").replace("{application_id}", "1").replace("{language_id}", "1")
             res = self.client.request(method, "/api/career" + path, headers=bearer("not.a.token"), json={})
             if res.status_code != 401:
                 offenders.append((method, r.path, res.status_code))

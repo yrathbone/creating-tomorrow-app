@@ -24,6 +24,7 @@ function startGeneralResumeFlow() {
   document.getElementById("general-resume-card").scrollIntoView({ behavior: "smooth", block: "start" });
   hideAllGeneralResumeStates();
   generalResumeForm.hidden = false;
+  prefillResumeHeader(document.getElementById("general-resume-name"), document.getElementById("general-resume-contact"));
 }
 
 document.getElementById("general-resume-hero-btn").addEventListener("click", startGeneralResumeFlow);

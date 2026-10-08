@@ -15,13 +15,16 @@ CareerProfile row are both set together, only by an explicit POST to
 CareerProfile row yet for a child row to attach to.
 """
 import base64
+import logging
 import re
+from contextlib import contextmanager
 from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import Response
 from pydantic import BaseModel
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
@@ -33,10 +36,33 @@ from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_ch
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
-from models import Application, CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
+from models import Application, CareerProfile, Certification, Education, Experience, Language, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
 from resume_builder import build_resume_bytes
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
+
+_MISSING_SCHEMA_HINTS = ("no such table", "no such column", "does not exist", "undefinedtable", "undefinedcolumn")
+
+
+@contextmanager
+def schema_upgrade_guard(db: Session, what: str):
+    """Migration 0008 (languages table, display_name/contact_line) is applied by hand
+    (`alembic upgrade head`). Until then these features must say so plainly instead of
+    failing mysteriously or pretending to work: a missing table/column becomes a logged
+    503 naming what is not upgraded. Any other database error is re-raised untouched."""
+    try:
+        yield
+    except (OperationalError, ProgrammingError) as e:
+        db.rollback()
+        if any(h in str(e).lower() for h in _MISSING_SCHEMA_HINTS):
+            logger.error("Database schema not upgraded for %s (run `alembic upgrade head`): %s", what, e.__class__.__name__)
+            raise HTTPException(
+                status_code=503,
+                detail=f"{what} are not available yet: the database upgrade (migration 0008) has not been applied.",
+            ) from e
+        raise
 
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB - matches main.py's existing resume-upload limit
 MAX_PDF_UPLOAD_BYTES = 20 * 1024 * 1024  # a LinkedIn page printed to PDF is pictures of pages, so it is large
@@ -1494,6 +1520,147 @@ async def delete_application(
     return {"deleted": True}
 
 
+# --- Career Profile basics (migration 0008): the name/contact line that heads a resume.
+# Ownership comes only from the token: there is no profile or user id in the path or body.
+
+class ProfileIn(BaseModel):
+    display_name: str | None = None
+    contact_line: str | None = None
+
+
+MAX_DISPLAY_NAME_CHARS = 200
+MAX_CONTACT_LINE_CHARS = 400
+
+
+def _profile_basics(profile: CareerProfile) -> dict:
+    return {"display_name": profile.display_name, "contact_line": profile.contact_line}
+
+
+@router.get("/profile")
+async def get_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    with schema_upgrade_guard(db, "Profile details"):
+        return _profile_basics(profile)
+
+
+@router.put("/profile")
+async def update_profile(
+    req: ProfileIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    display_name = (req.display_name or "").strip() or None
+    contact_line = (req.contact_line or "").strip() or None
+    if display_name and len(display_name) > MAX_DISPLAY_NAME_CHARS:
+        raise HTTPException(status_code=400, detail=f"Name is too long ({MAX_DISPLAY_NAME_CHARS} characters max).")
+    if contact_line and len(contact_line) > MAX_CONTACT_LINE_CHARS:
+        raise HTTPException(status_code=400, detail=f"Contact line is too long ({MAX_CONTACT_LINE_CHARS} characters max).")
+
+    profile = get_career_profile_or_404(db, current_user)
+    with schema_upgrade_guard(db, "Profile details"):
+        profile.display_name = display_name
+        profile.contact_line = contact_line
+        db.commit()
+        db.refresh(profile)
+        return _profile_basics(profile)
+
+
+# --- Languages (migration 0008) ------------------------------------------------
+
+class LanguageIn(BaseModel):
+    name: str
+    proficiency: str | None = None
+
+
+def _language_to_dict(entry: Language) -> dict:
+    return {
+        "id": entry.id,
+        "name": entry.name,
+        "proficiency": entry.proficiency,
+        "source": entry.source,
+        "created_at": entry.created_at.isoformat() if entry.created_at else None,
+    }
+
+
+def _get_language_or_404(db: Session, profile: CareerProfile, language_id: int) -> Language:
+    entry = db.query(Language).filter_by(id=language_id, career_profile_id=profile.id).one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Language not found.")
+    return entry
+
+
+@router.get("/languages")
+async def list_languages(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    with schema_upgrade_guard(db, "Languages"):
+        entries = db.query(Language).filter_by(career_profile_id=profile.id).order_by(Language.created_at, Language.id).all()
+        return [_language_to_dict(e) for e in entries]
+
+
+@router.post("/languages")
+async def create_language(
+    req: LanguageIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    name = req.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Language name is required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    with schema_upgrade_guard(db, "Languages"):
+        entry = Language(
+            career_profile_id=profile.id,
+            name=name,
+            proficiency=(req.proficiency or "").strip() or None,
+        )
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+        return _language_to_dict(entry)
+
+
+@router.put("/languages/{language_id}")
+async def update_language(
+    language_id: int,
+    req: LanguageIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    name = req.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Language name is required.")
+
+    profile = get_career_profile_or_404(db, current_user)
+    with schema_upgrade_guard(db, "Languages"):
+        entry = _get_language_or_404(db, profile, language_id)
+        entry.name = name
+        entry.proficiency = (req.proficiency or "").strip() or None
+        db.commit()
+        db.refresh(entry)
+        return _language_to_dict(entry)
+
+
+@router.delete("/languages/{language_id}")
+async def delete_language(
+    language_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    with schema_upgrade_guard(db, "Languages"):
+        entry = _get_language_or_404(db, profile, language_id)
+        db.delete(entry)
+        db.commit()
+        return {"deleted": True}
+
+
 @router.get("/export")
 async def export_career_profile(
     current_user: User = Depends(get_current_user),
@@ -1518,7 +1685,19 @@ async def export_career_profile(
         db.rollback()  # applications table not migrated yet: the backup still works without it
         applications = []
 
-    return {
+    # Languages need migration 0008. If it has not been applied, say so in the backup itself
+    # (and in the log) rather than silently exporting an empty list.
+    languages_unavailable = False
+    try:
+        languages = db.query(Language).filter_by(career_profile_id=profile.id).order_by(Language.created_at, Language.id).all()
+    except (OperationalError, ProgrammingError) as e:
+        db.rollback()
+        if not any(h in str(e).lower() for h in _MISSING_SCHEMA_HINTS):
+            raise
+        logger.error("Export: languages table missing (run `alembic upgrade head`): %s", e.__class__.__name__)
+        languages, languages_unavailable = [], True
+
+    result = {
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "applications": [_application_to_dict(a) for a in applications],
         "experiences": [_experience_to_dict(e) for e in experiences],
@@ -1526,5 +1705,9 @@ async def export_career_profile(
         "certifications": [_certification_to_dict(c) for c in certifications],
         "skills": [_skill_to_dict(s) for s in skills],
         "scan_history": [_scan_history_to_dict(s) for s in scans],
+        "languages": [_language_to_dict(l) for l in languages],
         "resume_versions": [_resume_version_to_dict(v) for v in resumes],
     }
+    if languages_unavailable:
+        result["languages_unavailable"] = "Languages could not be included: the database upgrade (migration 0008) has not been applied."
+    return result

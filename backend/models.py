@@ -8,7 +8,7 @@ are live; Experience is the first Manual CRUD entity.
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String
+from sqlalchemy import DateTime, ForeignKey, JSON, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -33,16 +33,26 @@ class User(Base):
 
 class CareerProfile(Base):
     __tablename__ = "career_profiles"
+    # Do not ask the database to RETURN server-generated values on INSERT: that would name the
+    # migration-0008 columns and break creating a profile on a not-yet-upgraded database.
+    __mapper_args__ = {"eager_defaults": False}
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    # Resume-header basics (migration 0008). Deferred (never selected unless asked
+    # for) and given a server-side NULL default (never inserted unless set), so every
+    # existing query and every new CareerProfile row keeps working on a database that
+    # has not been upgraded yet; only the /profile routes read or write them.
+    display_name: Mapped[str | None] = mapped_column(String, nullable=True, deferred=True, server_default=text("NULL"))
+    contact_line: Mapped[str | None] = mapped_column(String, nullable=True, deferred=True, server_default=text("NULL"))
 
     user: Mapped["User"] = relationship(back_populates="career_profile")
     experiences: Mapped[list["Experience"]] = relationship(back_populates="career_profile")
     education_entries: Mapped[list["Education"]] = relationship(back_populates="career_profile")
     certifications: Mapped[list["Certification"]] = relationship(back_populates="career_profile")
+    languages: Mapped[list["Language"]] = relationship(back_populates="career_profile")
     skills: Mapped[list["Skill"]] = relationship(back_populates="career_profile")
     scan_histories: Mapped[list["ScanHistory"]] = relationship(back_populates="career_profile")
     resume_versions: Mapped[list["ResumeVersion"]] = relationship(back_populates="career_profile")
@@ -124,6 +134,21 @@ class Certification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     career_profile: Mapped["CareerProfile"] = relationship(back_populates="certifications")
+
+
+class Language(Base):
+    """A spoken/written language on the Career Profile (migration 0008). Free-text
+    proficiency, e.g. "Native", "Professional working proficiency"."""
+    __tablename__ = "languages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"))
+    name: Mapped[str] = mapped_column(String)
+    proficiency: Mapped[str | None] = mapped_column(String, nullable=True)
+    source: Mapped[str] = mapped_column(String, default="manual")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    career_profile: Mapped["CareerProfile"] = relationship(back_populates="languages")
 
 
 class ResumeIngestionDraft(Base):

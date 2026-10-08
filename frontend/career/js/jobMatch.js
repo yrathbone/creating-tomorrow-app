@@ -331,6 +331,7 @@ document.getElementById("job-questions-finish-btn").addEventListener("click", ()
 function showJobBuildForm() {
   hideAllJobStates();
   jobBuildFormState.hidden = false;
+  prefillResumeHeader(document.getElementById("job-build-name"), document.getElementById("job-build-contact"));
 }
 
 document.getElementById("job-build-btn").addEventListener("click", async () => {
