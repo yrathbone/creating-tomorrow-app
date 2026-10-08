@@ -260,6 +260,14 @@
 
           <div id="job-build-done-state" hidden>
             <p class="success">Your tailored resume is ready.</p>
+            <label class="field resume-layout-field">
+              <span>Resume layout</span>
+              <select id="job-resume-template">
+                <option value="classic">Classic: centered, shaded headings</option>
+                <option value="modern">Modern: clean, left-aligned, navy accents</option>
+                <option value="traditional">Traditional: serif, conservative</option>
+              </select>
+            </label>
             <button type="button" id="job-download-btn">Download Resume (.docx)</button>
             <button type="button" id="job-start-over-btn" class="btn-secondary">Compare Another Job</button>
 
@@ -346,6 +354,14 @@
 
           <div id="general-resume-done" hidden>
             <p class="success">Your general resume is ready.</p>
+            <label class="field resume-layout-field">
+              <span>Resume layout</span>
+              <select id="general-resume-template">
+                <option value="classic">Classic: centered, shaded headings</option>
+                <option value="modern">Modern: clean, left-aligned, navy accents</option>
+                <option value="traditional">Traditional: serif, conservative</option>
+              </select>
+            </label>
             <button type="button" id="general-resume-download-btn">Download Resume (.docx)</button>
             <button type="button" id="general-resume-again-btn" class="btn-secondary">Build Again</button>
           </div>

@@ -294,7 +294,7 @@ generateBtn.addEventListener("click", async () => {
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_data: finalData, ats_mode: atsMode }),
+      body: JSON.stringify({ resume_data: finalData, ats_mode: atsMode, template: document.getElementById("resume-template").value }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

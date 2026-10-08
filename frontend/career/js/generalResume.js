@@ -89,7 +89,7 @@ document.getElementById("general-resume-download-btn").addEventListener("click",
     const res = await authedFetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_data: generalResumeState.resumeData, ats_mode: false }),
+      body: JSON.stringify({ resume_data: generalResumeState.resumeData, ats_mode: false, template: document.getElementById("general-resume-template").value }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

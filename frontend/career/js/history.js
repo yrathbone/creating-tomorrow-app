@@ -16,6 +16,13 @@ let resumesLoaded = false;
 // "all" | "job_comparison" | "skill_scan": remembered for this tab only.
 let scanFilter = "all";
 
+// The resume layouts the server knows (see TEMPLATES in backend/resume_builder.py).
+const RESUME_LAYOUTS = [
+  ["classic", "Classic: centered, shaded headings"],
+  ["modern", "Modern: clean, left-aligned"],
+  ["traditional", "Traditional: serif, conservative"],
+];
+
 // ---- pure helpers (unit-tested) -------------------------------------------------------
 
 // How a scan should look: a tone (colour), the big badge text and a short type label.
@@ -136,9 +143,9 @@ async function loadResumeVersions() {
   renderResumeCards();
 }
 
-async function downloadResumeVersion(entry, name) {
+async function downloadResumeVersion(entry, name, template) {
   try {
-    const dlRes = await authedFetch("/api/career/resume-versions/" + entry.id + "/download");
+    const dlRes = await authedFetch("/api/career/resume-versions/" + entry.id + "/download?template=" + encodeURIComponent(template || "classic"));
     if (!dlRes.ok) {
       const err = await dlRes.json().catch(() => ({}));
       throw new Error(formatErrorDetail(err.detail, `Request failed (${dlRes.status})`));
@@ -174,15 +181,25 @@ function renderResumeCards() {
   grid.className = "vis-grid";
   for (const entry of allResumeVersions) {
     const info = resumeCardInfo(entry, allScanHistory);
+    const layout = document.createElement("select");
+    layout.className = "vcard-select";
+    layout.setAttribute("aria-label", "Layout for " + info.title);
+    for (const [value, label] of RESUME_LAYOUTS) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      layout.appendChild(opt);
+    }
     grid.appendChild(buildVisualCard({
       kind: "resume",
       tone: info.kind === "tailored" ? "fair" : "good",
       typeLabel: info.kind === "tailored" ? "Tailored resume" : "General resume",
       title: info.title + (info.headline ? " — " + info.headline : ""),
       lines: [info.subtitle],
+      extra: [layout],
       footerText: "Built " + shortDate(entry.created_at),
       actions: [
-        visualButton("Download again", "btn-secondary vcard-btn", () => downloadResumeVersion(entry, (entry.resume_data || {}).name)),
+        visualButton("Download again", "btn-secondary vcard-btn", () => downloadResumeVersion(entry, (entry.resume_data || {}).name, layout.value)),
         visualButton("Delete", "entry-remove-btn", async () => {
           await authedFetch("/api/career/resume-versions/" + entry.id, { method: "DELETE" });
           await loadResumeVersions();

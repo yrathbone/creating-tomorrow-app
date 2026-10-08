@@ -808,7 +808,7 @@ document.getElementById("job-download-btn").addEventListener("click", async () =
     const res = await authedFetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_data: jobState.tailoredResumeData, ats_mode: false }),
+      body: JSON.stringify({ resume_data: jobState.tailoredResumeData, ats_mode: false, template: document.getElementById("job-resume-template").value }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

@@ -1375,6 +1375,7 @@ async def delete_resume_version(
 async def download_resume_version(
     resume_version_id: int,
     ats_mode: bool = False,
+    template: str = "classic",
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
 ):
@@ -1382,7 +1383,7 @@ async def download_resume_version(
     entry = _get_resume_version_or_404(db, profile, resume_version_id)
 
     try:
-        docx_bytes = build_resume_bytes(entry.resume_data, ats_mode=ats_mode)
+        docx_bytes = build_resume_bytes(entry.resume_data, ats_mode=ats_mode, template=template)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to build resume: {e}")
 

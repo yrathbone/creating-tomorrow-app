@@ -1002,3 +1002,7 @@ body.dashboard-v4 .vcard-date { white-space: nowrap; }
 body.dashboard-v4 .vcard-actions { flex-wrap: nowrap; margin-left: auto; }
 
 body.dashboard-v4 .vtone-neutral { --tone: #8993a8; --tone-bg: #eef1f6; }
+
+/* resume layout menus */
+body.dashboard-v4 .vcard .vcard-select { width: 100%; margin: 0.25rem 0 0.35rem; padding: 0.5rem 0.6rem; border: 1px solid #d9dee9; border-radius: 8px; background: #ffffff; font: inherit; font-size: 0.88rem; color: var(--v4-ink); }
+body.dashboard-v4 .resume-layout-field { max-width: 22rem; margin: 0.4rem 0 0.7rem; }

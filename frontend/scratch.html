@@ -196,6 +196,14 @@
           <input type="checkbox" id="ats-mode" />
           <span>Use single-column layout (safer for automated ATS scanners)</span>
         </label>
+        <label class="field">
+          <span>Resume layout</span>
+          <select id="resume-template">
+            <option value="classic">Classic: centered, shaded headings</option>
+            <option value="modern">Modern: clean, left-aligned, navy accents</option>
+            <option value="traditional">Traditional: serif, conservative</option>
+          </select>
+        </label>
         <button type="button" id="generate-btn">Generate my resume</button>
         <div id="generate-error" class="error" hidden></div>
         <div id="generate-success" class="success" hidden></div>

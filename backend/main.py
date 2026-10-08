@@ -489,6 +489,7 @@ async def api_scratch_finalize(req: ScratchFinalizeRequest):
 class GenerateRequest(BaseModel):
     resume_data: dict
     ats_mode: bool = False
+    template: str = "classic"  # "classic" | "modern" | "traditional"; anything else quietly means classic
 
 
 @app.post("/api/generate")
@@ -499,7 +500,7 @@ async def api_generate(req: GenerateRequest):
         raise HTTPException(status_code=400, detail=f"resume_data missing fields: {missing}")
 
     try:
-        docx_bytes = build_resume_bytes(req.resume_data, ats_mode=req.ats_mode)
+        docx_bytes = build_resume_bytes(req.resume_data, ats_mode=req.ats_mode, template=req.template)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to build resume: {e}")
 
