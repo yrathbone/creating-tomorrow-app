@@ -84,3 +84,36 @@ test("the homepage says it is free for everyone, right under the hero buttons", 
   assert.match(hero, /No paywall\./);
   assert.ok(hero.indexOf("hv-cta") < hero.indexOf("hv-free"), "the line sits after the buttons");
 });
+
+test("the founder's note closes the page (after the team band, before the footer) and links to the About page", () => {
+  const band = html.indexOf('class="hv-bottom"');
+  const note = html.indexOf('class="hv-note"');
+  const footer = html.indexOf('<footer');
+  assert.ok(band > -1 && note > band && footer > note, "order: band, note, footer");
+  assert.match(html, /I really believe our futures are linked\./);
+  assert.match(html, /When my neighbors succeed, I succeed too\./);
+  assert.match(html, /This is how I honor our connection and show everyone they are important\./);
+  assert.match(html, /<a class="hv-note-link" href="about\.html">/);
+  assert.ok(!/yovana|rathbone/i.test(html), "the page does not name a person (the About page does not either)");
+});
+
+test("How It Works, Career Basics and the six tools share one panel, in that order, before the team band", () => {
+  const panelStart = html.indexOf('<div class="hv-panel">');
+  const how = html.indexOf('id="how"');
+  const basics = html.indexOf('id="basics"');
+  const tools = html.indexOf('id="tools"');
+  const band = html.indexOf('class="hv-bottom"');
+  assert.ok(panelStart > -1 && panelStart < how && how < basics && basics < tools && tools < band);
+  // the panel closes before the band: three sections inside, none after
+  const panelHtml = html.slice(panelStart, band);
+  assert.strictEqual((panelHtml.match(/<section class="hv-section hv-card/g) || []).length, 3);
+  assert.strictEqual((panelHtml.match(/<div/g) || []).length - (panelHtml.match(/<\/div>/g) || []).length, 0, "panel div is balanced");
+});
+
+test("the section headings are warm, and the ids that links and tests rely on are unchanged", () => {
+  assert.match(html, /<h2 id="how-h" class="hv-h2">Here’s how we begin<\/h2>/);
+  assert.match(html, /<h2 id="basics-h" class="hv-h2">Start with the basics<\/h2>/);
+  assert.match(html, /<h2 id="tools-h" class="hv-h2">Six free tools for your next step<\/h2>/);
+  for (const id of ["how", "basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
+  assert.match(html, /href="#tools"/); // Explore Tools and step 2 still jump to the tools
+});
