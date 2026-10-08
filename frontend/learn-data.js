@@ -7,7 +7,7 @@ const ARTICLES = [
   {
     slug: "what-is-ats",
     title: "What Is an ATS, Really?",
-    summary: "The software behind online job applications — without the mythology.",
+    summary: "What you need to know about the software behind online job applications, without the myths.",
     category: "ATS Basics",
     video_youtube_id: null,
   },
@@ -21,14 +21,14 @@ const ARTICLES = [
   {
     slug: "honest-self-marketing",
     title: "Your LinkedIn Profile Is Your Professional Story",
-    summary: "Learn to market your experience clearly — without exaggerating it.",
+    summary: "Present yourself honestly by showing what you know, what you've accomplished, and how you add value.",
     category: "LinkedIn Basics",
     video_youtube_id: null,
   },
   {
     slug: "how-we-grade",
     title: "Prepare Stories, Not Perfect Answers",
-    summary: "Learn how to research the role, organize your experience, and walk into an interview prepared — not scripted.",
+    summary: "How to prepare for an interview without memorizing a script.",
     category: "Interview Basics",
     video_youtube_id: null,
   },
