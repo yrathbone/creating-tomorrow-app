@@ -122,6 +122,26 @@ function renderDetailCard(container, entity, fieldDefs, { onSave, onDelete }) {
   card.className = "entry-summary-card";
 
   function renderView() {
+    if (fieldDefs.card && typeof buildVisualCard === "function") {
+      // The shared dashboard card (same look as scans, resumes and applications).
+      const c = fieldDefs.card;
+      container.classList.add("vis-grid");
+      buildVisualCard({
+        kind: c.kind,
+        tone: c.tone,
+        typeLabel: c.typeLabel,
+        badge: c.badge ? c.badge(entity) : "",
+        title: c.title(entity),
+        lines: c.lines ? c.lines(entity) : [],
+        summary: c.summary ? c.summary(entity) : "",
+        footerText: c.footer ? c.footer(entity) : "",
+        actions: [
+          visualButton("Edit", "btn-secondary vcard-btn", renderEdit),
+          visualButton("Delete", "entry-remove-btn", () => onDelete(entity)),
+        ],
+      }, card);
+      return;
+    }
     card.innerHTML = "";
     const header = document.createElement("div");
     header.className = "entry-summary-header";
@@ -157,6 +177,7 @@ function renderDetailCard(container, entity, fieldDefs, { onSave, onDelete }) {
 
   function renderEdit() {
     card.innerHTML = "";
+    if (fieldDefs.card) card.classList.add("vcard-editing");
     const draft = Object.assign({}, entity);
     for (const f of fieldDefs.fields) {
       if (f.type === "select") {
@@ -232,6 +253,16 @@ function skillLabel(entry) {
 }
 
 const EXPERIENCE_FIELD_DEFS = {
+  card: {
+    kind: "role",
+    tone: "good",
+    typeLabel: "Role",
+    title: (e) => e.title,
+    lines: (e) => [[e.organization, e.location].filter(Boolean).join(" · ")],
+    summary: (e) => e.description || "",
+    badge: (e) => (/^(present|current)$/i.test((e.end_date || "").trim()) ? "Current" : ""),
+    footer: (e) => [e.start_date, e.end_date].filter(Boolean).join(" – "),
+  },
   summary: experienceLabel,
   detail: (exp) => exp.description || "",
   fields: [
@@ -245,6 +276,14 @@ const EXPERIENCE_FIELD_DEFS = {
 };
 
 const EDUCATION_FIELD_DEFS = {
+  card: {
+    kind: "education",
+    tone: "skill",
+    typeLabel: "Education",
+    title: (e) => e.institution,
+    lines: (e) => [[e.degree, e.field_of_study].filter(Boolean).join(", ")],
+    footer: (e) => (e.graduation_date ? "Graduated " + e.graduation_date : ""),
+  },
   summary: educationLabel,
   fields: [
     { key: "institution", label: "Institution" },
@@ -255,6 +294,14 @@ const EDUCATION_FIELD_DEFS = {
 };
 
 const CERTIFICATION_FIELD_DEFS = {
+  card: {
+    kind: "certification",
+    tone: "strong",
+    typeLabel: "Certification",
+    title: (e) => e.name,
+    lines: (e) => [e.issuer],
+    footer: (e) => e.date || "",
+  },
   summary: certificationLabel,
   fields: [
     { key: "name", label: "Certification name" },
@@ -264,6 +311,18 @@ const CERTIFICATION_FIELD_DEFS = {
 };
 
 const SKILL_FIELD_DEFS = {
+  card: {
+    kind: "skill",
+    tone: "fair",
+    typeLabel: "Skill",
+    title: (s) => s.name,
+    lines: (s) => {
+      const exp = s.experience_id ? allExperiences.find((e) => e.id === s.experience_id) : null;
+      return [exp ? exp.title + " — " + exp.organization : "Not tied to one role"];
+    },
+    summary: (s) => s.source_text || "",
+    footer: (s) => (s.created_at ? "Added " + shortDate(s.created_at) : ""),
+  },
   summary: skillLabel,
   detail: (s) => s.source_text || "",
   fields: [
@@ -463,6 +522,8 @@ async function loadSkills() {
     p.className = "hint";
     p.textContent = "No skills added yet.";
     container.appendChild(p);
+  } else if (typeof skillView !== "undefined" && skillView === "groups" && typeof renderSkillGroups === "function") {
+    renderSkillGroups(container);
   } else {
     for (const entry of allSkills) {
       renderDetailCard(container, entry, SKILL_FIELD_DEFS, {
@@ -485,6 +546,7 @@ async function loadSkills() {
       });
     }
   }
+  if (typeof syncSkillViewToggle === "function") syncSkillViewToggle();
   updateDashboardSummary();
 }
 

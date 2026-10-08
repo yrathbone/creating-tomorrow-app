@@ -10,6 +10,14 @@ function languageLabel(entry) {
 }
 
 const LANGUAGE_FIELD_DEFS = {
+  card: {
+    kind: "language",
+    tone: "pink",
+    typeLabel: "Language",
+    title: (e) => e.name,
+    lines: (e) => [e.proficiency],
+    footer: (e) => (e.created_at ? "Added " + shortDate(e.created_at) : ""),
+  },
   summary: languageLabel,
   fields: [
     { key: "name", label: "Language" },

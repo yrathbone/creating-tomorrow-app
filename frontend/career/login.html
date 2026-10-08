@@ -400,6 +400,10 @@
           <button type="button" id="skill-tidy-apply-btn">Save the ones I've ticked</button>
           <button type="button" id="skill-tidy-cancel-btn" class="btn-secondary">Close</button>
         </div>
+        <div id="skill-view-toggle" class="app-view-toggle" role="group" aria-label="How to show your skills" hidden>
+          <button type="button" id="skill-view-groups" class="btn-secondary" aria-pressed="true">Groups</button>
+          <button type="button" id="skill-view-list" class="btn-secondary" aria-pressed="false">List</button>
+        </div>
         <div id="skill-detail-list"></div>
 <h3>Scan for missing skills</h3>
         <div id="skill-scan-start">
@@ -493,6 +497,7 @@
           <div id="activity-panels">
             <section class="snapshot-panel" id="panel-history" hidden>
         <h3>Job &amp; Skill Scan History</h3>
+        <div id="scan-filter" class="vis-filter" role="group" aria-label="Filter scans" hidden></div>
         <div id="scan-history-list"></div>
             </section>
 
@@ -693,6 +698,7 @@
   <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.20/dist/amazon-cognito-identity.min.js"></script>
   <script src="js/auth.js"></script>
   <script src="../loading.js"></script>
+  <script src="js/visualCards.js"></script>
   <script src="login.js"></script>
   <script src="js/profileBasics.js"></script>
   <script src="js/languages.js"></script>
@@ -702,6 +708,7 @@
   <script src="js/skillScan.js"></script>
   <script src="js/skillTidy.js"></script>
   <script src="js/history.js"></script>
+  <script src="js/skillsVisual.js"></script>
   <script src="js/applications.js"></script>
   <script src="js/generalResume.js"></script>
 </body>

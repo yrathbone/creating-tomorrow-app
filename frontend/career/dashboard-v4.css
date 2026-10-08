@@ -848,3 +848,157 @@ body.dashboard-v4 .app-board-tip { margin-top: 0.6rem; }
   body.dashboard-v4 .app-card, body.dashboard-v4 .app-col-body { transition: none; }
   body.dashboard-v4 .app-card:hover { transform: none; }
 }
+
+/* ===== Visual panels: Skills (groups), Job & Skill Scans, Resumes Built ===== */
+body.dashboard-v4 .vis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.75rem; align-items: stretch; }
+body.dashboard-v4 .vcard-foot { margin-top: auto; padding-top: 0.6rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+body.dashboard-v4 .vcard-date { font-size: 0.78rem; color: var(--v4-muted); }
+
+/* filter pills above the scan cards */
+body.dashboard-v4 .vis-filter { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0 0.8rem; }
+body.dashboard-v4 .dashboard-grid > .card .vis-filter button.vis-chip {
+  min-height: 34px;
+  padding: 0.25rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--v4-muted);
+  background: #ffffff;
+  background-image: none;
+  border: 1px solid #d5dae6;
+  border-radius: 999px;
+  box-shadow: none;
+}
+body.dashboard-v4 .dashboard-grid > .card .vis-filter button.vis-chip:hover { background: var(--v4-sky); border-color: var(--v4-blue); color: var(--v4-blue); }
+body.dashboard-v4 .dashboard-grid > .card .vis-filter button.vis-chip[aria-pressed="true"] { background: var(--v4-blue); border-color: var(--v4-blue); color: #ffffff; }
+
+/* --- scan cards --- */
+body.dashboard-v4 .vcard {
+  --tone: #8993a8;
+  --tone-bg: #eef1f6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.8rem 0.9rem 0.8rem;
+  background: #ffffff;
+  border: 1px solid var(--v4-line);
+  border-top: 3px solid var(--tone);
+  border-radius: 12px;
+  box-shadow: var(--v4-lit), 0 1px 2px rgba(20, 33, 61, 0.05), 0 8px 16px -10px rgba(20, 33, 61, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+body.dashboard-v4 .vcard:hover { transform: translateY(-2px); box-shadow: var(--v4-lit), var(--v4-shadow-lift); }
+body.dashboard-v4 .vtone-strong { --tone: #1f7a3f; --tone-bg: #e3f3e8; }
+body.dashboard-v4 .vtone-good { --tone: #0a35a8; --tone-bg: #e3ebfb; }
+body.dashboard-v4 .vtone-fair { --tone: #b86e00; --tone-bg: #fdf0d3; }
+body.dashboard-v4 .vtone-low { --tone: #c2410c; --tone-bg: #fde8df; }
+body.dashboard-v4 .vtone-skill { --tone: #6d28d9; --tone-bg: #ece6fb; }
+body.dashboard-v4 .vcard-top { display: flex; align-items: center; gap: 0.5rem; }
+body.dashboard-v4 .vcard-icon {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--tone-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(20, 33, 61, 0.08);
+}
+body.dashboard-v4 .vcard-icon::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  background: var(--tone);
+  -webkit-mask: var(--scan-icon) center / contain no-repeat;
+  mask: var(--scan-icon) center / contain no-repeat;
+}
+body.dashboard-v4 .vkind-job_comparison { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23000%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2211%22%20cy=%2211%22%20r=%226.5%22/%3E%3Cpath%20d=%22M16%2016l5%205%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-skill_scan { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23000%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M12%203l2.1%205.9L20%2011l-5.9%202.1L12%2019l-2.1-5.9L4%2011l5.9-2.1z%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vcard-type { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--tone); }
+body.dashboard-v4 .vcard-badge { margin-left: auto; padding: 0.15rem 0.6rem; font-size: 0.78rem; font-weight: 750; color: #ffffff; background: var(--tone); border-radius: 999px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+body.dashboard-v4 .vcard-title { font-size: 0.98rem; line-height: 1.25; color: var(--v4-ink); overflow-wrap: anywhere; }
+body.dashboard-v4 .vcard-summary { margin: 0; font-size: 0.85rem; line-height: 1.4; color: #46506a; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* --- skill groups --- */
+body.dashboard-v4 .skill-groups { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+body.dashboard-v4 .skill-group {
+  --tone: #0a35a8;
+  padding: 0.75rem 0.85rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid var(--v4-line);
+  border-top: 3px solid var(--tone);
+  border-radius: 12px;
+  box-shadow: var(--v4-lit), 0 1px 2px rgba(20, 33, 61, 0.05), 0 8px 16px -10px rgba(20, 33, 61, 0.22);
+}
+body.dashboard-v4 .skill-tone-1 { --tone: #d99b0b; }
+body.dashboard-v4 .skill-tone-2 { --tone: #1a6144; }
+body.dashboard-v4 .skill-tone-3 { --tone: #6d28d9; }
+body.dashboard-v4 .skill-tone-4 { --tone: #be185d; }
+body.dashboard-v4 .skill-group-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.55rem; }
+body.dashboard-v4 .skill-group-head strong { display: block; font-size: 0.92rem; line-height: 1.25; color: var(--v4-ink); }
+body.dashboard-v4 .skill-group-sub { display: block; font-size: 0.8rem; color: var(--v4-muted); }
+body.dashboard-v4 .skill-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+body.dashboard-v4 .skill-chip {
+  padding: 0.25rem 0.7rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--v4-ink);
+  background: #ffffff;
+  border: 1px solid var(--tone);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 4px -2px rgba(20, 33, 61, 0.25);
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  body.dashboard-v4 .vis-grid, body.dashboard-v4 .skill-groups { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.dashboard-v4 .vcard { transition: none; }
+  body.dashboard-v4 .vcard:hover, 
+}
+
+/* ===== One card for every list (Scans, Resumes, Applications, Roles, Education, Certifications, Skills, Languages) ===== */
+body.dashboard-v4 .vkind-role { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%231d4ed8%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Crect%20x=%223%22%20y=%227%22%20width=%2218%22%20height=%2213%22%20rx=%222%22/%3E%3Cpath%20d=%22M9%207V5a1%201%200%200%201%201-1h4a1%201%200%200%201%201%201v2%22/%3E%3Cpath%20d=%22M3%2012h18%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-education { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%236d28d9%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M2%209l10-5%2010%205-10%205z%22/%3E%3Cpath%20d=%22M6%2011.5V16c0%201.5%203%203%206%203s6-1.5%206-3v-4.5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-certification { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23047857%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2212%22%20cy=%229%22%20r=%225.5%22/%3E%3Cpath%20d=%22M8.5%2013.5L7%2021l5-2.5L17%2021l-1.5-7.5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-skill { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23b45309%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M12%203l2.1%205.9L20%2011l-5.9%202.1L12%2019l-2.1-5.9L4%2011l5.9-2.1z%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-language { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23be185d%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M4%205h16v11H9l-5%204z%22/%3E%3Cpath%20d=%22M8%209.5h8M8%2012.5h5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-resume { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23047857%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M7%203h7l4%204v14H7z%22/%3E%3Cpath%20d=%22M14%203v4h4%22/%3E%3Cpath%20d=%22M9.5%2012h5M9.5%2016h5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-application { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%236d28d9%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M21%203L3%2011l7%203%203%207z%22/%3E%3Cpath%20d=%22M10%2014l11-11%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vtone-pink { --tone: #be185d; --tone-bg: #fce7f1; }
+body.dashboard-v4 .vcard-line { font-size: 0.85rem; line-height: 1.35; color: #46506a; overflow-wrap: anywhere; }
+body.dashboard-v4 .vcard-date { min-width: 0; overflow-wrap: anywhere; }
+body.dashboard-v4 .vcard-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem; }
+body.dashboard-v4 .dashboard-grid > .card .vcard-actions .vcard-btn { min-height: 32px; padding: 0.25rem 0.8rem; font-size: 0.82rem; }
+body.dashboard-v4 .vis-grid > p.hint { grid-column: 1 / -1; }
+body.dashboard-v4 #experience-detail-list.vis-grid,
+body.dashboard-v4 #education-detail-list.vis-grid,
+body.dashboard-v4 #certification-detail-list.vis-grid,
+body.dashboard-v4 #skill-detail-list.vis-grid,
+body.dashboard-v4 #language-detail-list.vis-grid { margin-top: 0.4rem; }
+/* a card being edited uses the whole row so its fields have room */
+body.dashboard-v4 .vcard.vcard-editing { grid-column: 1 / -1; transform: none; }
+body.dashboard-v4 .vcard .application-status { width: 100%; margin-top: 0.15rem; }
+body.dashboard-v4 .vcard .application-notes { width: 100%; margin-top: 0.15rem; }
+
+/* summary tiles: plain white with a coloured top edge, like the cards below them */
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card { --edge: #8993a8; background: #ffffff; border-top: 3px solid var(--edge); }
+body.dashboard-v4 .stat-roles, body.dashboard-v4 .stat-education, body.dashboard-v4 .stat-certifications, body.dashboard-v4 .stat-skills, body.dashboard-v4 .stat-languages,
+body.dashboard-v4 .stat-history, body.dashboard-v4 .stat-resumes, body.dashboard-v4 .stat-applications { background: #ffffff; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-roles { --edge: #1d4ed8; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-education { --edge: #6d28d9; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-certifications { --edge: #047857; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-skills { --edge: #b45309; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-languages { --edge: #be185d; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-history { --edge: #b45309; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-resumes { --edge: #047857; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-applications { --edge: #6d28d9; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin { --edge: #0a66c2; background: #ffffff; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card.active { border-top-color: var(--edge); }
+body.dashboard-v4 .recent-skills li { background: #ffffff; border-color: #e0c27a; color: #5b4300; }
+
+/* footer: keep the date on one line; if a card has two buttons, the buttons drop to their own row */
+body.dashboard-v4 .vcard-foot { flex-wrap: wrap; }
+body.dashboard-v4 .vcard-date { white-space: nowrap; }
+body.dashboard-v4 .vcard-actions { flex-wrap: nowrap; margin-left: auto; }
+
+body.dashboard-v4 .vtone-neutral { --tone: #8993a8; --tone-bg: #eef1f6; }

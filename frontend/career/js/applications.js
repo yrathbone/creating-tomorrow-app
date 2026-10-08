@@ -34,6 +34,22 @@ function groupApplicationsByStatus(apps) {
   return groups;
 }
 
+// How an application card looks (pure, unit-tested): colour by status, a short "days" badge.
+const APPLICATION_TONES = { applied: "good", interview: "fair", offer: "strong", no_response: "neutral", rejected: "low" };
+
+function applicationCardInfo(entry, now) {
+  const status = APPLICATION_TONES[entry.status] ? entry.status : "applied";
+  const then = new Date((entry.applied_on || "") + "T00:00:00");
+  const days = isNaN(then) ? null : Math.floor(((now || Date.now()) - then.getTime()) / 86400000);
+  return {
+    tone: APPLICATION_TONES[status],
+    typeLabel: APPLICATION_STATUS_LABELS[status],
+    badge: days === null || days < 0 ? "" : days === 0 ? "Today" : days + (days === 1 ? " day" : " days"),
+    days,
+    stale: status === "applied" && days !== null && days >= 14,
+  };
+}
+
 // List or Board: remembered for this tab only (sessionStorage, like the sign-in).
 let applicationView = "list";
 try {
@@ -144,80 +160,76 @@ function renderApplications() {
     return;
   }
 
-  for (const entry of allApplications) {
-    const card = document.createElement("div");
-    card.className = "entry-summary-card application-card app-status-" + entry.status;
+  const grid = document.createElement("div");
+  grid.className = "vis-grid";
+  for (const entry of allApplications) grid.appendChild(buildApplicationCard(entry));
+  list.appendChild(grid);
+}
 
-    const header = document.createElement("div");
-    header.className = "entry-summary-header";
-    const title = document.createElement("strong");
-    title.textContent = entry.job_title + (entry.company ? " — " + entry.company : "");
-    header.appendChild(title);
+// One application as the shared card, plus the status menu and notes box it always had.
+function buildApplicationCard(entry) {
+  const info = applicationCardInfo(entry);
 
-    const del = document.createElement("button");
-    del.type = "button";
-    del.className = "entry-remove-btn";
-    del.textContent = "Delete";
-    del.addEventListener("click", async () => {
+  const statusSelect = document.createElement("select");
+  statusSelect.className = "application-status";
+  statusSelect.setAttribute("aria-label", "Status for " + entry.job_title);
+  for (const [value, label] of Object.entries(APPLICATION_STATUS_LABELS)) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    statusSelect.appendChild(opt);
+  }
+  statusSelect.value = entry.status;
+  statusSelect.addEventListener("change", async () => {
+    statusSelect.disabled = true;
+    try {
+      await saveApplication(entry, { status: statusSelect.value });
+    } catch (err) {
+      window.alert(err.message);
+      statusSelect.value = entry.status;
+      statusSelect.disabled = false;
+    }
+  });
+
+  const extra = [statusSelect];
+  // Gentle nudge: still "waiting" after two weeks is worth a status update.
+  if (info.stale) {
+    const nudge = document.createElement("p");
+    nudge.className = "hint application-nudge";
+    nudge.textContent = "No word in " + info.days + " days? Mark it \"No response\" or follow up.";
+    extra.push(nudge);
+  }
+
+  const notes = document.createElement("textarea");
+  notes.className = "application-notes";
+  notes.rows = 2;
+  notes.placeholder = "Notes (who you spoke to, next step, date of the interview...)";
+  notes.value = entry.notes || "";
+  notes.addEventListener("blur", async () => {
+    if ((notes.value.trim() || null) === (entry.notes || null)) return;
+    try {
+      await saveApplication(entry, { notes: notes.value });
+    } catch (err) {
+      window.alert(err.message);
+    }
+  });
+  extra.push(notes);
+
+  return buildVisualCard({
+    kind: "application",
+    tone: info.tone,
+    typeLabel: info.typeLabel,
+    badge: info.badge,
+    title: entry.job_title,
+    lines: [entry.company],
+    extra,
+    footerText: "Applied " + (shortDate(entry.applied_on + "T00:00:00") || entry.applied_on),
+    actions: [visualButton("Delete", "entry-remove-btn", async () => {
       if (!window.confirm("Remove this application from your tracker?")) return;
       await authedFetch("/api/career/applications/" + entry.id, { method: "DELETE" });
       await loadApplications();
-    });
-    header.appendChild(del);
-    card.appendChild(header);
-
-    const days = daysSince(entry.applied_on);
-    const when = document.createElement("p");
-    when.className = "hint";
-    when.textContent = "Applied " + entry.applied_on + (days !== null && days >= 0 ? " (" + (days === 0 ? "today" : days + (days === 1 ? " day ago" : " days ago")) + ")" : "");
-    card.appendChild(when);
-
-    const statusSelect = document.createElement("select");
-    statusSelect.className = "application-status";
-    for (const [value, label] of Object.entries(APPLICATION_STATUS_LABELS)) {
-      const opt = document.createElement("option");
-      opt.value = value;
-      opt.textContent = label;
-      statusSelect.appendChild(opt);
-    }
-    statusSelect.value = entry.status;
-    statusSelect.addEventListener("change", async () => {
-      statusSelect.disabled = true;
-      try {
-        await saveApplication(entry, { status: statusSelect.value });
-      } catch (err) {
-        window.alert(err.message);
-        statusSelect.value = entry.status;
-        statusSelect.disabled = false;
-      }
-    });
-    card.appendChild(statusSelect);
-
-    // Gentle nudge: still "waiting" after two weeks is worth a status update.
-    if (entry.status === "applied" && days !== null && days >= 14) {
-      const nudge = document.createElement("p");
-      nudge.className = "hint application-nudge";
-      nudge.textContent = "No word in " + days + " days? Mark it \"No response\" or follow up.";
-      card.appendChild(nudge);
-    }
-
-    const notes = document.createElement("textarea");
-    notes.className = "application-notes";
-    notes.rows = 2;
-    notes.placeholder = "Notes (who you spoke to, next step, date of the interview...)";
-    notes.value = entry.notes || "";
-    notes.addEventListener("blur", async () => {
-      if ((notes.value.trim() || null) === (entry.notes || null)) return;
-      try {
-        await saveApplication(entry, { notes: notes.value });
-      } catch (err) {
-        window.alert(err.message);
-      }
-    });
-    card.appendChild(notes);
-
-    list.appendChild(card);
-  }
+    })],
+  });
 }
 
 // The List / Board switch is only shown when there is something to show.
