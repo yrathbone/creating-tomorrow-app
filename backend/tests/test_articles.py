@@ -130,5 +130,28 @@ class LearnPageCards(unittest.TestCase):
             self.assertIn(text, LEARN, slug)
 
 
+class OneCopyOfEveryGuide(unittest.TestCase):
+    """A guide lives either in a rich template in article.html or in articles/<slug>.md, never in both,
+    so an edit can't be made to a copy nobody sees."""
+
+    def test_every_listed_guide_has_exactly_one_home(self):
+        slugs = re.findall(r'slug:\s*"([a-z0-9-]+)"', LEARN)
+        rich = set(re.findall(r'"([a-z0-9-]+)":\s*\{\s*mainId:', PAGE))
+        self.assertEqual(rich, {slug for slug, _, _ in ARTICLES.values()})
+        for slug in slugs:
+            md = os.path.join(FRONTEND, "articles", slug + ".md")
+            with self.subTest(slug):
+                if slug in rich:
+                    self.assertFalse(os.path.exists(md), f"{slug} has a rich template AND a leftover .md copy")
+                else:
+                    self.assertTrue(os.path.exists(md), f"{slug} is listed but has no content")
+
+    def test_no_stray_markdown_files(self):
+        folder = os.path.join(FRONTEND, "articles")
+        listed = set(re.findall(r'slug:\s*"([a-z0-9-]+)"', LEARN))
+        for name in (os.listdir(folder) if os.path.isdir(folder) else []):
+            self.assertIn(name[:-3], listed, f"articles/{name} is not in learn-data.js")
+
+
 if __name__ == "__main__":
     unittest.main()

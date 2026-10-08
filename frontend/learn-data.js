@@ -1,8 +1,9 @@
-// Shared article manifest. Add a new article by (1) dropping a .md file
-// into articles/, and (2) adding an entry here so it shows up in the Learn
-// listing and homepage teaser. video_youtube_id is optional - set it to a
-// YouTube video ID (the part after "v=" in a youtube.com URL) once a video
-// exists for that article, or leave null.
+// Shared article manifest: what the Learn page, the homepage guide tiles and the sitemap list.
+// The four guides below each have a hand-built page inside article.html (the rich templates, keyed by
+// slug). To add a SIMPLE article instead: (1) create frontend/articles/<slug>.md (plain headings,
+// paragraphs, bold/italic, links and bullet lists; see markdown.js), and (2) add an entry here.
+// A slug needs one or the other, never both. video_youtube_id is optional - set it to a YouTube
+// video ID (the part after "v=" in a youtube.com URL) once a video exists, or leave null.
 const ARTICLES = [
   {
     slug: "what-is-ats",
