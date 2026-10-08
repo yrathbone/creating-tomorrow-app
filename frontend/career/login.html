@@ -49,8 +49,26 @@
         </label>
         <button type="submit" id="login-btn">Log In</button>
       </form>
-      <p class="hint">No account yet? <a href="register.html">Create one</a>.</p>
+      <p class="hint">Career Profile is in <strong>beta testing</strong> and is <strong>by invitation only</strong>. If you were invited, log in with the email address and temporary password from your invitation; you will choose your own password the first time. Want an invitation? <a href="register.html">Find out how</a>.</p>
       <div id="login-error" class="error" hidden></div>
+    </section>
+
+    <section class="card" id="step-newpassword" hidden>
+      <h2>Choose your password</h2>
+      <p>Welcome! Your invitation came with a temporary password. Choose your own to finish signing in.</p>
+      <form id="newpassword-form">
+        <label class="field">
+          <span>New password</span>
+          <input type="password" id="newpassword-input" name="new-password" autocomplete="new-password" minlength="8" required />
+          <span class="hint">At least 8 characters.</span>
+        </label>
+        <label class="field">
+          <span>Type it again</span>
+          <input type="password" id="newpassword-confirm" name="new-password-confirm" autocomplete="new-password" minlength="8" required />
+        </label>
+        <button type="submit" id="newpassword-btn">Save password and continue</button>
+      </form>
+      <div id="newpassword-error" class="error" hidden></div>
     </section>
 
     <section class="card" id="step-consent" hidden>

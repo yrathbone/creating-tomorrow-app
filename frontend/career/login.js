@@ -805,6 +805,31 @@ window.addEventListener("pageshow", (e) => {
   if (e.persisted && !hasStoredSessionKeys()) window.location.reload();
 });
 
+// Everything that happens once there is a valid access token (a normal sign-in, or the first sign-in of an invited person).
+async function finishSignIn(accessToken) {
+  currentAccessToken = accessToken;
+  document.getElementById("step-newpassword").hidden = true;
+
+  const res = await authedFetch("/api/career/me");
+  const me = await res.json();
+
+  if (me.consent_given) {
+    await showProfileStep();
+  } else {
+    showConsentStep();
+  }
+}
+
+// Set when an invited person signs in with their temporary password: finishes the sign-in once they choose their own.
+let completeNewPassword = null;
+
+// Pure (unit-tested): what to tell the person about the two password boxes, or "" if they are fine.
+function newPasswordProblem(password, again) {
+  if (!password || password.length < 8) return "Your password needs at least 8 characters.";
+  if (password !== again) return "The two passwords don't match.";
+  return "";
+}
+
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   loginError.hidden = true;
@@ -813,22 +838,52 @@ loginForm.addEventListener("submit", async (e) => {
 
   loginBtn.disabled = true;
   try {
-    const { accessToken } = await signIn(email, password);
-    currentAccessToken = accessToken;
-
-    const res = await authedFetch("/api/career/me");
-    const me = await res.json();
-
-    if (me.consent_given) {
-      await showProfileStep();
-    } else {
-      showConsentStep();
+    const result = await signIn(email, password);
+    if (result.newPasswordRequired) {
+      // First sign-in of an invited person: ask for their own password before anything else.
+      completeNewPassword = result.completeNewPassword;
+      document.getElementById("step-login").hidden = true;
+      document.getElementById("step-newpassword").hidden = false;
+      document.getElementById("newpassword-input").focus();
+      return;
     }
+    await finishSignIn(result.accessToken);
   } catch (err) {
     loginError.textContent = (err && err.message) || "Login failed.";
     loginError.hidden = false;
   } finally {
     loginBtn.disabled = false;
+  }
+});
+
+document.getElementById("newpassword-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const errorEl = document.getElementById("newpassword-error");
+  const btn = document.getElementById("newpassword-btn");
+  errorEl.hidden = true;
+  const problem = newPasswordProblem(document.getElementById("newpassword-input").value, document.getElementById("newpassword-confirm").value);
+  if (problem) {
+    errorEl.textContent = problem;
+    errorEl.hidden = false;
+    return;
+  }
+  if (!completeNewPassword) {
+    // The page was reloaded part-way: start the sign-in again.
+    document.getElementById("step-newpassword").hidden = true;
+    document.getElementById("step-login").hidden = false;
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const { accessToken } = await completeNewPassword(document.getElementById("newpassword-input").value);
+    completeNewPassword = null;
+    document.getElementById("newpassword-form").reset();
+    await finishSignIn(accessToken);
+  } catch (err) {
+    errorEl.textContent = (err && err.message) || "We couldn't save that password. Please try again.";
+    errorEl.hidden = false;
+  } finally {
+    btn.disabled = false;
   }
 });
 

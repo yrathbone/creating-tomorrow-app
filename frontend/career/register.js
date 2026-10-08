@@ -1,63 +1,23 @@
+// Career Profile is invite-only while it is in beta. This page never creates an account: submitting the form
+// only explains that. (The real lock is in the sign-in service: self-registration is switched off for the
+// user pool, so calling it directly does not work either. This page just says so kindly.)
 const signupForm = document.getElementById("signup-form");
 const signupError = document.getElementById("signup-error");
-const signupBtn = document.getElementById("signup-btn");
 
-const confirmForm = document.getElementById("confirm-form");
-const confirmError = document.getElementById("confirm-error");
-const confirmBtn = document.getElementById("confirm-btn");
-const resendBtn = document.getElementById("resend-btn");
-const resendMsg = document.getElementById("confirm-resend-msg");
+const INVITE_ONLY_MESSAGE = "Sorry, we can't create this account. Career Profile is currently in beta testing and is by invitation only.";
 
-let pendingEmail = "";
-
-signupForm.addEventListener("submit", async (e) => {
+signupForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  signupError.hidden = true;
-  const email = document.getElementById("signup-email").value.trim();
-  const password = document.getElementById("signup-password").value;
-
-  signupBtn.disabled = true;
-  try {
-    await signUp(email, password);
-    pendingEmail = email;
-    document.getElementById("confirm-email-display").textContent = email;
-    document.getElementById("step-signup").hidden = true;
-    document.getElementById("step-confirm").hidden = false;
-  } catch (err) {
-    signupError.textContent = (err && err.message) || "Something went wrong creating your account.";
-    signupError.hidden = false;
-  } finally {
-    signupBtn.disabled = false;
-  }
-});
-
-confirmForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  confirmError.hidden = true;
-  const code = document.getElementById("confirm-code").value.trim();
-
-  confirmBtn.disabled = true;
-  try {
-    await confirmRegistration(pendingEmail, code);
-    document.getElementById("step-confirm").hidden = true;
-    document.getElementById("step-done").hidden = false;
-  } catch (err) {
-    confirmError.textContent = (err && err.message) || "That code didn't work.";
-    confirmError.hidden = false;
-  } finally {
-    confirmBtn.disabled = false;
-  }
-});
-
-resendBtn.addEventListener("click", async () => {
-  resendMsg.hidden = true;
-  confirmError.hidden = true;
-  try {
-    await resendConfirmationCode(pendingEmail);
-    resendMsg.textContent = "A new code has been sent.";
-    resendMsg.hidden = false;
-  } catch (err) {
-    confirmError.textContent = (err && err.message) || "Couldn't resend the code.";
-    confirmError.hidden = false;
-  }
+  signupError.textContent = "";
+  const text = document.createElement("span");
+  text.textContent = INVITE_ONLY_MESSAGE + " To ask for an invitation, ";
+  const link = document.createElement("a");
+  link.href = "mailto:yovanarathbone@creatingtomorrow.net?subject=" + encodeURIComponent("Career Profile beta invitation request");
+  link.textContent = "email us";
+  const rest = document.createTextNode(". If you were already invited, ");
+  const login = document.createElement("a");
+  login.href = "login.html";
+  login.textContent = "log in here";
+  signupError.append(text, link, rest, login, document.createTextNode("."));
+  signupError.hidden = false;
 });

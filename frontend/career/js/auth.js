@@ -203,6 +203,22 @@ function signIn(email, password) {
         });
       },
       onFailure: (err) => reject(err),
+      // An invited person's first sign-in uses the temporary password from their invitation email.
+      // Cognito then requires them to choose their own: hand the page a function that finishes the sign-in.
+      newPasswordRequired: () => {
+        resolve({
+          newPasswordRequired: true,
+          completeNewPassword: (newPassword) => new Promise((done, fail) => {
+            cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
+              onSuccess: (session) => done({
+                accessToken: session.getAccessToken().getJwtToken(),
+                idToken: session.getIdToken().getJwtToken(),
+              }),
+              onFailure: (err) => fail(err),
+            });
+          }),
+        });
+      },
     });
   });
 }

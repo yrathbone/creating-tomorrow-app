@@ -28,13 +28,14 @@
 
   <header class="page-header">
     <p class="guide-eyebrow" style="text-align: center;">Career Profile</p>
-    <h1>Create your account</h1>
-    <p class="tagline">This is an early, invite-only preview. Your existing tools stay free and fully anonymous — this is a separate, opt-in account.</p>
+    <h1>Career Profile is by invitation</h1>
+    <p class="tagline">Career Profile is in <strong>beta testing</strong>, so new accounts are by invitation only right now. Your existing tools stay free and fully anonymous, and you don&rsquo;t need an account to use them.</p>
   </header>
 
   <main>
     <section class="card" id="step-signup">
-      <h2>1. Your email and password</h2>
+      <h2>Create an account</h2>
+      <p>If you were invited, you don&rsquo;t need to sign up: <a href="login.html">log in</a> with the email address and temporary password in your invitation. Not invited yet? Accounts are by invitation only for now: you can <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20beta%20invitation%20request">email us to ask for one</a>.</p>
       <form id="signup-form">
         <label class="field">
           <span>Email</span>
@@ -43,31 +44,10 @@
         <label class="field">
           <span>Password</span>
           <input type="password" id="signup-password" name="new-password" autocomplete="new-password" minlength="8" required />
-          <span class="hint">At least 8 characters.</span>
         </label>
         <button type="submit" id="signup-btn">Create Account</button>
       </form>
-      <div id="signup-error" class="error" hidden></div>
-    </section>
-
-    <section class="card" id="step-confirm" hidden>
-      <h2>2. Confirm your email</h2>
-      <p>We sent a confirmation code to <strong id="confirm-email-display"></strong>. Enter it below.</p>
-      <form id="confirm-form">
-        <label class="field">
-          <span>Confirmation code</span>
-          <input type="text" id="confirm-code" required />
-        </label>
-        <button type="submit" id="confirm-btn">Confirm</button>
-      </form>
-      <button type="button" id="resend-btn" class="btn-secondary">Resend code</button>
-      <div id="confirm-error" class="error" hidden></div>
-      <div id="confirm-resend-msg" class="success" hidden></div>
-    </section>
-
-    <section class="card" id="step-done" hidden>
-      <h2>You're all set</h2>
-      <p class="success">Your account is confirmed. You can now <a href="login.html">log in</a>.</p>
+      <div id="signup-error" class="error" role="alert" hidden></div>
     </section>
   </main>
 
