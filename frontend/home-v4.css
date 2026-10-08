@@ -6,7 +6,7 @@
 body.home-v4 {
   /* ASSET SLOT: the Chicago picture in the bottom-right card. Swap this one line for the final file
      (about 1800x576, no text baked in). */
-  --hv-closing-image: url("img/home/chicago-2150.jpg");
+  --hv-closing-image: url("img/home/team-people.jpg"); /* was img/home/chicago-2150.jpg */
   --ink: #14213d;
   --muted: #5a6478;
   --blue: #0a35a8;
@@ -296,8 +296,8 @@ body.home-v4 .hv-seeall:hover { text-decoration: underline; text-underline-offse
   overflow: hidden;
   border: 1px solid #dfe5f1;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 255, 255, 0.94) 31%, rgba(255, 255, 255, 0.5) 41%, rgba(255, 255, 255, 0) 55%),
-    var(--hv-closing-image) 50% 62% / cover no-repeat,
+    linear-gradient(90deg, #ffffff 0%, #ffffff 40%, rgba(255, 255, 255, 0.85) 46%, rgba(255, 255, 255, 0) 58%),
+    var(--hv-closing-image) right 6% / 64% auto no-repeat,
     #ffffff;
   box-shadow: var(--shadow), var(--lit), 0 22px 54px -28px rgba(239, 174, 9, 0.5);
 }
@@ -348,7 +348,7 @@ body.home-v4 .hv-footer-privacy { max-width: 62ch; margin: 0.6rem auto 0; line-h
     right: 0;
     bottom: 0;
     height: 190px;
-    background: var(--hv-closing-image) 62% bottom / cover no-repeat;
+    background: var(--hv-closing-image) 50% 8% / cover no-repeat;
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 42%);
     mask-image: linear-gradient(180deg, transparent 0%, #000 42%);
   }

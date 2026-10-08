@@ -565,7 +565,7 @@ body.dashboard-v4 .dashboard-hero {
    City art: img/cities/<city>.jpg, about 1800x560, no text in the picture. */
 body.dashboard-v4 {
   --v4-hero-art: url("img/people/chicago-laptop-portrait.jpg");
-  --v4-city-art: url("img/cities/detroit-2049.jpg");
+  --v4-city-art: url("../img/home/team-people.jpg"); /* was img/cities/detroit-2049.jpg */
   --v4-hero-art-pos: right 22%;
   --v4-hero-art-size: 620px auto;
   --v4-glow: rgba(70, 150, 255, 0.22);
@@ -746,13 +746,13 @@ body.dashboard-v4 main.dashboard-main::after {
   border-radius: var(--v4-radius);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 38%),
-    var(--v4-city-art) 50% 58% / cover no-repeat,
+    var(--v4-city-art) 50% 7% / cover no-repeat,
     #ffffff;
   border: 1px solid #dfe5f1;
   box-shadow: var(--v4-shadow), var(--v4-lit), 0 22px 54px -28px rgba(239, 174, 9, 0.5), inset 0 -46px 56px -46px rgba(10, 42, 122, 0.28);
 }
 @media (max-width: 640px) {
-  body.dashboard-v4 main.dashboard-main::after { height: 130px; background-position: 66% 58%; }
+  body.dashboard-v4 main.dashboard-main::after { height: 130px; background-position: 50% 8%; }
 }
 
 /* ===== Applications: List / Board switch and the board view ===== */
