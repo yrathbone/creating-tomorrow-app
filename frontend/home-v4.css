@@ -403,3 +403,11 @@ body.home-v4 .hv-panel {
   box-shadow: 0 30px 80px -46px rgba(20, 33, 61, 0.13);
 }
 body.home-v4 .site-nav { border-bottom-color: rgba(20, 33, 61, 0.035); }
+
+/* ---------- The not-found page (404.html) ---------- */
+.hv-notfound { max-width: 40rem; width: calc(100% - 3rem); margin: 3.5rem auto 1rem; padding: 2.5rem 2rem 2.4rem; text-align: center; background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%); border: 1px solid var(--line-soft); border-radius: var(--radius); box-shadow: var(--shadow), var(--lit); }
+.hv-notfound-code { margin: 0; font-size: 4.5rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--gold); }
+.hv-notfound h1 { margin: 0.4rem 0 0.5rem; font-size: 1.9rem; letter-spacing: -0.02em; color: var(--ink); }
+.hv-notfound p { margin: 0 auto 1.4rem; max-width: 30rem; color: #3d4963; }
+.hv-notfound-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; }
+@media (max-width: 800px) { .hv-notfound { width: calc(100% - 2rem); margin-top: 2rem; padding: 2rem 1.2rem; } }

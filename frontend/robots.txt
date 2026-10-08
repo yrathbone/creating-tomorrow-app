@@ -1,0 +1,7 @@
+# Creating Tomorrow: public pages are open to search engines; the signed-in area and the API are not.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /career/
+
+Sitemap: https://creatingtomorrow.net/sitemap.xml

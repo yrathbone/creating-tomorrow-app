@@ -75,9 +75,11 @@ import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.exception_handlers import http_exception_handler
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from extractor import extract_text
 from coach import analyze, CoachError
@@ -134,6 +136,52 @@ async def no_cache_for_frontend(request, call_next):
     if not request.url.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-cache"
     return response
+
+
+# Security headers on every response. The first five are enforced now. The Content-Security-Policy is
+# Report-Only on purpose: it lists what the pages are known to load (their own files, the Cognito
+# sign-in library from jsDelivr, the sign-in service, YouTube videos) and the browser's console reports
+# anything outside that list WITHOUT blocking it. Once a full sign-in has been tried with a clean
+# console, change the header name to "Content-Security-Policy" to enforce it.
+CONTENT_SECURITY_POLICY = "; ".join([
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://i.ytimg.com",
+    "font-src 'self'",
+    "connect-src 'self' https://cognito-idp.us-east-2.amazonaws.com",
+    "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+])
+SECURITY_HEADERS = {
+    "Strict-Transport-Security": "max-age=31536000",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    "Content-Security-Policy-Report-Only": CONTENT_SECURITY_POLICY,
+}
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
+
+
+# A mistyped or old link gets a branded page (still a real 404) instead of a bare {"detail":"Not Found"}.
+# The API keeps answering with JSON. The page is not-found.html, NOT 404.html: StaticFiles would pick up a
+# file called 404.html by itself and would then answer unknown /api/ paths with a web page.
+@app.exception_handler(StarletteHTTPException)
+async def friendly_not_found(request, exc):
+    if exc.status_code == 404 and not request.url.path.startswith("/api/"):
+        return FileResponse(os.path.join(frontend_dir, "not-found.html"), status_code=404)
+    return await http_exception_handler(request, exc)
 
 
 @app.post("/api/analyze")
