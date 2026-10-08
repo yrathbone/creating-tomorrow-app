@@ -1040,3 +1040,10 @@ body.dashboard-v4 .dash-panel > .dashboard-grid > .job-card,
 body.dashboard-v4 .dash-panel > .dashboard-grid > .resume-card { border-top: 1px solid var(--v4-line-soft); }
 /* the main stylesheet colours the General Resume card's top edge by its id; inside the one box it is a thin line like the others */
 body.dashboard-v4 .dash-panel > .dashboard-grid > #general-resume-card { border-top-color: var(--v4-line-soft); }
+
+/* ===== Soft edge: the one box melts into the page instead of being outlined (easy to remove) ===== */
+body.dashboard-v4 .dash-panel {
+  border-color: transparent;
+  box-shadow: 0 30px 80px -46px rgba(20, 33, 61, 0.13);
+}
+body.dashboard-v4 .site-nav { border-bottom-color: rgba(20, 33, 61, 0.035); }
