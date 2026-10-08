@@ -177,5 +177,49 @@ class NoStrayFonts(unittest.TestCase):
             self.assertNotIn("googleapis", read(css), css)
 
 
+class TypeSystem(unittest.TestCase):
+    """One headline face (self-hosted Source Serif 4) + one size scale, defined once in style.css."""
+
+    def test_font_files_are_real_and_licensed(self):
+        for w in ("600", "700"):
+            path = os.path.join(FRONTEND, "fonts", f"source-serif-4-latin-{w}-normal.woff2")
+            with open(path, "rb") as f:
+                self.assertEqual(f.read(4), b"wOF2", path)
+            self.assertLess(os.path.getsize(path), 40 * 1024)
+        self.assertIn("SIL Open Font License", read("fonts", "SourceSerif4-OFL.txt"))
+
+    def test_font_face_points_at_files_that_exist(self):
+        css = read("style.css")
+        urls = re.findall(r'url\("(fonts/[^"]+\.woff2)"\)', css)
+        self.assertEqual(len(urls), 2)
+        for u in urls:
+            self.assertTrue(os.path.exists(os.path.join(FRONTEND, u)), u)
+        self.assertIn("font-display: swap", css)
+
+    def test_woff2_is_served_with_the_right_type(self):
+        res = TestClient(main.app).get("/fonts/source-serif-4-latin-700-normal.woff2")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.headers["content-type"], "font/woff2")
+
+    def test_scale_tokens_exist_and_pages_use_them(self):
+        css = read("style.css")
+        for token in ("--font-sans", "--font-serif", "--fs-sm", "--fs-base", "--fs-lg", "--fs-xl", "--fs-h2", "--fs-h1"):
+            self.assertRegex(css, re.escape(token) + r":")
+        for name, selector in (
+            ("style.css", ".ats-header h1"), ("style.css", ".about-hero h1"), ("style.css", ".learn-hub-hero h1"),
+            ("home-v4.css", ".hv-hero h1"), ("home-v4.css", ".hv-h2"),
+            (os.path.join("career", "dashboard-v4.css"), ".dashboard-hero h1"),
+        ):
+            m = re.search(re.escape(selector) + r" \{([^}]*)\}", read(name))
+            self.assertTrue(m, selector)
+            self.assertIn("var(--font-serif)", m.group(1), f"{selector} should use the headline face")
+            self.assertRegex(m.group(1), r"font-size:\s*var\(--fs-", f"{selector} should use a scale step")
+
+    def test_every_stylesheet_uses_the_tokens_not_a_second_font_stack(self):
+        for name in ("home-v4.css", os.path.join("career", "dashboard-v4.css")):
+            self.assertNotIn("Source Serif", read(name), name)
+            self.assertNotIn('"Segoe UI"', read(name), name)
+
+
 if __name__ == "__main__":
     unittest.main()

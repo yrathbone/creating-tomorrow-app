@@ -70,6 +70,7 @@ call in Starlette's worker thread pool instead, freeing the event loop to
 handle other requests while it's in flight.
 """
 import base64
+import mimetypes
 import os
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -578,5 +579,7 @@ async def health():
 
 
 # Serve the static frontend last, so /api/* routes above take priority.
+# The self-hosted headline font: some systems have no mapping for .woff2, which would serve it as generic binary.
+mimetypes.add_type("font/woff2", ".woff2")
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

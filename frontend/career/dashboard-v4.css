@@ -93,10 +93,11 @@ body.dashboard-v4 .dashboard-hero {
 body.dashboard-v4 .dashboard-hero h1 {
   grid-column: 1;
   margin: 0 0 0.35rem;
-  font-size: clamp(1.65rem, 2.7vw, 2.15rem);
-  font-weight: 750;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.12;
+  font-family: var(--font-serif);
 }
 body.dashboard-v4 .dashboard-hero .hero-h1-line1,
 body.dashboard-v4 .dashboard-hero .hero-h1-line2 { display: inline; }
@@ -171,11 +172,12 @@ body.dashboard-v4 .dashboard-grid > .card .dashboard-card-header h2 {
   background: none;
   margin: 0;
   padding: 0;
-  font-size: 1.12rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.2;
   color: var(--v4-ink);
+  font-family: var(--font-serif);
 }
 body.dashboard-v4 .dashboard-grid > .card > .hint,
 body.dashboard-v4 .dashboard-grid > .card #job-target-empty > .hint,
@@ -431,7 +433,7 @@ body.dashboard-v4 #career-profile-editor {
   border-radius: var(--v4-radius);
   box-shadow: var(--v4-shadow);
 }
-body.dashboard-v4 #career-profile-editor h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; color: var(--v4-ink); }
+body.dashboard-v4 #career-profile-editor h2 { font-size: var(--fs-lg); font-weight: 700; letter-spacing: -0.01em; color: var(--v4-ink); font-family: var(--font-serif); }
 
 /* ---------- Footer ---------- */
 body.dashboard-v4 footer {
