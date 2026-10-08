@@ -19,7 +19,10 @@ import main
 
 FRONTEND = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend"))
 SITE = "https://creatingtomorrow.net"
-PUBLIC_PAGES = ["index.html", "about.html", "learn.html", "videos.html", "tool.html", "scratch.html", "elevate.html", "spotlight.html", "prepare.html", "article.html"]
+PUBLIC_PAGES = ["index.html", "about.html", "learn.html", "videos.html", "tool.html", "scratch.html", "elevate.html", "spotlight.html", "prepare.html", "article.html",
+                "privacy.html", "terms.html", "accessibility.html", "contact.html"]
+TRUST_PAGES = ["privacy.html", "terms.html", "accessibility.html", "contact.html"]
+CONTACT_EMAIL = "yovanarathbone@creatingtomorrow.net"
 
 
 def read(*parts):
@@ -166,6 +169,64 @@ class SearchAndSharing(unittest.TestCase):
 
     def test_the_logo_is_a_light_file(self):
         self.assertLess(os.path.getsize(os.path.join(FRONTEND, "logo-icon.png")), 40 * 1024)
+
+
+class TrustPages(unittest.TestCase):
+    """Privacy, Terms, Accessibility, Contact: what funders, schools and partners look for first."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.client = TestClient(main.app)
+
+    def test_pages_exist_and_short_addresses_redirect_permanently(self):
+        for page in TRUST_PAGES:
+            name = page[:-5]
+            res = self.client.get("/" + name, follow_redirects=False)
+            with self.subTest(name):
+                self.assertEqual(res.status_code, 301)
+                self.assertEqual(res.headers["location"], "/" + page)
+                self.assertEqual(self.client.get("/" + page).status_code, 200)
+
+    def test_every_page_footer_links_to_all_four(self):
+        pages = PUBLIC_PAGES + ["career/login.html", "career/register.html", "not-found.html"]
+        for page in pages:
+            h = read(page)
+            prefix = "../" if page.startswith("career/") else ("/" if page == "not-found.html" else "")
+            with self.subTest(page):
+                for t in TRUST_PAGES:
+                    self.assertIn(f'href="{prefix}{t}"', h)
+                self.assertIn('class="footer-links"', h)
+
+    def test_the_contact_address_is_the_one_she_gave_and_everything_points_at_it(self):
+        self.assertIn(f'href="mailto:{CONTACT_EMAIL}"', read("contact.html"))
+        for page in ("privacy.html", "terms.html", "accessibility.html"):
+            self.assertIn(CONTACT_EMAIL, read(page), page)
+        for name, page in all_html():
+            for found in re.findall(r"mailto:([^\"?]+)", page):
+                self.assertEqual(found, CONTACT_EMAIL, name)
+
+    def test_privacy_names_every_outside_service_the_site_really_uses(self):
+        text = read("privacy.html")
+        for service in ("Anthropic", "Amazon Cognito", "Render", "Cloudflare", "jsDelivr", "YouTube"):
+            self.assertIn(service, text)
+        self.assertIn("We don’t sell your information", text)
+
+    def test_no_claims_we_cannot_back_up_yet(self):
+        blob = " ".join(read(p) for p in TRUST_PAGES).lower()
+        for banned in ("501(c)", "tax-deductible", "tax deductible", "ein ", "hipaa", "gdpr", "soc 2", "wcag 2.2 level aa compliant",
+                       "fully accessible", "fully compliant", "governing law", "lorem", "todo", "placeholder"):
+            self.assertNotIn(banned, blob, banned)
+
+    def test_the_consent_screen_links_instead_of_saying_coming_soon(self):
+        login = read("career/login.html")
+        self.assertNotIn("Privacy · Terms · Delete My Data (coming soon", login)
+        self.assertIn('href="../privacy.html"', login)
+
+    def test_trust_pages_are_in_the_sitemap_and_not_hidden_from_search(self):
+        sitemap = read("sitemap.xml")
+        for page in TRUST_PAGES:
+            self.assertIn(f"{SITE}/{page}</loc>", sitemap)
+            self.assertNotIn("noindex", read(page))
 
 
 class NoStrayFonts(unittest.TestCase):

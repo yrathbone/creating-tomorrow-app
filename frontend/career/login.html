@@ -70,7 +70,7 @@
         <a href="../index.html" class="btn-secondary">Not now</a>
       </div>
       <div id="consent-error" class="error" hidden></div>
-      <p class="hint" style="margin-top:1.5rem;">Privacy · Terms · Delete My Data (coming soon — not yet available)</p>
+      <p class="hint" style="margin-top:1.5rem;"><a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a> · To delete your data, <a href="../contact.html">contact us</a> (a self-serve button is coming)</p>
     </section>
 
     <section id="step-profile" hidden>
@@ -87,6 +87,17 @@
         </div>
         <img class="dh-mascot" src="../mascot-welcome.png" alt="" width="245" height="291" />
       </div>
+
+      <section class="next-step" id="next-step" aria-labelledby="next-step-title" hidden>
+        <p class="next-step-eyebrow">Your next step</p>
+        <div class="next-step-body">
+          <div class="next-step-copy">
+            <h2 id="next-step-title"></h2>
+            <p id="next-step-text"></p>
+          </div>
+          <button type="button" id="next-step-btn" class="next-step-btn"></button>
+        </div>
+      </section>
 
       <section class="cp-status" id="career-profile-status" aria-label="Career Profile">
         <div class="cp-row">
@@ -727,6 +738,7 @@
 
   <footer>
     <p>Creating Tomorrow's Career Profile is an early, invite-only preview. Everything else on this site remains free and fully anonymous.</p>
+    <p class="footer-links"><a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a> · <a href="../accessibility.html">Accessibility</a> · <a href="../contact.html">Contact</a></p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.20/dist/amazon-cognito-identity.min.js"></script>
@@ -746,5 +758,6 @@
   <script src="js/skillsVisual.js"></script>
   <script src="js/applications.js"></script>
   <script src="js/generalResume.js"></script>
+  <script src="js/nextStep.js"></script>
 </body>
 </html>

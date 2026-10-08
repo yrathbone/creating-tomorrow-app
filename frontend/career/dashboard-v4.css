@@ -1049,3 +1049,28 @@ body.dashboard-v4 .dash-panel {
   box-shadow: 0 30px 80px -46px rgba(20, 33, 61, 0.13);
 }
 body.dashboard-v4 .site-nav { border-bottom-color: rgba(20, 33, 61, 0.035); }
+
+/* ---------- Your next step: the one thing to do now (js/nextStep.js) ----------
+   A warm band between the hero and the profile strip, like the other bands in the one-box dashboard. */
+body.dashboard-v4 .next-step {
+  margin: 0;
+  padding: 0.95rem 1.75rem 1.05rem;
+  background: linear-gradient(90deg, var(--v4-gold-wash) 0%, #ffffff 80%);
+  border-top: 1px solid var(--v4-line-soft);
+  box-shadow: inset 4px 0 0 var(--v4-gold);
+}
+body.dashboard-v4 .next-step[hidden] { display: none; }
+body.dashboard-v4 .next-step-eyebrow { margin: 0 0 0.2rem; font-size: var(--fs-sm); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--v4-gold-text); }
+body.dashboard-v4 .next-step-body { display: flex; align-items: center; justify-content: space-between; gap: 1rem 1.5rem; flex-wrap: wrap; }
+body.dashboard-v4 .next-step-copy { flex: 1 1 22rem; min-width: 0; }
+body.dashboard-v4 .next-step h2 { margin: 0 0 0.2rem; font-family: var(--font-serif); font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; color: var(--v4-ink); }
+body.dashboard-v4 .next-step p#next-step-text { margin: 0; max-width: 40rem; font-size: 0.97rem; line-height: 1.45; color: #3d4963; }
+body.dashboard-v4 .next-step-btn { flex: 0 0 auto; min-height: 44px; margin: 0; padding: 0.55rem 1.3rem; font-family: inherit; font-size: 0.95rem; font-weight: 700; color: #ffffff; background: var(--v4-blue); border: 0; border-radius: var(--v4-radius-sm); cursor: pointer; box-shadow: 0 1px 2px rgba(10, 53, 168, 0.3); }
+body.dashboard-v4 .next-step-btn:hover { background: var(--v4-blue-deep); }
+body.dashboard-v4 .next-step-btn:focus-visible { outline: 3px solid var(--v4-blue-ring); outline-offset: 2px; }
+@media (max-width: 640px) {
+  /* on a phone the hero is tall (four buttons and a photo), so the next step goes first */
+  body.dashboard-v4 .dash-panel { display: flex; flex-direction: column; }
+  body.dashboard-v4 .dash-panel > .next-step { order: -1; border-top: 0; border-bottom: 1px solid var(--v4-line-soft); padding: 0.9rem 1.1rem 1rem; }
+  body.dashboard-v4 .next-step-btn { width: 100%; }
+}

@@ -691,6 +691,7 @@ async function showProfileStep() {
   if (typeof restoreCurrentJobTarget === "function") restoreCurrentJobTarget();
   if (typeof loadLanguages === "function") await loadLanguages();
   if (typeof loadProfileBasics === "function") await loadProfileBasics();
+  if (typeof markNextStepReady === "function") markNextStepReady();
 }
 
 function revealCareerProfileSections(scrollToId) {

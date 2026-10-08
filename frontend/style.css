@@ -3359,3 +3359,21 @@ main.dashboard-main {
 .hero-signin a:hover {
   color: #063594;
 }
+
+/* ---------- Footer link row (Privacy, Terms, Accessibility, Contact) ---------- */
+.footer-links { margin: 0.6rem 0 0; font-size: var(--fs-sm); }
+.footer-links a { color: var(--blue); text-decoration: none; font-weight: 600; }
+.footer-links a:hover, .footer-links a:focus-visible { text-decoration: underline; }
+
+/* ---------- Plain document pages (privacy, terms, accessibility, contact) ---------- */
+.doc-hero { max-width: 44rem; margin: 0 auto; padding: 3rem 1.5rem 0.5rem; text-align: center; }
+.doc-hero h1 { margin: 0 0 0.6rem; font-family: var(--font-serif); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; color: #101318; }
+.doc-lead { margin: 0; font-size: var(--fs-lg); color: var(--muted); }
+.doc-main { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; font-size: 1.04rem; line-height: 1.65; color: #1d2330; }
+.doc-main h2 { margin: 2.2rem 0 0.5rem; font-family: var(--font-serif); font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; color: #101318; }
+.doc-main p, .doc-main ul { margin: 0.7rem 0; }
+.doc-main ul { padding-left: 1.3rem; }
+.doc-main li { margin: 0.45rem 0; }
+.doc-main a { color: var(--blue); overflow-wrap: anywhere; }
+.doc-updated { margin: 0 0 1.2rem; font-size: var(--fs-sm); color: var(--muted); text-align: center; }
+.doc-contact { margin: 1rem 0 0; text-align: center; font-size: clamp(0.85rem, 4vw, var(--fs-xl)); font-weight: 700; overflow-wrap: anywhere; }

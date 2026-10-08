@@ -77,7 +77,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -183,6 +183,13 @@ async def friendly_not_found(request, exc):
     if exc.status_code == 404 and not request.url.path.startswith("/api/"):
         return FileResponse(os.path.join(frontend_dir, "not-found.html"), status_code=404)
     return await http_exception_handler(request, exc)
+
+
+# Short addresses people expect for the trust pages: /privacy -> /privacy.html (permanent, so search engines
+# keep the .html address listed in the sitemap).
+for _trust_page in ("privacy", "terms", "accessibility", "contact"):
+    app.add_api_route(f"/{_trust_page}", (lambda target: (lambda: RedirectResponse(target, status_code=301)))(f"/{_trust_page}.html"),
+                      methods=["GET", "HEAD"], include_in_schema=False)
 
 
 @app.post("/api/analyze")

@@ -65,4 +65,24 @@
     <lastmod>2026-10-08</lastmod>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://creatingtomorrow.net/privacy.html</loc>
+    <lastmod>2026-10-08</lastmod>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://creatingtomorrow.net/terms.html</loc>
+    <lastmod>2026-10-08</lastmod>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://creatingtomorrow.net/accessibility.html</loc>
+    <lastmod>2026-10-08</lastmod>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://creatingtomorrow.net/contact.html</loc>
+    <lastmod>2026-10-08</lastmod>
+    <priority>0.3</priority>
+  </url>
 </urlset>
