@@ -20,6 +20,7 @@ import urllib.request
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from db import get_db_session
@@ -93,6 +94,15 @@ def get_current_user(
     if user is None:
         user = User(cognito_sub=cognito_sub)
         db.add(user)
-        db.commit()
-        db.refresh(user)
+        try:
+            db.commit()
+        except IntegrityError:
+            # Two first requests from the same new person raced and the other one created
+            # the row first (cognito_sub is unique). Use theirs instead of failing with a 500.
+            db.rollback()
+            user = db.query(User).filter_by(cognito_sub=cognito_sub).one()
+        else:
+            db.refresh(user)
+    if user.deleted_at is not None:
+        raise HTTPException(status_code=403, detail="This account is no longer active.")
     return user
