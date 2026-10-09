@@ -242,7 +242,7 @@ class NoStrayFonts(unittest.TestCase):
         for name, page in all_html():
             self.assertNotIn("fonts.googleapis.com", page, name)
             self.assertNotIn("fonts.gstatic.com", page, name)
-        for css in ("style.css", "home-v4.css", os.path.join("career", "dashboard-v4.css")):
+        for css in ("style.css", "home-v4.css", "home-v5.css", os.path.join("career", "dashboard-v4.css")):
             self.assertNotIn("googleapis", read(css), css)
 
 
@@ -277,6 +277,7 @@ class TypeSystem(unittest.TestCase):
         for name, selector in (
             ("style.css", ".ats-header h1"), ("style.css", ".about-hero h1"), ("style.css", ".learn-hub-hero h1"),
             ("home-v4.css", ".hv-hero h1"), ("home-v4.css", ".hv-h2"),
+            ("home-v5.css", ".h5-hero h1"), ("home-v5.css", ".h5-h2"),
             (os.path.join("career", "dashboard-v4.css"), ".dashboard-hero h1"),
         ):
             m = re.search(re.escape(selector) + r" \{([^}]*)\}", read(name))
@@ -285,7 +286,7 @@ class TypeSystem(unittest.TestCase):
             self.assertRegex(m.group(1), r"font-size:\s*var\(--fs-", f"{selector} should use a scale step")
 
     def test_every_stylesheet_uses_the_tokens_not_a_second_font_stack(self):
-        for name in ("home-v4.css", os.path.join("career", "dashboard-v4.css")):
+        for name in ("home-v4.css", "home-v5.css", os.path.join("career", "dashboard-v4.css")):
             self.assertNotIn("Source Serif", read(name), name)
             self.assertNotIn('"Segoe UI"', read(name), name)
 

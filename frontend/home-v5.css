@@ -1,0 +1,247 @@
+/* Creating Tomorrow homepage, Version 5 ("clean"). Loaded only by index.html, after the shared style.css.
+   Everything is scoped to body.home-v5 or to the h5- classes, so no other page is affected.
+   Rhythm (top to bottom): white header, pale hero, white "how we begin", pale "basics", white tools,
+   cobalt closing, white footer. Flat colour, hairline borders, almost no shadow, generous space.
+
+   Colours are the reference design's. Two are adjusted for readability (WCAG 2.2 AA), see the notes by --gold-text and --body. */
+
+body.home-v5 {
+  --navy: #0b2454;
+  --cobalt: #075fea;
+  --cta: #075be8;
+  --gold: #f4a900;
+  --gold-hover: #e09d00;
+  /* The reference gold (#f4a900) is only 1.9:1 on the pale gray, too faint for text. This deeper gold is 3.4:1,
+     which meets the 3:1 minimum for large text. The gold buttons, rules and underline keep the reference gold. */
+  --gold-text: #b87700;
+  --white: #ffffff;
+  --pale: #f5f7fa;
+  /* Reference body gray #66758d is 4.35:1 on the pale gray (needs 4.5:1); this is 4.9:1 and looks the same. */
+  --body: #5e6d85;
+  --green: #079b70;
+  --line: #e3e8f0;
+  --tint-blue: #e8f0fe;
+  --tint-gold: #fff3d6;
+  --radius: 14px;
+  --wrap: 1180px;
+  background: var(--white);
+  color: var(--body);
+}
+
+body.home-v5, body.home-v5 *, body.home-v5 *::before, body.home-v5 *::after { box-sizing: border-box; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+body.home-v5 a:focus-visible,
+body.home-v5 button:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 3px; }
+
+/* ---------- Header: thin, white, quiet ---------- */
+body.home-v5 .site-nav {
+  max-width: none;
+  margin: 0;
+  padding: 1rem max(1.5rem, calc((100% - var(--wrap)) / 2 + 1.5rem));
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+  gap: 0.5rem 1rem;
+}
+body.home-v5 .nav-logo img { height: 40px; }
+body.home-v5 .nav-wordmark-title { color: var(--navy); }
+body.home-v5 .nav-links { gap: 0.1rem 0.5rem; }
+body.home-v5 .nav-links a {
+  color: var(--navy);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+}
+body.home-v5 .nav-links a:hover { color: var(--cobalt); }
+body.home-v5 .nav-links a.nav-active { color: var(--navy); border-bottom-color: var(--gold); }
+body.home-v5 .nav-links a.nav-cta { background: none; color: var(--navy); padding: 0.6rem 0.8rem; font-weight: 600; opacity: 1; }
+body.home-v5 .nav-links a.nav-cta:hover { color: var(--cobalt); }
+body.home-v5 .nav-links a.nav-account {
+  margin-left: 0.75rem;
+  padding: 0.55rem 1.5rem;
+  border: 2px solid var(--gold);
+  border-radius: 999px;
+  color: var(--navy);
+  font-weight: 700;
+  background: var(--white);
+}
+body.home-v5 .nav-links a.nav-account:hover { background: var(--tint-gold); color: var(--navy); }
+
+/* ---------- Shared layout ---------- */
+/* style.css narrows <main> to a reading column; this page lays out its own full-width bands */
+body.home-v5 main { max-width: none; margin: 0; padding: 0; }
+body.home-v5 .h5-wrap { width: 100%; max-width: calc(var(--wrap) + 3rem); margin: 0 auto; padding: 0 1.5rem; }
+body.home-v5 .h5-band { padding: 5rem 0; }
+body.home-v5 .h5-band-white { background: var(--white); }
+body.home-v5 .h5-band-pale { background: var(--pale); }
+.h5-h2 {
+  margin: 0 0 0.6rem;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--navy);
+}
+.h5-sub { margin: 0 auto 3rem; max-width: 40rem; text-align: center; font-size: 1.1rem; line-height: 1.6; color: var(--body); }
+
+/* ---------- Buttons ---------- */
+.h5-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.75rem 1.7rem;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+}
+.h5-btn-gold { background: var(--gold); color: var(--navy); }
+.h5-btn-gold:hover { background: var(--gold-hover); }
+.h5-btn-outline { background: var(--white); border-color: var(--cobalt); color: var(--cobalt); }
+.h5-btn-outline:hover { background: var(--tint-blue); }
+
+/* ---------- Hero ---------- */
+.h5-hero-band { padding: 4.5rem 0 3.5rem; }
+.h5-hero { display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 4rem; align-items: center; }
+.h5-eyebrow { margin: 0 0 1.25rem; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cobalt); }
+.h5-hero h1 {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-serif);
+  font-size: var(--fs-display);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  color: var(--navy);
+}
+.h5-hero h1 span { display: block; color: var(--gold-text); }
+.h5-lead { margin: 0 0 2rem; max-width: 31rem; font-size: 1.25rem; line-height: 1.55; color: var(--body); }
+.h5-cta { display: flex; flex-wrap: wrap; gap: 1rem; }
+.h5-free { display: flex; align-items: center; gap: 0.6rem; margin: 1.5rem 0 0; font-size: 1rem; color: var(--body); }
+.h5-free b { color: var(--navy); }
+.h5-free svg { width: 26px; height: 26px; flex: none; }
+.h5-free circle { fill: var(--green); }
+.h5-free path { fill: none; stroke: var(--white); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.h5-hero-photo { margin: 0; border-radius: var(--radius); overflow: hidden; box-shadow: 0 16px 40px -14px rgba(11, 36, 84, 0.28); }
+.h5-hero-photo img { display: block; width: 100%; height: auto; }
+
+.h5-statement { margin: 3.5rem 0 0; }
+.h5-statement blockquote { display: flex; align-items: center; gap: 1.5rem; margin: 0; }
+.h5-statement blockquote::before, .h5-statement blockquote::after { content: ""; flex: 1; height: 1px; background: var(--gold); }
+.h5-statement p { margin: 0; text-align: center; font-family: var(--font-serif); font-style: italic; font-size: 1.35rem; line-height: 1.4; color: var(--body); }
+
+/* ---------- How we begin ---------- */
+.h5-steps { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; }
+.h5-steps li + li { border-left: 1px solid var(--line); }
+.h5-step { display: block; padding: 0.25rem 2.25rem; text-align: center; text-decoration: none; color: inherit; }
+.h5-step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--cobalt);
+  color: var(--white);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.h5-step-title { display: block; margin: 1.1rem 0 0.6rem; font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; line-height: 1.2; color: var(--navy); }
+.h5-step:hover .h5-step-title { text-decoration: underline; text-underline-offset: 4px; }
+.h5-step-text { display: block; font-size: 1.05rem; line-height: 1.6; color: var(--body); }
+
+/* ---------- Cards (guides and tools) ---------- */
+.h5-grid { display: grid; gap: 1.25rem; }
+.h5-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.h5-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.h5-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem 1.6rem 1.5rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--body);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.h5-card:hover { border-color: #b9cdf7; box-shadow: 0 10px 28px -12px rgba(11, 36, 84, 0.2); }
+.h5-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 56px; height: 56px; border-radius: 50%; }
+.h5-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.h5-icon-blue { background: var(--tint-blue); color: var(--cobalt); }
+.h5-icon-gold { background: var(--tint-gold); color: var(--gold-text); }
+.h5-card-title { display: block; margin: 1.1rem 0 0.45rem; font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; line-height: 1.2; color: var(--navy); }
+.h5-card-text { display: block; font-size: 1rem; line-height: 1.55; color: var(--body); }
+.h5-card-link { display: block; margin-top: auto; padding-top: 1.1rem; font-size: 0.98rem; font-weight: 600; color: var(--cobalt); }
+.h5-card:hover .h5-card-link { text-decoration: underline; text-underline-offset: 4px; }
+.h5-more { margin: 2rem 0 0; text-align: center; }
+.h5-more a { font-weight: 600; color: var(--cobalt); text-decoration: none; }
+.h5-more a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* tools: compact and horizontal */
+.h5-tool { flex-direction: row; align-items: flex-start; gap: 1.1rem; padding: 1.5rem; }
+.h5-tool-body { display: flex; flex-direction: column; min-width: 0; flex: 1; align-self: stretch; }
+.h5-tool .h5-card-title { margin: 0.1rem 0 0.35rem; font-size: 1.25rem; }
+.h5-tool .h5-card-text { font-size: 0.98rem; }
+.h5-tool .h5-card-link { padding-top: 0.8rem; }
+
+/* ---------- Closing: the one strong colour ---------- */
+.h5-closing { position: relative; overflow: hidden; padding: 5rem 1.5rem; background: var(--cta); color: var(--white); text-align: center; }
+.h5-closing::before, .h5-closing::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
+.h5-closing::before { width: 62rem; height: 62rem; left: -34rem; bottom: -46rem; background: rgba(255, 255, 255, 0.05); }
+.h5-closing::after { width: 56rem; height: 56rem; right: -30rem; top: -44rem; background: rgba(0, 20, 90, 0.1); }
+.h5-closing-inner { position: relative; z-index: 1; max-width: 46rem; margin: 0 auto; }
+.h5-closing h2 { margin: 0 0 0.9rem; font-family: var(--font-serif); font-size: var(--fs-h1); font-weight: 700; line-height: 1.15; color: var(--white); }
+.h5-closing p { margin: 0 0 2rem; font-size: 1.2rem; line-height: 1.5; color: var(--white); }
+.h5-closing p.h5-closing-free { margin: 1.1rem 0 0; font-size: 0.98rem; }
+
+/* ---------- Footer ---------- */
+.h5-footer { padding: 3rem 0 2.25rem; background: var(--white); border-top: 1px solid var(--line); text-align: left; }
+.h5-footer-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem 2.5rem; }
+.h5-footer-brand p { margin: 0.35rem 0 0 0; font-size: 0.9rem; color: var(--body); text-align: left; }
+.h5-footer .nav-logo img { height: 36px; }
+.h5-footer .nav-wordmark-title { color: var(--navy); }
+.h5-footer-nav { display: flex; flex-wrap: wrap; gap: 0.5rem 1.6rem; }
+.h5-footer-nav a, .h5-footer .footer-links a { color: var(--navy); font-size: 0.95rem; font-weight: 600; text-decoration: none; }
+.h5-footer-nav a:hover, .h5-footer .footer-links a:hover { color: var(--cobalt); text-decoration: underline; text-underline-offset: 3px; }
+.h5-footer .footer-links { margin: 0; color: var(--body); }
+.h5-footer-privacy { margin: 1.75rem 0 0; max-width: 54rem; font-size: 0.88rem; line-height: 1.55; color: var(--body); }
+.h5-footer-copy { margin: 0.6rem 0 0; font-size: 0.88rem; color: var(--body); }
+
+/* ---------- Tablet ---------- */
+@media (max-width: 1000px) {
+  body.home-v5 .h5-band { padding: 4rem 0; }
+  .h5-hero-band { padding: 3rem 0 2.5rem; }
+  .h5-hero { grid-template-columns: 1fr; gap: 2.25rem; }
+  .h5-hero-photo { max-width: 34rem; }
+  .h5-grid-4, .h5-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .h5-steps { grid-template-columns: 1fr; gap: 2rem; }
+  .h5-steps li + li { border-left: 0; border-top: 1px solid var(--line); padding-top: 2rem; }
+  .h5-step { padding: 0 0.5rem; }
+  .h5-footer-row { flex-direction: column; align-items: flex-start; }
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 620px) {
+  body.home-v5 .site-nav { padding: 0.75rem 1rem; }
+  body.home-v5 .nav-links { justify-content: flex-start; }
+  body.home-v5 .nav-links a.nav-account { margin-left: 0; }
+  body.home-v5 .h5-wrap { padding: 0 1.1rem; }
+  body.home-v5 .h5-band { padding: 3.25rem 0; }
+  .h5-sub { margin-bottom: 2.25rem; font-size: 1.05rem; }
+  .h5-grid-4, .h5-grid-3 { grid-template-columns: 1fr; }
+  .h5-cta .h5-btn { flex: 1 1 100%; }
+  .h5-statement blockquote::before, .h5-statement blockquote::after { display: none; }
+  .h5-statement p { font-size: 1.2rem; }
+  .h5-closing { padding: 3.5rem 1.1rem; }
+  .h5-closing .h5-btn { width: 100%; }
+}

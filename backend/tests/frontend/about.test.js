@@ -46,3 +46,18 @@ test("the story is honest about AI and does not name a person", () => {
   assert.match(html, /to use AI tools to help others/);
   assert.ok(!/yovana|rathbone/i.test(html));
 });
+
+test("the founder's note lives on the About page: after the story, before the closing quote, in her own words", () => {
+  const label = html.indexOf('class="about-note-label">Why I built this</p>');
+  assert.ok(label > -1, "the label is there");
+  assert.match(html, /<p class="about-note-text">I really believe our futures are linked\. When my neighbors succeed, I succeed too\. This is how I honor our connection and show everyone they are important\.<\/p>/);
+  assert.ok(label > html.indexOf("ready to ask for it all along"), "after the story");
+  assert.ok(label < html.indexOf("about-editorial-line"), "before the closing quote, which stays last");
+  assert.ok(html.indexOf("</main>") > html.indexOf("about-editorial-line"));
+});
+
+test("the founder's note is styled with readable colours", () => {
+  const css = fs.readFileSync(path.join(FRONTEND, "style.css"), "utf8");
+  assert.match(css, /\.about-section \.about-note \{[^}]*background: #f5f7fa/);
+  assert.match(css, /about-note-label \{[^}]*color: #996300/); // 4.73:1 on the pale box (needs 4.5:1)
+});

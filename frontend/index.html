@@ -25,170 +25,188 @@
   <link rel="manifest" href="site.webmanifest" />
   <meta name="theme-color" content="#ffffff" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="home-v4.css" />
+  <link rel="stylesheet" href="home-v5.css" />
 </head>
-<body class="home-v4">
+<body class="home-v5">
   <nav class="site-nav">
     <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
     <div class="nav-links">
-      <a href="index.html" class="nav-active">Home</a>
+      <a href="index.html" class="nav-active" aria-current="page">Home</a>
       <a href="learn.html">Learn</a>
       <a href="videos.html">Videos</a>
       <a href="about.html">About</a>
-      <a href="tool.html" class="nav-cta">Career Tools →</a>
+      <a href="tool.html" class="nav-cta">Career Tools</a>
       <a href="career/login.html" class="nav-account">Sign In</a>
     </div>
   </nav>
   <script src="auth-nav.js"></script>
 
   <main>
-    <!-- One box: the hero, a line of her own, How It Works, Career Basics and the six tools, divided by thin lines -->
-    <div class="hv-panel">
-      <!-- Hero: one person, one city, one line of copy -->
-      <section class="hv-hero">
-        <div class="hv-hero-copy">
-          <h1>See your value.<br /><span>Build your future.</span></h1>
-          <p>Free career tools to help you see your experience clearly and take the next step.</p>
-          <div class="hv-cta">
-            <button type="button" class="hv-btn hv-btn-primary" data-guide-open>Guide Me <span aria-hidden="true">→</span></button>
-            <a href="#tools" class="hv-btn hv-btn-outline">Explore Tools</a>
+    <!-- Hero: pale gray. The picture is a PLACEHOLDER until the final image file is supplied. -->
+    <section class="h5-band h5-band-pale h5-hero-band" aria-labelledby="hero-h">
+      <div class="h5-wrap">
+        <div class="h5-hero">
+          <div class="h5-hero-copy">
+            <p class="h5-eyebrow">Tools today. Brighter tomorrow.</p>
+            <h1 id="hero-h">See your value.<br /><span>Build your future.</span></h1>
+            <p class="h5-lead">Free career tools to help you see your experience clearly and take the next step.</p>
+            <div class="h5-cta">
+              <button type="button" class="h5-btn h5-btn-gold" data-guide-open>Guide Me <span aria-hidden="true">→</span></button>
+              <a href="#tools" class="h5-btn h5-btn-outline">Explore Tools</a>
+            </div>
+            <p class="h5-free"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg><span><b>Free for everyone.</b> No paywall.</span></p>
           </div>
-          <p class="hv-free"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg><span><b>Free for everyone.</b> No paywall.</span></p>
+          <div class="h5-hero-photo">
+            <img src="img/home/hero-graduate-placeholder.jpg" alt="A graduate in a blue cap and gown, seen from behind, looking toward a sunlit campus" width="826" height="616" />
+          </div>
         </div>
-        <div class="hv-hero-photo">
-          <img src="img/home/hero-man.jpg" alt="A man smiling and looking up toward the future, with the Chicago skyline and lakefront behind him" width="1400" height="788" />
-        </div>
-      </section>
-
-      <figure class="hv-quote hv-quote-top">
-        <blockquote><p>You can’t become what you can’t picture. Let’s picture it together.</p></blockquote>
-      </figure>
-    <!-- How It Works: three steps, each with a number and a big colored icon, joined by arrows -->
-    <section class="hv-section hv-card hv-how" id="how" aria-labelledby="how-h">
-      <img class="hv-sprout" src="mascot-icon.png" alt="" width="52" height="52" />
-      <h2 id="how-h" class="hv-h2">Here’s how we begin</h2>
-      <p class="hv-how-sub">Get started in minutes and take meaningful steps toward your goals.</p>
-      <ol class="hv-steps" aria-labelledby="how-h">
-        <li><a class="hv-step-link" href="#" data-guide-open title="Open Guide Me to tell us where you are">          <div class="hv-step-top"><span class="hv-step-n">1</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="hv-step-icon hv-c-blue"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h5M9.5 16h5"/></svg></div>
-          <b>Tell us where you are</b>
-          <p>Share a bit about your background, goals, and the kind of work you're looking for.</p></a></li>
-        <li><a class="hv-step-link" href="#tools" title="Jump to the six free tools">          <div class="hv-step-top"><span class="hv-step-n">2</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="hv-step-icon hv-c-gold"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></div>
-          <b>Build your next version</b>
-          <p>Use our free tools to create and improve your resume, explore job matches, and build your skills.</p></a></li>
-        <li><a class="hv-step-link" href="prepare.html" title="Get ready for interviews with Prepare">          <div class="hv-step-top"><span class="hv-step-n">3</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="hv-step-icon hv-c-navy"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
-          <b>Move forward with confidence</b>
-          <p>Apply with a stronger resume, practice for interviews, and take your next step.</p></a></li>
-      </ol>
-    </section>
-
-    <!-- Career Basics: the four guides, as clickable tiles in a dashboard-style card -->
-    <section class="hv-section hv-card hv-basics" id="basics" aria-labelledby="basics-h">
-      <h2 id="basics-h" class="hv-h2">Start with the basics</h2>
-      <p class="hv-basics-sub">Four clear guides. Start anywhere.</p>
-      <div class="hv-guides">
-        <a class="hv-guide hv-t-sky" href="article.html?slug=what-is-ats">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></span><span class="hv-vtype">ATS Basics</span></span>
-          <b>What Is an ATS, Really?</b>
-          <span class="hv-vdesc">Understand what happens after you submit a resume.</span>
-          <span class="hv-vfoot">Read guide <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="hv-guide hv-t-butter" href="article.html?slug=resume-calling-card">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h5M9.5 16h5"/></svg></span><span class="hv-vtype">Resume Basics</span></span>
-          <b>Your Resume Is Your Calling Card</b>
-          <span class="hv-vdesc">Keep your career story ready before you need it.</span>
-          <span class="hv-vfoot">Read guide <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="hv-guide hv-t-lavender" href="article.html?slug=honest-self-marketing">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg></span><span class="hv-vtype">LinkedIn Basics</span></span>
-          <b>Your LinkedIn Profile Is Your Professional Story</b>
-          <span class="hv-vdesc">Present your experience clearly — without exaggerating it.</span>
-          <span class="hv-vfoot">Read guide <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="hv-guide hv-t-mint" href="article.html?slug=how-we-grade">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></span><span class="hv-vtype">Interview Basics</span></span>
-          <b>Prepare Stories, Not Perfect Answers</b>
-          <span class="hv-vdesc">Walk into an interview prepared — not scripted.</span>
-          <span class="hv-vfoot">Read guide <span aria-hidden="true">→</span></span>
-        </a>
-      </div>
-      <a href="learn.html" class="hv-seeall">See all learning resources <span aria-hidden="true">→</span></a>
-    </section>
-
-    <!-- Tools card: the six free tools and the Alan Kay quote in one box, like the dashboard cards -->
-    <section class="hv-section hv-card hv-toolscard" id="tools" aria-labelledby="tools-h">
-      <h2 id="tools-h" class="hv-h2">Six free tools for your next step</h2>
-      <figure class="hv-quote">
-      <blockquote><p>“The best way to predict the future is to invent it.”</p></blockquote>
-      <figcaption>— Alan Kay</figcaption>
-    </figure>
-      <div class="hv-tools">
-        <a class="hv-tool hv-t-sky" href="scratch.html">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h5M9.5 16h5"/></svg></span><span class="hv-vtype">Create</span></span>
-          <b>Beginning</b>
-          <span class="hv-vdesc">Build your first resume.</span>
-          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="hv-tool hv-t-butter" href="tool.html?mode=refine">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></span><span class="hv-vtype">Improve</span></span>
-          <b>Refine</b>
-          <span class="hv-vdesc">Strengthen the resume you have.</span>
-          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="hv-tool hv-t-lavender" href="tool.html?mode=analyze">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg></span><span class="hv-vtype">Match</span></span>
-          <b>Right Fit</b>
-          <span class="hv-vdesc">Compare your resume to a job.</span>
-          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="hv-tool hv-t-mint" href="elevate.html">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M11 20V4M17 20v-6"/><path d="M2.5 20.5h19"/></svg></span><span class="hv-vtype">Discover</span></span>
-          <b>Elevate</b>
-          <span class="hv-vdesc">Find experience you left out.</span>
-          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="hv-tool hv-t-sky" href="spotlight.html">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg></span><span class="hv-vtype">LinkedIn</span></span>
-          <b>Spotlight</b>
-          <span class="hv-vdesc">Strengthen your LinkedIn.</span>
-          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="hv-tool hv-t-blush" href="prepare.html">
-          <span class="hv-vtop"><span class="hv-vicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></span><span class="hv-vtype">Interview</span></span>
-          <b>Prepare</b>
-          <span class="hv-vdesc">Get ready for interviews.</span>
-          <span class="hv-vfoot">Start <span aria-hidden="true">→</span></span>
-        </a>
+        <figure class="h5-statement">
+          <blockquote><p>You can’t become what you can’t picture. Let’s picture it together.</p></blockquote>
+        </figure>
       </div>
     </section>
 
-    </div>
+    <!-- How we begin: white, three steps, solid cobalt numbers, hairline separators -->
+    <section class="h5-band h5-band-white" id="how" aria-labelledby="how-h">
+      <div class="h5-wrap">
+        <h2 id="how-h" class="h5-h2">Here’s how we begin.</h2>
+        <p class="h5-sub">Get started in minutes and take meaningful steps toward your goals.</p>
+        <ol class="h5-steps">
+          <li><a class="h5-step" href="#" data-guide-open title="Open Guide Me to tell us where you are">
+            <span class="h5-step-n">1</span>
+            <b class="h5-step-title">Tell us where you are.</b>
+            <span class="h5-step-text">Share a bit about your background, goals, and the kind of work you’re looking for.</span></a></li>
+          <li><a class="h5-step" href="#tools" title="Jump to the six free tools">
+            <span class="h5-step-n">2</span>
+            <b class="h5-step-title">Build your next version.</b>
+            <span class="h5-step-text">Use our free tools to create and improve your resume, explore job matches, and build your skills.</span></a></li>
+          <li><a class="h5-step" href="prepare.html" title="Get ready for interviews with Prepare">
+            <span class="h5-step-n">3</span>
+            <b class="h5-step-title">Move forward with confidence.</b>
+            <span class="h5-step-text">Apply with a stronger resume, practice for interviews, and take your next step.</span></a></li>
+        </ol>
+      </div>
+    </section>
 
-    <!-- Bottom: the Chicago band with the promise -->
-    <section class="hv-bottom" aria-label="Our promise">
-      <div class="hv-closing" role="group" aria-labelledby="close-h">
-        <div class="hv-closing-inner">
-          <h2 id="close-h">We don't invent your value.<br /><span>We help you see it.</span></h2>
-          <p>Real tools. Real support. A brighter tomorrow is possible.</p>
-          <a href="tool.html" class="hv-btn hv-btn-gold">Start your journey <span aria-hidden="true">→</span></a>
+    <!-- Start with the basics: pale gray, four equal guide cards -->
+    <section class="h5-band h5-band-pale" id="basics" aria-labelledby="basics-h">
+      <div class="h5-wrap">
+        <h2 id="basics-h" class="h5-h2">Start with the basics.</h2>
+        <p class="h5-sub">Learn the fundamentals with our quick, practical guides.</p>
+        <div class="h5-grid h5-grid-4">
+        <a class="h5-card h5-guide" href="article.html?slug=what-is-ats" aria-label="ATS Basics: What Is an ATS, Really?. Read the guide.">
+          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></span>
+          <b class="h5-card-title">ATS Basics</b>
+          <span class="h5-card-text">Understand what happens after you submit a resume.</span>
+          <span class="h5-card-link">Read the Guide <span aria-hidden="true">→</span></span>
+        </a>
+        <a class="h5-card h5-guide" href="article.html?slug=resume-calling-card" aria-label="Resume Basics: Your Resume Is Your Calling Card. Read the guide.">
+          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V6a3 3 0 0 1 6 0v1.5"/><path d="M3.5 12.5h17"/></svg></span>
+          <b class="h5-card-title">Resume Basics</b>
+          <span class="h5-card-text">Keep your career story ready before you need it.</span>
+          <span class="h5-card-link">Read the Guide <span aria-hidden="true">→</span></span>
+        </a>
+        <a class="h5-card h5-guide" href="article.html?slug=honest-self-marketing" aria-label="LinkedIn Basics: Your LinkedIn Profile Is Your Professional Story. Read the guide.">
+          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg></span>
+          <b class="h5-card-title">LinkedIn Basics</b>
+          <span class="h5-card-text">Present your experience clearly — without exaggerating it.</span>
+          <span class="h5-card-link">Read the Guide <span aria-hidden="true">→</span></span>
+        </a>
+        <a class="h5-card h5-guide" href="article.html?slug=how-we-grade" aria-label="Interview Basics: Prepare Stories, Not Perfect Answers. Read the guide.">
+          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9.5" r="2.4"/><path d="M3.5 19c.5-3.2 2.7-5 5.5-5s5 1.8 5.5 5"/><path d="M15.5 14.4c2.6-.4 4.6 1 5 4.1"/></svg></span>
+          <b class="h5-card-title">Interview Basics</b>
+          <span class="h5-card-text">Walk into an interview prepared — not scripted.</span>
+          <span class="h5-card-link">Read the Guide <span aria-hidden="true">→</span></span>
+        </a>
+        </div>
+        <p class="h5-more"><a href="learn.html">See all learning resources <span aria-hidden="true">→</span></a></p>
+      </div>
+    </section>
+
+    <!-- Six free tools: white, 2 x 3 compact horizontal cards -->
+    <section class="h5-band h5-band-white" id="tools" aria-labelledby="tools-h">
+      <div class="h5-wrap">
+        <h2 id="tools-h" class="h5-h2">Six free tools for your next step.</h2>
+        <p class="h5-sub">Practical tools to help you create, improve and explore what’s next.</p>
+        <div class="h5-grid h5-grid-3">
+        <a class="h5-card h5-tool" href="scratch.html">
+          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M12 11v6M9 14h6"/></svg></span>
+          <span class="h5-tool-body">
+            <b class="h5-card-title">Create</b>
+            <span class="h5-card-text">Build your first resume.</span>
+            <span class="h5-card-link">Start Beginning <span aria-hidden="true">→</span></span>
+          </span>
+        </a>
+        <a class="h5-card h5-tool" href="tool.html?mode=refine">
+          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M11 20V4M17 20v-6"/><path d="M2.5 20.5h19"/></svg></span>
+          <span class="h5-tool-body">
+            <b class="h5-card-title">Improve</b>
+            <span class="h5-card-text">Strengthen the resume you have.</span>
+            <span class="h5-card-link">Start Refine <span aria-hidden="true">→</span></span>
+          </span>
+        </a>
+        <a class="h5-card h5-tool" href="tool.html?mode=analyze">
+          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg></span>
+          <span class="h5-tool-body">
+            <b class="h5-card-title">Match</b>
+            <span class="h5-card-text">Compare your resume to a job.</span>
+            <span class="h5-card-link">Start Right Fit <span aria-hidden="true">→</span></span>
+          </span>
+        </a>
+        <a class="h5-card h5-tool" href="elevate.html">
+          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5L13 13l-4.5 2.5L11 11z"/></svg></span>
+          <span class="h5-tool-body">
+            <b class="h5-card-title">Discover</b>
+            <span class="h5-card-text">Find experience you left out.</span>
+            <span class="h5-card-link">Start Elevate <span aria-hidden="true">→</span></span>
+          </span>
+        </a>
+        <a class="h5-card h5-tool" href="spotlight.html">
+          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg></span>
+          <span class="h5-tool-body">
+            <b class="h5-card-title">LinkedIn</b>
+            <span class="h5-card-text">Strengthen your LinkedIn.</span>
+            <span class="h5-card-link">Start Spotlight <span aria-hidden="true">→</span></span>
+          </span>
+        </a>
+        <a class="h5-card h5-tool" href="prepare.html">
+          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></span>
+          <span class="h5-tool-body">
+            <b class="h5-card-title">Interview</b>
+            <span class="h5-card-text">Get ready for interviews.</span>
+            <span class="h5-card-link">Start Prepare <span aria-hidden="true">→</span></span>
+          </span>
+        </a>
         </div>
       </div>
     </section>
-    <!-- A note from the founder, in her own words -->
-    <section class="hv-note" aria-labelledby="note-h">
-      <p class="hv-note-label" id="note-h">Why I built this</p>
-      <p class="hv-note-text">I really believe our futures are linked. When my neighbors succeed, I succeed too. This is how I honor our connection and show everyone they are important.</p>
-      <a class="hv-note-link" href="about.html">Read my story <span aria-hidden="true">→</span></a>
+
+    <!-- Closing: the one strong colour moment -->
+    <section class="h5-closing" aria-labelledby="close-h">
+      <div class="h5-closing-inner">
+        <h2 id="close-h">We don’t invent your value. We help you see it.</h2>
+        <p>Real tools. Real support. A brighter tomorrow is possible.</p>
+        <a href="tool.html" class="h5-btn h5-btn-gold">Get Started Today <span aria-hidden="true">→</span></a>
+        <p class="h5-closing-free">Free for everyone. No paywall.</p>
+      </div>
     </section>
   </main>
 
-  <footer class="hv-footer">
-    <p class="hv-footer-brand">Creating Tomorrow</p>
-    <p>Free career education and tools. <a href="about.html">About</a> · <a href="learn.html">Learn</a> · <a href="videos.html">Videos</a></p>
-    <p class="hv-footer-privacy">We don't save your resume or job posting — they're sent securely to our AI provider to generate your results, and are typically deleted from their systems within 30 days.</p>
-    <p class="footer-links"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="accessibility.html">Accessibility</a> · <a href="contact.html">Contact</a></p>
+  <footer class="h5-footer">
+    <div class="h5-wrap">
+      <div class="h5-footer-row">
+        <div class="h5-footer-brand">
+          <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
+          <p>Tools today. Brighter tomorrow.</p>
+        </div>
+        <nav class="h5-footer-nav" aria-label="Footer">
+          <a href="index.html">Home</a><a href="learn.html">Learn</a><a href="videos.html">Videos</a><a href="about.html">About</a><a href="tool.html">Career Tools</a>
+        </nav>
+        <p class="footer-links"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="accessibility.html">Accessibility</a> · <a href="contact.html">Contact</a></p>
+      </div>
+      <p class="h5-footer-privacy">We don't save your resume or job posting — they're sent securely to our AI provider to generate your results, and are typically deleted from their systems within 30 days.</p>
+      <p class="h5-footer-copy">© 2026 Creating Tomorrow. All rights reserved.</p>
+    </div>
   </footer>
 
   <div id="guide-modal" class="guide-modal-overlay" hidden>

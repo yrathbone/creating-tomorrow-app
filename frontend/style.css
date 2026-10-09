@@ -27,6 +27,7 @@
   --fs-xl: 1.44rem;    /* sub-section headings */
   --fs-h2: clamp(1.6rem, 1.3rem + 1vw, 2.07rem);   /* section headings */
   --fs-h1: clamp(2rem, 1.5rem + 2vw, 3rem);        /* page titles */
+  --fs-display: clamp(2.6rem, 1.5rem + 3.6vw, 4.1rem);  /* the homepage headline */
 }
 
 :root {
@@ -2533,6 +2534,29 @@ footer.site-footer-v2 {
   color: #063594;
 }
 
+/* The founder's note (moved here from the homepage): a quiet boxed aside just before the closing quote. */
+.about-section .about-note {
+  margin: 40px 0 0;
+  padding: 24px 28px;
+  background: #f5f7fa;
+  border-left: 4px solid #f4a900;
+  border-radius: 10px;
+}
+.about-section .about-note p.about-note-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #996300;
+}
+.about-section .about-note p.about-note-text {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.6;
+  color: #303844;
+}
+
 .about-closing-line {
   max-width: 1080px;
   margin: 0 auto;
@@ -2549,6 +2573,8 @@ footer.site-footer-v2 {
   .about-hero-primary { font-size: 21px; }
   .about-section-inner { padding: 0 20px; }
   .about-section p.about-editorial-line { margin-top: 40px; padding-top: 28px; font-size: 19px; }
+  .about-section .about-note { padding: 20px; }
+  .about-section .about-note p.about-note-text { font-size: 17px; }
 }
 
 /* --- Spotlight (LinkedIn Profile Review) --- */
