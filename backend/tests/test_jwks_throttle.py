@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 
 from fastapi import HTTPException
-from jose import JWTError
+from jwt import PyJWTError as JWTError
 
 import auth.dependencies as deps
 

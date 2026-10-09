@@ -20,7 +20,8 @@ import urllib.request
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError as JWTError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -106,13 +107,14 @@ def get_current_user(
     token = credentials.credentials
     try:
         header = jwt.get_unverified_header(token)
-        signing_key = _get_signing_key(header["kid"])
+        signing_key = jwt.PyJWK(_get_signing_key(header["kid"])).key
+        # RS256 only, never the token's own say-so: this is what stops "algorithm confusion" forgeries (see tests/test_token_algorithm.py)
         claims = jwt.decode(
             token,
             signing_key,
             algorithms=["RS256"],
             issuer=_issuer(),
-            options={"verify_aud": False},
+            options={"verify_aud": False, "require": ["exp", "iss", "sub"]},
         )
     except (JWTError, KeyError) as e:
         raise HTTPException(status_code=401, detail="Invalid or expired token.") from e

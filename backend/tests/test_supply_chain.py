@@ -21,7 +21,7 @@ class PinnedLibraries(unittest.TestCase):
 
     def test_the_libraries_the_site_imports_are_all_listed(self):
         names = {re.split(r"[\[=]", l)[0].lower() for l in self.lines()}
-        for needed in ("fastapi", "uvicorn", "python-multipart", "python-docx", "pypdf", "ftfy", "anthropic", "pydantic", "sqlalchemy", "alembic", "psycopg", "python-jose"):
+        for needed in ("fastapi", "uvicorn", "python-multipart", "python-docx", "pypdf", "ftfy", "anthropic", "pydantic", "sqlalchemy", "alembic", "psycopg", "pyjwt"):
             self.assertIn(needed, names)
 
     def test_no_pin_uses_a_range_or_a_wildcard(self):

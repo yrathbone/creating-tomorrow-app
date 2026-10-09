@@ -19,7 +19,8 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.testclient import TestClient
-from jose import jwk, jwt
+import jwt
+from jwt.algorithms import RSAAlgorithm
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
@@ -45,7 +46,7 @@ def _new_key():
     public_pem = private.public_key().public_bytes(
         serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
     ).decode()
-    public_jwk = jwk.construct(public_pem, "RS256").to_dict()
+    public_jwk = RSAAlgorithm.to_jwk(private.public_key(), as_dict=True)
     public_jwk.update({"kid": KID, "use": "sig", "alg": "RS256"})
     return private_pem, public_jwk
 
