@@ -91,13 +91,15 @@ test("the page is seven bands in the reference order: header, pale hero, white s
   assert.match(html, /<section class="h5-band h5-band-white" id="how"/);
   assert.match(html, /<section class="h5-band h5-band-pale" id="basics"/);
   assert.match(html, /<section class="h5-band h5-band-white" id="tools"/);
-  assert.match(css, /\.h5-closing \{[^}]*background: var\(--cta\)/);
+  assert.match(css, /\.h5-closing \{[^}]*background: var\(--cobalt\)/);
+  assert.ok(!/\.h5-closing::(before|after) \{[^}]*border-radius: 50%/.test(css), "no decorative spheres");
 });
 
-test("the hero says what the design says, with the gold second line and the free note right under the buttons", () => {
+test("the hero says what the design says, with the cobalt second line, the gold rule and the free note right under the buttons", () => {
   assert.match(html, /<p class="h5-eyebrow">Tools today\. Brighter tomorrow\.<\/p>/);
   assert.match(html, /<h1 id="hero-h">See your value\.<br \/><span>Build your future\.<\/span><\/h1>/);
-  assert.match(css, /\.h5-hero h1 span \{[^}]*color: var\(--gold-display\)/);
+  assert.match(css, /\.h5-hero h1 span \{[^}]*color: var\(--cobalt\)/);
+  assert.match(css, /\.h5-hero h1::after \{[^}]*background: var\(--gold\)/);
   assert.match(html, /<p class="h5-lead">Free career tools to help you build a better tomorrow\.<\/p>/);
   const hero = html.slice(html.indexOf('class="h5-hero"'), html.indexOf('class="h5-hero-photo"'));
   assert.match(hero, /Guide Me <span aria-hidden="true">→<\/span>/);
@@ -142,23 +144,22 @@ test("the page does not name a person, and nothing the design dropped is left be
   for (const gone of ["mascot-icon", "hv-", "hero-man", "team-people"]) assert.ok(!html.includes(gone), `leftover: ${gone}`);
 });
 
-test("colours: the reference palette is used, and every text pairing meets WCAG AA", () => {
-  assert.strictEqual(token("navy").toLowerCase(), "#0b2454");
-  assert.strictEqual(token("cobalt").toLowerCase(), "#075fea");
-  assert.strictEqual(token("cta").toLowerCase(), "#075be8");
-  assert.strictEqual(token("gold").toLowerCase(), "#f4a900");
-  assert.strictEqual(token("pale").toLowerCase(), "#f5f7fa");
+test("colours: the locked palette is used exactly, and every text pairing meets WCAG AA", () => {
+  const exact = { navy: "#071c42", cobalt: "#0756ed", gold: "#ffbc00", pale: "#f2f5f8", body: "#596b85", line: "#e2e8f0", "tint-blue": "#eaf1ff", "tint-gold": "#fff5dd", "gold-text": "#a66b00" };
+  for (const [name, hex] of Object.entries(exact)) assert.strictEqual(token(name).toLowerCase(), hex, `--${name}`);
   assert.strictEqual(token("green").toLowerCase(), "#079b70");
-  const [navy, cobalt, cta, gold, goldText, pale, body] = ["navy", "cobalt", "cta", "gold", "gold-text", "pale", "body"].map(token);
-  assert.ok(contrast(goldText, pale) >= 3, "the large gold headline text needs 3:1");
+  const [navy, cobalt, gold, goldText, pale, body] = ["navy", "cobalt", "gold", "gold-text", "pale", "body"].map(token);
+  assert.ok(contrast(goldText, pale) >= 3, "dark gold on the pale bands (large text and icons)");
   assert.ok(contrast(goldText, "#ffffff") >= 3);
   assert.ok(contrast(body, pale) >= 4.5, "body gray on the pale bands");
   assert.ok(contrast(body, "#ffffff") >= 4.5, "body gray on white");
   assert.ok(contrast(cobalt, "#ffffff") >= 4.5, "links on white");
-  assert.ok(contrast(cobalt, pale) >= 4.5, "the eyebrow on the pale band");
-  assert.ok(contrast("#ffffff", cta) >= 4.5, "white text on the cobalt band");
+  assert.ok(contrast(cobalt, pale) >= 4.5, "the eyebrow and headline on the pale band");
+  assert.ok(contrast("#ffffff", cobalt) >= 4.5, "white text on the cobalt band");
+  assert.ok(contrast("#ffffff", navy) >= 4.5, "white text on the navy header button");
   assert.ok(contrast(navy, gold) >= 4.5, "navy text on the gold buttons");
-  assert.ok(contrast(goldText, "#fff3d6") >= 3, "gold icons on their pale tint");
+  assert.ok(contrast(goldText, token("tint-gold")) >= 3, "gold icons on their pale tint");
+  assert.ok(!/gradient\(/.test(css), "no gradients");
 });
 
 test("type: serif headlines and the shared size scale, buttons tall enough to tap, focus ring present", () => {
@@ -198,12 +199,15 @@ test("card descriptions are a few words each, so they stay readable on a phone",
   for (const t of tools) assert.ok(t.split(/\s+/).length <= 6, `"${t}" is too long`);
 });
 
-test("the headline gold is the founder's chosen colour, used on that one phrase only, and its contrast is a recorded choice", () => {
-  assert.strictEqual(token("gold-display").toLowerCase(), "#e49107");
-  const uses = css.match(/var\(--gold-display\)/g) || [];
-  assert.strictEqual(uses.length, 1, "only the headline's second line uses it");
-  // Known and accepted: below the 3:1 AA minimum for large text. If this ever needs to be fully AA, set --gold-display to #b87700.
-  const ratio = contrast(token("gold-display"), token("pale"));
-  assert.ok(ratio > 2.2 && ratio < 3, `recorded contrast ${ratio.toFixed(2)}:1 on the pale band`);
-  assert.ok(contrast(token("gold-text"), token("pale")) >= 3, "every other gold text keeps the accessible gold");
+test("the old headline gold is gone: the headline's second line is cobalt and the 404 numeral uses the dark gold", () => {
+  assert.ok(!/gold-display|e49107/i.test(css), "the retired headline gold is not left behind");
+  assert.match(css, /\.h5-notfound-code \{[^}]*color: var\(--gold-text\)/);
+});
+
+test("the hero photo is framed by a cobalt block and a gold block, and the steps use large numerals", () => {
+  assert.match(css, /\.h5-hero-photo::before \{[^}]*background: var\(--cobalt\)/);
+  assert.match(css, /\.h5-hero-photo::after \{[^}]*background: var\(--gold\)/);
+  assert.deepStrictEqual([...html.matchAll(/<span class="h5-step-n">([^<]+)<\/span>/g)].map((m) => m[1]), ["01", "02", "03"]);
+  assert.match(css, /\.h5-step-n \{[^}]*color: var\(--cobalt\)/);
+  assert.match(css, /\.h5-tool \{ border-top: 3px solid var\(--cobalt\)/);
 });

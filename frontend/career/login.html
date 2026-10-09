@@ -13,8 +13,9 @@
   <meta name="theme-color" content="#ffffff" />
   <link rel="stylesheet" href="../style.css" />
   <link rel="stylesheet" href="dashboard-v4.css" />
+  <link rel="stylesheet" href="auth-v5.css" />
 </head>
-<body>
+<body class="auth-v5">
   <nav class="site-nav">
     <a href="../index.html" class="nav-logo"><img src="../logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
     <div class="nav-links">
@@ -23,7 +24,7 @@
       <a href="../videos.html">Videos</a>
       <a href="../about.html">About</a>
       <a href="login.html" class="nav-active">My Career</a>
-      <a href="../tool.html" class="nav-cta">Career Tools →</a>
+      <a href="../tool.html" class="nav-cta">Career Tools</a>
       <a href="login.html" id="nav-signout" class="nav-signout" hidden>Sign Out</a>
     </div>
   </nav>
@@ -859,9 +860,19 @@
     </section>
   </main>
 
-  <footer>
-    <p>Creating Tomorrow's Career Profile is an early, invite-only preview. Everything else on this site remains free and fully anonymous.</p>
-    <p class="footer-links"><a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a> · <a href="../accessibility.html">Accessibility</a> · <a href="../contact.html">Contact</a></p>
+  <footer class="h5-footer">
+    <div class="h5-wrap">
+      <div class="h5-footer-row">
+        <div class="h5-footer-brand">
+          <a href="../index.html" class="nav-logo"><img src="../logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
+          <p>Tools today. Brighter tomorrow.</p>
+        </div>
+        <nav class="h5-footer-nav" aria-label="Footer"><a href="../index.html">Home</a><a href="../learn.html">Learn</a><a href="../videos.html">Videos</a><a href="../about.html">About</a><a href="../tool.html">Career Tools</a></nav>
+        <p class="footer-links"><a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a> · <a href="../accessibility.html">Accessibility</a> · <a href="../contact.html">Contact</a></p>
+      </div>
+      <p class="h5-footer-privacy">Creating Tomorrow's Career Profile is an early, invite-only preview. Everything else on this site remains free and fully anonymous.</p>
+      <p class="h5-footer-copy">© 2026 Creating Tomorrow. All rights reserved.</p>
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.20/dist/amazon-cognito-identity.min.js" integrity="sha384-SVW/JUAWuaFjpcvT65qqpCfy5aD/6+mTPt046MJYXaNbaI70H1WE4fvhVc0iKOvi" crossorigin="anonymous"></script>
