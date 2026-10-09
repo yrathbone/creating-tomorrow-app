@@ -584,7 +584,7 @@ async def api_generate(req: GenerateRequest):
     )
 
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 async def health(request: Request):
     database_status = "not_configured"
     if os.environ.get("DATABASE_URL"):
@@ -605,10 +605,11 @@ async def health(request: Request):
     }
 
 
-@app.get("/api/health/ai")
+@app.api_route("/api/health/ai", methods=["GET", "HEAD"])
 async def health_ai():
     """For an uptime monitor: 200 while the AI key is accepted, 503 when it is refused or unusable, so the monitor
-    emails you before a user finds out. (/api/health always answers 200 and only reports.)"""
+    emails you before a user finds out. (/api/health always answers 200 and only reports.)
+    Answers HEAD as well as GET, because free uptime monitors check with HEAD."""
     status = await run_in_threadpool(check_ai_key)
     body = {"ai_key": status}
     if status == "ok":

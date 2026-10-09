@@ -174,6 +174,13 @@ class EndpointTests(unittest.TestCase):
                 self.assertEqual(res.status_code, 503)
                 self.assertEqual(res.json(), {"ai_key": bad})
 
+    def test_monitors_that_use_head_requests_get_the_same_answer(self):
+        # UptimeRobot's free plan checks with HEAD. A GET-only route let that fall through to the static files (404 = false "down").
+        for path, status, expected in (("/api/health", "ok", 200), ("/api/health/ai", "ok", 200), ("/api/health/ai", "rejected", 503)):
+            with self.subTest(path + " " + status):
+                with mock.patch.object(main, "check_ai_key", lambda: status):
+                    self.assertEqual(self.client.head(path).status_code, expected)
+
     def test_no_response_ever_contains_the_key(self):
         for path in ("/api/health", "/api/health/ai"):
             for status in ("ok", "rejected"):
