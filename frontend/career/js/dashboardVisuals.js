@@ -24,6 +24,12 @@ function careerProgressSummary(steps) {
   return { doneCount: done.length, total: steps.length, complete: done.length === steps.length, text };
 }
 
+// Pure: which of the bar's segments are lit. The bar fills from the left like a meter: 4 of 6 started lights
+// the first four, whichever steps those happen to be (the text beside it still names the next step to take).
+function careerProgressFill(doneCount, total) {
+  return Array.from({ length: total }, (_, i) => i < doneCount);
+}
+
 // Pure: "3 roles · 2 education · 1 certification · 8 skills · 2 languages"
 function careerEvidenceSummary(counts) {
   const parts = [
@@ -84,11 +90,9 @@ function renderCareerProgress() {
   const sub = document.getElementById("career-progress-sub");
   if (!bar || !sub) return;
   const steps = CAREER_STEPS.map((s) => ({ key: s.key, label: s.label, done: !!s.done() }));
-  for (const s of steps) {
-    const cell = bar.querySelector('[data-step="' + s.key + '"]');
-    if (cell) cell.classList.toggle("done", s.done);
-  }
   const summary = careerProgressSummary(steps);
+  const lit = careerProgressFill(summary.doneCount, steps.length);
+  Array.from(bar.children).forEach((cell, i) => cell.classList.toggle("done", !!lit[i]));
   sub.textContent = summary.text;
   bar.setAttribute("aria-label", "Career foundation: " + summary.doneCount + " of " + summary.total + " steps started");
   const box = document.getElementById("career-progress");

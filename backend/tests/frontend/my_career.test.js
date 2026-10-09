@@ -109,6 +109,14 @@ test("career foundation progress is derived from loaded data and explains what i
   assert.strictEqual(all.text, "Complete");
 });
 
+test("the progress bar fills from the left like a meter, not wherever the finished steps happen to sit", () => {
+  const { sandbox } = load("dashboardVisuals.js", reply(200, []));
+  const clean = (v) => JSON.parse(JSON.stringify(v));
+  assert.deepStrictEqual(clean(sandbox.careerProgressFill(0, 6)), [false, false, false, false, false, false]);
+  assert.deepStrictEqual(clean(sandbox.careerProgressFill(4, 6)), [true, true, true, true, false, false]);
+  assert.deepStrictEqual(clean(sandbox.careerProgressFill(6, 6)), [true, true, true, true, true, true]);
+});
+
 test("the status strip summarizes evidence and the avatar initial from loaded data", () => {
   const { sandbox } = load("dashboardVisuals.js", reply(200, []));
   assert.strictEqual(sandbox.careerEvidenceSummary({ roles: 3, education: 2, certifications: 1, skills: 8, languages: 2 }),
