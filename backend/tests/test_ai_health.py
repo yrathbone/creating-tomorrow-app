@@ -157,6 +157,14 @@ class EndpointTests(unittest.TestCase):
                 self.assertIn("api_key_configured", body)
                 self.assertIn("database", body)
 
+    def test_the_health_page_says_how_visitors_are_told_apart_without_showing_any_address(self):
+        with mock.patch.object(main, "check_ai_key", lambda: "ok"):
+            plain = self.client.get("/api/health").json()
+            via_cloudflare = self.client.get("/api/health", headers={"CF-Ray": "abc-ORD", "CF-Connecting-IP": "203.0.113.9"})
+        self.assertEqual(plain["visitor_address_source"], "direct")
+        self.assertEqual(via_cloudflare.json()["visitor_address_source"], "cloudflare")
+        self.assertNotIn("203.0.113.9", via_cloudflare.text)
+
     def test_the_monitor_endpoint_is_200_only_when_the_key_is_accepted(self):
         self.assertEqual(self.get("/api/health/ai", "ok").status_code, 200)
         self.assertEqual(self.get("/api/health/ai", "ok").json(), {"ai_key": "ok"})

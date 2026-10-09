@@ -75,7 +75,7 @@ import mimetypes
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exception_handlers import http_exception_handler
@@ -585,7 +585,7 @@ async def api_generate(req: GenerateRequest):
 
 
 @app.get("/api/health")
-async def health():
+async def health(request: Request):
     database_status = "not_configured"
     if os.environ.get("DATABASE_URL"):
         try:
@@ -599,6 +599,9 @@ async def health():
         "api_key_configured": bool(os.environ.get("ANTHROPIC_API_KEY")),
         "ai_key": await run_in_threadpool(check_ai_key),
         "database": database_status,
+        # Which header the visitor rate limits use to tell visitors apart: "cloudflare" is right for the live site
+        # (no address is ever shown). If this ever reads "direct" on the live site, every visitor would share one allowance.
+        "visitor_address_source": "cloudflare" if request.headers.get("cf-ray") and request.headers.get("cf-connecting-ip") else "direct",
     }
 
 
