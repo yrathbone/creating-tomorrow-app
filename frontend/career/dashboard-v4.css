@@ -252,7 +252,6 @@ body.dashboard-v4 .dashboard-grid > .card .entry-remove-btn { border-radius: 6px
 body.dashboard-v4 .dashboard-grid > .card form button + button,
 body.dashboard-v4 .dashboard-grid > .card div > button + button { margin-left: 0.5rem; }
 body.dashboard-v4 #general-resume-empty .btn-secondary { margin-top: 0; }
-body.dashboard-v4 #export-profile-btn { margin-top: 1rem; }
 
 /* ---------- Inputs ---------- */
 body.dashboard-v4 .dashboard-grid > .card .field span { font-weight: 600; font-size: 0.85rem; color: var(--v4-ink); }
@@ -1115,6 +1114,6 @@ body.dashboard-v4 .feedback-card .hint { max-width: 40rem; }
 body.dashboard-v4 .feedback-card .feedback-btn { margin-top: 0.5rem; }
 
 /* --- Profile downloads: the readable Word copy and the full data backup, side by side --- */
-body.dashboard-v4 .export-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.25rem 0 0.35rem; }
-body.dashboard-v4 .export-row .btn-secondary { margin-top: 0; }
+body.dashboard-v4 .export-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); gap: 0.6rem; max-width: 36rem; margin: 0.25rem 0 0.35rem; }
+body.dashboard-v4 .export-row .btn-secondary { margin-top: 0; width: 100%; min-height: 44px; padding: 0.5rem 1rem; text-align: center; }
 body.dashboard-v4 .export-hint { max-width: 40rem; margin-top: 0.4rem; }
