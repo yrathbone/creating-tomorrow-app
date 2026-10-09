@@ -14,6 +14,10 @@ body.home-v5 {
   /* The reference gold (#f4a900) is only 1.9:1 on the pale gray, too faint for text. This deeper gold is 3.4:1,
      which meets the 3:1 minimum for large text. The gold buttons, rules and underline keep the reference gold. */
   --gold-text: #b87700;
+  /* The headline's second line, matched by eye-dropper to the founder's chosen colour (#e49107). It is brighter than WCAG's
+     3:1 minimum for large text allows (2.3:1 on the pale band), a deliberate brand choice. Used ONLY on that one phrase; every
+     other gold text and icon keeps --gold-text. To make it fully AA, set this to #b87700. */
+  --gold-display: #e49107;
   --white: #ffffff;
   --pale: #f5f7fa;
   /* Reference body gray #66758d is 4.35:1 on the pale gray (needs 4.5:1); this is 4.9:1 and looks the same. */
@@ -123,7 +127,7 @@ body.home-v5 .h5-band-pale { background: var(--pale); }
   letter-spacing: -0.01em;
   color: var(--navy);
 }
-.h5-hero h1 span { display: block; color: var(--gold-text); }
+.h5-hero h1 span { display: block; color: var(--gold-display); }
 .h5-lead { margin: 0 0 2rem; max-width: 31rem; font-size: 1.25rem; line-height: 1.55; color: var(--body); }
 .h5-cta { display: flex; flex-wrap: wrap; gap: 1rem; }
 .h5-free { display: flex; align-items: center; gap: 0.6rem; margin: 1.5rem 0 0; font-size: 1rem; color: var(--body); }

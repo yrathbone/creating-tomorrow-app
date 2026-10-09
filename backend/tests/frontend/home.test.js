@@ -97,7 +97,7 @@ test("the page is seven bands in the reference order: header, pale hero, white s
 test("the hero says what the design says, with the gold second line and the free note right under the buttons", () => {
   assert.match(html, /<p class="h5-eyebrow">Tools today\. Brighter tomorrow\.<\/p>/);
   assert.match(html, /<h1 id="hero-h">See your value\.<br \/><span>Build your future\.<\/span><\/h1>/);
-  assert.match(css, /\.h5-hero h1 span \{[^}]*color: var\(--gold-text\)/);
+  assert.match(css, /\.h5-hero h1 span \{[^}]*color: var\(--gold-display\)/);
   assert.match(html, /<p class="h5-lead">Free career tools to help you build a better tomorrow\.<\/p>/);
   const hero = html.slice(html.indexOf('class="h5-hero"'), html.indexOf('class="h5-hero-photo"'));
   assert.match(hero, /Guide Me <span aria-hidden="true">→<\/span>/);
@@ -196,4 +196,14 @@ test("card descriptions are a few words each, so they stay readable on a phone",
   assert.deepStrictEqual(tools, ["Build your first resume.", "Polish the resume you have.", "Check your fit for a job.", "Find experience you left out.", "Strengthen your LinkedIn.", "Get ready for interviews."]);
   for (const g of guides) assert.ok(g.split(/\s+/).length <= 5, `"${g}" is too long`);
   for (const t of tools) assert.ok(t.split(/\s+/).length <= 6, `"${t}" is too long`);
+});
+
+test("the headline gold is the founder's chosen colour, used on that one phrase only, and its contrast is a recorded choice", () => {
+  assert.strictEqual(token("gold-display").toLowerCase(), "#e49107");
+  const uses = css.match(/var\(--gold-display\)/g) || [];
+  assert.strictEqual(uses.length, 1, "only the headline's second line uses it");
+  // Known and accepted: below the 3:1 AA minimum for large text. If this ever needs to be fully AA, set --gold-display to #b87700.
+  const ratio = contrast(token("gold-display"), token("pale"));
+  assert.ok(ratio > 2.2 && ratio < 3, `recorded contrast ${ratio.toFixed(2)}:1 on the pale band`);
+  assert.ok(contrast(token("gold-text"), token("pale")) >= 3, "every other gold text keeps the accessible gold");
 });
