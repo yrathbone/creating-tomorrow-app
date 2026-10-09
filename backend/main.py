@@ -93,6 +93,7 @@ from profile_review import review_profile, ProfileReviewError
 from prepare import prepare, PrepareError
 from resume_builder import build_resume_bytes, build_match_recap_bytes, build_profile_review_recap_bytes
 from ai_health import check_ai_key, log_at_startup
+from download_names import attachment_headers
 from db import check_connection
 from career.routes import router as career_router
 
@@ -256,11 +257,10 @@ async def api_recap(req: RecapRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to build recap: {e}")
 
-    filename = req.candidate_name.replace(" ", "_") + "_Right_Fit_Recap.docx"
     return Response(
         content=docx_bytes,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers=attachment_headers(req.candidate_name, "_Right_Fit_Recap.docx", fallback="Candidate"),
     )
 
 
@@ -571,11 +571,10 @@ async def api_generate(req: GenerateRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to build resume: {e}")
 
-    filename = req.resume_data.get("name", "Resume").replace(" ", "_") + "_Resume.docx"
     return Response(
         content=docx_bytes,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers=attachment_headers(req.resume_data.get("name"), "_Resume.docx"),
     )
 
 

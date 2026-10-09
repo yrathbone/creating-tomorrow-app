@@ -302,6 +302,23 @@ class Isolation(OwnershipTestCase):
         self.assertNotIn("Role B", text_a)
         self.assertIn("Role A", text_a)
 
+    def test_saved_resume_downloads_for_a_name_with_accents_and_other_alphabets(self):
+        self.onboard(self.a)
+        scan_id, _ = self.seed_history_rows(SUB_A)
+        pid = self.profile_id_for(SUB_A)
+        for name in ("Zoë Müller", "Nguyễn Văn An", "李明"):
+            with self.subTest(name=name), self.Session() as s:
+                row = ResumeVersion(
+                    career_profile_id=pid, scan_history_id=scan_id,
+                    resume_data={"name": name, "contact": "x@example.com", "summary": "", "skills": [], "experience": [], "education": [], "certifications": []},
+                )
+                s.add(row)
+                s.commit()
+                res = self.call("GET", f"/resume-versions/{row.id}/download", self.a)
+                self.assertEqual(res.status_code, 200, "the name must never turn a download into a server error")
+                self.assertEqual(res.content[:2], b"PK")
+                res.headers["content-disposition"].encode("ascii")
+
     def test_readable_copy_only_contains_the_callers_own_records(self):
         import io
         from docx import Document

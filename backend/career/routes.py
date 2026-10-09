@@ -38,6 +38,7 @@ from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
 from models import Application, CareerProfile, Certification, Education, Experience, Language, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
+from download_names import attachment_headers
 from profile_copy import build_profile_copy_bytes
 from resume_builder import build_resume_bytes
 
@@ -1389,11 +1390,10 @@ async def download_resume_version(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to build resume: {e}")
 
-    filename = (entry.resume_data.get("name") or "Resume").replace(" ", "_") + "_Resume.docx"
     return Response(
         content=docx_bytes,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers=attachment_headers(entry.resume_data.get("name"), "_Resume.docx"),
     )
 
 
