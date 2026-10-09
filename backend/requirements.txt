@@ -2,7 +2,7 @@
 # These are the versions Render installed for the live site on 2026-10-09. To upgrade: change one line, run the
 # tests (they run automatically on GitHub), then push. GitHub's Dependabot opens a pull request when a newer one exists.
 fastapi==0.139.0
-uvicorn[standard]==0.51.0
+uvicorn[standard]==0.54.0
 python-multipart==0.0.32
 python-docx==1.2.0
 pypdf==6.19.0
