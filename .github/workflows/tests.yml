@@ -23,12 +23,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: backend/requirements*.txt
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install the exact libraries the live site uses
-        run: pip install -r backend/requirements.txt
+      - name: Install the exact libraries the live site uses (plus the test-only ones)
+        run: pip install -r backend/requirements-dev.txt
       - name: Back-end tests
         working-directory: backend
         run: python -m unittest discover -s tests -t .

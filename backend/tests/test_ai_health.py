@@ -8,7 +8,10 @@ import unittest
 from unittest import mock
 
 import anthropic
-import httpx
+try:  # the pinned AI library uses httpx2; older setups still have httpx
+    import httpx2 as httpx
+except ImportError:
+    import httpx
 from fastapi.testclient import TestClient
 
 import ai_health

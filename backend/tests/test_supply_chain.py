@@ -37,7 +37,8 @@ class AutomaticTests(unittest.TestCase):
         self.assertIn("pull_request:", wf)
         self.assertIn("python -m unittest discover -s tests -t .", wf)
         self.assertIn("node --test backend/tests/frontend/*.test.js", wf)
-        self.assertIn("pip install -r backend/requirements.txt", wf, "the tests run against the same pinned libraries as the live site")
+        self.assertIn("pip install -r backend/requirements-dev.txt", wf)
+        self.assertIn("-r requirements.txt", read("backend", "requirements-dev.txt"), "the tests run against the same pinned libraries as the live site")
         self.assertIn("contents: read", wf, "the workflow gets read-only access")
 
     def test_both_python_versions_are_tested(self):
