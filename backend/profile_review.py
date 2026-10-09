@@ -32,7 +32,7 @@ import os
 
 import anthropic
 
-from llm_utils import log_usage
+from llm_utils import describe_provider_error, log_usage
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
@@ -278,7 +278,7 @@ def review_profile(images: list, pasted_text: str, pdf_text: str, resume_text: s
                 messages=[{"role": "user", "content": attempt_content}],
             )
         except anthropic.APIError as e:
-            _diagnose("provider_error")
+            _diagnose("provider_error " + describe_provider_error(e))
             raise ProfileReviewError("We couldn't complete this review right now. Please try again.") from e
 
         log_usage("spotlight", response)

@@ -22,7 +22,7 @@ import os
 
 import anthropic
 
-from llm_utils import log_usage
+from llm_utils import describe_provider_error, log_usage
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
@@ -214,7 +214,7 @@ def prepare(job_description: str, resume_text: str = "") -> dict:
                 messages=[{"role": "user", "content": prompt_for_this_attempt}],
             )
         except anthropic.APIError as e:
-            _diagnose("provider_error")
+            _diagnose("provider_error " + describe_provider_error(e))
             raise PrepareError("We couldn't prepare your interview prep right now. Please try again.") from e
 
         log_usage("prepare", response)

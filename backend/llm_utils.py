@@ -25,6 +25,19 @@ def log_usage(tool_name: str, response) -> None:
     )
 
 
+def describe_provider_error(e) -> str:
+    """One short line for the server log when a call to the AI service fails, so a failure can be told apart
+    (out of credit, rate limit, busy, bad model name, bad key...) without guessing. It holds the error class, the
+    HTTP status, the service's own error type and its first words, and the request id: never anything we sent it."""
+    body = getattr(e, "body", None)
+    err = body.get("error") if isinstance(body, dict) and isinstance(body.get("error"), dict) else {}
+    message = " ".join(str(err.get("message") or getattr(e, "message", "") or "").split())[:160]
+    return (
+        f"class={type(e).__name__} status={getattr(e, 'status_code', '?')} "
+        f"type={err.get('type', '?')} request_id={getattr(e, 'request_id', None) or '?'} message=\"{message}\""
+    )
+
+
 def extract_final_text(response) -> str:
     """Concatenate every text-type content block, in order, skipping
     thinking/tool-use/tool-result blocks. Web search in particular can

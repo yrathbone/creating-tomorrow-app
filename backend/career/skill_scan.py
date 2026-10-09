@@ -25,7 +25,7 @@ import os
 
 import anthropic
 
-from llm_utils import log_usage
+from llm_utils import describe_provider_error, log_usage
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 MAX_TOKENS = 16000
@@ -126,7 +126,7 @@ def start_skill_scan(profile_text: str) -> dict:
                 messages=[{"role": "user", "content": prompt_for_this_attempt}],
             )
         except anthropic.APIError as e:
-            _diagnose("provider_error")
+            _diagnose("provider_error " + describe_provider_error(e))
             raise SkillScanError("We couldn't run that scan right now. Please try again.") from e
 
         log_usage("career_skill_scan", response)

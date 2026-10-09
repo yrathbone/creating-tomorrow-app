@@ -30,7 +30,7 @@ import os
 
 import anthropic
 
-from llm_utils import log_usage
+from llm_utils import describe_provider_error, log_usage
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
@@ -143,7 +143,7 @@ def restructure_resume(resume_text: str) -> dict:
                 messages=[{"role": "user", "content": prompt_for_this_attempt}],
             )
         except anthropic.APIError as e:
-            _diagnose("provider_error")
+            _diagnose("provider_error " + describe_provider_error(e))
             raise ResumeIngestionError("We couldn't process that resume right now. Please try again.") from e
 
         log_usage("resume_ingestion", response)

@@ -26,7 +26,7 @@ import os
 
 import anthropic
 
-from llm_utils import log_usage
+from llm_utils import describe_provider_error, log_usage
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 MAX_TOKENS = 16000
@@ -375,7 +375,7 @@ def _call_with_retry(label: str, system_prompt: str, user_prompt: str, tool: dic
                 messages=[{"role": "user", "content": prompt_for_this_attempt}],
             )
         except anthropic.APIError as e:
-            _diagnose("provider_error")
+            _diagnose("provider_error " + describe_provider_error(e))
             raise JobMatchError("We couldn't complete this comparison right now. Please try again.") from e
 
         log_usage(label, response)

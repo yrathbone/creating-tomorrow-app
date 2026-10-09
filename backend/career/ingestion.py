@@ -30,7 +30,7 @@ import os
 import anthropic
 
 from elevate import discover, ElevateError  # noqa: F401 - re-exported for career/routes.py
-from llm_utils import log_usage
+from llm_utils import describe_provider_error, log_usage
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 MAX_TOKENS = 16000
@@ -232,7 +232,7 @@ def start_resume_review(resume_text: str, pdf_document_b64: str | None = None) -
                 messages=[{"role": "user", "content": content}],
             )
         except anthropic.APIError as e:
-            _diagnose("provider_error")
+            _diagnose("provider_error " + describe_provider_error(e))
             raise IngestionError("We couldn't process that resume right now. Please try again.") from e
 
         log_usage("career_resume_start", response)
