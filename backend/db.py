@@ -82,3 +82,17 @@ def check_connection() -> None:
         session.execute(text("SELECT 1"))
     finally:
         session.close()
+
+
+def release_db_connection(db: Session) -> None:
+    """Hand the database connection back to the pool before a slow call (an AI call can take 10 to 90 seconds).
+
+    A session that has run even one query keeps its connection until the request ends. The pool is small (3, plus 2
+    overflow), so about five signed-in AI requests at once used every connection and the next request, even a simple
+    one, waited and failed (risk-audit finding F-04). Ending the read-only transaction returns the connection; the
+    session opens a new one by itself the next time it is used. If there are unsaved changes, nothing is done, so
+    work in progress is never thrown away.
+    """
+    if db.new or db.dirty or db.deleted:
+        return
+    db.rollback()

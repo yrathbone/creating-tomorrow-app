@@ -84,7 +84,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from extractor import extract_text
+from extractor import extract_text_async
 from coach import analyze, CoachError
 from scratch import draft_entry, finalize, ScratchError
 from upgrade import upgrade, UpgradeError
@@ -92,6 +92,9 @@ from elevate import analyze_for_discovery, discover, finalize_elevate, ElevateEr
 from profile_review import review_profile, ProfileReviewError
 from prepare import prepare, PrepareError
 from resume_builder import build_resume_bytes, build_match_recap_bytes, build_profile_review_recap_bytes
+from limits import BoundedDict, BoundedList, Long, Short, Tiny
+from errors import internal_error
+from abuse_guard import AbuseGuardMiddleware
 from ai_health import check_ai_key, log_at_startup
 from download_names import attachment_headers
 from db import check_connection
@@ -105,6 +108,9 @@ async def lifespan(_app):
 
 app = FastAPI(title="Creating Tomorrow API", lifespan=lifespan)
 app.include_router(career_router, prefix="/api/career")
+
+# Innermost on purpose: its 413/429/503 answers still pick up the security headers and CORS headers added by the layers around it.
+app.add_middleware(AbuseGuardMiddleware)
 
 # Only needed if the frontend is ever served from a different origin than
 # the API (e.g. local dev with a separate dev server - .claude/launch.json's
@@ -214,7 +220,7 @@ async def api_analyze(
         raise HTTPException(status_code=413, detail="File too large (5 MB max).")
 
     try:
-        resume_text = extract_text(resume_file.filename, content)
+        resume_text = await extract_text_async(resume_file.filename, content)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -235,14 +241,14 @@ async def api_analyze(
     except CoachError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
 
 class RecapRequest(BaseModel):
-    match_report: dict
-    candidate_name: str = "Candidate"
+    match_report: BoundedDict
+    candidate_name: Short = "Candidate"
 
 
 @app.post("/api/recap")
@@ -255,7 +261,7 @@ async def api_recap(req: RecapRequest):
     try:
         docx_bytes = build_match_recap_bytes(req.match_report, req.candidate_name)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to build recap: {e}")
+        raise internal_error(e, "build document")
 
     return Response(
         content=docx_bytes,
@@ -271,7 +277,7 @@ async def api_refine(resume_file: UploadFile = File(...)):
         raise HTTPException(status_code=413, detail="File too large (5 MB max).")
 
     try:
-        resume_text = extract_text(resume_file.filename, content)
+        resume_text = await extract_text_async(resume_file.filename, content)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -283,7 +289,7 @@ async def api_refine(resume_file: UploadFile = File(...)):
     except UpgradeError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
@@ -295,7 +301,7 @@ async def api_elevate_start(resume_file: UploadFile = File(...)):
         raise HTTPException(status_code=413, detail="File too large (5 MB max).")
 
     try:
-        resume_text = extract_text(resume_file.filename, content)
+        resume_text = await extract_text_async(resume_file.filename, content)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -307,15 +313,15 @@ async def api_elevate_start(resume_file: UploadFile = File(...)):
     except ElevateError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
 
 class ElevateDiscoverRequest(BaseModel):
-    resume_data: dict
-    categories: list = []
-    history: list = []
+    resume_data: BoundedDict
+    categories: BoundedList = []
+    history: BoundedList = []
     force_finish: bool = False
     round_number: int = 1
 
@@ -329,14 +335,14 @@ async def api_elevate_discover(req: ElevateDiscoverRequest):
     except ElevateError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
 
 class ElevateFinalizeRequest(BaseModel):
-    resume_data: dict
-    confirmed_facts: list = []
+    resume_data: BoundedDict
+    confirmed_facts: BoundedList = []
 
 
 @app.post("/api/elevate-finalize")
@@ -346,7 +352,7 @@ async def api_elevate_finalize(req: ElevateFinalizeRequest):
     except ElevateError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
@@ -399,7 +405,7 @@ async def api_profile_review(
         if len(pdf_bytes) > MAX_PDF_BYTES:
             raise HTTPException(status_code=413, detail="That PDF is too large (20 MB max).")
         try:
-            pdf_text = extract_text(profile_pdf.filename, pdf_bytes)
+            pdf_text = await extract_text_async(profile_pdf.filename, pdf_bytes)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
         if not pdf_text.strip():
@@ -436,7 +442,7 @@ async def api_profile_review(
         if len(resume_bytes) > MAX_UPLOAD_BYTES:
             raise HTTPException(status_code=413, detail="That resume file is too large (5 MB max).")
         try:
-            resume_text = extract_text(resume_file.filename, resume_bytes)
+            resume_text = await extract_text_async(resume_file.filename, resume_bytes)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -445,13 +451,13 @@ async def api_profile_review(
     except ProfileReviewError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
 
 class SpotlightRecapRequest(BaseModel):
-    review: dict
+    review: BoundedDict
 
 
 @app.post("/api/spotlight-recap")
@@ -459,7 +465,7 @@ async def api_spotlight_recap(req: SpotlightRecapRequest):
     try:
         docx_bytes = build_profile_review_recap_bytes(req.review)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to build report: {e}")
+        raise internal_error(e, "build document")
 
     return Response(
         content=docx_bytes,
@@ -493,7 +499,7 @@ async def api_prepare(
         if len(content) > MAX_UPLOAD_BYTES:
             raise HTTPException(status_code=413, detail="That resume file is too large (5 MB max).")
         try:
-            resume_text = extract_text(resume_file.filename, content)
+            resume_text = await extract_text_async(resume_file.filename, content)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
         if not resume_text.strip():
@@ -504,17 +510,17 @@ async def api_prepare(
     except PrepareError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
 
 class ScratchEntryRequest(BaseModel):
-    entry_type: str  # "work" | "volunteer" | "school"
-    title: str
-    organization: str
-    dates: str
-    description: str
+    entry_type: Tiny  # "work" | "volunteer" | "school"
+    title: Short
+    organization: Short
+    dates: Short
+    description: Long
 
 
 @app.post("/api/scratch-entry")
@@ -529,16 +535,16 @@ async def api_scratch_entry(req: ScratchEntryRequest):
     except ScratchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
 
 class ScratchFinalizeRequest(BaseModel):
-    name: str
-    experience: list
-    education: list
-    existing_skills: list = []
+    name: Short
+    experience: BoundedList
+    education: BoundedList
+    existing_skills: BoundedList = []
 
 
 @app.post("/api/scratch-finalize")
@@ -548,15 +554,15 @@ async def api_scratch_finalize(req: ScratchFinalizeRequest):
     except ScratchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
 
 class GenerateRequest(BaseModel):
-    resume_data: dict
+    resume_data: BoundedDict
     ats_mode: bool = False
-    template: str = "classic"  # "classic" | "modern" | "traditional"; anything else quietly means classic
+    template: Tiny = "classic"  # "classic" | "modern" | "traditional"; anything else quietly means classic
 
 
 @app.post("/api/generate")
@@ -569,7 +575,7 @@ async def api_generate(req: GenerateRequest):
     try:
         docx_bytes = build_resume_bytes(req.resume_data, ats_mode=req.ats_mode, template=req.template)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to build resume: {e}")
+        raise internal_error(e, "build document")
 
     return Response(
         content=docx_bytes,

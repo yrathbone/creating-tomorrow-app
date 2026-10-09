@@ -1,16 +1,17 @@
+# Exact versions, so a new release of any library can never change the live site by surprise (risk-audit finding F-13).
+# These are the versions Render installed for the live site on 2026-10-09. To upgrade: change one line, run the
+# tests (they run automatically on GitHub), then push. GitHub's Dependabot opens a pull request when a newer one exists.
 fastapi==0.139.0
 uvicorn[standard]==0.51.0
-python-multipart
-python-docx
-pypdf
-ftfy
-anthropic
-pydantic
+python-multipart==0.0.32
+python-docx==1.2.0
+pypdf==6.19.0
+ftfy==6.3.1
+anthropic==1.12.1
+pydantic==2.14.0
 
-# Added for Career Profile Phase 0 (docs/CAREER_PROFILE_ARCHITECTURE_AUDIT.md).
-# Not yet imported/used by any route - see backend/resume_ingestion.py and
-# the Phase 0 completion report for what's actually wired up so far.
-sqlalchemy==2.0.*
-alembic==1.*
-psycopg[binary]
-python-jose[cryptography]
+# Career Profile (docs/CAREER_PROFILE_ARCHITECTURE_AUDIT.md)
+sqlalchemy==2.0.54
+alembic==1.20.0
+psycopg[binary]==3.3.6
+python-jose[cryptography]==3.5.0

@@ -23,7 +23,7 @@ from datetime import date, datetime, timezone
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import inspect
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
@@ -35,9 +35,12 @@ from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
-from db import get_db_session
-from extractor import extract_text
+from db import get_db_session, release_db_connection
+from extractor import extract_text_async
 from models import Application, CareerProfile, Certification, Education, Experience, Language, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
+from limits import BoundedDict, BoundedDictList, BoundedList, Long, Medium, Short, Tiny
+from errors import internal_error
+from abuse_guard import user_ai_guard
 from download_names import attachment_headers
 from profile_copy import build_profile_copy_bytes
 from resume_builder import build_resume_bytes
@@ -110,12 +113,12 @@ async def give_consent(
 
 
 class ExperienceIn(BaseModel):
-    title: str
-    organization: str
-    location: str | None = None
-    start_date: str | None = None
-    end_date: str | None = None
-    description: str | None = None
+    title: Short
+    organization: Short
+    location: Short | None = None
+    start_date: Tiny | None = None
+    end_date: Tiny | None = None
+    description: Long | None = None
 
 
 def _experience_to_dict(e: Experience) -> dict:
@@ -220,10 +223,10 @@ async def delete_experience(
 
 
 class EducationIn(BaseModel):
-    institution: str
-    degree: str | None = None
-    field_of_study: str | None = None
-    graduation_date: str | None = None
+    institution: Short
+    degree: Short | None = None
+    field_of_study: Short | None = None
+    graduation_date: Tiny | None = None
 
 
 def _education_to_dict(e: Education) -> dict:
@@ -318,9 +321,9 @@ async def delete_education(
 
 
 class CertificationIn(BaseModel):
-    name: str
-    issuer: str | None = None
-    date: str | None = None
+    name: Short
+    issuer: Short | None = None
+    date: Tiny | None = None
 
 
 def _certification_to_dict(c: Certification) -> dict:
@@ -412,8 +415,8 @@ async def delete_certification(
 
 
 class SkillIn(BaseModel):
-    name: str
-    source_text: str | None = None
+    name: Short
+    source_text: Medium | None = None
     experience_id: int | None = None
 
 
@@ -481,7 +484,7 @@ async def list_skills(
     return [_skill_to_dict(s) for s in entries]
 
 
-@router.post("/skills-tidy-suggest")
+@router.post("/skills-tidy-suggest", dependencies=[Depends(user_ai_guard)])
 async def suggest_skill_tidy(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
@@ -495,12 +498,13 @@ async def suggest_skill_tidy(
     if not candidates:
         return {"suggestions": []}
 
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         keywords = await run_in_threadpool(suggest_skill_keywords, candidates)
     except JobMatchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     suggestions = []
     for s in candidates:
@@ -605,7 +609,7 @@ async def discard_resume_draft(
     return {"discarded": True}
 
 
-@router.post("/resume-start")
+@router.post("/resume-start", dependencies=[Depends(user_ai_guard)])
 async def resume_start(
     resume_file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
@@ -617,7 +621,7 @@ async def resume_start(
         raise HTTPException(status_code=413, detail="File too large (20 MB max for a PDF, 5 MB for other files).")
 
     try:
-        resume_text = extract_text(resume_file.filename, content)
+        resume_text = await extract_text_async(resume_file.filename, content)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -628,12 +632,13 @@ async def resume_start(
         # A PDF made of page images (e.g. a page printed to PDF): the AI reads the pages instead.
         pdf_document_b64 = base64.b64encode(content).decode("ascii")
 
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(start_resume_review, resume_text, pdf_document_b64)
     except IngestionError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     profile = get_career_profile_or_404(db, current_user)
     draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
@@ -655,19 +660,20 @@ async def resume_start(
 
 
 class ResumeDiscoverRequest(BaseModel):
-    resume_data: dict
-    categories: list = []
-    history: list = []
+    resume_data: BoundedDict
+    categories: BoundedList = []
+    history: BoundedList = []
     force_finish: bool = False
     round_number: int = 1
 
 
-@router.post("/resume-discover")
+@router.post("/resume-discover", dependencies=[Depends(user_ai_guard)])
 async def resume_discover(
     req: ResumeDiscoverRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
 ):
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(
             discover, req.resume_data, req.categories, req.history, req.force_finish, req.round_number
@@ -675,7 +681,7 @@ async def resume_discover(
     except ElevateError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     profile = get_career_profile_or_404(db, current_user)
     draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
@@ -694,15 +700,15 @@ async def resume_discover(
 
 
 class ConfirmedFactAssignment(BaseModel):
-    bullet_text: str
+    bullet_text: Medium
     role_index: int  # which entry in roles[] this fact's bullet attaches to
 
 
 class ResumeSaveRequest(BaseModel):
-    roles: list[dict]
-    education: list[dict] = []
-    certifications: list[dict] = []
-    confirmed_facts: list[ConfirmedFactAssignment] = []
+    roles: BoundedDictList
+    education: BoundedDictList = []
+    certifications: BoundedDictList = []
+    confirmed_facts: list[ConfirmedFactAssignment] = Field(default_factory=list, max_length=500)
 
 
 @router.post("/resume-save")
@@ -917,7 +923,7 @@ class JobCompareRequest(BaseModel):
     job_description: str
 
 
-@router.post("/job-compare")
+@router.post("/job-compare", dependencies=[Depends(user_ai_guard)])
 async def job_compare(
     req: JobCompareRequest,
     current_user: User = Depends(get_current_user),
@@ -934,12 +940,13 @@ async def job_compare(
     profile = get_career_profile_or_404(db, current_user)
     profile_text = _build_profile_text(db, profile)
 
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(compare_to_job, profile_text, job_description)
     except JobMatchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     job_title = (result.get("job_title") or "").strip() or None
     # Computed in code from the requirement lists (None if the model omitted the met list).
@@ -968,7 +975,7 @@ async def job_compare(
 
 
 class LinkedInSkillCompareRequest(BaseModel):
-    review: dict
+    review: BoundedDict
 
 
 @router.post("/linkedin-skill-compare")
@@ -987,8 +994,8 @@ async def linkedin_skill_compare(
 
 
 class JobFitRequest(BaseModel):
-    match_report: dict
-    confirmed_facts: list[dict] = []
+    match_report: BoundedDict
+    confirmed_facts: BoundedDictList = []
 
 
 @router.post("/job-fit")
@@ -1003,10 +1010,10 @@ async def job_fit(
 
 class JobKeywordCheckRequest(BaseModel):
     job_description: str
-    confirmed_facts: list[dict] = []
+    confirmed_facts: BoundedDictList = []
 
 
-@router.post("/job-keyword-check")
+@router.post("/job-keyword-check", dependencies=[Depends(user_ai_guard)])
 async def job_keyword_check(
     req: JobKeywordCheckRequest,
     current_user: User = Depends(get_current_user),
@@ -1024,27 +1031,30 @@ async def job_keyword_check(
     profile = get_career_profile_or_404(db, current_user)
     profile_text = _build_profile_text(db, profile)
 
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         return await run_in_threadpool(keyword_check, profile_text, req.confirmed_facts, job_description)
     except JobMatchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
 
 class JobDiscoverRequest(BaseModel):
-    resume_data: dict
-    categories: list = []
-    history: list = []
+    resume_data: BoundedDict
+    categories: BoundedList = []
+    history: BoundedList = []
     force_finish: bool = False
     round_number: int = 1
 
 
-@router.post("/job-discover")
+@router.post("/job-discover", dependencies=[Depends(user_ai_guard)])
 async def job_discover(
     req: JobDiscoverRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
 ):
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(
             discover, req.resume_data, req.categories, req.history, req.force_finish, req.round_number
@@ -1052,18 +1062,18 @@ async def job_discover(
     except ElevateError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     return result
 
 
 class JobBuildResumeRequest(BaseModel):
     job_description: str
-    confirmed_facts: list[dict] = []
-    name: str
-    contact: str
+    confirmed_facts: BoundedDictList = []
+    name: Short
+    contact: Short
     scan_history_id: int | None = None
-    qa_history: list[dict] = []
+    qa_history: BoundedDictList = []
 
 
 def _validate_scan_history_id(db: Session, profile: CareerProfile, scan_history_id: int | None) -> ScanHistory | None:
@@ -1083,7 +1093,7 @@ def _validate_scan_history_id(db: Session, profile: CareerProfile, scan_history_
     return scan
 
 
-@router.post("/job-build-resume")
+@router.post("/job-build-resume", dependencies=[Depends(user_ai_guard)])
 async def job_build_resume(
     req: JobBuildResumeRequest,
     current_user: User = Depends(get_current_user),
@@ -1096,6 +1106,7 @@ async def job_build_resume(
     scan = _validate_scan_history_id(db, profile, req.scan_history_id)
     profile_text = _build_profile_text(db, profile)
 
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(
             build_checked_resume, profile_text, req.job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
@@ -1103,7 +1114,7 @@ async def job_build_resume(
     except JobMatchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     # role_selection is kept with the saved resume so what was left off stays
     # visible later; skills_style "grouped" makes the .docx print the compact
@@ -1136,11 +1147,11 @@ async def job_build_resume(
 
 
 class GeneralResumeRequest(BaseModel):
-    name: str
-    contact: str
+    name: Short
+    contact: Short
 
 
-@router.post("/build-general-resume")
+@router.post("/build-general-resume", dependencies=[Depends(user_ai_guard)])
 async def build_general_resume_route(
     req: GeneralResumeRequest,
     current_user: User = Depends(get_current_user),
@@ -1152,12 +1163,13 @@ async def build_general_resume_route(
     profile = get_career_profile_or_404(db, current_user)
     profile_text = _build_profile_text(db, profile)
 
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(build_general_resume, profile_text, req.name.strip(), req.contact.strip())
     except JobMatchError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     result["resume_data"] = dedupe_skills(result["resume_data"])
     version = ResumeVersion(
@@ -1179,7 +1191,7 @@ async def build_general_resume_route(
 # gap-finding triggered it, it only ever sees categories/history/
 # questions as opaque context.
 
-@router.post("/skill-scan")
+@router.post("/skill-scan", dependencies=[Depends(user_ai_guard)])
 async def skill_scan(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
@@ -1187,12 +1199,13 @@ async def skill_scan(
     profile = get_career_profile_or_404(db, current_user)
     profile_text = _build_profile_text(db, profile)
 
+    release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(start_skill_scan, profile_text)
     except SkillScanError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {type(e).__name__}: {e}")
+        raise internal_error(e)
 
     scan_history_id = None
     questions = result.get("questions") or []
@@ -1217,15 +1230,15 @@ async def skill_scan(
 
 
 class SkillScanFactAssignment(BaseModel):
-    name: str
-    source_text: str = ""
+    name: Short
+    source_text: Medium = ""
     experience_id: int | None = None  # None = not tied to one specific role - never guessed, always the candidate's own choice
 
 
 class SkillScanSaveRequest(BaseModel):
-    confirmed_facts: list[SkillScanFactAssignment] = []
-    analysis_summary: str = ""
-    categories: list[str] = []
+    confirmed_facts: list[SkillScanFactAssignment] = Field(default_factory=list, max_length=500)
+    analysis_summary: Long = ""
+    categories: list[Short] = Field(default_factory=list, max_length=100)
 
 
 @router.post("/skill-scan-save")
@@ -1388,7 +1401,7 @@ async def download_resume_version(
     try:
         docx_bytes = build_resume_bytes(entry.resume_data, ats_mode=ats_mode, template=template or _preferred_layout(db, profile))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to build resume: {e}")
+        raise internal_error(e, "build document")
 
     return Response(
         content=docx_bytes,
@@ -1407,11 +1420,11 @@ _ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 class ApplicationIn(BaseModel):
-    job_title: str
-    company: str | None = None
-    applied_on: str | None = None
-    status: str = "applied"
-    notes: str | None = None
+    job_title: Short
+    company: Short | None = None
+    applied_on: Tiny | None = None
+    status: Tiny = "applied"
+    notes: Long | None = None
     scan_history_id: int | None = None
     resume_version_id: int | None = None
 
@@ -1623,8 +1636,8 @@ async def update_resume_layout(
 # --- Languages (migration 0008) ------------------------------------------------
 
 class LanguageIn(BaseModel):
-    name: str
-    proficiency: str | None = None
+    name: Short
+    proficiency: Tiny | None = None
 
 
 def _language_to_dict(entry: Language) -> dict:
@@ -1798,7 +1811,7 @@ async def export_career_profile_readable(
 
 
 class DeleteAccountIn(BaseModel):
-    confirm: str
+    confirm: Tiny
 
 
 DELETE_CONFIRM_WORD = "DELETE"

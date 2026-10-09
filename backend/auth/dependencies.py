@@ -15,6 +15,7 @@ is checked explicitly instead - both per Deliverable C's verified design.
 """
 import json
 import os
+import time
 import urllib.request
 
 from fastapi import Depends, HTTPException
@@ -33,6 +34,14 @@ COGNITO_APP_CLIENT_ID = os.environ.get("COGNITO_APP_CLIENT_ID")
 _bearer = HTTPBearer(auto_error=True)
 
 _jwks_cache: dict | None = None
+_jwks_fetched_at: float | None = None      # when the key list was last fetched (None: planted by hand, never expires)
+_jwks_last_attempt: float | None = None    # when we last tried to fetch (success or not)
+_unknown_kids: dict[str, float] = {}       # key ids we looked for and did not find, and when
+
+JWKS_MAX_AGE_SECONDS = 6 * 3600     # re-read Cognito's key list at least this often
+JWKS_MIN_REFETCH_SECONDS = 60       # never ask Cognito again sooner than this because of an unknown key id
+UNKNOWN_KID_SECONDS = 300           # remember "not found" for a key id this long
+MAX_REMEMBERED_UNKNOWN_KIDS = 1000
 
 
 def _issuer() -> str:
@@ -45,18 +54,45 @@ def _fetch_jwks() -> dict:
         return json.loads(response.read())
 
 
-def _get_signing_key(kid: str) -> dict:
-    global _jwks_cache
-    if _jwks_cache is None:
+def _refresh_jwks() -> None:
+    """Fetch Cognito's published keys. If that fails and we already have keys, keep using them (a short outage must not sign everyone out)."""
+    global _jwks_cache, _jwks_fetched_at, _jwks_last_attempt
+    _jwks_last_attempt = time.monotonic()
+    try:
         _jwks_cache = _fetch_jwks()
-    for key in _jwks_cache.get("keys", []):
+        _jwks_fetched_at = _jwks_last_attempt
+    except Exception:
+        if _jwks_cache is None:
+            raise HTTPException(status_code=503, detail="Couldn't reach the sign-in service. Please try again in a moment.")
+
+
+def _find_key(kid: str) -> dict | None:
+    for key in (_jwks_cache or {}).get("keys", []):
         if key.get("kid") == kid:
             return key
-    # kid not found - could be genuine key rotation, refetch once before giving up.
-    _jwks_cache = _fetch_jwks()
-    for key in _jwks_cache.get("keys", []):
-        if key.get("kid") == kid:
+    return None
+
+
+def _get_signing_key(kid: str) -> dict:
+    """The public key for a token's key id. Cached; an unknown id triggers at most one refetch a minute, and is remembered
+    as unknown for a few minutes, so forged tokens cannot make this server hammer Cognito (risk-audit finding F-06)."""
+    now = time.monotonic()
+    if _jwks_cache is None or (_jwks_fetched_at is not None and now - _jwks_fetched_at > JWKS_MAX_AGE_SECONDS):
+        _refresh_jwks()
+    key = _find_key(kid)
+    if key:
+        return key
+    if now - _unknown_kids.get(kid, -1e9) < UNKNOWN_KID_SECONDS:
+        raise JWTError("Signing key not found in Cognito's published JWKS.")
+    # could be genuine key rotation: refetch, but not more than once a minute
+    if _jwks_last_attempt is None or now - _jwks_last_attempt >= JWKS_MIN_REFETCH_SECONDS:
+        _refresh_jwks()
+        key = _find_key(kid)
+        if key:
             return key
+    if len(_unknown_kids) >= MAX_REMEMBERED_UNKNOWN_KIDS:
+        _unknown_kids.clear()
+    _unknown_kids[kid] = now
     raise JWTError("Signing key not found in Cognito's published JWKS.")
 
 

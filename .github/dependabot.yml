@@ -1,0 +1,13 @@
+# GitHub opens a pull request (never changes anything by itself) when a library or an action we use has a newer version,
+# including security fixes. The tests run on each one automatically.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

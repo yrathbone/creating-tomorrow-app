@@ -1,0 +1,36 @@
+# Runs every automated test on every push and pull request, so a broken change is seen before (or right after) it goes live.
+# Two Python versions: 3.12 (what the founder develops on) and 3.14 (what Render builds the live site with).
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install the exact libraries the live site uses
+        run: pip install -r backend/requirements.txt
+      - name: Back-end tests
+        working-directory: backend
+        run: python -m unittest discover -s tests -t .
+      - name: Front-end tests
+        run: node --test backend/tests/frontend/*.test.js

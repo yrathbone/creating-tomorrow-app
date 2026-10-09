@@ -4,14 +4,35 @@ Pulls plain text out of an uploaded old resume (.docx, .pdf, or .txt).
 Works on in-memory file-like objects (BytesIO from an upload) rather than
 disk paths, since this runs inside a web request.
 """
+import asyncio
 import io
+import zipfile
 
 import ftfy
+from starlette.concurrency import run_in_threadpool
+
+# Uploaded files are untrusted. A small .docx can unpack to gigabytes (a "zip bomb") and a PDF can have thousands of pages;
+# either would tie up the server. These caps are far above any real resume or LinkedIn export.
+MAX_DOCX_UNPACKED_BYTES = 100 * 1024 * 1024
+MAX_DOCX_ENTRIES = 3000
+MAX_PDF_PAGES = 150
+EXTRACT_TIMEOUT_SECONDS = 30
+
+
+def _refuse_if_zip_bomb(content: bytes) -> None:
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as z:
+            infos = z.infolist()
+    except zipfile.BadZipFile:
+        return  # python-docx will report it as an unreadable file
+    if len(infos) > MAX_DOCX_ENTRIES or sum(i.file_size for i in infos) > MAX_DOCX_UNPACKED_BYTES:
+        raise ValueError("That Word file is too large or complex to read. Try saving it again as a simpler file.")
 
 
 def extract_docx_text(file_obj: io.BytesIO) -> str:
     from docx import Document
 
+    _refuse_if_zip_bomb(file_obj.getvalue())
     doc = Document(file_obj)
     lines = []
     for para in doc.paragraphs:
@@ -31,6 +52,8 @@ def extract_pdf_text(file_obj: io.BytesIO) -> str:
     from pypdf import PdfReader
 
     reader = PdfReader(file_obj)
+    if len(reader.pages) > MAX_PDF_PAGES:
+        raise ValueError(f"That PDF has too many pages to read (more than {MAX_PDF_PAGES}).")
     lines = []
     for page in reader.pages:
         text = page.extract_text() or ""
@@ -75,3 +98,11 @@ def extract_text(filename: str, content: bytes) -> str:
     # (e.g. an em-dash becomes "â€"") even though pypdf itself decoded the
     # PDF correctly - ftfy detects and reverses this encoding mismatch.
     return ftfy.fix_text(text)
+
+
+async def extract_text_async(filename: str, content: bytes) -> str:
+    """extract_text on a worker thread, so a slow or heavy file cannot freeze every other visitor, with a time limit."""
+    try:
+        return await asyncio.wait_for(run_in_threadpool(extract_text, filename, content), EXTRACT_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        raise ValueError("That file took too long to read. Try a smaller or simpler file.") from None
