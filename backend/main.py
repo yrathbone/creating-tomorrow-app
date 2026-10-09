@@ -70,8 +70,10 @@ call in Starlette's worker thread pool instead, freeing the event loop to
 handle other requests while it's in flight.
 """
 import base64
+import json
 import mimetypes
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.concurrency import run_in_threadpool
@@ -90,10 +92,17 @@ from elevate import analyze_for_discovery, discover, finalize_elevate, ElevateEr
 from profile_review import review_profile, ProfileReviewError
 from prepare import prepare, PrepareError
 from resume_builder import build_resume_bytes, build_match_recap_bytes, build_profile_review_recap_bytes
+from ai_health import check_ai_key, log_at_startup
 from db import check_connection
 from career.routes import router as career_router
 
-app = FastAPI(title="Creating Tomorrow API")
+@asynccontextmanager
+async def lifespan(_app):
+    log_at_startup()  # one line in the log after every deploy: is the AI key accepted?
+    yield
+
+
+app = FastAPI(title="Creating Tomorrow API", lifespan=lifespan)
 app.include_router(career_router, prefix="/api/career")
 
 # Only needed if the frontend is ever served from a different origin than
@@ -583,8 +592,20 @@ async def health():
     return {
         "status": "ok",
         "api_key_configured": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "ai_key": await run_in_threadpool(check_ai_key),
         "database": database_status,
     }
+
+
+@app.get("/api/health/ai")
+async def health_ai():
+    """For an uptime monitor: 200 while the AI key is accepted, 503 when it is refused or unusable, so the monitor
+    emails you before a user finds out. (/api/health always answers 200 and only reports.)"""
+    status = await run_in_threadpool(check_ai_key)
+    body = {"ai_key": status}
+    if status == "ok":
+        return body
+    return Response(content=json.dumps(body), media_type="application/json", status_code=503)
 
 
 # Serve the static frontend last, so /api/* routes above take priority.
