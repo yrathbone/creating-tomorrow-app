@@ -11,6 +11,9 @@ services:
     # deliberately - this service is Blueprint-managed, so the next
     # Blueprint sync would otherwise silently revert it back to free.
     plan: starter
+    # Deploy only after the GitHub "Tests" workflow passes on the commit (2026-10-09), so a broken change never goes live.
+    # If the tests fail, nothing deploys; fix and push again, or use Manual Deploy in the dashboard to override.
+    autoDeployTrigger: checksPass
     buildCommand: "pip install -r backend/requirements.txt"
     startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
