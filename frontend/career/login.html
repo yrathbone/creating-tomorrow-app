@@ -609,7 +609,11 @@
             </section>
           </div>
 
-        <button type="button" id="export-profile-btn" class="btn-secondary">Download my Career Profile (backup)</button>
+        <div class="export-row">
+          <button type="button" id="export-readable-btn" class="btn-secondary">Download a readable copy (Word)</button>
+          <button type="button" id="export-profile-btn" class="btn-secondary">Download full data backup (.json)</button>
+        </div>
+        <p class="hint export-hint">The readable copy is for you to read, print or share. The data backup is the complete technical file, kept so everything could be restored or moved.</p>
         <div id="export-profile-error" class="error" hidden></div>
         </div>
 
@@ -673,7 +677,11 @@
               <li>Your sign-in account</li>
             </ul>
             <p><strong>This cannot be undone.</strong> Files you already downloaded to your own device are not affected.</p>
-            <p>Want a copy first? <button type="button" id="delete-backup-btn" class="btn-secondary">Download my Career Profile (backup)</button></p>
+            <p>Want a copy first?</p>
+            <div class="export-row">
+              <button type="button" id="delete-readable-btn" class="btn-secondary">Download a readable copy (Word)</button>
+              <button type="button" id="delete-backup-btn" class="btn-secondary">Download full data backup (.json)</button>
+            </div>
             <label class="field">
               <span>To confirm, type <strong>DELETE</strong></span>
               <input type="text" id="delete-confirm-input" name="delete-confirm" autocomplete="off" autocapitalize="characters" spellcheck="false" />

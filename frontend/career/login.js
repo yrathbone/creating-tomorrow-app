@@ -639,30 +639,48 @@ function updateDashboardSummary() {
   }
 }
 
-document.getElementById("export-profile-btn").addEventListener("click", async () => {
+// Hands a finished file to the browser's Downloads.
+function saveBlobAs(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// Both profile downloads: ask the server for the signed-in person's own copy, then save it.
+async function downloadProfileCopy(path, makeBlob, filename, button) {
   const errorEl = document.getElementById("export-profile-error");
   errorEl.hidden = true;
+  if (button) button.disabled = true;
   try {
-    const res = await authedFetch("/api/career/export");
+    const res = await authedFetch(path);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
-    const data = await res.json();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "career_profile_backup_" + new Date().toISOString().slice(0, 10) + ".json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    saveBlobAs(await makeBlob(res), filename);
   } catch (err) {
     errorEl.textContent = err.message || "Something went wrong downloading your profile.";
     errorEl.hidden = false;
+  } finally {
+    if (button) button.disabled = false;
   }
-});
+}
+
+document.getElementById("export-readable-btn").addEventListener("click", (e) =>
+  downloadProfileCopy("/api/career/export/readable", (res) => res.blob(), "My_Career_Profile_" + new Date().toISOString().slice(0, 10) + ".docx", e.currentTarget));
+
+document.getElementById("export-profile-btn").addEventListener("click", (e) =>
+  downloadProfileCopy(
+    "/api/career/export",
+    async (res) => new Blob([JSON.stringify(await res.json(), null, 2)], { type: "application/json" }),
+    "career_profile_data_backup_" + new Date().toISOString().slice(0, 10) + ".json",
+    e.currentTarget,
+  ));
 
 function showConsentStep() {
   document.getElementById("step-login").hidden = true;

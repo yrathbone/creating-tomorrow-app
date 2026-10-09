@@ -1113,3 +1113,8 @@ body.dashboard-v4 #delete-confirm-btn:disabled { opacity: 0.45; box-shadow: none
 /* --- Feedback card (beta) --- */
 body.dashboard-v4 .feedback-card .hint { max-width: 40rem; }
 body.dashboard-v4 .feedback-card .feedback-btn { margin-top: 0.5rem; }
+
+/* --- Profile downloads: the readable Word copy and the full data backup, side by side --- */
+body.dashboard-v4 .export-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.25rem 0 0.35rem; }
+body.dashboard-v4 .export-row .btn-secondary { margin-top: 0; }
+body.dashboard-v4 .export-hint { max-width: 40rem; margin-top: 0.4rem; }

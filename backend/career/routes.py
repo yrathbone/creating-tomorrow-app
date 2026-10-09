@@ -38,6 +38,7 @@ from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session
 from extractor import extract_text
 from models import Application, CareerProfile, Certification, Education, Experience, Language, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
+from profile_copy import build_profile_copy_bytes
 from resume_builder import build_resume_bytes
 
 router = APIRouter()
@@ -1712,17 +1713,9 @@ async def delete_language(
         return {"deleted": True}
 
 
-@router.get("/export")
-async def export_career_profile(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db_session),
-):
-    """A full, unfiltered snapshot of everything in the Career Profile -
-    a backup the candidate can keep before manually cleaning up their own
-    data (merging duplicates, moving misattributed evidence, etc.), not a
-    resume and not something generated/polished."""
-    profile = get_career_profile_or_404(db, current_user)
-
+def _collect_export(db: Session, profile: CareerProfile) -> dict:
+    """Everything saved for this profile, as plain data. Shared by the data-file backup and the readable copy,
+    so the two can never disagree about what is saved."""
     experiences = db.query(Experience).filter_by(career_profile_id=profile.id).order_by(Experience.created_at.desc()).all()
     education = db.query(Education).filter_by(career_profile_id=profile.id).all()
     certifications = db.query(Certification).filter_by(career_profile_id=profile.id).all()
@@ -1762,6 +1755,46 @@ async def export_career_profile(
     if languages_unavailable:
         result["languages_unavailable"] = "Languages could not be included: the database upgrade (migration 0008) has not been applied."
     return result
+
+
+@router.get("/export")
+async def export_career_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    """A full, unfiltered snapshot of everything in the Career Profile -
+    a backup the candidate can keep before manually cleaning up their own
+    data (merging duplicates, moving misattributed evidence, etc.), not a
+    resume and not something generated/polished."""
+    profile = get_career_profile_or_404(db, current_user)
+    return _collect_export(db, profile)
+
+
+@router.get("/export/readable")
+async def export_career_profile_readable(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    """The same snapshot as /export, laid out as a Word document a person can read or print. Only what is saved,
+    only the caller's own records (the profile comes from the verified token, like every route here)."""
+    profile = get_career_profile_or_404(db, current_user)
+    data = _collect_export(db, profile)
+    try:
+        name, contact = profile.display_name, profile.contact_line
+    except (OperationalError, ProgrammingError):
+        db.rollback()  # resume-header columns need migration 0008: the copy still works without them
+        name = contact = None
+    try:
+        docx_bytes = build_profile_copy_bytes(data, name, contact)
+    except Exception as e:
+        logger.error("Readable profile copy failed: %s", e.__class__.__name__)
+        raise HTTPException(status_code=500, detail="We couldn't build your readable copy. Please try again.")
+    filename = f"My_Career_Profile_{datetime.now(timezone.utc).strftime('%Y-%m-%d')}.docx"
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 class DeleteAccountIn(BaseModel):

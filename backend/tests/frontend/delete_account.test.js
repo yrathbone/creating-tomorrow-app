@@ -26,7 +26,7 @@ function element(extra = {}) {
 // opts: server -> async () => response, cognito -> "ok" | "fail"
 function world(opts = {}) {
   const ids = ["delete-account-start-btn", "delete-account-panel", "delete-confirm-input", "delete-confirm-btn", "delete-cancel-btn", "delete-error",
-    "delete-backup-btn", "export-profile-btn", "step-profile", "nav-signout", "deleted-message", "step-deleted"];
+    "delete-backup-btn", "delete-readable-btn", "export-profile-btn", "export-readable-btn", "step-profile", "nav-signout", "deleted-message", "step-deleted"];
   const els = Object.fromEntries(ids.map((id) => [id, element()]));
   els["delete-account-panel"].hidden = true;
   els["delete-confirm-btn"].disabled = true;
@@ -105,6 +105,14 @@ test("the backup button presses the existing backup download button", async () =
   const w = world();
   await w.els["delete-backup-btn"].click();
   assert.strictEqual(w.els["export-profile-btn"].clicks, 1);
+  assert.strictEqual(w.els["export-readable-btn"].clicks, 0);
+});
+
+test("the readable-copy button presses the dashboard's readable download button, not the data file one", async () => {
+  const w = world();
+  await w.els["delete-readable-btn"].click();
+  assert.strictEqual(w.els["export-readable-btn"].clicks, 1);
+  assert.strictEqual(w.els["export-profile-btn"].clicks, 0);
 });
 
 test("happy path: server first, then the sign-in account, then a plain confirmation (no dashboard)", async () => {
@@ -174,7 +182,7 @@ test("a double click sends one request", async () => {
 // ---- the page itself ----
 test("the dashboard has the Your Data card, the confirmation panel, the final screen and loads the script last", () => {
   const html = read("login.html");
-  for (const id of ["your-data-card", "delete-account-start-btn", "delete-account-panel", "delete-confirm-input", "delete-confirm-btn", "delete-cancel-btn", "delete-error", "delete-backup-btn", "step-deleted", "deleted-message"]) {
+  for (const id of ["your-data-card", "delete-account-start-btn", "delete-account-panel", "delete-confirm-input", "delete-confirm-btn", "delete-cancel-btn", "delete-error", "delete-backup-btn", "delete-readable-btn", "step-deleted", "deleted-message"]) {
     assert.ok(html.includes(`id="${id}"`), id);
   }
   assert.match(html, /id="delete-confirm-btn" class="btn-danger" disabled>/, "the final button starts disabled");

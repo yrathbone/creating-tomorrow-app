@@ -149,7 +149,7 @@ class TokenVerification(OwnershipTestCase):
     def test_every_career_route_rejects_a_request_with_no_token(self):
         routes = [r for r in router.routes if isinstance(r, APIRoute)]
         # 43 routes through Phase 2A + 4 language routes + 2 profile routes (GET/PUT /profile) in Phase 2B = 49, + 2 resume-layout routes (GET/PUT /resume-layout, migration 0009) = 51
-        self.assertEqual(len(routes), 52, "a route was added or removed: update this guard on purpose")  # 52 = 51 + POST /account/delete
+        self.assertEqual(len(routes), 53, "a route was added or removed: update this guard on purpose")  # 53 = 51 + POST /account/delete + GET /export/readable
         offenders = []
         for r in routes:
             method = sorted(r.methods - {"HEAD", "OPTIONS"})[0]
@@ -299,6 +299,29 @@ class Isolation(OwnershipTestCase):
             self.assertNotIn(secret, text_b, f"B's export leaked {secret!r}")
         self.assertIn("Role B", text_b)
         text_a = self.call("GET", "/export", self.a).text
+        self.assertNotIn("Role B", text_a)
+        self.assertIn("Role A", text_a)
+
+    def test_readable_copy_only_contains_the_callers_own_records(self):
+        import io
+        from docx import Document
+        self.build_world()
+
+        def readable_text(who):
+            res = self.call("GET", "/export/readable", who)
+            self.assertEqual(res.status_code, 200)
+            self.assertIn("wordprocessingml", res.headers["content-type"])
+            self.assertIn('attachment; filename="My_Career_Profile_', res.headers["content-disposition"])
+            doc = Document(io.BytesIO(res.content))
+            cells = [c.text for t in doc.tables for row in t.rows for c in row.cells]
+            return "\n".join([p.text for p in doc.paragraphs] + cells)
+
+        text_b = readable_text(self.b)
+        for secret in ("Role A", "Org A", "private-A", "School A", "Cert A", "Skill A", "Secret job of aaaa", "Name of aaaa", "Applied A"):
+            self.assertNotIn(secret, text_b, f"B's readable copy leaked {secret!r}")
+        for mine in ("Role B", "Org B", "private-B", "School B", "Cert B", "Skill B", "Applied B"):
+            self.assertIn(mine, text_b)
+        text_a = readable_text(self.a)
         self.assertNotIn("Role B", text_a)
         self.assertIn("Role A", text_a)
 
