@@ -36,3 +36,15 @@ test("the 404 page uses the homepage stylesheet", () => {
   assert.match(html, /<body class="home-v5">/);
   assert.match(html, /home-v5\.css/);
 });
+
+test("the signed-in dashboard uses the locked palette: flat, two-tone icons, no leftover purple, pink or green tile colours", () => {
+  const css = read("career/dashboard-v4.css");
+  assert.match(css, /v6 LOCKED PALETTE/);
+  for (const [name, hex] of Object.entries({ "v4-ink": "#071c42", "v4-blue": "#0756ed", "v4-gold": "#ffbc00", "v4-gold-text": "#a66b00", "v4-line": "#e2e8f0", "v4-cream": "#f2f5f8", "v4-muted": "#596b85" })) {
+    const all = [...css.matchAll(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`, "g"))].map((m) => m[1].toLowerCase());
+    assert.strictEqual(all[all.length - 1], hex, `--${name} ends as ${hex}`);
+  }
+  for (const gone of ["6d28d9", "be185d", "%236d28d9", "%23be185d", "%23047857", "%23b45309"]) assert.ok(!css.includes(gone), `leftover colour ${gone}`);
+  assert.match(css, /--v4-shadow: none/);
+  assert.match(css, /\.next-step \{ background: var\(--v4-gold-wash\); background-image: none; \}/);
+});

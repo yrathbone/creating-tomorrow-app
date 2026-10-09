@@ -139,7 +139,7 @@ body.dashboard-v4 #upload-resume-btn { background: var(--v4-blue); color: #fffff
 body.dashboard-v4 #upload-resume-btn:hover { background: var(--v4-blue-deep); opacity: 1; }
 body.dashboard-v4 #general-resume-hero-btn { background: var(--v4-gold); border-color: var(--v4-gold); color: #2b1d00; }
 body.dashboard-v4 #general-resume-hero-btn:hover { background: #dc9f00; border-color: #dc9f00; opacity: 1; }
-body.dashboard-v4 #import-linkedin-btn { background: #ffffff; border-color: #c6d3ea; color: #0a66c2; }
+body.dashboard-v4 #import-linkedin-btn { background: #ffffff; border-color: #c6d3ea; color: #0756ed; }
 body.dashboard-v4 #import-linkedin-btn:hover { background: var(--v4-sky); opacity: 1; }
 body.dashboard-v4 #update-profile-btn { background: transparent; border-color: transparent; color: var(--v4-blue); padding-left: 0.5rem; padding-right: 0.5rem; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(10, 53, 168, 0.3); }
 body.dashboard-v4 #update-profile-btn:hover { background: rgba(10, 53, 168, 0.05); opacity: 1; }
@@ -301,7 +301,7 @@ body.dashboard-v4 .stat-resumes        { background: var(--v4-mint); }
 body.dashboard-v4 .stat-applications   { background: var(--v4-lavender); }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin { background: var(--v4-sky); border-color: var(--v4-line-soft); }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card .stat-number { font-size: 1.4rem; font-weight: 750; color: var(--v4-ink); line-height: 1.15; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin .stat-number { color: #0a66c2; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin .stat-number { color: #0756ed; }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card .stat-label { font-size: 0.83rem; font-weight: 600; color: #46506a; }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card.active { background: #ffffff; border-color: var(--v4-blue); box-shadow: 0 0 0 3px var(--v4-blue-ring); }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card.active .stat-number { color: var(--v4-blue); }
@@ -706,17 +706,17 @@ body.dashboard-v4 .mc-progress-bar span.done { box-shadow: inset 0 1px 0 rgba(25
 
 /* Icon colours: each section and tile gets its own vivid colour (the generated icons above stay as the base) */
 body.dashboard-v4 .dashboard-grid > .job-card .dashboard-card-header h2::before { background: #bcd0fb url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%231d4ed8%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2212%22%20cy=%2212%22%20r=%229%22/%3E%3Ccircle%20cx=%2212%22%20cy=%2212%22%20r=%225%22/%3E%3Ccircle%20cx=%2212%22%20cy=%2212%22%20r=%221.3%22/%3E%3C/svg%3E") center / 68% no-repeat; }
-body.dashboard-v4 .dashboard-grid > .resume-card .dashboard-card-header h2::before { background: #fbd170 url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23b45309%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M7%203h7l4%204v14H7z%22/%3E%3Cpath%20d=%22M14%203v4h4%22/%3E%3Cpath%20d=%22M9.5%2012h5M9.5%2016h5%22/%3E%3C/svg%3E") center / 68% no-repeat; }
-body.dashboard-v4 .dashboard-grid > .profile-card .dashboard-card-header h2::before { background: #a9e4c8 url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23047857%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Crect%20x=%223%22%20y=%227%22%20width=%2218%22%20height=%2213%22%20rx=%222%22/%3E%3Cpath%20d=%22M9%207V5a1%201%200%200%201%201-1h4a1%201%200%200%201%201%201v2%22/%3E%3Cpath%20d=%22M3%2012h18%22/%3E%3C/svg%3E") center / 68% no-repeat; }
-body.dashboard-v4 .dashboard-grid > .activity-card .dashboard-card-header h2::before { background: #d3c2f7 url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%236d28d9%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M5%2020V11M11%2020V4M17%2020v-6%22/%3E%3Cpath%20d=%22M2.5%2020.5h19%22/%3E%3C/svg%3E") center / 68% no-repeat; }
+body.dashboard-v4 .dashboard-grid > .resume-card .dashboard-card-header h2::before { background: #fff5dd url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23a66b00%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M7%203h7l4%204v14H7z%22/%3E%3Cpath%20d=%22M14%203v4h4%22/%3E%3Cpath%20d=%22M9.5%2012h5M9.5%2016h5%22/%3E%3C/svg%3E") center / 68% no-repeat; }
+body.dashboard-v4 .dashboard-grid > .profile-card .dashboard-card-header h2::before { background: #eaf1ff url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Crect%20x=%223%22%20y=%227%22%20width=%2218%22%20height=%2213%22%20rx=%222%22/%3E%3Cpath%20d=%22M9%207V5a1%201%200%200%201%201-1h4a1%201%200%200%201%201%201v2%22/%3E%3Cpath%20d=%22M3%2012h18%22/%3E%3C/svg%3E") center / 68% no-repeat; }
+body.dashboard-v4 .dashboard-grid > .activity-card .dashboard-card-header h2::before { background: #eaf1ff url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M5%2020V11M11%2020V4M17%2020v-6%22/%3E%3Cpath%20d=%22M2.5%2020.5h19%22/%3E%3C/svg%3E") center / 68% no-repeat; }
 body.dashboard-v4 .stat-roles { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%231d4ed8%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Crect%20x=%223%22%20y=%227%22%20width=%2218%22%20height=%2213%22%20rx=%222%22/%3E%3Cpath%20d=%22M9%207V5a1%201%200%200%201%201-1h4a1%201%200%200%201%201%201v2%22/%3E%3Cpath%20d=%22M3%2012h18%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .stat-education { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%236d28d9%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M2%209l10-5%2010%205-10%205z%22/%3E%3Cpath%20d=%22M6%2011.5V16c0%201.5%203%203%206%203s6-1.5%206-3v-4.5%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .stat-certifications { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23047857%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2212%22%20cy=%229%22%20r=%225.5%22/%3E%3Cpath%20d=%22M8.5%2013.5L7%2021l5-2.5L17%2021l-1.5-7.5%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .stat-skills { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23b45309%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M12%203l2.1%205.9L20%2011l-5.9%202.1L12%2019l-2.1-5.9L4%2011l5.9-2.1z%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .stat-languages { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23be185d%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M4%205h16v11H9l-5%204z%22/%3E%3Cpath%20d=%22M8%209.5h8M8%2012.5h5%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .stat-history { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23b45309%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2211%22%20cy=%2211%22%20r=%226.5%22/%3E%3Cpath%20d=%22M16%2016l5%205%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .stat-resumes { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23047857%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M7%203h7l4%204v14H7z%22/%3E%3Cpath%20d=%22M14%203v4h4%22/%3E%3Cpath%20d=%22M9.5%2012h5M9.5%2016h5%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .stat-applications { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%236d28d9%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M21%203L3%2011l7%203%203%207z%22/%3E%3Cpath%20d=%22M10%2014l11-11%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .stat-education { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M2%209l10-5%2010%205-10%205z%22/%3E%3Cpath%20d=%22M6%2011.5V16c0%201.5%203%203%206%203s6-1.5%206-3v-4.5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .stat-certifications { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2212%22%20cy=%229%22%20r=%225.5%22/%3E%3Cpath%20d=%22M8.5%2013.5L7%2021l5-2.5L17%2021l-1.5-7.5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .stat-skills { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23a66b00%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M12%203l2.1%205.9L20%2011l-5.9%202.1L12%2019l-2.1-5.9L4%2011l5.9-2.1z%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .stat-languages { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23a66b00%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M4%205h16v11H9l-5%204z%22/%3E%3Cpath%20d=%22M8%209.5h8M8%2012.5h5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .stat-history { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23a66b00%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2211%22%20cy=%2211%22%20r=%226.5%22/%3E%3Cpath%20d=%22M16%2016l5%205%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .stat-resumes { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M7%203h7l4%204v14H7z%22/%3E%3Cpath%20d=%22M14%203v4h4%22/%3E%3Cpath%20d=%22M9.5%2012h5M9.5%2016h5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .stat-applications { --tile-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M21%203L3%2011l7%203%203%207z%22/%3E%3Cpath%20d=%22M10%2014l11-11%22/%3E%3C/svg%3E"); }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card::before { background-size: 62%, auto; }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card:hover::before { box-shadow: inset 0 1px 0 #ffffff, inset 0 -3px 5px rgba(10, 42, 122, 0.10), 0 0 0 1px rgba(10, 42, 122, 0.22), 0 8px 14px -4px rgba(20, 33, 61, 0.36); }
 
@@ -892,7 +892,7 @@ body.dashboard-v4 .vtone-strong { --tone: #1f7a3f; --tone-bg: #e3f3e8; }
 body.dashboard-v4 .vtone-good { --tone: #0a35a8; --tone-bg: #e3ebfb; }
 body.dashboard-v4 .vtone-fair { --tone: #b86e00; --tone-bg: #fdf0d3; }
 body.dashboard-v4 .vtone-low { --tone: #c2410c; --tone-bg: #fde8df; }
-body.dashboard-v4 .vtone-skill { --tone: #6d28d9; --tone-bg: #ece6fb; }
+body.dashboard-v4 .vtone-skill { --tone: #0756ed; --tone-bg: #eaf1ff; }
 body.dashboard-v4 .vcard-top { display: flex; align-items: center; gap: 0.5rem; }
 body.dashboard-v4 .vcard-icon {
   position: relative;
@@ -930,9 +930,9 @@ body.dashboard-v4 .skill-group {
   box-shadow: var(--v4-lit), 0 1px 2px rgba(20, 33, 61, 0.05), 0 8px 16px -10px rgba(20, 33, 61, 0.22);
 }
 body.dashboard-v4 .skill-tone-1 { --tone: #d99b0b; }
-body.dashboard-v4 .skill-tone-2 { --tone: #1a6144; }
-body.dashboard-v4 .skill-tone-3 { --tone: #6d28d9; }
-body.dashboard-v4 .skill-tone-4 { --tone: #be185d; }
+body.dashboard-v4 .skill-tone-2 { --tone: #a66b00; }
+body.dashboard-v4 .skill-tone-3 { --tone: #0756ed; }
+body.dashboard-v4 .skill-tone-4 { --tone: #a66b00; }
 body.dashboard-v4 .skill-group-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.55rem; }
 body.dashboard-v4 .skill-group-head strong { display: block; font-size: 0.92rem; line-height: 1.25; color: var(--v4-ink); }
 body.dashboard-v4 .skill-group-sub { display: block; font-size: 0.8rem; color: var(--v4-muted); }
@@ -959,13 +959,13 @@ body.dashboard-v4 .skill-chip {
 
 /* ===== One card for every list (Scans, Resumes, Applications, Roles, Education, Certifications, Skills, Languages) ===== */
 body.dashboard-v4 .vkind-role { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%231d4ed8%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Crect%20x=%223%22%20y=%227%22%20width=%2218%22%20height=%2213%22%20rx=%222%22/%3E%3Cpath%20d=%22M9%207V5a1%201%200%200%201%201-1h4a1%201%200%200%201%201%201v2%22/%3E%3Cpath%20d=%22M3%2012h18%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .vkind-education { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%236d28d9%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M2%209l10-5%2010%205-10%205z%22/%3E%3Cpath%20d=%22M6%2011.5V16c0%201.5%203%203%206%203s6-1.5%206-3v-4.5%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .vkind-certification { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23047857%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2212%22%20cy=%229%22%20r=%225.5%22/%3E%3Cpath%20d=%22M8.5%2013.5L7%2021l5-2.5L17%2021l-1.5-7.5%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .vkind-skill { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23b45309%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M12%203l2.1%205.9L20%2011l-5.9%202.1L12%2019l-2.1-5.9L4%2011l5.9-2.1z%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .vkind-language { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23be185d%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M4%205h16v11H9l-5%204z%22/%3E%3Cpath%20d=%22M8%209.5h8M8%2012.5h5%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .vkind-resume { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23047857%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M7%203h7l4%204v14H7z%22/%3E%3Cpath%20d=%22M14%203v4h4%22/%3E%3Cpath%20d=%22M9.5%2012h5M9.5%2016h5%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .vkind-application { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%236d28d9%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M21%203L3%2011l7%203%203%207z%22/%3E%3Cpath%20d=%22M10%2014l11-11%22/%3E%3C/svg%3E"); }
-body.dashboard-v4 .vtone-pink { --tone: #be185d; --tone-bg: #fce7f1; }
+body.dashboard-v4 .vkind-education { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M2%209l10-5%2010%205-10%205z%22/%3E%3Cpath%20d=%22M6%2011.5V16c0%201.5%203%203%206%203s6-1.5%206-3v-4.5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-certification { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Ccircle%20cx=%2212%22%20cy=%229%22%20r=%225.5%22/%3E%3Cpath%20d=%22M8.5%2013.5L7%2021l5-2.5L17%2021l-1.5-7.5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-skill { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23a66b00%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M12%203l2.1%205.9L20%2011l-5.9%202.1L12%2019l-2.1-5.9L4%2011l5.9-2.1z%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-language { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23a66b00%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M4%205h16v11H9l-5%204z%22/%3E%3Cpath%20d=%22M8%209.5h8M8%2012.5h5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-resume { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M7%203h7l4%204v14H7z%22/%3E%3Cpath%20d=%22M14%203v4h4%22/%3E%3Cpath%20d=%22M9.5%2012h5M9.5%2016h5%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vkind-application { --scan-icon: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%230756ed%22%20stroke-width=%222.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M21%203L3%2011l7%203%203%207z%22/%3E%3Cpath%20d=%22M10%2014l11-11%22/%3E%3C/svg%3E"); }
+body.dashboard-v4 .vtone-pink { --tone: #a66b00; --tone-bg: #fff5dd; }
 body.dashboard-v4 .vcard-line { font-size: 0.85rem; line-height: 1.35; color: #46506a; overflow-wrap: anywhere; }
 body.dashboard-v4 .vcard-date { min-width: 0; overflow-wrap: anywhere; }
 body.dashboard-v4 .vcard-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem; }
@@ -986,14 +986,14 @@ body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card { --edge
 body.dashboard-v4 .stat-roles, body.dashboard-v4 .stat-education, body.dashboard-v4 .stat-certifications, body.dashboard-v4 .stat-skills, body.dashboard-v4 .stat-languages,
 body.dashboard-v4 .stat-history, body.dashboard-v4 .stat-resumes, body.dashboard-v4 .stat-applications { background: #ffffff; }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-roles { --edge: #1d4ed8; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-education { --edge: #6d28d9; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-certifications { --edge: #047857; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-skills { --edge: #b45309; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-languages { --edge: #be185d; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-history { --edge: #b45309; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-resumes { --edge: #047857; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-applications { --edge: #6d28d9; }
-body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin { --edge: #0a66c2; background: #ffffff; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-education { --edge: #0756ed; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-certifications { --edge: #ffbc00; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-skills { --edge: #0756ed; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-languages { --edge: #ffbc00; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-history { --edge: #0756ed; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-resumes { --edge: #ffbc00; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-applications { --edge: #0756ed; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin { --edge: #ffbc00; background: #ffffff; }
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card.active { border-top-color: var(--edge); }
 body.dashboard-v4 .recent-skills li { background: #ffffff; border-color: #e0c27a; color: #5b4300; }
 
@@ -1117,3 +1117,95 @@ body.dashboard-v4 .feedback-card .feedback-btn { margin-top: 0.5rem; }
 body.dashboard-v4 .export-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); gap: 0.6rem; max-width: 36rem; margin: 0.25rem 0 0.35rem; }
 body.dashboard-v4 .export-row .btn-secondary { margin-top: 0; width: 100%; min-height: 44px; padding: 0.5rem 1rem; text-align: center; }
 body.dashboard-v4 .export-hint { max-width: 40rem; margin-top: 0.4rem; }
+
+/* ===== v6 LOCKED PALETTE (2026-10-09): the homepage's flat, hairline look on the signed-in dashboard =====
+   Cobalt #0756ED, navy #071C42, gold #FFBC00, white, gray #F2F5F8, muted #596B85, border #E2E8F0, pale blue #EAF1FF,
+   pale gold #FFF5DD, dark gold #A66B00. No shadows, no decorative gradients (the hero keeps its white fade over the photo
+   so the words stay readable). Green and red stay only where they mean success or danger. Markup and scripts are untouched. */
+body.dashboard-v4 {
+  --v4-ink: #071c42;
+  --v4-muted: #596b85;
+  --v4-blue: #0756ed;
+  --v4-blue-deep: #0646c8;
+  --v4-blue-ring: rgba(7, 86, 237, 0.22);
+  --v4-gold: #ffbc00;
+  --v4-gold-text: #a66b00;
+  --v4-gold-deep: #e8aa00;
+  --v4-gold-track: #e2e8f0;
+  --v4-gold-wash: #fff5dd;
+  --v4-line: #e2e8f0;
+  --v4-line-soft: #e2e8f0;
+  --v4-cream: #f2f5f8;
+  --v4-sky: #eaf1ff;
+  --v4-lavender: #eaf1ff;
+  --v4-mint: #eaf1ff;
+  --v4-butter: #fff5dd;
+  --v4-blush: #fff5dd;
+  --v4-shadow: none;
+  --v4-shadow-lift: none;
+  --v4-lit: none;
+  --v4-glow: transparent;
+  background: #ffffff;
+}
+body.dashboard-v4 .nav-links a.nav-cta { color: var(--v4-ink); font-weight: 600; }
+body.dashboard-v4 .nav-links a.nav-cta:hover { color: var(--v4-blue); text-decoration: none; }
+body.dashboard-v4 .nav-links a.nav-signout { background: #ffffff; border: 2px solid var(--v4-ink); border-radius: 10px; color: var(--v4-ink); font-weight: 700; }
+body.dashboard-v4 .nav-links a.nav-signout:hover { background: var(--v4-ink); border-color: var(--v4-ink); color: #ffffff; }
+body.dashboard-v4 .nav-wordmark-gold { color: var(--v4-gold-text); }
+body.dashboard-v4 .dashboard-hero .hero-h1-line2 { color: var(--v4-blue); }
+body.dashboard-v4 .dashboard-hero > p { color: var(--v4-muted); }
+body.dashboard-v4 .dashboard-hero { box-shadow: none; border-color: var(--v4-line); }
+body.dashboard-v4 .dashboard-hero::after { box-shadow: none; }
+body.dashboard-v4 .dh-mascot { filter: none; }
+body.dashboard-v4 .dash-panel { background: #ffffff; box-shadow: none; }
+body.dashboard-v4 .dash-panel > .cp-status { background: transparent; }
+body.dashboard-v4 .dashboard-grid > .card,
+body.dashboard-v4 .cp-status,
+body.dashboard-v4 #career-profile-editor,
+body.dashboard-v4 .dashboard-grid > .job-card,
+body.dashboard-v4 .dashboard-grid > .resume-card,
+body.dashboard-v4 .snapshot-card #snapshot-panels > .snapshot-panel,
+body.dashboard-v4 .snapshot-card #activity-panels > .snapshot-panel,
+body.dashboard-v4 .entry-summary-card { box-shadow: none; background-image: none; }
+body.dashboard-v4 .dashboard-grid > .job-card .dashboard-card-header h2::before,
+body.dashboard-v4 .dashboard-grid > .resume-card .dashboard-card-header h2::before,
+body.dashboard-v4 .dashboard-grid > .profile-card .dashboard-card-header h2::before,
+body.dashboard-v4 .dashboard-grid > .activity-card .dashboard-card-header h2::before { box-shadow: none; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card::before { background-image: var(--tile-icon); background-color: var(--v4-sky); background-position: center; background-size: 60%; background-repeat: no-repeat; box-shadow: none; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card { box-shadow: none; transition: border-color 0.15s ease; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card:hover { transform: none; box-shadow: none; border-color: #b9cdf7; }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card.active { box-shadow: 0 0 0 3px var(--v4-blue-ring); }
+body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin { background: #ffffff; }
+body.dashboard-v4 .cp-avatar { background: var(--v4-sky); box-shadow: none; }
+/* buttons: flat cobalt, flat gold with navy text, outlined secondary */
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger),
+body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn),
+body.dashboard-v4 #upload-resume-btn,
+body.dashboard-v4 #job-target-add-btn { background-image: none; background-color: var(--v4-blue); box-shadow: none; }
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger):hover,
+body.dashboard-v4 #upload-resume-btn:hover,
+body.dashboard-v4 #job-target-add-btn:hover { background-image: none; background-color: var(--v4-blue-deep); transform: none; box-shadow: none; }
+body.dashboard-v4 #general-resume-hero-btn,
+body.dashboard-v4 .dashboard-grid > .card .btn-gold { background-image: none; background-color: var(--v4-gold); color: var(--v4-ink); box-shadow: none; }
+body.dashboard-v4 #general-resume-hero-btn:hover,
+body.dashboard-v4 .dashboard-grid > .card .btn-gold:hover { background-image: none; background-color: var(--v4-gold-deep); transform: none; }
+body.dashboard-v4 .dashboard-grid > .card .btn-secondary,
+body.dashboard-v4 #career-profile-editor .btn-secondary,
+body.dashboard-v4 #import-linkedin-btn,
+body.dashboard-v4 .cp-edit,
+body.dashboard-v4 #update-profile-btn,
+body.dashboard-v4 #update-profile-btn:hover,
+body.dashboard-v4 #update-profile-btn:active { background-image: none; background-color: #ffffff; box-shadow: none; border-color: var(--v4-blue); color: var(--v4-blue); }
+body.dashboard-v4 #update-profile-btn:hover { transform: none; background-color: var(--v4-sky); }
+body.dashboard-v4 .btn-danger,
+body.dashboard-v4 #delete-confirm-btn { background-image: none; background-color: #b93030; box-shadow: none; }
+body.dashboard-v4 .btn-danger:hover:not(:disabled),
+body.dashboard-v4 #delete-confirm-btn:hover:not(:disabled) { background-image: none; background-color: #8f1818; }
+/* the Career foundation bar: flat gold fill, no glow */
+body.dashboard-v4 .mc-progress-bar span.done,
+body.dashboard-v4 .mc-progress.complete .mc-progress-bar span.done { background: var(--v4-gold); box-shadow: none; }
+/* the "next step" band: flat pale gold with the gold left edge, no fade */
+body.dashboard-v4 .next-step { background: var(--v4-gold-wash); background-image: none; }
+body.dashboard-v4 .next-step p#next-step-text { color: var(--v4-muted); }
+body.dashboard-v4 .mc-progress-title { color: var(--v4-ink); }
+body.dashboard-v4 .mc-progress-bar span { transition: none; }
