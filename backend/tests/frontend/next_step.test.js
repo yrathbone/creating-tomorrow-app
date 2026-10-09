@@ -121,3 +121,14 @@ test("button runs the existing control; an open tile is not toggled closed; hidd
   s2.runNextStep({ href: "../prepare.html" });
   assert.strictEqual(win.location.href, "../prepare.html");
 });
+
+test("the dashboard only counts the resume header as set when both the name and the contact line are saved", () => {
+  const facts = (basics) => load({
+    profileBasics: basics, nextStepReady: true, scansLoaded: true, resumesLoaded: true,
+    allExperiences: [{}], allEducation: [{}], allSkills: [{}],
+  });
+  const hasHeader = (basics) => { const w = facts(basics); return vm.runInContext("nextStepFacts().hasHeader", w); };
+  assert.strictEqual(hasHeader({ display_name: "Ada", contact_line: "London" }), true);
+  assert.strictEqual(hasHeader({ display_name: "Ada", contact_line: null }), false);
+  assert.strictEqual(hasHeader({ display_name: null, contact_line: "London" }), false);
+});

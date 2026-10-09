@@ -6,7 +6,7 @@
 // in earlier scripts.
 
 const CAREER_STEPS = [
-  { key: "header", label: "your resume header", done: () => typeof profileBasics !== "undefined" && !!(profileBasics.display_name || profileBasics.contact_line) },
+  { key: "header", label: "your resume header", done: () => typeof profileBasics !== "undefined" && !!(profileBasics.display_name && profileBasics.contact_line) },
   { key: "roles", label: "a role", done: () => typeof allExperiences !== "undefined" && allExperiences.length > 0 },
   { key: "education", label: "your education", done: () => typeof allEducation !== "undefined" && allEducation.length > 0 },
   { key: "certifications", label: "a certification", done: () => typeof allCertifications !== "undefined" && allCertifications.length > 0 },

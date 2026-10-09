@@ -101,7 +101,7 @@ function nextStepFacts() {
     roles: len(typeof allExperiences !== "undefined" ? allExperiences : undefined),
     education: len(typeof allEducation !== "undefined" ? allEducation : undefined),
     skills: len(typeof allSkills !== "undefined" ? allSkills : undefined),
-    hasHeader: typeof profileBasics !== "undefined" && !!(profileBasics.display_name || profileBasics.contact_line),
+    hasHeader: typeof profileBasics !== "undefined" && !!(profileBasics.display_name && profileBasics.contact_line),
     scans: typeof allScanHistory !== "undefined" ? allScanHistory : [],
     resumes: typeof allResumeVersions !== "undefined" ? allResumeVersions : [],
     applications: typeof applicationsUnavailable !== "undefined" && applicationsUnavailable ? null

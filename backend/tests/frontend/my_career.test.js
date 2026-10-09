@@ -109,6 +109,15 @@ test("career foundation progress is derived from loaded data and explains what i
   assert.strictEqual(all.text, "Complete");
 });
 
+test("the resume-header step is only done when BOTH the name and the contact line are saved", () => {
+  const { sandbox } = load("dashboardVisuals.js", reply(200, []));
+  const headerDone = (basics) => { sandbox.profileBasics = basics; return vm.runInContext("CAREER_STEPS.find((s) => s.key === 'header').done()", sandbox); };
+  assert.strictEqual(headerDone({ display_name: "Ada Lovelace", contact_line: "London | ada@example.com" }), true);
+  assert.strictEqual(headerDone({ display_name: "Ada Lovelace", contact_line: null }), false, "clearing the contact line un-completes the step");
+  assert.strictEqual(headerDone({ display_name: "", contact_line: "London" }), false);
+  assert.strictEqual(headerDone({ display_name: null, contact_line: null }), false);
+});
+
 test("the progress bar fills from the left like a meter, not wherever the finished steps happen to sit", () => {
   const { sandbox } = load("dashboardVisuals.js", reply(200, []));
   const clean = (v) => JSON.parse(JSON.stringify(v));
