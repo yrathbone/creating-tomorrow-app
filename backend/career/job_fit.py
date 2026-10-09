@@ -24,7 +24,7 @@ BANDS = [
     (0, "D", "under 70%", "Not yet a fit", "Not a strong fit yet. Look at what would close the gaps below before spending time on this one."),
 ]
 
-_PAREN = re.compile(r"\([^)]*\)")
+_PAREN = re.compile(r"\([^)]{0,300}\)")  # bounded, so a pile of unclosed brackets cannot make matching slow
 _WORD = re.compile(r"[a-z0-9]+")
 
 

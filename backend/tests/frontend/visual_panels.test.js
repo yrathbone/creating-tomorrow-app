@@ -116,10 +116,10 @@ test("every card kind the dashboard builds has an icon and every tone has a colo
   for (const k of ["role", "education", "certification", "skill", "language", "resume", "application", "job_comparison", "skill_scan"]) {
     assert.ok(kinds.has(k), `no card builds kind ${k}`);
   }
-  for (const k of kinds) assert.match(css, new RegExp(`\.vkind-${k} \{ --scan-icon:`), `no icon for ${k}`);
+  for (const k of kinds) assert.match(css, new RegExp(`\\.vkind-${k} \\{ --scan-icon:`), `no icon for ${k}`);
   const tones = new Set([...sources.matchAll(/tone: "([a-z]+)"/g)].map((m) => m[1]));
-  for (const t of ["strong", "good", "fair", "low", "skill", "pink", "neutral"]) assert.match(css, new RegExp(`\.vtone-${t} \{ --tone:`), `no colour for tone ${t}`);
-  for (const t of tones) assert.match(css, new RegExp(`\.vtone-${t} \{ --tone:`), `unstyled tone ${t}`);
+  for (const t of ["strong", "good", "fair", "low", "skill", "pink", "neutral"]) assert.match(css, new RegExp(`\\.vtone-${t} \\{ --tone:`), `no colour for tone ${t}`);
+  for (const t of tones) assert.match(css, new RegExp(`\\.vtone-${t} \\{ --tone:`), `unstyled tone ${t}`);
 });
 
 test("the editable lists all use the shared card: Roles, Education, Certifications, Skills, Languages", () => {

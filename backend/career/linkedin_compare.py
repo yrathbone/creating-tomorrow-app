@@ -15,9 +15,10 @@ from career.term_pipeline import normalize, term_in_text
 
 MAX_RESULTS = 40
 MAX_LABEL_WORDS = 4
-_SPLIT_LABEL = re.compile(r"\s+[-–—]\s+|:\s+")
-_PAREN = re.compile(r"\([^)]*\)")
-_PART_SPLIT = re.compile(r"\s*/\s*")
+# whitespace is collapsed to single spaces before these run (see _labels), so they never have to untangle long runs of it
+_SPLIT_LABEL = re.compile(r" [-–—] |: ")
+_PAREN = re.compile(r"\([^)]{0,300}\)")
+_PART_SPLIT = re.compile(r" ?/ ?")
 
 
 def _all_strings(value) -> list[str]:
@@ -33,7 +34,7 @@ def _all_strings(value) -> list[str]:
 def _labels(entry: str) -> list[str]:
     """'Pre-sales / Solutions Consulting - supported by the CashPro role' ->
     ['Pre-sales', 'Solutions Consulting']. Anything sentence-like is dropped."""
-    head = _SPLIT_LABEL.split(entry.strip(), maxsplit=1)[0]
+    head = _SPLIT_LABEL.split(" ".join(entry.split()), maxsplit=1)[0]
     head = _PAREN.sub(" ", head)
     out = []
     for part in _PART_SPLIT.split(head):
