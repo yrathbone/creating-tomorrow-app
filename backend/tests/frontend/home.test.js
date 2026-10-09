@@ -98,14 +98,15 @@ test("the hero says what the design says, with the gold second line and the free
   assert.match(html, /<p class="h5-eyebrow">Tools today\. Brighter tomorrow\.<\/p>/);
   assert.match(html, /<h1 id="hero-h">See your value\.<br \/><span>Build your future\.<\/span><\/h1>/);
   assert.match(css, /\.h5-hero h1 span \{[^}]*color: var\(--gold-text\)/);
-  assert.match(html, /Free career tools to help you see your experience clearly and take the next step\./);
+  assert.match(html, /<p class="h5-lead">Free career tools to help you build a better tomorrow\.<\/p>/);
   const hero = html.slice(html.indexOf('class="h5-hero"'), html.indexOf('class="h5-hero-photo"'));
   assert.match(hero, /Guide Me <span aria-hidden="true">→<\/span>/);
   assert.match(hero, /href="#tools" class="h5-btn h5-btn-outline">Explore Tools/);
   assert.match(hero, /Free for everyone\./);
   assert.match(hero, /No paywall\./);
   assert.ok(hero.indexOf("h5-cta") < hero.indexOf("h5-free"), "the line sits after the buttons");
-  assert.match(html, /You can’t become what you can’t picture\. Let’s picture it together\./);
+  assert.match(html, /<blockquote><p>“The best way to predict the future is to invent it\.”<\/p><\/blockquote>\s*<figcaption>— Alan Kay<\/figcaption>/);
+  assert.ok(!html.includes("You can’t become what you can’t picture"), "the old line was swapped out on purpose");
 });
 
 test("the section headings and the ids that links rely on are unchanged", () => {
@@ -138,7 +139,7 @@ test("four guide cards open the real articles, and the Learn link is still there
 
 test("the page does not name a person, and nothing the design dropped is left behind", () => {
   assert.ok(!/yovana|rathbone/i.test(html), "the page does not name a person");
-  for (const gone of ["mascot-icon", "hv-", "Alan Kay", "hero-man", "team-people"]) assert.ok(!html.includes(gone), `leftover: ${gone}`);
+  for (const gone of ["mascot-icon", "hv-", "hero-man", "team-people"]) assert.ok(!html.includes(gone), `leftover: ${gone}`);
 });
 
 test("colours: the reference palette is used, and every text pairing meets WCAG AA", () => {
@@ -176,4 +177,23 @@ test("responsive: tablet and phone layouts exist (stacked hero, 2-up then 1-up c
   assert.match(css, /@media \(max-width: 1000px\)[\s\S]*\.h5-steps \{ grid-template-columns: 1fr/);
   assert.match(css, /@media \(max-width: 620px\)[\s\S]*\.h5-grid-4, \.h5-grid-3 \{ grid-template-columns: 1fr/);
   assert.match(css, /prefers-reduced-motion: no-preference/);
+});
+
+test("less wording, because phones lose long text: a short lead, a short intro, and one short line per step", () => {
+  const words = (re) => html.match(re)[1].trim().split(/\s+/).length;
+  assert.ok(words(/<p class="h5-lead">([^<]+)<\/p>/) <= 12, "the hero line stays short");
+  assert.match(html, /<p class="h5-sub">Get started now\.<\/p>/);
+  const lines = [...html.matchAll(/<span class="h5-step-text">([^<]+)<\/span>/g)].map((m) => m[1]);
+  assert.deepStrictEqual(lines, ["Share your background and goals.", "Use our free tools.", "Apply and prepare for interviews."]);
+  for (const l of lines) assert.ok(l.split(/\s+/).length <= 6, `"${l}" is short enough for a phone`);
+  for (const gone of ["in minutes", "meaningful steps", "see your experience clearly", "kind of work you"]) assert.ok(!html.includes(gone), `old wording left: ${gone}`);
+});
+
+test("card descriptions are a few words each, so they stay readable on a phone", () => {
+  const guides = [...html.matchAll(/class="h5-card h5-guide"[\s\S]*?<span class="h5-card-text">([^<]+)<\/span>/g)].map((m) => m[1]);
+  const tools = [...html.matchAll(/class="h5-card h5-tool"[\s\S]*?<span class="h5-card-text">([^<]+)<\/span>/g)].map((m) => m[1]);
+  assert.deepStrictEqual(guides, ["See how resumes get screened.", "Keep your story ready.", "Show your experience honestly.", "Prepare stories, not scripts."]);
+  assert.deepStrictEqual(tools, ["Build your first resume.", "Polish the resume you have.", "Check your fit for a job.", "Find experience you left out.", "Strengthen your LinkedIn.", "Get ready for interviews."]);
+  for (const g of guides) assert.ok(g.split(/\s+/).length <= 5, `"${g}" is too long`);
+  for (const t of tools) assert.ok(t.split(/\s+/).length <= 6, `"${t}" is too long`);
 });

@@ -137,6 +137,7 @@ body.home-v5 .h5-band-pale { background: var(--pale); }
 .h5-statement { margin: 3.5rem 0 0; }
 .h5-statement blockquote { display: flex; align-items: center; gap: 1.5rem; margin: 0; }
 .h5-statement blockquote::before, .h5-statement blockquote::after { content: ""; flex: 1; height: 1px; background: var(--gold); }
+.h5-statement figcaption { margin-top: 0.6rem; text-align: center; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em; color: var(--body); }
 .h5-statement p { margin: 0; text-align: center; font-family: var(--font-serif); font-style: italic; font-size: 1.35rem; line-height: 1.4; color: var(--body); }
 
 /* ---------- How we begin ---------- */
