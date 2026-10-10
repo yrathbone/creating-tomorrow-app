@@ -272,7 +272,8 @@ body.pages-v4 .ats-compare-clear { background: var(--tint-gold); }
    white), the privacy sentence is black with its first words underlined, and the brand sits on the right beside the legal links. The
    blue is a touch sharper on this page (#0052F5, fully saturated; white on it is 5.9:1). */
 body.pages-v4.tool-hub { --pale: #ffffff; --blue: #0052f5; --blue-deep: #0043c9; --gold: #ffb300; --gold-hover: #f2a400; background: #ffffff; }
-body.pages-v4.tool-hub .h5-footer-privacy { color: #000000; }
+/* the sentence uses the full footer width, so on a desktop it stays on one line (on a phone it wraps as it must) */
+body.pages-v4.tool-hub .h5-footer-privacy { color: #000000; max-width: none; }
 /* free-tools wording: "We don't save your resume" is underlined, which sets this promise apart from the signed-in side, where data is saved */
 body.pages-v4.tool-hub .h5-footer-privacy .h5-nosave { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 /* only Privacy and Terms are crimson (#C8102E, 5.9:1 on white); the other two links stay navy */

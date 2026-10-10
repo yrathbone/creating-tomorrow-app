@@ -58,10 +58,12 @@ test("the Career Tools page is all white with a cobalt header and a cobalt strip
   assert.ok(rules.length >= 10, "the page has its own rules");
   for (const l of rules) assert.ok(/^\s*(body\.pages-v4\.tool-hub|\/\*)/.test(l), "every rule is scoped to the page: " + l.slice(0, 70));
   assert.match(css, /body\.pages-v4\.tool-hub \{ --pale: #ffffff; --blue: #0052f5; --blue-deep: #0043c9; --gold: #ffb300; --gold-hover: #f2a400; background: #ffffff; \}/);
-  assert.match(css, /body\.pages-v4\.tool-hub \.h5-footer-privacy \{ color: #000000; \}/);
+  assert.match(css, /body\.pages-v4\.tool-hub \.h5-footer-privacy \{ color: #000000; max-width: none; \}/);
   assert.match(css, /\.h5-footer-privacy \.h5-nosave \{ text-decoration: underline;/);
   assert.match(css, /\.footer-links a:nth-of-type\(-n\+2\) \{ color: #c8102e; \}/);
-  assert.match(html, /<p class="h5-footer-privacy"><span class="h5-nosave">We do not keep your resume<\/span> or job posting\. We safely send them to our AI provider to generate your results, and they normally delete them from their systems within 30 days\.<\/p>/);
+  assert.match(html, /<p class="h5-footer-privacy"><span class="h5-nosave">We do not keep your resume<\/span> or job posting\. We send them securely to our AI provider, which normally deletes them within 30 days\.<\/p>/);
+  // the sentence claims "normally", never "always": Anthropic keeps some flagged content longer, so an absolute promise would be untrue
+  assert.ok(!/We do not save your data/.test(html), "no blanket claim about all data");
   assert.match(css, /tool-hub \.h5-footer \.h5-wrap \{ display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
   assert.match(css, /tool-hub \.h5-footer-privacy \{ grid-area: privacy; justify-self: center;/);
   assert.match(css, /tool-hub \.h5-footer-brand \{ grid-area: brand; justify-self: end; \}/);
