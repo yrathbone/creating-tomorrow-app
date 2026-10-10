@@ -61,13 +61,14 @@ test("the Career Tools page is all white with a cobalt header and a cobalt strip
   assert.match(css, /body\.pages-v4\.tool-hub \.h5-footer-privacy \{ color: #000000; \}/);
   assert.match(css, /\.h5-footer-privacy \.h5-nosave \{ text-decoration: underline;/);
   assert.match(css, /\.footer-links a:nth-of-type\(-n\+2\) \{ color: #c8102e; \}/);
-  assert.match(html, /<p class="h5-footer-privacy"><span class="h5-nosave">We don't save your resume<\/span> or job posting/);
+  assert.match(html, /<p class="h5-footer-privacy"><span class="h5-nosave">We do not keep your resume<\/span> or job posting\. We safely send them to our AI provider to generate your results, and they normally delete them from their systems within 30 days\.<\/p>/);
   assert.match(css, /tool-hub \.h5-footer \.h5-wrap \{ display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
   assert.match(css, /tool-hub \.h5-footer-privacy \{ grid-area: privacy; justify-self: center;/);
   assert.match(css, /tool-hub \.h5-footer-brand \{ grid-area: brand; justify-self: end; \}/);
   assert.match(css, /tool-hub \.h5-footer \.nav-wordmark-title \{ color: var\(--blue\); \}/);
-  assert.match(css, /tool-hub \.h5-footer \.nav-wordmark-gold \{ color: var\(--gold\); \}/);
-  assert.match(html, /<a href="privacy\.html">Privacy<\/a> <a href="terms\.html">Terms<\/a> · <a href="accessibility\.html">Accessibility<\/a>/);
+  assert.match(css, /tool-hub \.h5-footer \.nav-wordmark-gold \{ color: #e5a100; \}/);
+  assert.match(css, /tool-hub \.h5-footer \.footer-links \.h5-amp \{ color: #c8102e; \}/);
+  assert.match(html, /<a href="privacy\.html">Privacy<\/a> <span class="h5-amp">&amp;<\/span> <a href="terms\.html">Terms<\/a> · <a href="accessibility\.html">Accessibility<\/a>/);
   assert.match(css, /body\.pages-v4\.tool-hub \.page-header h1 \{ color: var\(--blue\); \}/);
   assert.match(css, /body\.pages-v4\.tool-hub \.site-nav \{ background: var\(--blue\); border-bottom: 0; \}/);
   assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem; margin-top: 2\.25rem; background: var\(--blue\); \}/);
