@@ -26,6 +26,7 @@ from collections import deque
 from fastapi import Depends, HTTPException
 from starlette.responses import JSONResponse
 
+import turnstile
 from auth.dependencies import get_current_user
 
 PUBLIC_AI_PATHS = frozenset({
@@ -212,6 +213,18 @@ class AbuseGuardMiddleware:
             if not allowed:
                 print(f"[abuse] rate limit on {path} visitor={_short(key)} retry_after={wait}s")
                 return await _json(429, RATE_MESSAGE, wait)(scope, receive, send)
+            if turnstile.enabled():
+                # the invisible bot check: no genuine token, no AI call (after the cheap rate limit, so floods of bad tokens are capped)
+                token = headers.get(turnstile.TOKEN_HEADER, "")
+                if not token or len(token) > turnstile.MAX_TOKEN_LENGTH:
+                    print(f"[abuse] bot check: no usable token on {path} visitor={_short(key)}")
+                    return await _json(403, turnstile.FAILED_MESSAGE)(scope, receive, send)
+                ok, reason = await turnstile.verify_async(token)
+                if not ok:
+                    print(f"[abuse] bot check {reason} on {path} visitor={_short(key)}")
+                    if reason == "unreachable":
+                        return await _json(503, turnstile.UNAVAILABLE_MESSAGE, 30)(scope, receive, send)
+                    return await _json(403, turnstile.FAILED_MESSAGE)(scope, receive, send)
             if not IN_FLIGHT.acquire():
                 print(f"[abuse] busy on {path}")
                 return await _json(503, BUSY_MESSAGE, 30)(scope, receive, send)

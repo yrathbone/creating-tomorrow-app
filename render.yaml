@@ -19,6 +19,10 @@ services:
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false   # set manually in the Render dashboard - never in this repo
+      # The invisible bot check on the public AI tools (Cloudflare Turnstile). Off until BOTH keys are set. The site key is public
+      # (add it as a plain value or in the dashboard); the secret key is set only in the Render dashboard, never here.
+      - key: TURNSTILE_SECRET_KEY
+        sync: false
       - key: CT_MODEL
         value: claude-sonnet-5
       # Cognito User Pool ID / App Client ID / region are not secrets (the

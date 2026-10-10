@@ -94,6 +94,7 @@ from prepare import prepare, PrepareError
 from resume_builder import build_resume_bytes, build_match_recap_bytes, build_profile_review_recap_bytes
 from limits import BoundedDict, BoundedList, Long, Short, Tiny
 from errors import internal_error
+import turnstile
 from abuse_guard import AbuseGuardMiddleware
 from ai_health import check_ai_key, log_at_startup
 from download_names import attachment_headers
@@ -164,12 +165,12 @@ async def no_cache_for_frontend(request, call_next):
 # to test_the_csp_lists_every_outside_address_the_pages_really_use.
 CONTENT_SECURITY_POLICY = "; ".join([
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://challenges.cloudflare.com",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://i.ytimg.com",
     "font-src 'self'",
-    "connect-src 'self' https://cognito-idp.us-east-2.amazonaws.com",
-    "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
+    "connect-src 'self' https://cognito-idp.us-east-2.amazonaws.com https://challenges.cloudflare.com",
+    "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -602,7 +603,15 @@ async def health(request: Request):
         # Which header the visitor rate limits use to tell visitors apart: "cloudflare" is right for the live site
         # (no address is ever shown). If this ever reads "direct" on the live site, every visitor would share one allowance.
         "visitor_address_source": "cloudflare" if request.headers.get("cf-ray") and request.headers.get("cf-connecting-ip") else "direct",
+        # whether the invisible bot check is on for the public AI tools (never shows a key)
+        "bot_check": "on" if turnstile.enabled() else "off",
     }
+
+
+@app.get("/api/turnstile-config")
+async def turnstile_config():
+    """Tells the tool pages whether to run the bot check and with which PUBLIC site key. Never returns the secret."""
+    return Response(content=json.dumps(turnstile.public_config()), media_type="application/json", headers={"Cache-Control": "no-store"})
 
 
 @app.api_route("/api/health/ai", methods=["GET", "HEAD"])
