@@ -57,7 +57,8 @@ test("the Career Tools page is all white with a cobalt header and a cobalt strip
   const rules = css.split("\n").filter((l) => l.includes("tool-hub"));
   assert.ok(rules.length >= 10, "the page has its own rules");
   for (const l of rules) assert.ok(/^\s*(body\.pages-v4\.tool-hub|\/\*)/.test(l), "every rule is scoped to the page: " + l.slice(0, 70));
-  assert.match(css, /body\.pages-v4\.tool-hub \{ --pale: #ffffff; --gold: #f59e00; --gold-hover: #e28d00; background: #ffffff; \}/);
+  assert.match(css, /body\.pages-v4\.tool-hub \{ --pale: #ffffff; --gold: #ffb300; --gold-hover: #f2a400; background: #ffffff; \}/);
+  assert.match(css, /body\.pages-v4\.tool-hub \.h5-footer-privacy \{ color: #c8102e; \}/);
   assert.match(css, /body\.pages-v4\.tool-hub \.page-header h1 \{ color: var\(--blue\); \}/);
   assert.match(css, /body\.pages-v4\.tool-hub \.site-nav \{ background: var\(--blue\); border-bottom: 0; \}/);
   assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem; margin-top: 2\.25rem; background: var\(--blue\); \}/);
@@ -65,15 +66,15 @@ test("the Career Tools page is all white with a cobalt header and a cobalt strip
   for (const l of rules.filter((x) => x.includes("nav-wordmark") || x.includes("nav-logo img"))) assert.ok(l.includes(".site-nav"), "header-only: " + l.slice(0, 80));
 });
 
-test("on the cobalt header the text keeps its contrast: white 5.9:1, navy-on-gold button, and the gold wordmark is a recorded choice", () => {
+test("on the cobalt header the text keeps its contrast: white 5.9:1, navy-on-gold button, gold wordmark and crimson privacy sentence", () => {
   const hex = (n) => parseInt(n, 16) / 255;
   const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
   const lum = (h) => 0.2126 * lin(hex(h.slice(0, 2))) + 0.7152 * lin(hex(h.slice(2, 4))) + 0.0722 * lin(hex(h.slice(4, 6)));
   const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
   assert.ok(ratio("FFFFFF", "0756ED") >= 4.5, "white links on cobalt");
-  const g = ratio("F59E00", "0756ED");
-  assert.ok(g > 2.5 && g < 3, "the sharpened earlier gold on cobalt is a recorded brand choice, " + g.toFixed(2) + ":1 (below the 3:1 large-text mark)");
-  assert.ok(ratio("071C42", "F59E00") >= 4.5, "navy text on the gold Sign In button");
+  assert.ok(ratio("FFB300", "0756ED") >= 3, "the large bold gold wordmark on cobalt");
+  assert.ok(ratio("071C42", "FFB300") >= 4.5, "navy text on the gold Sign In button");
+  assert.ok(ratio("C8102E", "FFFFFF") >= 4.5, "the crimson privacy sentence on white");
   assert.ok(ratio("0756ED", "FFFFFF") >= 4.5, "the cobalt Career Tools headline on white");
 });
 
