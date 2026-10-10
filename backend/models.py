@@ -231,7 +231,7 @@ class ResumeVersion(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"))
-    scan_history_id: Mapped[int | None] = mapped_column(ForeignKey("scan_histories.id"), nullable=True)
+    scan_history_id: Mapped[int | None] = mapped_column(ForeignKey("scan_histories.id", ondelete="SET NULL"), nullable=True)
     resume_data: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
