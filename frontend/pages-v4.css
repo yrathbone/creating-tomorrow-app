@@ -260,6 +260,27 @@ body.pages-v4 .ats-callout-summary { background: var(--tint-blue); border-color:
 body.pages-v4 .ats-compare-unclear { background: var(--pale); }
 body.pages-v4 .ats-compare-clear { background: var(--tint-gold); }
 
+/* ---------- Career Tools page (tool.html): all white, with a cobalt header and a cobalt strip at the foot ----------
+   Content is unchanged. Every grey on this page becomes white (the --pale token is redefined here, so the heading band, panels and any
+   other pale area turn white); hairlines and the pale-blue and pale-gold icon tints stay. The nav sits on cobalt: white links, a
+   white badge behind the logo mark, a gold Sign In button with navy text. White on cobalt is 5.9:1, navy on gold is 11:1. */
+body.pages-v4.tool-hub { --pale: #ffffff; background: #ffffff; }
+body.pages-v4.tool-hub .site-nav { background: var(--blue); border-bottom: 0; }
+body.pages-v4.tool-hub .site-nav .nav-logo img { box-sizing: content-box; padding: 5px; background: #ffffff; border-radius: 50%; }
+body.pages-v4.tool-hub .site-nav .nav-wordmark-title { color: #ffffff; }
+body.pages-v4.tool-hub .site-nav .nav-wordmark-gold { color: var(--gold); }
+body.pages-v4.tool-hub .nav-links a, body.pages-v4.tool-hub .nav-links a.nav-cta { color: #ffffff; }
+body.pages-v4.tool-hub .nav-links a:hover, body.pages-v4.tool-hub .nav-links a.nav-cta:hover { color: var(--gold); background: none; }
+body.pages-v4.tool-hub .nav-links a.nav-active { color: #ffffff; border-bottom-color: var(--gold); }
+body.pages-v4.tool-hub .nav-links a.nav-account { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+body.pages-v4.tool-hub .nav-links a.nav-account:hover { background: var(--gold-hover); border-color: var(--gold-hover); color: var(--navy); }
+body.pages-v4.tool-hub .site-nav a:focus-visible, body.pages-v4.tool-hub .site-nav button:focus-visible { outline: 3px solid #ffffff; outline-offset: 3px; }
+/* no grey hairlines on this page: the six tool cards sit on plain white (a pale-blue hairline appears only on hover), and the footer has no top rule */
+body.pages-v4.tool-hub .hv-tool, body.pages-v4.tool-hub .mode-btn.hv-tool { border-color: transparent; }
+body.pages-v4.tool-hub .hv-tool:hover, body.pages-v4.tool-hub .mode-btn.hv-tool:hover { border-color: #b9cdf7; }
+body.pages-v4.tool-hub footer.h5-footer { padding-bottom: 0; border-top: 0; }
+body.pages-v4.tool-hub footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 2.25rem; background: var(--blue); }
+
 @media (prefers-reduced-motion: reduce) {
   body:where(.pages-v4) button, body.pages-v4 .hv-guide, body.pages-v4 .hv-tool { transition: none; }
 }

@@ -48,3 +48,29 @@ test("the signed-in dashboard uses the locked palette: flat, two-tone icons, no 
   assert.match(css, /--v4-shadow: none/);
   assert.match(css, /\.next-step \{ background: var\(--v4-gold-wash\); background-image: none; \}/);
 });
+
+test("the Career Tools page is all white with a cobalt header and a cobalt strip at the foot, and no other page is touched", () => {
+  const html = read("tool.html");
+  assert.match(html, /<body class="pages-v4 tool-hub">/);
+  for (const other of ["learn.html", "videos.html", "about.html", "elevate.html", "prepare.html", "scratch.html", "spotlight.html"]) assert.ok(!read(other).includes("tool-hub"), other);
+  const css = read("pages-v4.css");
+  const rules = css.split("\n").filter((l) => l.includes("tool-hub"));
+  assert.ok(rules.length >= 10, "the page has its own rules");
+  for (const l of rules) assert.ok(/^\s*(body\.pages-v4\.tool-hub|\/\*)/.test(l), "every rule is scoped to the page: " + l.slice(0, 70));
+  assert.match(css, /body\.pages-v4\.tool-hub \{ --pale: #ffffff; background: #ffffff; \}/);
+  assert.match(css, /body\.pages-v4\.tool-hub \.site-nav \{ background: var\(--blue\); border-bottom: 0; \}/);
+  assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem; margin-top: 2\.25rem; background: var\(--blue\); \}/);
+  // the header recolouring must not leak into the footer's wordmark (white on white once happened)
+  for (const l of rules.filter((x) => x.includes("nav-wordmark") || x.includes("nav-logo img"))) assert.ok(l.includes(".site-nav"), "header-only: " + l.slice(0, 80));
+});
+
+test("on the cobalt header the text keeps its contrast: white 5.9:1, gold wordmark and navy-on-gold button", () => {
+  const hex = (n) => parseInt(n, 16) / 255;
+  const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const lum = (h) => 0.2126 * lin(hex(h.slice(0, 2))) + 0.7152 * lin(hex(h.slice(2, 4))) + 0.0722 * lin(hex(h.slice(4, 6)));
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  assert.ok(ratio("FFFFFF", "0756ED") >= 4.5, "white links on cobalt");
+  assert.ok(ratio("FFBC00", "0756ED") >= 3, "the large bold gold wordmark on cobalt");
+  assert.ok(ratio("071C42", "FFBC00") >= 4.5, "navy text on the gold Sign In button");
+});
+
