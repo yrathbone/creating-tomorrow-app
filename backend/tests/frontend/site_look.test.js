@@ -65,11 +65,14 @@ test("the Career Tools page is all white with a cobalt header and a cobalt strip
   assert.match(css, /tool-hub \.h5-footer \.h5-wrap \{ display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
   assert.match(css, /tool-hub \.h5-footer-privacy \{ grid-area: privacy; justify-self: center;/);
   assert.match(css, /tool-hub \.h5-footer-brand \{ grid-area: brand; justify-self: end; \}/);
+  assert.match(css, /tool-hub \.h5-footer \.nav-wordmark-title \{ color: var\(--blue\); \}/);
+  assert.match(css, /tool-hub \.h5-footer \.nav-wordmark-gold \{ color: var\(--gold\); \}/);
+  assert.match(html, /<a href="privacy\.html">Privacy<\/a> <a href="terms\.html">Terms<\/a> · <a href="accessibility\.html">Accessibility<\/a>/);
   assert.match(css, /body\.pages-v4\.tool-hub \.page-header h1 \{ color: var\(--blue\); \}/);
   assert.match(css, /body\.pages-v4\.tool-hub \.site-nav \{ background: var\(--blue\); border-bottom: 0; \}/);
   assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem; margin-top: 2\.25rem; background: var\(--blue\); \}/);
   // the header recolouring must not leak into the footer's wordmark (white on white once happened)
-  for (const l of rules.filter((x) => x.includes("nav-wordmark") || x.includes("nav-logo img"))) assert.ok(l.includes(".site-nav"), "header-only: " + l.slice(0, 80));
+  for (const l of rules.filter((x) => x.includes("nav-wordmark") || x.includes("nav-logo img"))) assert.ok(l.includes(".site-nav") || l.includes(".h5-footer"), "header-only or footer-only, never both at once: " + l.slice(0, 80));
 });
 
 test("on the cobalt header the text keeps its contrast: white 5.9:1, navy-on-gold button, gold wordmark and the crimson Privacy and Terms links", () => {

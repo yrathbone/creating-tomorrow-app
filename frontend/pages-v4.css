@@ -287,6 +287,10 @@ body.pages-v4.tool-hub .h5-footer .footer-links { grid-area: legal; justify-self
 body.pages-v4.tool-hub .h5-footer-privacy { grid-area: privacy; justify-self: center; margin: 0.75rem 0 0.25rem; text-align: center; }
 body.pages-v4.tool-hub .h5-footer-copy { grid-area: copy; margin: 0; }
 body.pages-v4.tool-hub .h5-footer-brand { grid-area: brand; justify-self: end; }
+/* the footer wordmark matches the page: "Creating" in the page blue (the Career Tools headline blue), "Tomorrow" in the Sign In gold. Same typeface, size and weight as before.
+   Gold on white is only 1.7:1, so this is a deliberate brand choice for a large, heavy wordmark. */
+body.pages-v4.tool-hub .h5-footer .nav-wordmark-title { color: var(--blue); }
+body.pages-v4.tool-hub .h5-footer .nav-wordmark-gold { color: var(--gold); }
 @media (max-width: 1000px) {
   body.pages-v4.tool-hub .h5-footer .h5-wrap { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "privacy" "copy"; row-gap: 1.1rem; }
   body.pages-v4.tool-hub .h5-footer .footer-links, body.pages-v4.tool-hub .h5-footer-brand { justify-self: start; }
