@@ -11,6 +11,7 @@ const AI = ["/api/analyze", "/api/refine", "/api/elevate-start", "/api/elevate-d
 
 function browser(config) {
   const calls = [];
+  const listeners = {};
   const injected = [];
   const resets = [];
   let renderOptions = null;
@@ -26,13 +27,14 @@ function browser(config) {
     body: { appendChild: (el) => injected.push(el) },
     head: { appendChild: (el) => { injected.push(el); if (el.src && el.onload) setTimeout(() => { win.turnstile = { render: (box, opts) => { renderOptions = opts; return "w1"; }, reset: (id) => resets.push(id) }; el.onload(); }, 0); } },
     createElement: (tag) => ({ tag, style: {}, set src(v) { this._src = v; }, get src() { return this._src; } }),
-    addEventListener: () => {},
+    addEventListener: (name, fn) => { (listeners[name] = listeners[name] || []).push(fn); },
   };
   const ctx = { window: win, document: doc, URL, Headers, Promise, setTimeout, clearTimeout, Object, console };
   win.window = win;
   vm.createContext(ctx);
   vm.runInContext(SRC, ctx);
-  return { win, calls, injected, resets, options: () => renderOptions };
+  const interact = (tag = "INPUT") => (listeners.focusin || []).forEach((fn) => fn({ target: { tagName: tag } }));
+  return { win, calls, injected, resets, interact, options: () => renderOptions };
 }
 
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
@@ -46,8 +48,29 @@ test("when the check is off nothing changes: no Cloudflare script, no header, sa
   assert.strictEqual(headerOf(call), null);
 });
 
+test("a page that only lists the tools never loads Cloudflare or shows a check", async () => {
+  const b = browser({ enabled: true, site_key: "0x4AAAAAAApublic" });
+  await tick(40);
+  assert.strictEqual(b.injected.length, 0, "nothing is added until someone starts using a tool");
+  b.interact("BUTTON");
+  b.interact("A");
+  await tick(20);
+  assert.strictEqual(b.injected.length, 0, "buttons and links do not start it");
+});
+
+test("the check starts, once, when the visitor first clicks or types in a form field", async () => {
+  const b = browser({ enabled: true, site_key: "0x4AAAAAAApublic" });
+  await tick();
+  b.interact("TEXTAREA");
+  b.interact("INPUT");
+  await tick();
+  assert.strictEqual(b.injected.filter((e) => e.tag === "script").length, 1, "one script only");
+});
+
 test("when on, Cloudflare's script is loaded once with the public site key and an interaction-only widget", async () => {
   const b = browser({ enabled: true, site_key: "0x4AAAAAAApublic" });
+  await tick();
+  b.interact("INPUT");
   await tick();
   const script = b.injected.find((e) => e.tag === "script");
   assert.ok(script && script.src.startsWith("https://challenges.cloudflare.com/turnstile/v0/api.js"));
@@ -57,6 +80,8 @@ test("when on, Cloudflare's script is loaded once with the public site key and a
 
 test("every one of the nine AI calls carries the pass, and a new pass is requested after each use", async () => {
   const b = browser({ enabled: true, site_key: "0x4AAAAAAApublic" });
+  await tick();
+  b.interact("INPUT");
   await tick();
   for (const [i, p] of AI.entries()) {
     b.options().callback("token-" + i);
@@ -70,6 +95,8 @@ test("every one of the nine AI calls carries the pass, and a new pass is request
 
 test("other requests are never touched: other paths, GETs, and uploads keep their own headers", async () => {
   const b = browser({ enabled: true, site_key: "0x4AAAAAAApublic" });
+  await tick();
+  b.interact("INPUT");
   await tick();
   b.options().callback("t");
   await b.win.fetch("/api/health", { method: "GET" });
@@ -85,6 +112,8 @@ test("other requests are never touched: other paths, GETs, and uploads keep thei
 test("an expired pass is dropped, and a click waits for the next pass instead of sending an old one", async () => {
   const b = browser({ enabled: true, site_key: "0x4AAAAAAApublic" });
   await tick();
+  b.interact("INPUT");
+  await tick();
   b.options().callback("old");
   b.options()["expired-callback"]();
   const pending = b.win.fetch("/api/refine", { method: "POST", body: "x" });
@@ -93,4 +122,16 @@ test("an expired pass is dropped, and a click waits for the next pass instead of
   b.options().callback("fresh");
   await pending;
   assert.strictEqual(headerOf(b.calls.filter((c) => c.url === "/api/refine").pop()), "fresh");
+});
+
+test("a request sent with no earlier click or keystroke starts the check itself and waits for the pass", async () => {
+  const b = browser({ enabled: true, site_key: "0x4AAAAAAApublic" });
+  await tick();
+  assert.strictEqual(b.injected.length, 0);
+  const pending = b.win.fetch("/api/prepare", { method: "POST", body: "x" });
+  await tick(30);
+  assert.ok(b.injected.some((e) => e.tag === "script"), "the check was started by the request");
+  b.options().callback("late-pass");
+  await pending;
+  assert.strictEqual(headerOf(b.calls.filter((c) => c.url === "/api/prepare").pop()), "late-pass");
 });

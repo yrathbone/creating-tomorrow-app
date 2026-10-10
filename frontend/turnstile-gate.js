@@ -2,8 +2,9 @@
    One small shared script, loaded by the five tool pages before their own script. It does nothing unless the server says the check
    is on (GET /api/turnstile-config), so the pages work exactly as before until the keys exist.
 
-   When it is on: it loads Cloudflare's script, gets a short-lived single-use pass, and adds it to every POST to one of the nine
-   AI endpoints as the X-Turnstile-Token header. A new pass is fetched after each use. Nothing here is a secret: the site key is
+   When it is on, it waits until the visitor actually starts using a tool (they click or type in a form field, or send a request),
+   so a page that only shows the list of tools never loads Cloudflare's script or shows any check. Then it gets a short-lived
+   single-use pass and adds it to every POST to one of the nine AI endpoints as the X-Turnstile-Token header. A new pass is fetched after each use. Nothing here is a secret: the site key is
    public by design. If the pass cannot be had in time the request is sent without one and the server answers with a friendly
    message (the tools already show the server's message). */
 (function () {
@@ -22,7 +23,7 @@
   var realFetch = window.fetch ? window.fetch.bind(window) : null;
   if (!realFetch) return;
 
-  var state = { enabled: false, siteKey: null, widgetId: null, token: null, waiters: [] };
+  var state = { enabled: false, siteKey: null, widgetId: null, token: null, waiters: [], started: false };
 
   function pathOf(input) {
     try {
@@ -81,6 +82,8 @@
   }
 
   function start() {
+    if (state.started) return;
+    state.started = true;
     var script = document.createElement("script");
     script.src = CLOUDFLARE_SCRIPT;
     script.async = true;
@@ -97,18 +100,32 @@
       if (cfg && cfg.enabled && cfg.site_key) {
         state.enabled = true;
         state.siteKey = cfg.site_key;
-        var begin = function () { start(); };
-        if (document.body) begin();
-        else document.addEventListener("DOMContentLoaded", begin);
+        // not started yet: see startOnUse() below
       }
     })
     .catch(function () { /* check stays off in this browser; the server decides what to do */ });
+
+  // Start the check the moment someone begins to use a tool: the first click or keystroke in a form field. By the time they press the button the
+  // pass is usually ready. A page that only lists the tools has no form fields, so nothing loads and nothing can show.
+  function startOnUse(event) {
+    if (!state.enabled || state.started) return;
+    var el = event && event.target;
+    var tag = el && el.tagName ? String(el.tagName).toUpperCase() : "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") begin();
+  }
+  function begin() {
+    if (document.body) start();
+    else document.addEventListener("DOMContentLoaded", start);
+  }
+  document.addEventListener("focusin", startOnUse, true);
+  document.addEventListener("pointerdown", startOnUse, true);
 
   window.fetch = function (input, init) {
     if (!isGated(input, init)) return realFetch(input, init);
     var wait = new Promise(function (resolve) { setTimeout(resolve, CONFIG_WAIT_MS); });
     return Promise.race([configReady, wait]).then(function () {
       if (!state.enabled) return realFetch(input, init);
+      begin(); // a request without any earlier click or keystroke starts the check now
       return getToken().then(function (token) {
         var options = Object.assign({}, init || {});
         var headers = new Headers(options.headers || {});
