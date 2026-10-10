@@ -192,6 +192,11 @@ class PagesAndPolicyTests(unittest.TestCase):
             self.assertIn('<script src="turnstile-gate.js"></script>', html, page)
             self.assertLess(html.index("turnstile-gate.js"), html.index(own), page)
 
+    def test_the_privacy_page_names_the_bot_check(self):
+        text = self.read("privacy.html")
+        self.assertIn("Cloudflare Turnstile", text)
+        self.assertIn("only to tell people from automated scripts", text)
+
     def test_the_security_policy_allows_cloudflare_for_scripts_frames_and_connections_only(self):
         csp = main.CONTENT_SECURITY_POLICY
         for directive in ("script-src", "connect-src", "frame-src"):
