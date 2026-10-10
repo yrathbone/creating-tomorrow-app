@@ -33,7 +33,7 @@ test("sign-in and sign-up styling is scoped so the dashboard keeps its own look"
 
 test("the 404 page uses the homepage stylesheet", () => {
   const html = read("not-found.html");
-  assert.match(html, /<body class="home-v5">/);
+  assert.match(html, /<body class="home-v5 chrome-v6">/);
   assert.match(html, /home-v5\.css/);
 });
 
@@ -49,49 +49,78 @@ test("the signed-in dashboard uses the locked palette: flat, two-tone icons, no 
   assert.match(css, /\.next-step \{ background: var\(--v4-gold-wash\); background-image: none; \}/);
 });
 
-test("the Career Tools page is all white with a cobalt header and a cobalt strip at the foot, and no other page is touched", () => {
-  const html = read("tool.html");
-  assert.match(html, /<body class="pages-v4 tool-hub">/);
-  for (const other of ["learn.html", "videos.html", "about.html", "elevate.html", "prepare.html", "scratch.html", "spotlight.html"]) assert.ok(!read(other).includes("tool-hub"), other);
-  const css = read("pages-v4.css");
-  const rules = css.split("\n").filter((l) => l.includes("tool-hub"));
-  assert.ok(rules.length >= 10, "the page has its own rules");
-  for (const l of rules) assert.ok(/^\s*(body\.pages-v4\.tool-hub|\/\*)/.test(l), "every rule is scoped to the page: " + l.slice(0, 70));
-  assert.match(css, /body\.pages-v4\.tool-hub \{ --pale: #ffffff; --blue: #0052f5; --blue-deep: #0043c9; --gold: #ffb300; --gold-hover: #f2a400; background: #ffffff; \}/);
-  assert.match(css, /body\.pages-v4\.tool-hub \.h5-footer-privacy \{ color: #000000; max-width: none; \}/);
-  assert.match(css, /\.h5-footer-privacy \.h5-nosave \{ text-decoration: underline;/);
-  assert.match(css, /\.footer-links a:nth-of-type\(-n\+2\) \{ color: #c8102e; \}/);
-  assert.match(html, /<p class="h5-footer-privacy"><span class="h5-nosave">We do not keep your resume<\/span> or job posting\. We send them securely to our AI provider, which normally deletes them within 30 days\.<\/p>/);
-  // the sentence claims "normally", never "always": Anthropic keeps some flagged content longer, so an absolute promise would be untrue
-  assert.ok(!/We do not save your data/.test(html), "no blanket claim about all data");
-  assert.match(css, /tool-hub \.h5-footer \.h5-wrap \{ display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
-  assert.match(css, /tool-hub \.h5-footer-privacy \{ grid-area: privacy; justify-self: center;/);
-  assert.match(css, /tool-hub \.h5-footer-brand \{ grid-area: brand; justify-self: end; \}/);
-  assert.match(css, /tool-hub \.h5-footer \.nav-wordmark-title \{ color: var\(--blue\); \}/);
-  assert.match(css, /tool-hub \.h5-footer \.nav-wordmark-gold \{ color: #e5a100; \}/);
-  assert.match(css, /tool-hub \.h5-footer \.footer-links \.h5-amp \{ color: #c8102e; \}/);
-  assert.match(html, /<a href="privacy\.html">Privacy<\/a> <span class="h5-amp">&amp;<\/span> <a href="terms\.html">Terms<\/a> · <a href="accessibility\.html">Accessibility<\/a>/);
-  assert.match(css, /body\.pages-v4\.tool-hub \.page-header h1 \{ color: var\(--blue\); \}/);
-  assert.match(css, /body\.pages-v4\.tool-hub \.site-nav \{ background: var\(--blue\); border-bottom: 0; \}/);
-  assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem; margin-top: 2\.25rem; background: var\(--blue\); \}/);
-  // the header recolouring must not leak into the footer's wordmark (white on white once happened)
-  for (const l of rules.filter((x) => x.includes("nav-wordmark") || x.includes("nav-logo img"))) assert.ok(l.includes(".site-nav") || l.includes(".h5-footer"), "header-only or footer-only, never both at once: " + l.slice(0, 80));
-});
-
-test("on the cobalt header the text keeps its contrast: white 5.9:1, navy-on-gold button, gold wordmark and the crimson Privacy and Terms links", () => {
-  const hex = (n) => parseInt(n, 16) / 255;
-  const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
-  const lum = (h) => 0.2126 * lin(hex(h.slice(0, 2))) + 0.7152 * lin(hex(h.slice(2, 4))) + 0.0722 * lin(hex(h.slice(4, 6)));
-  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
-  assert.ok(ratio("FFFFFF", "0052F5") >= 4.5, "white links on the sharper cobalt");
-  assert.ok(ratio("FFB300", "0052F5") >= 3, "the large bold gold wordmark on cobalt");
-  assert.ok(ratio("071C42", "FFB300") >= 4.5, "navy text on the gold Sign In button");
-  assert.ok(ratio("C8102E", "FFFFFF") >= 4.5, "the crimson privacy sentence on white");
-  assert.ok(ratio("0052F5", "FFFFFF") >= 4.5, "the cobalt Career Tools headline on white");
-});
-
 test("the inner pages never scroll sideways: the centred Career Tools panel (sized by 100vw, which counts the scrollbar) is clipped by the body", () => {
   const css = read("pages-v4.css");
   assert.match(css, /body\.pages-v4 \{ overflow-x: clip; \}/);
   assert.match(css, /#step-mode\.pv-panel \{ position: relative; left: 50%; transform: translateX\(-50%\); width: min\(var\(--wrap\), 100vw\);/);
 });
+
+const PUBLIC = ["index", "about", "accessibility", "article", "contact", "elevate", "learn", "prepare", "privacy", "scratch", "spotlight", "terms", "tool", "videos", "not-found", "career/login", "career/register"];
+const LAST_CSS = { index: "home-v5.css", "not-found": "/home-v5.css", "career/login": "auth-v5.css", "career/register": "auth-v5.css" };
+
+test("every public page wears the shared chrome: the body class, and chrome-v6.css loaded after the page's own stylesheet", () => {
+  for (const name of PUBLIC) {
+    const html = read(name + ".html");
+    assert.match(html, /<body class="[^"]*\bchrome-v6\b/, name + " body class");
+    assert.ok(!html.includes("tool-hub"), name + " has no leftover single-page class");
+    const links = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1]);
+    const prefix = name.startsWith("career/") ? "../" : name === "not-found" ? "/" : "";
+    assert.strictEqual(links[links.length - 1], prefix + "chrome-v6.css", name + ": chrome-v6.css is the last stylesheet");
+    const own = LAST_CSS[name] || "pages-v4.css";
+    assert.strictEqual(links[links.length - 2], own, name + ": it follows " + own);
+  }
+});
+
+test("chrome-v6.css is scoped to the public pages, never the signed-in dashboard, and holds nothing for other pages", () => {
+  const css = read("chrome-v6.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const selectors = css.split("}").map((r) => r.split("{")[0].trim()).filter(Boolean).flatMap((r) => (r.startsWith("@") ? [] : r.split(",").map((x) => x.trim())));
+  assert.ok(selectors.length > 40, "the stylesheet has its rules");
+  for (const sel of selectors) assert.ok(/^body\.chrome-v6/.test(sel), "scoped: " + sel);
+  for (const sel of selectors) assert.ok(sel.includes(":not(.dashboard-v4)"), "dashboard excluded: " + sel);
+  // the dashboard stylesheet is not touched by this change
+  assert.ok(!read("career/dashboard-v4.css").includes("chrome-v6"));
+});
+
+test("every footer says Privacy & Terms (two links, one crimson unit), and the free-tools line uses the new wording", () => {
+  for (const name of PUBLIC) {
+    const html = read(name + ".html");
+    const prefix = name.startsWith("career/") ? "../" : name === "not-found" ? "/" : "";
+    assert.ok(html.includes(`<a href="${prefix}privacy.html">Privacy</a> <span class="h5-amp">&amp;</span> <a href="${prefix}terms.html">Terms</a>`), name + " footer pair");
+    assert.ok(!/Privacy<\/a>\s*·\s*<a href="[^"]*terms\.html">/.test(html), name + " has no dotted Privacy · Terms left");
+    const m = html.match(/<p class="h5-footer-privacy">([\s\S]*?)<\/p>/);
+    if (!m) continue;
+    if (name.startsWith("career/")) { assert.match(m[1], /Career Profile is an early, invite-only preview/); continue; }
+    assert.match(m[1], /^<span class="h5-nosave">We do not keep your [a-z ]+<\/span>/, name + " opens with the underlined promise");
+    assert.match(m[1], /normally deletes (them|it) within 30 days\.$/, name + " says 'normally', never 'always'");
+    assert.ok(!/typically deleted|don't save/.test(m[1]), name + " no old wording");
+  }
+});
+
+test("the chrome rules hold their contrast and layout: cobalt header, gold button, crimson links, one-line centred sentence, brand bottom right", () => {
+  const css = read("chrome-v6.css");
+  assert.match(css, /--c6-blue: #0052f5;/);
+  assert.match(css, /\.site-nav \{ background: var\(--c6-blue\); border-bottom: 0; \}/);
+  assert.match(css, /\.nav-links a\.nav-account \{ background: var\(--c6-gold\); border-color: var\(--c6-gold\); color: #071c42; \}/);
+  assert.match(css, /grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
+  assert.match(css, /\.h5-footer-privacy \{ grid-area: privacy; justify-self: center; max-width: none;/);
+  assert.match(css, /\.h5-footer-brand \{ grid-area: brand; justify-self: end; \}/);
+  assert.match(css, /\.h5-footer \.nav-wordmark-gold \{ color: var\(--c6-gold-footer\); \}/);
+  assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem;/);
+  const hex = (n) => parseInt(n, 16) / 255;
+  const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const lum = (h) => 0.2126 * lin(hex(h.slice(0, 2))) + 0.7152 * lin(hex(h.slice(2, 4))) + 0.0722 * lin(hex(h.slice(4, 6)));
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  assert.ok(ratio("FFFFFF", "0052F5") >= 4.5, "white links on the cobalt header");
+  assert.ok(ratio("FFB300", "0052F5") >= 3, "the gold wordmark on cobalt");
+  assert.ok(ratio("071C42", "FFB300") >= 4.5, "navy text on the gold Sign In button");
+  assert.ok(ratio("C8102E", "FFFFFF") >= 4.5, "crimson Privacy & Terms on white");
+  assert.ok(ratio("0052F5", "FFFFFF") >= 4.5, "the cobalt page titles on white");
+});
+
+test("only the inner pages are whitened: the homepage keeps its locked grey and white bands", () => {
+  const css = read("chrome-v6.css");
+  assert.match(css, /body\.chrome-v6\.pages-v4:not\(\.dashboard-v4\) \{ --pale: #ffffff; background: #ffffff; \}/);
+  assert.ok(!/body\.chrome-v6:not\(\.dashboard-v4\) \{[^}]*--pale/.test(css), "--pale is not redefined for every page");
+  assert.match(read("home-v5.css"), /--pale: #f2f5f8;/);
+});
+

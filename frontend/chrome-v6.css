@@ -1,0 +1,102 @@
+/* Creating Tomorrow "chrome v6": the header, footer and page colours from the Career Tools mockup, shared by every public page.
+   Loaded LAST on each page (after pages-v4.css, home-v5.css or career/auth-v5.css). Everything is scoped to body.chrome-v6, and never to the
+   signed-in dashboard (body.dashboard-v4), which keeps its own look.
+
+   What it does:
+   - a sharper cobalt (#0052F5) header with white links, a white badge behind the logo mark, a gold "Sign In" button (navy text);
+   - a footer with the page links top left, Privacy & Terms (crimson) top right, the privacy sentence centred in black, the copyright at
+     the bottom left and the brand at the bottom right (diagonally opposite the header logo), and a cobalt strip along the very bottom;
+   - the footer wordmark: "Creating" in the page blue, "Tomorrow" in a gold 10% darker than the header gold so it holds up on white;
+   - on the inner pages (body.pages-v4): a white page (the pale grey token becomes white), borderless tool and guide cards, cobalt page titles.
+   The homepage keeps its locked grey-and-white band order; only its header, footer and blue/gold are updated.
+   Contrast: white on #0052F5 is 5.9:1; navy on the gold button is 9:1; crimson #C8102E on white is 5.9:1; the gold on cobalt is 3.3:1 (header)
+   and about 2.2:1 on white (footer wordmark), a deliberate brand choice for a large, heavy wordmark. */
+
+/* ---------- tokens (names that cannot clash with any page's own) ---------- */
+body.chrome-v6:not(.dashboard-v4) {
+  --c6-blue: #0052f5;
+  --c6-blue-deep: #0043c9;
+  --c6-gold: #ffb300;
+  --c6-gold-hover: #f2a400;
+  --c6-gold-footer: #e5a100;
+  --c6-crimson: #c8102e;
+  --c6-crimson-deep: #8f0b22;
+  /* the sharper blue and gold also replace the pages' own cobalt and gold tokens */
+  --blue: #0052f5;
+  --blue-deep: #0043c9;
+  --cobalt: #0052f5;
+  --gold: #ffb300;
+  --gold-hover: #f2a400;
+}
+
+/* ---------- header ---------- */
+body.chrome-v6:not(.dashboard-v4) .site-nav { background: var(--c6-blue); border-bottom: 0; }
+body.chrome-v6:not(.dashboard-v4) .site-nav .nav-logo img { box-sizing: content-box; padding: 5px; background: #ffffff; border-radius: 50%; }
+body.chrome-v6:not(.dashboard-v4) .site-nav .nav-wordmark-title { color: #ffffff; }
+body.chrome-v6:not(.dashboard-v4) .site-nav .nav-wordmark-gold { color: var(--c6-gold); }
+body.chrome-v6:not(.dashboard-v4) .nav-links a,
+body.chrome-v6:not(.dashboard-v4) .nav-links a.nav-cta { color: #ffffff; }
+body.chrome-v6:not(.dashboard-v4) .nav-links a:hover,
+body.chrome-v6:not(.dashboard-v4) .nav-links a.nav-cta:hover { color: var(--c6-gold); background: none; }
+body.chrome-v6:not(.dashboard-v4) .nav-links a.nav-active { color: #ffffff; border-bottom-color: var(--c6-gold); }
+body.chrome-v6:not(.dashboard-v4) .nav-links a.nav-account { background: var(--c6-gold); border-color: var(--c6-gold); color: #071c42; }
+body.chrome-v6:not(.dashboard-v4) .nav-links a.nav-account:hover { background: var(--c6-gold-hover); border-color: var(--c6-gold-hover); color: #071c42; }
+body.chrome-v6:not(.dashboard-v4) .site-nav a:focus-visible,
+body.chrome-v6:not(.dashboard-v4) .site-nav button:focus-visible { outline: 3px solid #ffffff; outline-offset: 3px; }
+
+/* ---------- footer: layout ---------- */
+body.chrome-v6:not(.dashboard-v4) footer.h5-footer { padding-bottom: 0; border-top: 0; }
+body.chrome-v6:not(.dashboard-v4) footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 2.25rem; background: var(--c6-blue); }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand"; align-items: center; column-gap: 2.5rem; row-gap: 1.5rem; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-areas: "nav legal" "copy brand"; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer-row { display: contents; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer-nav { grid-area: nav; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links { grid-area: legal; justify-self: end; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer-copy { grid-area: copy; margin: 0; max-width: none; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer-brand { grid-area: brand; justify-self: end; }
+/* the privacy sentence uses the full footer width, so on a desktop it stays on one line (on a phone it wraps as it must) */
+body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { grid-area: privacy; justify-self: center; max-width: none; margin: 0.75rem 0 0.25rem; text-align: center; color: #000000; }
+/* free-tools wording: the first words are underlined, which sets that promise apart from the signed-in side, where data is saved */
+body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy .h5-nosave { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+/* ---------- footer: colours ---------- */
+body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-wordmark-title { color: var(--c6-blue); }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-wordmark-gold { color: var(--c6-gold-footer); }
+/* only Privacy and Terms (and the & between them) are crimson */
+body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a:nth-of-type(-n+2) { color: var(--c6-crimson); }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a:nth-of-type(-n+2):hover { color: var(--c6-crimson-deep); }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links .h5-amp { color: var(--c6-crimson); }
+
+/* ---------- phone ---------- */
+@media (max-width: 1000px) {
+  body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap,
+  body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "privacy" "copy"; row-gap: 1.1rem; }
+  body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links,
+  body.chrome-v6:not(.dashboard-v4) .h5-footer-brand { justify-self: start; }
+  body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { justify-self: start; text-align: left; margin: 0.5rem 0 0; }
+}
+
+/* ---------- inner pages: a white page ---------- */
+body.chrome-v6.pages-v4:not(.dashboard-v4) { --pale: #ffffff; background: #ffffff; }
+body.chrome-v6.pages-v4:not(.dashboard-v4) .page-header h1,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-head h1,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .doc-hero h1,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .about-hero h1 { color: var(--c6-blue); }
+/* no grey hairlines around the tool and guide cards (a pale-blue outline appears only on hover) */
+body.chrome-v6.pages-v4:not(.dashboard-v4) .hv-tool,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .hv-guide,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .mode-btn.hv-tool { border-color: transparent; }
+body.chrome-v6.pages-v4:not(.dashboard-v4) .hv-tool:hover,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .hv-guide:hover,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .mode-btn.hv-tool:hover { border-color: #b9cdf7; }
+
+/* ---------- the sign-in and sign-up pages: the grey heading band becomes white too ---------- */
+body.chrome-v6.auth-v5:not(.dashboard-v4) { --pale: #ffffff; background: #ffffff; }
+body.chrome-v6.auth-v5:not(.dashboard-v4) .page-header { background: #ffffff; }
+body.chrome-v6.auth-v5:not(.dashboard-v4) .page-header h1 { color: var(--c6-blue); }
+
+/* ---------- the not-found page: white as well (the homepage keeps its locked grey and white bands) ---------- */
+body.chrome-v6.home-v5:not(.dashboard-v4) .h5-notfound.h5-band-pale { background: #ffffff; }
+
+/* the About page's "Why I built this" note: pale gold instead of grey, so the white page has no grey fill left */
+body.chrome-v6.pages-v4:not(.dashboard-v4) .about-note { background: #fff5dd; }

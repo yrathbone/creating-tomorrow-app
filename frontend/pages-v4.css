@@ -262,59 +262,6 @@ body.pages-v4 .ats-callout-summary { background: var(--tint-blue); border-color:
 body.pages-v4 .ats-compare-unclear { background: var(--pale); }
 body.pages-v4 .ats-compare-clear { background: var(--tint-gold); }
 
-/* ---------- Career Tools page (tool.html): all white, with a cobalt header and a cobalt strip at the foot ----------
-   Content is unchanged. Every grey on this page becomes white (the --pale token is redefined here, so the heading band, panels and any
-   other pale area turn white); hairlines and the pale-blue and pale-gold icon tints stay. The nav sits on cobalt: white links, a
-   white badge behind the logo mark, a gold Sign In button with navy text. White on cobalt is 5.9:1, navy on gold is 11:1. */
-/* The page's gold is the palette gold made a touch sharper and more vivid: #FFB300 (the palette's #FFBC00 nudged a little warmer). It is used on
-   the wordmark, the active-link underline and the Sign In button. Gold on cobalt is 3.3:1 (the large-text mark is 3:1); the Sign In text is
-   navy on gold at 9:1. The "Career Tools" headline is cobalt (5.9:1 on white). In the footer, only Privacy and Terms are crimson (#C8102E, 5.9:1 on
-   white), the privacy sentence is black with its first words underlined, and the brand sits on the right beside the legal links. The
-   blue is a touch sharper on this page (#0052F5, fully saturated; white on it is 5.9:1). */
-body.pages-v4.tool-hub { --pale: #ffffff; --blue: #0052f5; --blue-deep: #0043c9; --gold: #ffb300; --gold-hover: #f2a400; background: #ffffff; }
-/* the sentence uses the full footer width, so on a desktop it stays on one line (on a phone it wraps as it must) */
-body.pages-v4.tool-hub .h5-footer-privacy { color: #000000; max-width: none; }
-/* free-tools wording: "We don't save your resume" is underlined, which sets this promise apart from the signed-in side, where data is saved */
-body.pages-v4.tool-hub .h5-footer-privacy .h5-nosave { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
-/* only Privacy and Terms are crimson (#C8102E, 5.9:1 on white); the other two links stay navy */
-body.pages-v4.tool-hub .h5-footer .footer-links a:nth-of-type(-n+2) { color: #c8102e; }
-body.pages-v4.tool-hub .h5-footer .footer-links a:nth-of-type(-n+2):hover { color: #8f0b22; }
-body.pages-v4.tool-hub .h5-footer .footer-links .h5-amp { color: #c8102e; }
-/* footer layout: the page links top left and Privacy, Terms, Accessibility, Contact top right; the privacy sentence centred in the middle;
-   the copyright bottom left and the brand bottom right, diagonally opposite the logo at the top left of the header */
-body.pages-v4.tool-hub .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand"; align-items: center; column-gap: 2.5rem; row-gap: 1.5rem; }
-body.pages-v4.tool-hub .h5-footer-row { display: contents; }
-body.pages-v4.tool-hub .h5-footer-nav { grid-area: nav; }
-body.pages-v4.tool-hub .h5-footer .footer-links { grid-area: legal; justify-self: end; }
-body.pages-v4.tool-hub .h5-footer-privacy { grid-area: privacy; justify-self: center; margin: 0.75rem 0 0.25rem; text-align: center; }
-body.pages-v4.tool-hub .h5-footer-copy { grid-area: copy; margin: 0; }
-body.pages-v4.tool-hub .h5-footer-brand { grid-area: brand; justify-self: end; }
-/* the footer wordmark matches the page: "Creating" in the page blue (the Career Tools headline blue), "Tomorrow" in the Sign In gold made 10% darker (#E5A100) so it holds up on white.
-   Same typeface, size and weight as before. Gold on white is about 2.2:1, a deliberate brand choice for a large, heavy wordmark. */
-body.pages-v4.tool-hub .h5-footer .nav-wordmark-title { color: var(--blue); }
-body.pages-v4.tool-hub .h5-footer .nav-wordmark-gold { color: #e5a100; }
-@media (max-width: 1000px) {
-  body.pages-v4.tool-hub .h5-footer .h5-wrap { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "privacy" "copy"; row-gap: 1.1rem; }
-  body.pages-v4.tool-hub .h5-footer .footer-links, body.pages-v4.tool-hub .h5-footer-brand { justify-self: start; }
-  body.pages-v4.tool-hub .h5-footer-privacy { justify-self: start; text-align: left; margin: 0.5rem 0 0; }
-}
-body.pages-v4.tool-hub .page-header h1 { color: var(--blue); }
-body.pages-v4.tool-hub .site-nav { background: var(--blue); border-bottom: 0; }
-body.pages-v4.tool-hub .site-nav .nav-logo img { box-sizing: content-box; padding: 5px; background: #ffffff; border-radius: 50%; }
-body.pages-v4.tool-hub .site-nav .nav-wordmark-title { color: #ffffff; }
-body.pages-v4.tool-hub .site-nav .nav-wordmark-gold { color: var(--gold); }
-body.pages-v4.tool-hub .nav-links a, body.pages-v4.tool-hub .nav-links a.nav-cta { color: #ffffff; }
-body.pages-v4.tool-hub .nav-links a:hover, body.pages-v4.tool-hub .nav-links a.nav-cta:hover { color: var(--gold); background: none; }
-body.pages-v4.tool-hub .nav-links a.nav-active { color: #ffffff; border-bottom-color: var(--gold); }
-body.pages-v4.tool-hub .nav-links a.nav-account { background: var(--gold); border-color: var(--gold); color: var(--navy); }
-body.pages-v4.tool-hub .nav-links a.nav-account:hover { background: var(--gold-hover); border-color: var(--gold-hover); color: var(--navy); }
-body.pages-v4.tool-hub .site-nav a:focus-visible, body.pages-v4.tool-hub .site-nav button:focus-visible { outline: 3px solid #ffffff; outline-offset: 3px; }
-/* no grey hairlines on this page: the six tool cards sit on plain white (a pale-blue hairline appears only on hover), and the footer has no top rule */
-body.pages-v4.tool-hub .hv-tool, body.pages-v4.tool-hub .mode-btn.hv-tool { border-color: transparent; }
-body.pages-v4.tool-hub .hv-tool:hover, body.pages-v4.tool-hub .mode-btn.hv-tool:hover { border-color: #b9cdf7; }
-body.pages-v4.tool-hub footer.h5-footer { padding-bottom: 0; border-top: 0; }
-body.pages-v4.tool-hub footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 2.25rem; background: var(--blue); }
-
 @media (prefers-reduced-motion: reduce) {
   body:where(.pages-v4) button, body.pages-v4 .hv-guide, body.pages-v4 .hv-tool { transition: none; }
 }
