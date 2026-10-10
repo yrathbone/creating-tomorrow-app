@@ -264,7 +264,11 @@ body.pages-v4 .ats-compare-clear { background: var(--tint-gold); }
    Content is unchanged. Every grey on this page becomes white (the --pale token is redefined here, so the heading band, panels and any
    other pale area turn white); hairlines and the pale-blue and pale-gold icon tints stay. The nav sits on cobalt: white links, a
    white badge behind the logo mark, a gold Sign In button with navy text. White on cobalt is 5.9:1, navy on gold is 11:1. */
-body.pages-v4.tool-hub { --pale: #ffffff; background: #ffffff; }
+/* The page's gold is the earlier warm gold, sharpened (#F59E00, brighter and more vivid than the deeper #E49107), used on the wordmark, the
+   active-link underline and the Sign In button. Gold on cobalt is 2.8:1 (below the 3:1 mark for large text): a recorded brand choice, like
+   the earlier headline gold; the Sign In text is navy on gold at 7.9:1. The "Career Tools" headline is cobalt (5.9:1 on white). */
+body.pages-v4.tool-hub { --pale: #ffffff; --gold: #f59e00; --gold-hover: #e28d00; background: #ffffff; }
+body.pages-v4.tool-hub .page-header h1 { color: var(--blue); }
 body.pages-v4.tool-hub .site-nav { background: var(--blue); border-bottom: 0; }
 body.pages-v4.tool-hub .site-nav .nav-logo img { box-sizing: content-box; padding: 5px; background: #ffffff; border-radius: 50%; }
 body.pages-v4.tool-hub .site-nav .nav-wordmark-title { color: #ffffff; }
