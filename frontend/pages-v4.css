@@ -220,6 +220,8 @@ body.pages-v4 .page-header:has(.guide-eyebrow) h1,
 body.pages-v4 .about-hero h1 { font-size: var(--fs-h2); max-width: 24em; margin-left: auto; margin-right: auto; text-wrap: balance; }
 
 /* ---------- The Career Tools hub is wider than the narrow form column the rest of the page uses ---------- */
+/* 100vw counts the scrollbar, so the centred panel could be wider than the page; the body clips that overhang (the panel keeps its own side padding, so nothing visible is lost) */
+body.pages-v4 { overflow-x: clip; }
 body.pages-v4 #step-mode.pv-panel { position: relative; left: 50%; transform: translateX(-50%); width: min(var(--wrap), 100vw); max-width: none; background: none; border: 0; padding: 0; margin-top: 0; }
 body.pages-v4 #step-mode.pv-panel > .mode-choices, body.pages-v4 #step-mode .pv-tools { padding: 0 1.5rem; box-sizing: border-box; }
 body.pages-v4 #step-mode.pv-panel .pv-tools { margin-top: 0.5rem; }
@@ -266,10 +268,26 @@ body.pages-v4 .ats-compare-clear { background: var(--tint-gold); }
    white badge behind the logo mark, a gold Sign In button with navy text. White on cobalt is 5.9:1, navy on gold is 11:1. */
 /* The page's gold is the palette gold made a touch sharper and more vivid: #FFB300 (the palette's #FFBC00 nudged a little warmer). It is used on
    the wordmark, the active-link underline and the Sign In button. Gold on cobalt is 3.3:1 (the large-text mark is 3:1); the Sign In text is
-   navy on gold at 9:1. The "Career Tools" headline is cobalt (5.9:1 on white). The privacy sentence in the footer is crimson (#C8102E, 5.9:1 on
-   white): it stands out because it matters, at normal weight and size so it does not shout. */
-body.pages-v4.tool-hub { --pale: #ffffff; --gold: #ffb300; --gold-hover: #f2a400; background: #ffffff; }
-body.pages-v4.tool-hub .h5-footer-privacy { color: #c8102e; }
+   navy on gold at 9:1. The "Career Tools" headline is cobalt (5.9:1 on white). In the footer, only Privacy and Terms are crimson (#C8102E, 5.9:1 on
+   white), the privacy sentence is black with its first words underlined, and the brand sits on the right beside the legal links. The
+   blue is a touch sharper on this page (#0052F5, fully saturated; white on it is 5.9:1). */
+body.pages-v4.tool-hub { --pale: #ffffff; --blue: #0052f5; --blue-deep: #0043c9; --gold: #ffb300; --gold-hover: #f2a400; background: #ffffff; }
+body.pages-v4.tool-hub .h5-footer-privacy { color: #000000; }
+/* free-tools wording: "We don't save your resume" is underlined, which sets this promise apart from the signed-in side, where data is saved */
+body.pages-v4.tool-hub .h5-footer-privacy .h5-nosave { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+/* only Privacy and Terms are crimson (#C8102E, 5.9:1 on white); the other two links stay navy */
+body.pages-v4.tool-hub .h5-footer .footer-links a:nth-of-type(-n+2) { color: #c8102e; }
+body.pages-v4.tool-hub .h5-footer .footer-links a:nth-of-type(-n+2):hover { color: #8f0b22; }
+/* footer layout: the page links on the left, the brand moved over to the right, beside Privacy and Terms */
+body.pages-v4.tool-hub .h5-footer-row { justify-content: flex-start; }
+body.pages-v4.tool-hub .h5-footer-nav { order: 1; margin-right: auto; }
+body.pages-v4.tool-hub .h5-footer-brand { order: 2; }
+body.pages-v4.tool-hub .h5-footer .footer-links { order: 3; }
+@media (max-width: 1000px) {
+  body.pages-v4.tool-hub .h5-footer-brand { order: 1; }
+  body.pages-v4.tool-hub .h5-footer-nav { order: 2; margin-right: 0; }
+  body.pages-v4.tool-hub .h5-footer .footer-links { order: 3; }
+}
 body.pages-v4.tool-hub .page-header h1 { color: var(--blue); }
 body.pages-v4.tool-hub .site-nav { background: var(--blue); border-bottom: 0; }
 body.pages-v4.tool-hub .site-nav .nav-logo img { box-sizing: content-box; padding: 5px; background: #ffffff; border-radius: 50%; }
