@@ -278,15 +278,19 @@ body.pages-v4.tool-hub .h5-footer-privacy .h5-nosave { text-decoration: underlin
 /* only Privacy and Terms are crimson (#C8102E, 5.9:1 on white); the other two links stay navy */
 body.pages-v4.tool-hub .h5-footer .footer-links a:nth-of-type(-n+2) { color: #c8102e; }
 body.pages-v4.tool-hub .h5-footer .footer-links a:nth-of-type(-n+2):hover { color: #8f0b22; }
-/* footer layout: the page links on the left, the brand moved over to the right, beside Privacy and Terms */
-body.pages-v4.tool-hub .h5-footer-row { justify-content: flex-start; }
-body.pages-v4.tool-hub .h5-footer-nav { order: 1; margin-right: auto; }
-body.pages-v4.tool-hub .h5-footer-brand { order: 2; }
-body.pages-v4.tool-hub .h5-footer .footer-links { order: 3; }
+/* footer layout: the page links top left and Privacy, Terms, Accessibility, Contact top right; the privacy sentence centred in the middle;
+   the copyright bottom left and the brand bottom right, diagonally opposite the logo at the top left of the header */
+body.pages-v4.tool-hub .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand"; align-items: center; column-gap: 2.5rem; row-gap: 1.5rem; }
+body.pages-v4.tool-hub .h5-footer-row { display: contents; }
+body.pages-v4.tool-hub .h5-footer-nav { grid-area: nav; }
+body.pages-v4.tool-hub .h5-footer .footer-links { grid-area: legal; justify-self: end; }
+body.pages-v4.tool-hub .h5-footer-privacy { grid-area: privacy; justify-self: center; margin: 0.75rem 0 0.25rem; text-align: center; }
+body.pages-v4.tool-hub .h5-footer-copy { grid-area: copy; margin: 0; }
+body.pages-v4.tool-hub .h5-footer-brand { grid-area: brand; justify-self: end; }
 @media (max-width: 1000px) {
-  body.pages-v4.tool-hub .h5-footer-brand { order: 1; }
-  body.pages-v4.tool-hub .h5-footer-nav { order: 2; margin-right: 0; }
-  body.pages-v4.tool-hub .h5-footer .footer-links { order: 3; }
+  body.pages-v4.tool-hub .h5-footer .h5-wrap { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "privacy" "copy"; row-gap: 1.1rem; }
+  body.pages-v4.tool-hub .h5-footer .footer-links, body.pages-v4.tool-hub .h5-footer-brand { justify-self: start; }
+  body.pages-v4.tool-hub .h5-footer-privacy { justify-self: start; text-align: left; margin: 0.5rem 0 0; }
 }
 body.pages-v4.tool-hub .page-header h1 { color: var(--blue); }
 body.pages-v4.tool-hub .site-nav { background: var(--blue); border-bottom: 0; }

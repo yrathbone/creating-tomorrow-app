@@ -62,8 +62,9 @@ test("the Career Tools page is all white with a cobalt header and a cobalt strip
   assert.match(css, /\.h5-footer-privacy \.h5-nosave \{ text-decoration: underline;/);
   assert.match(css, /\.footer-links a:nth-of-type\(-n\+2\) \{ color: #c8102e; \}/);
   assert.match(html, /<p class="h5-footer-privacy"><span class="h5-nosave">We don't save your resume<\/span> or job posting/);
-  assert.match(css, /tool-hub \.h5-footer-brand \{ order: 2; \}/);
-  assert.match(css, /tool-hub \.h5-footer-nav \{ order: 1; margin-right: auto; \}/);
+  assert.match(css, /tool-hub \.h5-footer \.h5-wrap \{ display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
+  assert.match(css, /tool-hub \.h5-footer-privacy \{ grid-area: privacy; justify-self: center;/);
+  assert.match(css, /tool-hub \.h5-footer-brand \{ grid-area: brand; justify-self: end; \}/);
   assert.match(css, /body\.pages-v4\.tool-hub \.page-header h1 \{ color: var\(--blue\); \}/);
   assert.match(css, /body\.pages-v4\.tool-hub \.site-nav \{ background: var\(--blue\); border-bottom: 0; \}/);
   assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem; margin-top: 2\.25rem; background: var\(--blue\); \}/);
