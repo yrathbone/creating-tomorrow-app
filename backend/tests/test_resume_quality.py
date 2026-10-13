@@ -201,5 +201,13 @@ class WholeBuild(unittest.TestCase):
         self.assertEqual(result["quality"]["found"], 0)
 
 
+class InterviewCoaching(unittest.TestCase):
+    def test_follow_ups_coach_for_what_people_did_not_what_they_were(self):
+        import elevate
+        prompt = elevate.DISCOVER_SYSTEM_PROMPT
+        for must in ("balanced an open cash drawer", "how many", "how often", "for how long", "never suggest a number or result", "I don't know", "ONE more short follow-up"):
+            self.assertIn(must, prompt)
+
+
 if __name__ == "__main__":
     unittest.main()

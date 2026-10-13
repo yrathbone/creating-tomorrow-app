@@ -34,6 +34,21 @@ test("Build My Resume and the resume 'working' screens use the brand crimson, wi
   assert.ok(ratio("FFFFFF", "C8102E") >= 4.5, "white text on the crimson button");
   assert.ok(ratio("8F0B22", "FFFFFF") >= 7, "dark red wait text on white");
   // colours only: the new block sets no width, height, padding, margin, display or position
-  const block = css.slice(css.indexOf("Build My Resume and the"));
+  const start = css.indexOf("Build My Resume and the");
+  const block = css.slice(start, css.indexOf('/* "How your answers will read"', start) > 0 ? css.indexOf('/* "How your answers will read"', start) : undefined);
   assert.ok(!/(?:^|[;{\s])(width|height|padding|margin|display|position)\s*:/m.test(block.replace(/outline-offset/g, "")), "no layout properties in the crimson block");
+});
+
+test("answers are shown as editable sentences before the build, with a nudge toward specifics, and edits reach the build", () => {
+  const html = read("login.html");
+  const state = html.slice(html.indexOf('id="job-build-form-state"'));
+  assert.ok(state.indexOf('id="job-facts-review"') > 0 && state.indexOf('id="job-facts-review"') < state.indexOf('id="job-build-name"'), "the review sits above the header details");
+  assert.match(state.slice(0, 1500), /Balanced an open cash drawer for 5 years/);
+  const js = read("js", "jobMatch.js");
+  assert.match(js, /renderFactsReview\(\);\r?\n\}/, "the build form shows the review");
+  assert.match(js, /fact\.bullet_text = box\.value;/, "typing edits the fact that is sent to the build");
+  assert.match(js, /jobState\.discoveredFacts = jobState\.discoveredFacts\.filter\(\(f\) => f !== fact\);/, "Remove drops it");
+  assert.match(js, /words < 9 \|\| STOCK_FACT\.test/, "short or stock sentences get the nudge");
+  assert.match(js, /confirmed_facts: jobState\.discoveredFacts/, "the build sends the edited facts");
+  assert.match(js, /in a specific sentence \(optional\)/, "the keyword box coaches too");
 });

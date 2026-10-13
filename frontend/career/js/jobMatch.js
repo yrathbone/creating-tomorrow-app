@@ -332,6 +332,57 @@ function showJobBuildForm() {
   hideAllJobStates();
   jobBuildFormState.hidden = false;
   prefillResumeHeader(document.getElementById("job-build-name"), document.getElementById("job-build-contact"));
+  renderFactsReview();
+}
+
+// "How your answers will read": every sentence made from the candidate's answers, shown for editing before it is used. People often
+// say what they were ("cashier") rather than what they did ("balanced an open cash drawer for 5 years"), so a short or stock
+// sentence gets a nudge to be more specific. Edits and removals go straight into jobState.discoveredFacts, which the build sends.
+const STOCK_FACT = /^Has real hands-on experience with /i;
+function factNeedsDetail(text) {
+  const words = (text || "").trim().split(/\s+/).filter(Boolean).length;
+  return words < 9 || STOCK_FACT.test(text || "");
+}
+function renderFactsReview() {
+  const block = document.getElementById("job-facts-review");
+  const list = document.getElementById("job-facts-list");
+  list.textContent = "";
+  block.hidden = jobState.discoveredFacts.length === 0;
+  jobState.discoveredFacts.forEach((fact) => {
+    const li = document.createElement("li");
+    li.className = "facts-review-item";
+    const label = document.createElement("strong");
+    label.textContent = fact.category || "Your answer";
+    li.appendChild(label);
+
+    const box = document.createElement("textarea");
+    box.rows = 2;
+    box.value = fact.bullet_text || "";
+    box.setAttribute("aria-label", "Sentence for " + (fact.category || "this answer"));
+    li.appendChild(box);
+
+    const nudge = document.createElement("p");
+    nudge.className = "hint facts-review-nudge";
+    nudge.textContent = "Add detail if you can: what exactly you did, how much or how often, for how long, for whom.";
+    nudge.hidden = !factNeedsDetail(box.value);
+    li.appendChild(nudge);
+
+    box.addEventListener("input", () => {
+      fact.bullet_text = box.value;
+      nudge.hidden = !factNeedsDetail(box.value);
+    });
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "entry-remove-btn";
+    remove.textContent = "Remove";
+    remove.addEventListener("click", () => {
+      jobState.discoveredFacts = jobState.discoveredFacts.filter((f) => f !== fact);
+      renderFactsReview();
+    });
+    li.appendChild(remove);
+    list.appendChild(li);
+  });
 }
 
 document.getElementById("job-build-btn").addEventListener("click", async () => {
@@ -558,7 +609,7 @@ function renderKeywordCards(alreadyCovered) {
 
     const sentenceLabel = document.createElement("label");
     sentenceLabel.className = "field";
-    sentenceLabel.innerHTML = "<span>How you did it, in a sentence (optional, never printed in the Skills list)</span>";
+    sentenceLabel.innerHTML = "<span>How you did it, in a specific sentence (optional). &ldquo;Balanced an open cash drawer for 5 years&rdquo; says more than &ldquo;cashier&rdquo;. It is never printed in the Skills list.</span>";
     const sentence = document.createElement("textarea");
     sentence.className = "keyword-sentence";
     sentence.rows = 2;

@@ -1234,3 +1234,11 @@ body.dashboard-v4 #job-loading-state .processing-wait-copy strong,
 body.dashboard-v4 #job-build-loading-state .processing-wait-copy strong,
 body.dashboard-v4 #general-resume-loading .processing-wait-copy strong,
 body.dashboard-v4 #resume-loading-state .processing-wait-copy strong { color: #c8102e; }
+
+/* "How your answers will read": one editable sentence per confirmed answer, shown before the resume is built */
+body.dashboard-v4 .facts-review-list { list-style: none; margin: 0.5rem 0 1.25rem; padding: 0; }
+body.dashboard-v4 .facts-review-item { padding: 0.75rem 0; border-top: 1px solid var(--v4-line, #e3e8ef); }
+body.dashboard-v4 .facts-review-item strong { display: block; margin-bottom: 0.35rem; }
+body.dashboard-v4 .facts-review-item textarea { width: 100%; box-sizing: border-box; }
+body.dashboard-v4 .dashboard-grid > .card .facts-review-item .facts-review-nudge { margin: 0.35rem 0 0.5rem; color: #8f0b22; }
+body.dashboard-v4 .facts-review-item .entry-remove-btn { margin-top: 0.25rem; }
