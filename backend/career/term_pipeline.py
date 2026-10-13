@@ -20,13 +20,13 @@ import re
 from career import job_match
 from career.job_match import JobMatchError
 
-MAX_TERMS = 30
+MAX_TERMS = 45  # long postings have 40+ distinct terms; scanners such as Jobscan count them all
 MAX_TERM_WORDS = 5  # longer "terms" are sentence fragments, not keywords
 SUPPORTED = ("literal", "related")
 
 PLAN_SYSTEM_PROMPT = """You are Nova, a careful resume strategist. You are given a job posting and a candidate's verified Career Profile (plus any facts the candidate confirmed in an interview about this posting). Produce a TERM PLAN.
 
-1. List the key skill, keyword, tool, domain and requirement phrases the posting uses, in the posting's OWN exact wording. Read requirements, responsibilities, the overview, preferred qualifications, and any skill tags or keyword run-ins (several short tags run together with no spaces, for example "clear communicationstakeholder managementproblem-solving" - split them into separate terms). Include domain and industry terms (for example fintech, financial technology, financial services, banking) and tools or technologies. Every term must be a SHORT keyword phrase a recruiter would search for: a skill, tool, technology, domain or requirement written as a noun phrase of at most 4 words (for example "proposal development," "technical expertise," "financial products," "pricing strategies," "client onboarding"). Do NOT list duties, sentences or sentence fragments (not "taking ownership of complex initiatives," not "translate complex technical concepts into clear business value," not "address technical objections"); if a duty contains a real skill, list just the short skill. Skip generic filler unless the posting states it as a requirement. At most 30 terms, most important first. Judge importance from the posting's own language: "required" (must-have or a key requirement), "preferred" (nice-to-have), or "mentioned". Also give each term a kind: "skill" = a skill, tool, system, method or industry/domain a recruiter would list in a skills section (for example "proposal development," "ERP integrations," "fintech," "customer success"); "phrase" = context or duty wording that is not a skill by itself (for example "sales setting," "difficult customers," "business sense," "achieving targets and goals," "large, global, complex organizations," "complex projects and programs"). Do list the skill or domain inside the posting's own job title as a term (for example "customer success" for a Customer Success Manager role); the posting's title is a strong signal of what it wants.
+1. List the key skill, keyword, tool, domain and requirement phrases the posting uses, in the posting's OWN exact wording. Read requirements, responsibilities, the overview, preferred qualifications, and any skill tags or keyword run-ins (several short tags run together with no spaces, for example "clear communicationstakeholder managementproblem-solving" - split them into separate terms). Include domain and industry terms (for example fintech, financial technology, financial services, banking) and tools or technologies. Every term must be a SHORT keyword phrase a recruiter would search for: a skill, tool, technology, domain or requirement written as a noun phrase of at most 4 words (for example "proposal development," "technical expertise," "financial products," "pricing strategies," "client onboarding"). Do NOT list duties, sentences or sentence fragments (not "taking ownership of complex initiatives," not "translate complex technical concepts into clear business value," not "address technical objections"); if a duty contains a real skill, list just the short skill. Skip generic filler unless the posting states it as a requirement. At most 45 terms, most important first. Include the soft skills and competencies the posting names (for example "relationship management," "communication skills," "stakeholder management") as terms too; scanners count them. Judge importance from the posting's own language: "required" (must-have or a key requirement), "preferred" (nice-to-have), or "mentioned". Also give each term a kind: "skill" = a skill, tool, system, method or industry/domain a recruiter would list in a skills section (for example "proposal development," "ERP integrations," "fintech," "customer success"); "phrase" = context or duty wording that is not a skill by itself (for example "sales setting," "difficult customers," "business sense," "achieving targets and goals," "large, global, complex organizations," "complex projects and programs"). A recognised skill, competency, business process, methodology or domain is ALWAYS kind "skill", even when it sounds like a duty or a soft skill: for example "sales cycle," "sales process," "strategic initiatives," "relationship management," "stakeholder management," "technical expertise," "communication skills," "pipeline management," "account management," "forecasting." When unsure, choose "skill": a skill is placed on the resume (only if the candidate's evidence supports it), while a phrase is kept off the skills list. Do list the skill or domain inside the posting's own job title as a term (for example "customer success" for a Customer Success Manager role); the posting's title is a strong signal of what it wants.
 
 2. For EACH term decide whether the candidate's evidence supports it:
 - "literal": the exact term (ignoring capitalization, plurals and hyphens) appears in the Career Profile or the confirmed facts.
@@ -387,12 +387,44 @@ def _status(t: dict) -> str:
     return "wording_unused" if t.get("kind") == "phrase" else "not_placed"
 
 
+def ats_style_score(resume_data: dict, terms: list[dict]) -> dict:
+    """What a keyword scanner (Jobscan and similar) would report: the share of ALL the posting's terms that appear on the
+    resume, counting every term equally, including context wording and terms the profile does not support (an honest
+    resume still leaves those off). The Job Fit grade, by contrast, weights required terms and ignores unused context
+    wording; the two numbers answer different questions."""
+    text = resume_text(resume_data)
+    found = [t for t in terms if term_in_text(t["term"], text)]
+    total = len(terms)
+    return {
+        "pct": round(100 * len(found) / total) if total else None,
+        "found": len(found),
+        "total": total,
+        "missing_supported": sum(1 for t in terms if t not in found and t["support"] in SUPPORTED),
+        "missing_unsupported": sum(1 for t in terms if t not in found and t["support"] not in SUPPORTED),
+    }
+
+
+def log_term_summary(terms: list[dict], ats: dict) -> None:
+    """One server-log line per build, so a mismatch with an outside scanner can be read straight from the log: every
+    posting term that was left off the resume and why. Posting terms only, never anything from the candidate's profile."""
+    def names(items):
+        return "; ".join(t["term"] for t in items) or "-"
+    left_off = [t for t in terms if not t.get("on_resume")]
+    print(
+        f"[career.terms] planned={len(terms)} ats_style={ats['pct']}% "
+        f"not_placed=[{names([t for t in left_off if t['support'] in SUPPORTED and t.get('kind') != 'phrase'])}] "
+        f"phrases_unused=[{names([t for t in left_off if t['support'] in SUPPORTED and t.get('kind') == 'phrase'])}] "
+        f"not_in_profile=[{names([t for t in left_off if t['support'] not in SUPPORTED])}]"
+    )
+
+
 def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str) -> dict:
     facts_text = facts_text_for(confirmed_facts)
 
     try:
         terms = plan_terms(profile_text, facts_text, job_description)
     except JobMatchError:
+        print("[career.terms] planning failed; building without a term plan")
         terms = None  # fall back to the plain one-call build, no report
 
     result = job_match.build_tailored_resume(
@@ -415,10 +447,14 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
             revised = add_missing_terms(resume, missing)
         except JobMatchError:
             revised = None
+        if revised is None:
+            print(f"[career.terms] fix-up unusable; {len(missing)} supported term(s) left unplaced")
         if revised:
             resume = dedupe_skills({**resume, **revised}, wording)
             check_placement(resume, terms)
     result["resume_data"] = resume
+    result["ats_match"] = ats_style_score(resume, terms)
+    log_term_summary(terms, result["ats_match"])
     result["term_report"] = [
         {"term": t["term"], "kind": t.get("kind", "skill"), "importance": t["importance"], "support": t["support"],
          "evidence": t["evidence"], "status": _status(t)}

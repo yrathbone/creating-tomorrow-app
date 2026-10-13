@@ -1124,6 +1124,7 @@ async def job_build_resume(
         "skills_style": "grouped",
         "role_selection": result.get("role_selection") or [],
         "term_report": result.get("term_report") or [],
+        "ats_match": result.get("ats_match"),
     }
     version = ResumeVersion(
         career_profile_id=profile.id,

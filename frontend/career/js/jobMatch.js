@@ -379,7 +379,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     resetAppliedBlock();
     renderRoleSelection(data.role_selection || []);
     renderTermReport(data.term_report || []);
-    renderMatchGrade(data.term_report || []);
+    renderMatchGrade(data.term_report || [], data.ats_match || null);
 
     stopProcessingState(jobBuildLoadingState);
     jobBuildLoadingState.hidden = true;
@@ -730,7 +730,7 @@ function computeMatchGrade(report) {
   return { pct, ...MATCH_GRADES.find((g) => pct >= g.min) };
 }
 
-function renderMatchGrade(report) {
+function renderMatchGrade(report, ats) {
   const block = document.getElementById("job-match-grade-block");
   const grade = report && report.length ? computeMatchGrade(report) : null;
   block.hidden = !grade;
@@ -739,6 +739,12 @@ function renderMatchGrade(report) {
   document.getElementById("job-match-grade-letter").textContent = grade.letter;
   document.getElementById("job-match-grade-title").textContent = grade.title + " (" + grade.band + " of key terms)";
   document.getElementById("job-match-grade-explain").textContent = grade.text;
+  // The scanner-style number: every posting term counts equally, including ones your profile doesn't support.
+  const atsLine = document.getElementById("job-ats-line");
+  atsLine.hidden = !(ats && ats.total);
+  if (ats && ats.total) {
+    atsLine.textContent = "ATS-style score: " + ats.pct + "% (" + ats.found + " of " + ats.total + " posting terms appear on this resume). Outside scanners such as Jobscan count every term the posting uses, even ones you can't honestly claim, so this is the number to compare with them.";
+  }
   document.getElementById("job-match-grade-note").textContent =
     "Based on the key terms we found in this posting and what your profile honestly supports. Other scoring tools may pick different terms, and terms you don't have should stay off.";
 }

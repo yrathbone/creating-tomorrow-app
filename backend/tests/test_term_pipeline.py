@@ -239,6 +239,58 @@ class KeywordCheck(unittest.TestCase):
         self.assertEqual(out["already_covered"], 1)
 
 
+class ScannerStyleScoreAndLogging(unittest.TestCase):
+    """The site's own Job Fit grade and an outside scanner (Jobscan) answer different questions. These pin the scanner-style
+    number (every posting term counts once, supported or not) and the one log line that explains any mismatch."""
+
+    def resume(self):
+        r = copy.deepcopy(BASE_RESUME)
+        r["skills"] = ["Sales: Sales Cycle, Technical Expertise", "Payments: Fintech"]
+        return r
+
+    def terms(self):
+        return [
+            {"term": "Sales cycle", "kind": "skill", "importance": "required", "support": "related", "evidence": "x"},
+            {"term": "Technical expertise", "kind": "skill", "importance": "required", "support": "literal", "evidence": ""},
+            {"term": "Fintech", "kind": "skill", "importance": "preferred", "support": "literal", "evidence": ""},
+            {"term": "Sales process", "kind": "skill", "importance": "required", "support": "related", "evidence": "x"},
+            {"term": "Pricing strategies", "kind": "skill", "importance": "required", "support": "none", "evidence": ""},
+        ]
+
+    def test_every_term_counts_once_supported_or_not(self):
+        ats = term_pipeline.ats_style_score(self.resume(), self.terms())
+        self.assertEqual((ats["found"], ats["total"], ats["pct"]), (3, 5, 60))
+        self.assertEqual((ats["missing_supported"], ats["missing_unsupported"]), (1, 1))
+
+    def test_a_posting_with_no_terms_has_no_score(self):
+        self.assertIsNone(term_pipeline.ats_style_score(self.resume(), [])["pct"])
+
+    def test_the_build_returns_the_score(self):
+        fixed = self.resume()
+        answer = plan(("Fintech", "required", "literal", ""), ("Pricing strategies", "required", "none", ""))
+        fake, _ = Pipeline.scripted(self, answer, fixed)
+        with mock.patch.object(job_match, "_call_with_retry", side_effect=fake):
+            result = term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Jane Doe", "x@y.com")
+        self.assertEqual(result["ats_match"], {"pct": 50, "found": 1, "total": 2, "missing_supported": 0, "missing_unsupported": 1})
+
+    def test_the_log_line_names_every_term_left_off_and_why(self):
+        terms = self.terms()
+        term_pipeline.check_placement(self.resume(), terms)
+        with mock.patch("builtins.print") as out:
+            term_pipeline.log_term_summary(terms, term_pipeline.ats_style_score(self.resume(), terms))
+        line = out.call_args[0][0]
+        self.assertTrue(line.startswith("[career.terms] planned=5 ats_style=60%"))
+        self.assertIn("not_placed=[Sales process]", line)
+        self.assertIn("not_in_profile=[Pricing strategies]", line)
+        self.assertIn("phrases_unused=[-]", line)
+
+    def test_the_planner_can_list_a_long_posting_and_is_told_sales_process_terms_are_skills(self):
+        self.assertGreaterEqual(term_pipeline.MAX_TERMS, 45)
+        self.assertIn("At most 45 terms", term_pipeline.PLAN_SYSTEM_PROMPT)
+        for must in ("sales cycle", "sales process", "strategic initiatives", "relationship management", "ALWAYS kind \"skill\""):
+            self.assertIn(must, term_pipeline.PLAN_SYSTEM_PROMPT)
+
+
 class MalformedAnswers(unittest.TestCase):
     """Real failure seen live: a model answer with a plain-text list entry crashed
     with "'str' object has no attribute 'get'". These must be rejected as ValueError
