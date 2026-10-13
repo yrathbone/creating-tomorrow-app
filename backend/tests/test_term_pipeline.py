@@ -285,9 +285,9 @@ class ScannerStyleScoreAndLogging(unittest.TestCase):
         self.assertIn("phrases_unused=[-]", line)
 
     def test_the_planner_can_list_a_long_posting_and_is_told_sales_process_terms_are_skills(self):
-        self.assertGreaterEqual(term_pipeline.MAX_TERMS, 45)
-        self.assertIn("At most 45 terms", term_pipeline.PLAN_SYSTEM_PROMPT)
-        for must in ("sales cycle", "sales process", "strategic initiatives", "relationship management", "ALWAYS kind \"skill\""):
+        self.assertGreaterEqual(term_pipeline.MAX_TERMS, 60)
+        self.assertIn("At most 60 terms", term_pipeline.PLAN_SYSTEM_PROMPT)
+        for must in ("sales cycle", "sales process", "strategic initiatives", "relationship management", "standard skill name", "ALWAYS kind \"skill\""):
             self.assertIn(must, term_pipeline.PLAN_SYSTEM_PROMPT)
 
 
