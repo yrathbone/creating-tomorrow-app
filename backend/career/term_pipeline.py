@@ -17,7 +17,7 @@ fix-up fails or comes back malformed the step-3 resume is kept.
 import json
 import re
 
-from career import job_match
+from career import job_match, resume_quality
 from career.job_match import JobMatchError
 
 MAX_TERMS = 60  # long postings have 40+ distinct terms (one real posting filled 45 of 45); scanners such as Jobscan count them all
@@ -387,6 +387,96 @@ def _status(t: dict) -> str:
     return "wording_unused" if t.get("kind") == "phrase" else "not_placed"
 
 
+POLISH_SYSTEM_PROMPT = """You are making a MINIMAL edit to a finished resume so it reads like a person wrote it and stays strictly true to the candidate's evidence. You are given the resume as JSON, the candidate's EVIDENCE (the only source of truth), the posting keywords that must stay on the resume, and a list of FLAGGED ITEMS, each with where it is, the exact text, and the problem.
+
+Fix ONLY the flagged items:
+- Too long or run-on: split into shorter sentences or tighten. Cut filler and repeated words. Prefer plain verbs over a string of nouns. No more than one dash in a sentence.
+- Too many keywords in one sentence: keep the sentence's real meaning, spread keywords over neighbouring sentences or drop the repeat from this one. Never delete a keyword from the resume altogether: every KEEP keyword must still appear on the resume in its exact wording (the skills section already carries most of them).
+- A figure or name that is not in the evidence: delete it, or restate the sentence using only what the evidence says.
+Never add a fact, number, name, tool, title, employer, scope or result that is not in the EVIDENCE. Never turn "supported" into "led". Do not touch the skills list, education, certifications, headline, or any item that was not flagged. Keep every role and every bullet (rewrite a bullet in place; do not delete one unless the problem says to remove its content). Return the COMPLETE resume_data with the same structure. Call the submit_revised_resume tool. Do not respond with plain text."""
+
+POLISH_USER_TEMPLATE = """CURRENT RESUME (JSON):
+{resume_json}
+
+CANDIDATE EVIDENCE (the only source of truth):
+{evidence}
+
+KEEP THESE POSTING KEYWORDS ON THE RESUME (exact wording):
+{keep_terms}
+
+FLAGGED ITEMS:
+{issues_text}
+
+Make the minimal edit as specified in the system prompt."""
+
+
+def _prose_signature(resume_data: dict) -> list[str]:
+    return [u["text"] for u in resume_quality.prose_units(resume_data)]
+
+
+def improve_readability(resume_data: dict, evidence_text: str, terms: list[dict]) -> tuple[dict, dict]:
+    """Truth and readability checks (career/resume_quality.py), and at most ONE targeted edit pass when they find problems.
+
+    The edit is accepted only if it (a) keeps the same roles and bullets, (b) loses no posting term that was on the resume,
+    (c) leaves fewer problems than before and (d) introduces no new truth problem. Otherwise the original resume is kept.
+    Returns (resume, info) where info says what was found and what happened; it never raises."""
+    info = {"found": 0, "remaining": 0, "edited": False}
+    supported = [t for t in terms if t["support"] in SUPPORTED]
+    skill_names = [t["term"] for t in supported if t.get("kind") != "phrase"]
+    extra = "\n".join(t["term"] + " " + (t.get("evidence") or "") for t in supported)
+
+    def check(resume):
+        return resume_quality.find_issues(resume, evidence_text, skill_names, term_in_text, extra)
+
+    def truth_count(issues):
+        return sum(1 for i in issues if "not in the candidate's profile" in i["problem"])
+
+    try:
+        issues = check(resume_data)
+        info["found"] = info["remaining"] = len(issues)
+        if not issues:
+            return resume_data, info
+        keep = [t["term"] for t in supported if term_in_text(t["term"], resume_text(resume_data))]
+        issues_text = "\n".join(f"- [{i['where']}] {i['problem']}\n  TEXT: {i['text']}" for i in issues[:25])
+        user_prompt = POLISH_USER_TEMPLATE.format(
+            resume_json=json.dumps(resume_data, ensure_ascii=False),
+            evidence=evidence_text,
+            keep_terms="\n".join(f"- {k}" for k in keep) or "(none)",
+            issues_text=issues_text,
+        )
+        data = job_match._call_with_retry(
+            "career_readability_fix",
+            POLISH_SYSTEM_PROMPT,
+            user_prompt,
+            REVISE_TOOL,
+            extract=lambda r: job_match.require_resume_shape(job_match._extract_tool_input(r, "submit_revised_resume", ("resume_data",))),
+        )
+        revised = data.get("resume_data") or {}
+        required = ("name", "contact", "headline", "summary", "skills", "experience", "education")
+        if any(k not in revised for k in required):
+            return resume_data, info
+        old_jobs, new_jobs = resume_data.get("experience") or [], revised["experience"]
+        if len(new_jobs) != len(old_jobs) or any(len(a.get("bullets") or []) != len(b.get("bullets") or []) for a, b in zip(old_jobs, new_jobs)):
+            return resume_data, info
+        before_text, after_text = resume_text(resume_data), resume_text(revised)
+        if any(term_in_text(t["term"], before_text) and not term_in_text(t["term"], after_text) for t in terms):
+            print("[career.quality] edit rejected: it lost a posting keyword")
+            return resume_data, info
+        after = check(revised)
+        if len(after) >= len(issues) or truth_count(after) > truth_count(issues):
+            print("[career.quality] edit rejected: it did not reduce the problems")
+            return resume_data, info
+        info.update(remaining=len(after), edited=True)
+        return revised, info
+    except Exception as e:  # an optional polish step must never break a build
+        print(f"[career.quality] skipped: {type(e).__name__}")
+        return resume_data, info
+
+
+def log_quality(info: dict) -> None:
+    print(f"[career.quality] problems_found={info['found']} remaining={info['remaining']} edited={info['edited']}")
+
+
 def ats_style_score(resume_data: dict, terms: list[dict]) -> dict:
     """What a keyword scanner (Jobscan and similar) would report: the share of ALL the posting's terms that appear on the
     resume, counting every term equally, including context wording and terms the profile does not support (an honest
@@ -430,8 +520,12 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     result = job_match.build_tailored_resume(
         profile_text, job_description, confirmed_facts, name, contact, term_plan=terms
     )
+    evidence_text = profile_text + "\n" + facts_text
     if not terms:
-        result["resume_data"] = dedupe_skills(result["resume_data"])
+        resume, quality = improve_readability(dedupe_skills(result["resume_data"]), evidence_text, [])
+        result["resume_data"] = resume
+        result["quality"] = quality
+        log_quality(quality)
         result["term_report"] = []
         return result
 
@@ -452,6 +546,10 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         if revised:
             resume = dedupe_skills({**resume, **revised}, wording)
             check_placement(resume, terms)
+    resume, quality = improve_readability(resume, evidence_text, terms)
+    check_placement(resume, terms)
+    result["quality"] = quality
+    log_quality(quality)
     result["resume_data"] = resume
     result["ats_match"] = ats_style_score(resume, terms)
     log_term_summary(terms, result["ats_match"])
