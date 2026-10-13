@@ -1209,3 +1209,28 @@ body.dashboard-v4 .next-step { background: var(--v4-gold-wash); background-image
 body.dashboard-v4 .next-step p#next-step-text { color: var(--v4-muted); }
 body.dashboard-v4 .mc-progress-title { color: var(--v4-ink); }
 body.dashboard-v4 .mc-progress-bar span { transition: none; }
+
+/* Build My Resume and the "working on it" screens in the brand crimson (#C8102E, the Privacy & Terms red), so the one button that
+   matters stands out and the wait screens read as "hold on, this is in progress". Colours only: layouts are unchanged.
+   White on #C8102E is 5.9:1; the darker #8F0B22 is used for the hover and for the wait-screen text (9.9:1 on white). */
+/* the id is written twice on purpose: the generic dashboard button rule above carries an id inside its :not() list and would otherwise win */
+body.dashboard-v4 .dashboard-grid > .card button#job-build-btn#job-build-btn { background-image: none; background-color: #c8102e; color: #ffffff; border: 0; box-shadow: none; }
+body.dashboard-v4 .dashboard-grid > .card button#job-build-btn#job-build-btn:hover:not(:disabled),
+body.dashboard-v4 .dashboard-grid > .card button#job-build-btn#job-build-btn:focus-visible { background-color: #8f0b22; opacity: 1; }
+body.dashboard-v4 .dashboard-grid > .card button#job-build-btn#job-build-btn:focus-visible { outline: 3px solid #8f0b22; outline-offset: 2px; }
+body.dashboard-v4 #job-loading-state .processing-icon svg *,
+body.dashboard-v4 #job-build-loading-state .processing-icon svg *,
+body.dashboard-v4 #general-resume-loading .processing-icon svg *,
+body.dashboard-v4 #resume-loading-state .processing-icon svg * { stroke: #c8102e; }
+body.dashboard-v4 #job-loading-state .processing-dot,
+body.dashboard-v4 #job-build-loading-state .processing-dot,
+body.dashboard-v4 #general-resume-loading .processing-dot,
+body.dashboard-v4 #resume-loading-state .processing-dot { background: #c8102e; }
+body.dashboard-v4 #job-loading-state .processing-status,
+body.dashboard-v4 #job-build-loading-state .processing-status,
+body.dashboard-v4 #general-resume-loading .processing-status,
+body.dashboard-v4 #resume-loading-state .processing-status { color: #8f0b22; font-weight: 700; }
+body.dashboard-v4 #job-loading-state .processing-wait-copy strong,
+body.dashboard-v4 #job-build-loading-state .processing-wait-copy strong,
+body.dashboard-v4 #general-resume-loading .processing-wait-copy strong,
+body.dashboard-v4 #resume-loading-state .processing-wait-copy strong { color: #c8102e; }
