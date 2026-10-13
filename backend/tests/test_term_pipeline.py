@@ -257,6 +257,35 @@ class MalformedAnswers(unittest.TestCase):
         with self.assertRaises(ValueError):
             term_pipeline._require_term_shape({"terms": ["Fintech", {"term": "API"}]})
 
+    def test_the_reason_names_the_field_so_the_log_says_what_went_wrong(self):
+        cases = {
+            "invalid_shape:resume_data": {"resume_data": "just some text"},
+            "invalid_shape:experience": {"resume_data": dict(BASE_RESUME, experience=["Treasury Manager at BofA"])},
+            "invalid_shape:skills": {"resume_data": dict(BASE_RESUME, skills="Sales, Payments")},
+            "invalid_shape:skills_entry": {"resume_data": dict(BASE_RESUME, skills=["Sales: a, b", 42])},
+        }
+        for reason, bad in cases.items():
+            with self.assertRaises(ValueError) as caught:
+                job_match.require_resume_shape(bad)
+            self.assertEqual(str(caught.exception), reason)
+
+    def test_skills_groups_sent_as_objects_are_turned_into_the_grouped_lines(self):
+        data = {"resume_data": dict(BASE_RESUME, skills=[
+            {"label": "Payments", "skills": ["ISO 20022", "SWIFT"]},
+            {"group": "Domain", "items": ["Treasury Operations"]},
+            ["Sales", "Negotiation"],
+            "Management: Coaching, Hiring",
+        ])}
+        out = job_match.require_resume_shape(data)["resume_data"]["skills"]
+        self.assertEqual(out, ["Payments: ISO 20022, SWIFT", "Domain: Treasury Operations", "Sales, Negotiation", "Management: Coaching, Hiring"])
+
+    def test_lists_and_the_resume_sent_as_json_text_are_unwrapped(self):
+        import json
+        inner = dict(BASE_RESUME, skills=json.dumps(["Sales: a, b"]), experience=json.dumps(BASE_RESUME["experience"]))
+        out = job_match.require_resume_shape({"resume_data": json.dumps(inner)})["resume_data"]
+        self.assertEqual(out["skills"], ["Sales: a, b"])
+        self.assertEqual(out["experience"], BASE_RESUME["experience"])
+
     def test_good_shapes_pass(self):
         job_match.require_resume_shape({"resume_data": copy.deepcopy(BASE_RESUME)})
         term_pipeline._require_term_shape(plan(("Fintech", "required", "literal", "")))

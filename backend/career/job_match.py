@@ -22,6 +22,7 @@ new ones:
 The gap-interview loop itself is elevate.discover(), imported unchanged
 via career.ingestion - not reimplemented here.
 """
+import json
 import os
 
 import anthropic
@@ -336,21 +337,59 @@ def _extract_tool_input(response, tool_name: str, required_keys: tuple) -> dict:
     return data
 
 
+_SKILL_LABEL_KEYS = ("label", "group", "category", "name", "title", "heading")
+_SKILL_LIST_KEYS = ("skills", "items", "terms", "keywords", "list")
+
+
+def _json_if_text(value, kind):
+    """The model sometimes sends a whole list or object as one JSON string; unwrap it when it is."""
+    if isinstance(value, str) and value.strip()[:1] in ("[", "{"):
+        try:
+            decoded = json.loads(value)
+        except ValueError:
+            return value
+        if isinstance(decoded, kind):
+            return decoded
+    return value
+
+
+def _skill_line(entry):
+    """One SKILLS entry as the grouped text line the resume uses ("Group: a, b, c"). A group the model sent as an
+    object ({"label": ..., "skills": [...]}) or as a list is turned into that line; anything else is not repairable."""
+    if isinstance(entry, str):
+        return entry
+    if isinstance(entry, list) and entry and all(isinstance(s, str) for s in entry):
+        return ", ".join(entry)
+    if isinstance(entry, dict):
+        label = next((entry[k] for k in _SKILL_LABEL_KEYS if isinstance(entry.get(k), str)), "")
+        items = next((entry[k] for k in _SKILL_LIST_KEYS if isinstance(entry.get(k), list)), None)
+        if items is not None and all(isinstance(s, str) for s in items):
+            body = ", ".join(items)
+            return f"{label}: {body}" if label else body
+    return None
+
+
 def require_resume_shape(data: dict) -> dict:
     """The model sometimes returns a list entry as plain text where an object
     belongs (an experience entry, a role_selection item). Anything downstream
     that calls .get() on it would crash, so reject it here as ValueError, which
-    _call_with_retry turns into its one retry."""
-    resume = data.get("resume_data")
+    _call_with_retry turns into its one retry. The reason names the field, so the
+    server log says what went wrong. Layout slips that carry the same content
+    (a list sent as JSON text, skills groups sent as objects) are repaired instead."""
+    resume = _json_if_text(data.get("resume_data"), dict)
     if not isinstance(resume, dict):
-        raise ValueError("invalid_shape")
-    experience = resume.get("experience", [])
-    skills = resume.get("skills", [])
-    if (
-        not isinstance(experience, list) or any(not isinstance(j, dict) for j in experience)
-        or not isinstance(skills, list) or any(not isinstance(s, str) for s in skills)
-    ):
-        raise ValueError("invalid_shape")
+        raise ValueError("invalid_shape:resume_data")
+    data["resume_data"] = resume
+    experience = _json_if_text(resume.get("experience", []), list)
+    skills = _json_if_text(resume.get("skills", []), list)
+    if not isinstance(experience, list) or any(not isinstance(j, dict) for j in experience):
+        raise ValueError("invalid_shape:experience")
+    if not isinstance(skills, list):
+        raise ValueError("invalid_shape:skills")
+    lines = [_skill_line(s) for s in skills]
+    if any(line is None for line in lines):
+        raise ValueError("invalid_shape:skills_entry")
+    resume["experience"], resume["skills"] = experience, lines
     selection = data.get("role_selection")
     if selection is not None and (not isinstance(selection, list) or any(not isinstance(r, dict) for r in selection)):
         data["role_selection"] = []  # advisory note only; never worth failing the build
