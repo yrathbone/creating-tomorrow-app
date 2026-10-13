@@ -17,6 +17,10 @@ services:
     buildCommand: "pip install -r backend/requirements.txt"
     startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
+      # Python 3.12, the version the tests and the AWS Dockerfile use (Render's default had moved on to 3.14). Pinned 2026-10-12 while
+      # we watch the server's memory, which was climbing ~11 MB an hour on 3.14 and hit the 512 MB limit once.
+      - key: PYTHON_VERSION
+        value: 3.12.10
       - key: ANTHROPIC_API_KEY
         sync: false   # set manually in the Render dashboard - never in this repo
       # The invisible bot check on the public AI tools (Cloudflare Turnstile). Off until BOTH keys are set. The site key is public
