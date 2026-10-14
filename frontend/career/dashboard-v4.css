@@ -1242,3 +1242,10 @@ body.dashboard-v4 .facts-review-item strong { display: block; margin-bottom: 0.3
 body.dashboard-v4 .facts-review-item textarea { width: 100%; box-sizing: border-box; }
 body.dashboard-v4 .dashboard-grid > .card .facts-review-item .facts-review-nudge { margin: 0.35rem 0 0.5rem; color: #8f0b22; }
 body.dashboard-v4 .facts-review-item .entry-remove-btn { margin-top: 0.25rem; }
+
+/* Compare to My Career Profile: the site's green (#1F7A3F, the "A" match badge), so the step that starts a comparison stands out.
+   White on #1F7A3F is 5.4:1; the darker #16602F is the hover. The id is written twice because the generic dashboard button rule carries an id in its :not() list. */
+body.dashboard-v4 .dashboard-grid > .card button#job-compare-btn#job-compare-btn { background-image: none; background-color: #1f7a3f; color: #ffffff; border: 0; box-shadow: none; }
+body.dashboard-v4 .dashboard-grid > .card button#job-compare-btn#job-compare-btn:hover:not(:disabled),
+body.dashboard-v4 .dashboard-grid > .card button#job-compare-btn#job-compare-btn:focus-visible { background-color: #16602f; opacity: 1; }
+body.dashboard-v4 .dashboard-grid > .card button#job-compare-btn#job-compare-btn:focus-visible { outline: 3px solid #16602f; outline-offset: 2px; }

@@ -52,3 +52,14 @@ test("answers are shown as editable sentences before the build, with a nudge tow
   assert.match(js, /confirmed_facts: jobState\.discoveredFacts/, "the build sends the edited facts");
   assert.match(js, /in a specific sentence \(optional\)/, "the keyword box coaches too");
 });
+
+test("Compare to My Career Profile uses the site's green (#1F7A3F, the A badge green) with readable white text", () => {
+  const css = read("dashboard-v4.css");
+  assert.match(css, /button#job-compare-btn#job-compare-btn \{ background-image: none; background-color: #1f7a3f; color: #ffffff;/);
+  assert.match(css, /button#job-compare-btn#job-compare-btn:hover:not\(:disabled\),[\s\S]*?\{ background-color: #16602f;/);
+  assert.match(read("..", "style.css"), /\.match-grade-a \.match-grade-letter \{ background: #1f7a3f; \}/, "it is the same green as the A badge");
+  assert.match(read("login.html"), /<button type="submit" id="job-compare-btn">Compare to My Career Profile<\/button>/);
+  const lum = (h) => { const c = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  assert.ok(ratio("FFFFFF", "1F7A3F") >= 4.5 && ratio("FFFFFF", "16602F") >= 4.5);
+});
