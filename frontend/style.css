@@ -2821,13 +2821,15 @@ main.dashboard-main {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0, 1fr), not 1fr: a plain 1fr column cannot shrink below its widest content, so on a phone the whole dashboard grew
+     wider than the screen and ran off the right edge (it looked off-centre) */
+  grid-template-columns: minmax(0, 1fr);
   grid-auto-flow: dense;
   gap: 1.5rem;
   align-items: start;
 }
 @media (min-width: 860px) {
-  .dashboard-grid { grid-template-columns: 1fr 1fr; }
+  .dashboard-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .dashboard-grid .span-2 { grid-column: 1 / -1; }
 }
 
