@@ -1330,6 +1330,44 @@ def _get_scan_history_or_404(db: Session, profile: CareerProfile, scan_history_i
     return entry
 
 
+def _set_job_skipped(db: Session, profile: CareerProfile, scan_history_id: int, skipped: bool) -> dict:
+    """"Skip this job": a flag kept inside the comparison's own saved data, so nothing about the database changes and the
+    comparison itself is kept (a skipped job can be brought back). Only job comparisons can be skipped."""
+    entry = _get_scan_history_or_404(db, profile, scan_history_id)
+    if entry.scan_type != "job_comparison":
+        raise HTTPException(status_code=400, detail="Only a job comparison can be skipped.")
+    data = dict(entry.result_data or {})
+    if skipped:
+        data["skipped"] = True
+    else:
+        data.pop("skipped", None)
+    entry.result_data = data  # a new dict, so the change is saved
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return _scan_history_to_dict(entry)
+
+
+@router.post("/scan-history/{scan_history_id}/skip")
+async def skip_scan_history(
+    scan_history_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    return _set_job_skipped(db, profile, scan_history_id, True)
+
+
+@router.post("/scan-history/{scan_history_id}/unskip")
+async def unskip_scan_history(
+    scan_history_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    return _set_job_skipped(db, profile, scan_history_id, False)
+
+
 @router.delete("/scan-history/{scan_history_id}")
 async def delete_scan_history(
     scan_history_id: int,

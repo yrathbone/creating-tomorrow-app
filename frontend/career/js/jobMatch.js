@@ -913,11 +913,43 @@ function resetJobTarget() {
   document.getElementById("job-build-name").value = "";
   document.getElementById("job-build-contact").value = "";
   hideAllJobStates();
+  document.getElementById("job-skipped-note").hidden = true;
   jobTargetEmpty.hidden = false;
 }
 
 document.getElementById("job-start-over-btn").addEventListener("click", resetJobTarget);
 document.getElementById("job-match-new-btn").addEventListener("click", resetJobTarget);
+
+// "Skip This Job": mark the saved comparison as skipped (it stays in Your Activity > Skipped jobs and can be brought back), then go
+// back to the empty Current Job Target, so it no longer shows up as "Continue" or as an unfinished resume.
+document.getElementById("job-skip-job-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("job-skip-job-btn");
+  const errorEl = document.getElementById("job-skip-error");
+  errorEl.hidden = true;
+  const id = jobState.scanHistoryId;
+  const title = jobState.jobTitle;
+  btn.disabled = true;
+  try {
+    if (id) {
+      const res = await authedFetch("/api/career/scan-history/" + id + "/skip", { method: "POST" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(formatErrorDetail(err.detail, `Couldn't skip this job (${res.status})`));
+      }
+    }
+    resetJobTarget();
+    if (typeof loadScanHistory === "function") await loadScanHistory();
+    restoreCurrentJobTarget();
+    const note = document.getElementById("job-skipped-note");
+    note.textContent = "Skipped" + (title ? " \u201c" + title + "\u201d" : "") + ". You'll find it under Skipped jobs in Your Activity if you change your mind.";
+    note.hidden = false;
+  } catch (err) {
+    errorEl.textContent = err.message || "Something went wrong. Please try again.";
+    errorEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+});
 
 // Restores the dashboard's "Current Job Target" to the most recent real
 // job comparison on page load, instead of always starting back at the
@@ -930,7 +962,7 @@ function restoreCurrentJobTarget() {
   // The dashboard opens clean. The last comparison is kept, one click away,
   // instead of taking over the page on every refresh.
   const btn = document.getElementById("job-resume-last-btn");
-  const latest = (typeof allScanHistory !== "undefined" ? allScanHistory : []).find((s) => s.scan_type === "job_comparison");
+  const latest = (typeof allScanHistory !== "undefined" ? allScanHistory : []).find((s) => s.scan_type === "job_comparison" && !(s.result_data && s.result_data.skipped));
   if (!latest || !latest.result_data || !latest.result_data.match_report) {
     btn.hidden = true;
     return;

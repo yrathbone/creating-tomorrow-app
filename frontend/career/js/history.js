@@ -13,7 +13,7 @@ let allResumeVersions = [];
 let scansLoaded = false;
 let resumesLoaded = false;
 
-// "all" | "job_comparison" | "skill_scan": remembered for this tab only.
+// "all" | "job_comparison" | "skill_scan" | "skipped": remembered for this tab only.
 let scanFilter = "all";
 
 // The resume layouts the server knows (see TEMPLATES in backend/resume_builder.py).
@@ -27,6 +27,11 @@ const RESUME_LAYOUTS = [
 
 // How a scan should look: a tone (colour), the big badge text and a short type label.
 // Job comparisons take their tone from the fit letter, else from the match level.
+// A job the person chose to skip after seeing how it compared (kept, flagged inside the saved comparison, and can be brought back).
+function isSkipped(entry) {
+  return !!(entry && entry.scan_type === "job_comparison" && entry.result_data && entry.result_data.skipped);
+}
+
 function scanCardInfo(entry) {
   if (!entry || entry.scan_type !== "job_comparison") {
     return { kind: "skill_scan", tone: "skill", badge: "Skills", typeLabel: "Skill scan", title: "Skill Scan" };
@@ -43,12 +48,14 @@ function scanCardInfo(entry) {
     badge = level.charAt(0).toUpperCase() + level.slice(1);
     tone = { high: "strong", strong: "strong", good: "good", average: "fair", moderate: "fair", fair: "fair", low: "low", weak: "low" }[level] || "neutral";
   }
-  return { kind: "job_comparison", tone, badge, typeLabel: "Job comparison", title: entry.job_title || "Job Comparison" };
+  return { kind: "job_comparison", tone, badge, typeLabel: isSkipped(entry) ? "Skipped job" : "Job comparison", title: entry.job_title || "Job Comparison" };
 }
 
 function filterScans(entries, filter) {
   const list = Array.isArray(entries) ? entries : [];
-  return filter === "job_comparison" || filter === "skill_scan" ? list.filter((e) => (e.scan_type === "job_comparison" ? "job_comparison" : "skill_scan") === filter) : list;
+  if (filter === "skipped") return list.filter(isSkipped);
+  const active = list.filter((e) => !isSkipped(e)); // skipped jobs live only under their own chip
+  return filter === "job_comparison" || filter === "skill_scan" ? active.filter((e) => (e.scan_type === "job_comparison" ? "job_comparison" : "skill_scan") === filter) : active;
 }
 
 // A resume card's wording: tailored resumes name the job they were built for.
@@ -81,10 +88,12 @@ function renderScanFilter() {
   if (!bar) return;
   const jobs = filterScans(allScanHistory, "job_comparison").length;
   const skills = filterScans(allScanHistory, "skill_scan").length;
-  bar.hidden = jobs === 0 || skills === 0; // nothing to filter between
+  const skipped = filterScans(allScanHistory, "skipped").length;
+  bar.hidden = [jobs, skills, skipped].filter((n) => n > 0).length < 2; // nothing to filter between
   bar.textContent = "";
-  const options = [["all", "All", allScanHistory.length], ["job_comparison", "Job comparisons", jobs], ["skill_scan", "Skill scans", skills]];
+  const options = [["all", "All", filterScans(allScanHistory, "all").length], ["job_comparison", "Job comparisons", jobs], ["skill_scan", "Skill scans", skills], ["skipped", "Skipped jobs", skipped]];
   for (const [value, label, count] of options) {
+    if (value !== "all" && count === 0) continue;
     const chip = visualButton(label + " " + count, "vis-chip btn-secondary", () => {
       scanFilter = value;
       renderScanCards();
@@ -99,6 +108,8 @@ function renderScanCards() {
   if (!container) return;
   container.textContent = "";
   if (scanFilter !== "all" && filterScans(allScanHistory, scanFilter).length === 0) scanFilter = "all";
+  // only skipped jobs exist: show them rather than an empty list
+  if (scanFilter === "all" && filterScans(allScanHistory, "all").length === 0 && filterScans(allScanHistory, "skipped").length > 0) scanFilter = "skipped";
   renderScanFilter();
 
   if (allScanHistory.length === 0) {
@@ -112,6 +123,7 @@ function renderScanCards() {
   const grid = document.createElement("div");
   grid.className = "vis-grid";
   for (const entry of filterScans(allScanHistory, scanFilter)) {
+    const skipped = isSkipped(entry);
     const info = scanCardInfo(entry);
     const fit = (entry.result_data || {}).job_fit;
     grid.appendChild(buildVisualCard({
@@ -123,10 +135,14 @@ function renderScanCards() {
       title: info.title,
       summary: entry.summary_text || "",
       footerText: shortDate(entry.created_at),
-      actions: [visualButton("Delete", "entry-remove-btn", async () => {
+      actions: (skipped ? [visualButton("Bring back", "btn-secondary", async () => {
+        await authedFetch("/api/career/scan-history/" + entry.id + "/unskip", { method: "POST" });
+        await loadScanHistory();
+        if (typeof restoreCurrentJobTarget === "function") restoreCurrentJobTarget();
+      })] : []).concat([visualButton("Delete", "entry-remove-btn", async () => {
         await authedFetch("/api/career/scan-history/" + entry.id, { method: "DELETE" });
         await loadScanHistory();
-      })],
+      })]),
     }));
   }
   container.appendChild(grid);

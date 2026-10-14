@@ -214,6 +214,7 @@
           <div class="dashboard-card-header"><h2>Current Job Target</h2></div>
 
           <div id="job-target-empty">
+            <p class="hint" id="job-skipped-note" role="status" hidden></p>
             <p class="hint">Found a job you're interested in? Add it here and we'll compare it with your verified career experience.</p>
             <button type="button" id="job-target-add-btn">+ Add a Job</button>
             <button type="button" id="job-resume-last-btn" class="btn-secondary" hidden></button>
@@ -283,6 +284,9 @@
             <button type="button" id="job-start-interview-btn">Explore These With Me</button>
             <button type="button" id="job-skip-interview-btn" class="btn-secondary">Skip to Building My Resume</button>
             <button type="button" id="job-match-new-btn" class="btn-secondary">Compare a Different Job</button>
+            <button type="button" id="job-skip-job-btn" class="btn-secondary">Skip This Job</button>
+            <p class="hint">Not worth pursuing? Skip it and we'll keep it under Skipped jobs in Your Activity, in case you change your mind.</p>
+            <div id="job-skip-error" class="error" hidden></div>
           </div>
 
           <div id="job-questions-state" hidden>

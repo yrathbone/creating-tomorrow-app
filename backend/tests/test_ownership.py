@@ -150,7 +150,7 @@ class TokenVerification(OwnershipTestCase):
     def test_every_career_route_rejects_a_request_with_no_token(self):
         routes = [r for r in router.routes if isinstance(r, APIRoute)]
         # 43 routes through Phase 2A + 4 language routes + 2 profile routes (GET/PUT /profile) in Phase 2B = 49, + 2 resume-layout routes (GET/PUT /resume-layout, migration 0009) = 51
-        self.assertEqual(len(routes), 53, "a route was added or removed: update this guard on purpose")  # 53 = 51 + POST /account/delete + GET /export/readable
+        self.assertEqual(len(routes), 55, "a route was added or removed: update this guard on purpose")  # 55 = 51 + POST /account/delete + GET /export/readable + POST skip/unskip on a scan
         offenders = []
         for r in routes:
             method = sorted(r.methods - {"HEAD", "OPTIONS"})[0]
@@ -263,13 +263,15 @@ class Isolation(OwnershipTestCase):
             ("DELETE", f"/certifications/{a['cert']}", None),
             ("PUT", f"/skills/{a['skill']}", {"name": "Hacked"}),
             ("DELETE", f"/skills/{a['skill']}", None),
+            ("POST", f"/scan-history/{a['scan']}/skip", None),
+            ("POST", f"/scan-history/{a['scan']}/unskip", None),
             ("DELETE", f"/scan-history/{a['scan']}", None),
             ("DELETE", f"/resume-versions/{a['resume']}", None),
             ("GET", f"/resume-versions/{a['resume']}/download", None),
             ("PUT", f"/applications/{a['app']}", {"job_title": "Hacked"}),
             ("DELETE", f"/applications/{a['app']}", None),
         ]
-        self.assertEqual(len(attempts), 13, "all 13 ID-based routes")
+        self.assertEqual(len(attempts), 15, "all 15 ID-based routes")
         for method, path, body in attempts:
             with self.subTest(f"{method} {path}"):
                 kw = {"json": body} if body is not None else {}
@@ -283,6 +285,29 @@ class Isolation(OwnershipTestCase):
             self.assertIsNotNone(s.get(ScanHistory, a["scan"]))
             self.assertIsNotNone(s.get(ResumeVersion, a["resume"]))
             self.assertEqual(s.get(Application, a["app"]).job_title, "Applied A")
+
+    def test_skipping_a_job_keeps_it_and_can_be_undone_and_never_touches_other_scans(self):
+        ids = self.build_world()
+        a = ids["A"]
+        with self.Session() as s:
+            skill_scan = ScanHistory(career_profile_id=self.profile_id_for(SUB_A), scan_type="skill_scan", job_title=None, summary_text="s", result_data={})
+            s.add(skill_scan)
+            s.commit()
+            skill_scan_id = skill_scan.id
+        res = self.call("POST", f"/scan-history/{a['scan']}/skip", self.a)
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.json()["result_data"]["skipped"])
+        listed = {r["id"]: r for r in self.call("GET", "/scan-history", self.a).json()}
+        self.assertTrue(listed[a["scan"]]["result_data"].get("skipped"), "the skipped job is still in the list, flagged")
+        self.assertFalse((listed[skill_scan_id]["result_data"] or {}).get("skipped"))
+        back = self.call("POST", f"/scan-history/{a['scan']}/unskip", self.a)
+        self.assertEqual(back.status_code, 200)
+        self.assertNotIn("skipped", back.json()["result_data"])
+        # only a job comparison can be skipped
+        self.assertEqual(self.call("POST", f"/scan-history/{skill_scan_id}/skip", self.a).status_code, 400)
+        # B's job is untouched by all of this
+        b_rows = self.call("GET", "/scan-history", self.b).json()
+        self.assertFalse(any((r["result_data"] or {}).get("skipped") for r in b_rows))
 
     def test_lists_and_export_only_contain_the_callers_own_records(self):
         ids = self.build_world()

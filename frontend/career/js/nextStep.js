@@ -41,7 +41,7 @@ function chooseNextStep(f) {
   }
 
   const resumes = f.resumes || [];
-  const scans = (f.scans || []).filter((s) => s.scan_type === "job_comparison");
+  const scans = (f.scans || []).filter((s) => s.scan_type === "job_comparison" && !(s.result_data && s.result_data.skipped));
   const tailored = resumes.filter((r) => r.scan_history_id);
   if (!resumes.length) {
     return { key: "first-resume", title: "Build your first resume",
