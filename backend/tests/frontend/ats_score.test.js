@@ -63,3 +63,10 @@ test("Compare to My Career Profile uses the site's green (#1F7A3F, the A badge g
   const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
   assert.ok(ratio("FFFFFF", "1F7A3F") >= 4.5 && ratio("FFFFFF", "16602F") >= 4.5);
 });
+
+test("the homepage Explore Tools button is the site green, with the hover darker and white text readable", () => {
+  const css = fs.readFileSync(path.join(FRONTEND, "..", "home-v5.css"), "utf8");
+  assert.match(css, /\.h5-btn-green \{ background: #1f7a3f; color: #ffffff; \}/);
+  assert.match(css, /\.h5-btn-green:hover \{ background: #16602f; \}/);
+  assert.match(fs.readFileSync(path.join(FRONTEND, "..", "index.html"), "utf8"), /class="h5-btn h5-btn-green">Explore Tools</);
+});

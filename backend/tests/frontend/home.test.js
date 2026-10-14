@@ -104,7 +104,7 @@ test("the hero says what the design says, with the cobalt second line, the gold 
   assert.match(html, /<p class="h5-lead">Free career tools to help you build a better tomorrow\.<\/p>/);
   const hero = html.slice(html.indexOf('class="h5-hero"'), html.indexOf('class="h5-hero-photo"'));
   assert.match(hero, /Guide Me <span aria-hidden="true">→<\/span>/);
-  assert.match(hero, /href="#tools" class="h5-btn h5-btn-outline">Explore Tools/);
+  assert.match(hero, /href="#tools" class="h5-btn h5-btn-green">Explore Tools/);
   assert.match(hero, /Free for everyone\./);
   assert.match(hero, /No paywall\./);
   assert.ok(hero.indexOf("h5-cta") < hero.indexOf("h5-free"), "the line sits after the buttons");

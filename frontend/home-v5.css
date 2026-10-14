@@ -108,6 +108,9 @@ body.home-v5 .h5-band-pale { background: var(--pale); }
 .h5-btn-gold:hover { background: var(--gold-hover); }
 .h5-btn-outline { background: var(--white); border-color: var(--cobalt); color: var(--cobalt); }
 .h5-btn-outline:hover { background: var(--tint-blue); }
+/* green: explore and compare actions (the site green #1F7A3F, as on the A match badge; white on it is 5.4:1, the hover 7.6:1) */
+.h5-btn-green { background: #1f7a3f; color: #ffffff; }
+.h5-btn-green:hover { background: #16602f; }
 
 /* ---------- Hero ---------- */
 .h5-hero-band { padding: 4.5rem 0 3.5rem; }
