@@ -168,6 +168,10 @@ body.pages-v4 .btn-secondary:hover { background: var(--tint-blue); border-color:
 body.pages-v4 .btn-primary { background: var(--blue); border-radius: var(--radius-sm); }
 body.pages-v4 .btn-gold { background: var(--gold); color: var(--navy); border: 0; box-shadow: none; }
 body.pages-v4 .btn-gold:hover { background: var(--gold-hover); }
+body.pages-v4 .btn-green { background: #1f7a3f; color: #ffffff; border: 0; box-shadow: none; }
+body.pages-v4 .btn-green:hover { background: #16602f; opacity: 1; }
+body.pages-v4 .btn-crimson { background: #c8102e; color: #ffffff; border: 0; box-shadow: none; }
+body.pages-v4 .btn-crimson:hover { background: #8f0b22; opacity: 1; }
 
 /* steps along the top of the builder tools */
 body:where(.pages-v4) .wizard-progress { gap: 0.4rem 1rem; }
@@ -233,7 +237,6 @@ body.pages-v4 .hv-h2::before { display: none; }
 body.pages-v4.spotlight-page .page-header { max-width: none; margin: 0; padding: 3.25rem 1.25rem 2.5rem; background: var(--pale); border: 0; border-top: 0; border-radius: 0; }
 body.pages-v4.spotlight-page .page-header .guide-eyebrow { color: var(--blue); }
 body.pages-v4.spotlight-page .page-header .tagline { color: var(--muted); }
-body.pages-v4.spotlight-page #review-btn { background: var(--blue); border-color: var(--blue); }
 body.pages-v4.spotlight-page .input-option-toggle strong { color: var(--navy); }
 
 /* ---------- Footer: the homepage's ---------- */

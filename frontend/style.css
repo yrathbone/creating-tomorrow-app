@@ -2996,6 +2996,13 @@ main.dashboard-main {
 }
 .btn-gold:hover { background: #f5b95a; }
 
+/* Button roles (docs/BUTTON-SCHEME.md): green = explore and compare, crimson = the one action that builds your document.
+   White on #1F7A3F is 5.4:1 and on #C8102E 5.9:1. Gold, blue and outline are unchanged. */
+.btn-green { background: #1f7a3f; color: #ffffff; border: 2px solid #1f7a3f; font-weight: 700; }
+.btn-green:hover { background: #16602f; border-color: #16602f; opacity: 1; }
+.btn-crimson { background: #c8102e; color: #ffffff; border: 2px solid #c8102e; font-weight: 700; }
+.btn-crimson:hover { background: #8f0b22; border-color: #8f0b22; opacity: 1; }
+
 .match-grade {
   display: flex;
   align-items: center;
@@ -3169,7 +3176,6 @@ main.dashboard-main {
 .spotlight-page .page-header h1 { color: var(--navy); }
 .spotlight-page .page-header .guide-eyebrow { color: #0a66c2; letter-spacing: 0.12em; font-weight: 700; }
 .spotlight-page .page-header .tagline { color: #3d4b5c; }
-.spotlight-page #review-btn { background: #0a66c2; border-color: #0a66c2; }
 .spotlight-page .input-option-toggle strong { color: #0a66c2; }
 
 /* Report sections: one accent per block, green for what works, amber for what could be clearer */
@@ -3245,7 +3251,6 @@ main.dashboard-main {
 /* intro + privacy notes */
 .spotlight-page #step-input .guide-intro-line { background: linear-gradient(135deg, #e8f1fb 0%, #fff6e3 100%); border-radius: 12px; padding: 1rem 1.1rem; }
 .spotlight-page #step-input .privacy-note { background: #eef6f0; border: 1px solid #b6dcc1; border-left: 5px solid #1f7a3f; border-radius: 10px; color: #2d4a38; }
-.spotlight-page #review-btn:not(:disabled) { background: linear-gradient(135deg, #0a66c2, #0847c7); }
 
 /* --- One look across the home page, dashboard and LinkedIn pages --------- */
 /* Same headline treatment as the home hero: heavy, tight, navy then gold. */

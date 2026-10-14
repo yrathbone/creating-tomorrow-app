@@ -225,8 +225,8 @@ body.dashboard-v4 .dashboard-grid > .resume-card { border-top: 3px solid var(--v
 /* ---------- Buttons inside the cards ---------- */
 body.dashboard-v4 .dashboard-grid > .card button,
 body.dashboard-v4 #career-profile-editor button { font-family: inherit; border-radius: var(--v4-radius-sm); }
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger),
-body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn) {
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(.btn-green):not(.btn-crimson):not(#job-resume-last-btn):not(.btn-danger),
+body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn):not(.btn-green):not(.btn-crimson) {
   background: var(--v4-blue);
   color: #ffffff;
   padding: 0.55rem 1.1rem;
@@ -234,7 +234,7 @@ body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-r
   font-size: 0.92rem;
   font-weight: 650;
 }
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger):hover { background: var(--v4-blue-deep); opacity: 1; }
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(.btn-green):not(.btn-crimson):not(#job-resume-last-btn):not(.btn-danger):hover { background: var(--v4-blue-deep); opacity: 1; }
 body.dashboard-v4 .dashboard-grid > .card .btn-secondary,
 body.dashboard-v4 #career-profile-editor .btn-secondary {
   background: #ffffff;
@@ -651,15 +651,15 @@ body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card.active {
 body.dashboard-v4 .cp-avatar { background: linear-gradient(145deg, #ffffff, #d6e4ff); box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(10, 53, 168, 0.16), 0 5px 10px -4px rgba(20, 33, 61, 0.30); }
 
 /* Buttons: a lit top edge and a soft drop, still the same sizes and labels */
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger),
-body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn),
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(.btn-green):not(.btn-crimson):not(#job-resume-last-btn):not(.btn-danger),
+body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn):not(.btn-green):not(.btn-crimson),
 body.dashboard-v4 #upload-resume-btn,
 body.dashboard-v4 #job-target-add-btn {
   background-image: linear-gradient(180deg, #1a50cf 0%, #0a35a8 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 12px -5px rgba(10, 53, 168, 0.55);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger):hover,
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(.btn-green):not(.btn-crimson):not(#job-resume-last-btn):not(.btn-danger):hover,
 body.dashboard-v4 #upload-resume-btn:hover,
 body.dashboard-v4 #job-target-add-btn:hover {
   background-image: linear-gradient(180deg, #1448c4 0%, #072a86 100%);
@@ -1178,11 +1178,11 @@ body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-card.active {
 body.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin { background: #ffffff; }
 body.dashboard-v4 .cp-avatar { background: var(--v4-sky); box-shadow: none; }
 /* buttons: flat cobalt, flat gold with navy text, outlined secondary */
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger),
-body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn),
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(.btn-green):not(.btn-crimson):not(#job-resume-last-btn):not(.btn-danger),
+body.dashboard-v4 #career-profile-editor button:not(.btn-secondary):not(.entry-remove-btn):not(.btn-green):not(.btn-crimson),
 body.dashboard-v4 #upload-resume-btn,
 body.dashboard-v4 #job-target-add-btn { background-image: none; background-color: var(--v4-blue); box-shadow: none; }
-body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(#job-resume-last-btn):not(.btn-danger):hover,
+body.dashboard-v4 .dashboard-grid > .card button:not(.stat-card):not(.entry-remove-btn):not(.btn-secondary):not(.btn-gold):not(.btn-green):not(.btn-crimson):not(#job-resume-last-btn):not(.btn-danger):hover,
 body.dashboard-v4 #upload-resume-btn:hover,
 body.dashboard-v4 #job-target-add-btn:hover { background-image: none; background-color: var(--v4-blue-deep); transform: none; box-shadow: none; }
 body.dashboard-v4 #general-resume-hero-btn,
@@ -1213,11 +1213,6 @@ body.dashboard-v4 .mc-progress-bar span { transition: none; }
 /* Build My Resume and the "working on it" screens in the brand crimson (#C8102E, the Privacy & Terms red), so the one button that
    matters stands out and the wait screens read as "hold on, this is in progress". Colours only: layouts are unchanged.
    White on #C8102E is 5.9:1; the darker #8F0B22 is used for the hover and for the wait-screen text (9.9:1 on white). */
-/* the id is written twice on purpose: the generic dashboard button rule above carries an id inside its :not() list and would otherwise win */
-body.dashboard-v4 .dashboard-grid > .card button#job-build-btn#job-build-btn { background-image: none; background-color: #c8102e; color: #ffffff; border: 0; box-shadow: none; }
-body.dashboard-v4 .dashboard-grid > .card button#job-build-btn#job-build-btn:hover:not(:disabled),
-body.dashboard-v4 .dashboard-grid > .card button#job-build-btn#job-build-btn:focus-visible { background-color: #8f0b22; opacity: 1; }
-body.dashboard-v4 .dashboard-grid > .card button#job-build-btn#job-build-btn:focus-visible { outline: 3px solid #8f0b22; outline-offset: 2px; }
 body.dashboard-v4 #job-loading-state .processing-icon svg *,
 body.dashboard-v4 #job-build-loading-state .processing-icon svg *,
 body.dashboard-v4 #general-resume-loading .processing-icon svg *,
@@ -1243,9 +1238,21 @@ body.dashboard-v4 .facts-review-item textarea { width: 100%; box-sizing: border-
 body.dashboard-v4 .dashboard-grid > .card .facts-review-item .facts-review-nudge { margin: 0.35rem 0 0.5rem; color: #8f0b22; }
 body.dashboard-v4 .facts-review-item .entry-remove-btn { margin-top: 0.25rem; }
 
-/* Compare to My Career Profile: the site's green (#1F7A3F, the "A" match badge), so the step that starts a comparison stands out.
-   White on #1F7A3F is 5.4:1; the darker #16602F is the hover. The id is written twice because the generic dashboard button rule carries an id in its :not() list. */
-body.dashboard-v4 .dashboard-grid > .card button#job-compare-btn#job-compare-btn { background-image: none; background-color: #1f7a3f; color: #ffffff; border: 0; box-shadow: none; }
-body.dashboard-v4 .dashboard-grid > .card button#job-compare-btn#job-compare-btn:hover:not(:disabled),
-body.dashboard-v4 .dashboard-grid > .card button#job-compare-btn#job-compare-btn:focus-visible { background-color: #16602f; opacity: 1; }
-body.dashboard-v4 .dashboard-grid > .card button#job-compare-btn#job-compare-btn:focus-visible { outline: 3px solid #16602f; outline-offset: 2px; }
+/* ---------- Button roles (docs/BUTTON-SCHEME.md) ----------
+   green = explore and compare, crimson = the one action that builds your document, gold = start here, blue = the everyday main action,
+   outline = secondary, outline red = delete. Flat colours, white text; the darker shade is the hover. */
+body.dashboard-v4 .dashboard-grid > .card .btn-green,
+body.dashboard-v4 #career-profile-editor .btn-green { background-image: none; background-color: #1f7a3f; color: #ffffff; border: 0; box-shadow: none; }
+body.dashboard-v4 .dashboard-grid > .card .btn-green:hover:not(:disabled),
+body.dashboard-v4 #career-profile-editor .btn-green:hover:not(:disabled) { background-image: none; background-color: #16602f; transform: none; opacity: 1; }
+body.dashboard-v4 .dashboard-grid > .card .btn-crimson,
+body.dashboard-v4 #career-profile-editor .btn-crimson { background-image: none; background-color: #c8102e; color: #ffffff; border: 0; box-shadow: none; }
+body.dashboard-v4 .dashboard-grid > .card .btn-crimson:hover:not(:disabled),
+body.dashboard-v4 #career-profile-editor .btn-crimson:hover:not(:disabled) { background-image: none; background-color: #8f0b22; transform: none; opacity: 1; }
+body.dashboard-v4 .btn-green:focus-visible { outline: 3px solid #16602f; outline-offset: 2px; }
+body.dashboard-v4 .btn-crimson:focus-visible { outline: 3px solid #8f0b22; outline-offset: 2px; }
+/* delete: outlined, red text, so a solid red always means Build */
+body.dashboard-v4 .btn-danger,
+body.dashboard-v4 #delete-confirm-btn { background-image: none; background-color: #ffffff; color: #b93030; border: 2px solid #b93030; box-shadow: none; }
+body.dashboard-v4 .btn-danger:hover:not(:disabled),
+body.dashboard-v4 #delete-confirm-btn:hover:not(:disabled) { background-image: none; background-color: #fdecec; color: #8f1818; border-color: #8f1818; }

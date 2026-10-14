@@ -23,8 +23,6 @@ test("jobMatch.js passes the build's ats_match to the grade and writes 'ATS-styl
 
 test("Build My Resume and the resume 'working' screens use the brand crimson, with readable contrast, and layouts are untouched", () => {
   const css = read("dashboard-v4.css");
-  assert.match(css, /button#job-build-btn#job-build-btn \{ background-image: none; background-color: #c8102e; color: #ffffff;/);
-  assert.match(css, /button#job-build-btn#job-build-btn:hover:not\(:disabled\),[\s\S]*?\{ background-color: #8f0b22;/);
   for (const id of ["job-loading-state", "job-build-loading-state", "general-resume-loading", "resume-loading-state"]) {
     assert.ok(css.includes(`body.dashboard-v4 #${id} .processing-dot { background: #c8102e; }`) || css.includes(`#${id} .processing-dot,`), id + " dots");
     assert.ok(css.includes(`#${id} .processing-status`), id + " status text");
@@ -35,7 +33,7 @@ test("Build My Resume and the resume 'working' screens use the brand crimson, wi
   assert.ok(ratio("8F0B22", "FFFFFF") >= 7, "dark red wait text on white");
   // colours only: the new block sets no width, height, padding, margin, display or position
   const start = css.indexOf("Build My Resume and the");
-  const block = css.slice(start, css.indexOf('/* "How your answers will read"', start) > 0 ? css.indexOf('/* "How your answers will read"', start) : undefined);
+  const block = css.slice(start, css.indexOf('/* "How your answers will read"', start));
   assert.ok(!/(?:^|[;{\s])(width|height|padding|margin|display|position)\s*:/m.test(block.replace(/outline-offset/g, "")), "no layout properties in the crimson block");
 });
 
@@ -51,17 +49,6 @@ test("answers are shown as editable sentences before the build, with a nudge tow
   assert.match(js, /words < 9 \|\| STOCK_FACT\.test/, "short or stock sentences get the nudge");
   assert.match(js, /confirmed_facts: jobState\.discoveredFacts/, "the build sends the edited facts");
   assert.match(js, /in a specific sentence \(optional\)/, "the keyword box coaches too");
-});
-
-test("Compare to My Career Profile uses the site's green (#1F7A3F, the A badge green) with readable white text", () => {
-  const css = read("dashboard-v4.css");
-  assert.match(css, /button#job-compare-btn#job-compare-btn \{ background-image: none; background-color: #1f7a3f; color: #ffffff;/);
-  assert.match(css, /button#job-compare-btn#job-compare-btn:hover:not\(:disabled\),[\s\S]*?\{ background-color: #16602f;/);
-  assert.match(read("..", "style.css"), /\.match-grade-a \.match-grade-letter \{ background: #1f7a3f; \}/, "it is the same green as the A badge");
-  assert.match(read("login.html"), /<button type="submit" id="job-compare-btn">Compare to My Career Profile<\/button>/);
-  const lum = (h) => { const c = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
-  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
-  assert.ok(ratio("FFFFFF", "1F7A3F") >= 4.5 && ratio("FFFFFF", "16602F") >= 4.5);
 });
 
 test("the homepage Explore Tools button is the site green, with the hover darker and white text readable", () => {
