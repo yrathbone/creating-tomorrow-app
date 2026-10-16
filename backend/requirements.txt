@@ -7,7 +7,7 @@ python-multipart==0.0.32
 python-docx==1.2.0
 pypdf==6.19.0
 ftfy==6.3.1
-anthropic==1.12.1
+anthropic==1.13.0
 pydantic==2.14.0
 
 # Career Profile (docs/CAREER_PROFILE_ARCHITECTURE_AUDIT.md)
