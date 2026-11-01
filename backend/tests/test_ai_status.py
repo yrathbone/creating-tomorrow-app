@@ -10,6 +10,11 @@ import os
 import unittest
 from unittest import mock
 
+import anthropic
+try:  # the pinned AI library uses httpx2; older setups still have httpx (same convention as test_llm_utils.py)
+    import httpx2 as httpx
+except ImportError:
+    import httpx
 from fastapi.testclient import TestClient
 
 import abuse_guard
@@ -83,14 +88,22 @@ class Classifier(unittest.TestCase):
 
 
     def test_the_real_sdk_exception_classes_are_classified_the_same_way(self):
-        import anthropic
-        import httpx
+        # built the way test_llm_utils.py builds them (public constructors only), so it works on every SDK version
         request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
-        client = anthropic.Anthropic(api_key="not-a-real-key")  # never used to call anything
-        for status, body, expected in ((400, SPEND_LIMIT_400, "spend_limit"), (429, TIER_CAP_429, "spend_limit"), (529, OVERLOADED_529, "busy"), (401, BAD_KEY_401, "config")):
-            with self.subTest(status=status):
-                response = httpx.Response(status, json=body, request=request)
-                error = client._make_status_error("provider error", body=response.json(), response=response)
+
+        def sdk_error(cls, status, body):
+            response = httpx.Response(status, request=request, headers={"request-id": "req_test"})
+            return cls("provider text", response=response, body=body)
+
+        for error, expected in (
+            (sdk_error(anthropic.BadRequestError, 400, SPEND_LIMIT_400), "spend_limit"),
+            (sdk_error(anthropic.RateLimitError, 429, TIER_CAP_429), "spend_limit"),
+            (sdk_error(anthropic.RateLimitError, 429, RATE_429), "rate_limited"),
+            (sdk_error(anthropic.InternalServerError, 529, OVERLOADED_529), "busy"),
+            (sdk_error(anthropic.AuthenticationError, 401, BAD_KEY_401), "config"),
+            (sdk_error(anthropic.BadRequestError, 400, OTHER_400), "other"),
+        ):
+            with self.subTest(error=type(error).__name__, status=error.status_code):
                 self.assertEqual(ai_status.classify_provider_error(error), expected)
         self.assertEqual(ai_status.classify_provider_error(anthropic.APIConnectionError(request=request)), "busy")
         self.assertEqual(ai_status.classify_provider_error(anthropic.APITimeoutError(request=request)), "busy")
