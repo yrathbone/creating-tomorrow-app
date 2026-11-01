@@ -218,6 +218,26 @@ class SignedInRoutes(OwnershipTestCase):
         with self.Session() as s:
             self.assertEqual(s.get(ScanHistory, scan_id).result_data["qa_history"], answers)
 
+    def test_a_retry_sent_without_answers_does_not_wipe_the_saved_ones(self):
+        pid = self.profile_id_for("aaaaaaaa-0000-4000-8000-00000000000a")
+        answers = [{"question": "Did you manage a budget?", "answer": "yes, $50k"}]
+        with self.Session() as s:
+            scan = ScanHistory(career_profile_id=pid, scan_type="job_comparison", job_title="J", summary_text="s", result_data={"qa_history": answers})
+            s.add(scan)
+            s.commit()
+            scan_id = scan.id
+        body = {"job_description": JOB_TEXT, "name": "N", "contact": "c@example.com", "scan_history_id": scan_id, "qa_history": []}
+        with mock.patch("career.routes.build_checked_resume", side_effect=raising(JobMatchError, FakeAPIError(400, SPEND_LIMIT_400))):
+            self.assertEqual(self.call("POST", "/job-build-resume", self.a, json=body).status_code, 503)
+        with self.Session() as s:
+            self.assertEqual(s.get(ScanHistory, scan_id).result_data["qa_history"], answers)
+        newer = [{"question": "Did you lead a team?", "answer": "yes"}]
+        ai_status.reset()  # the first failure paused the AI; let the next request reach the route
+        with mock.patch("career.routes.build_checked_resume", side_effect=raising(JobMatchError, FakeAPIError(400, SPEND_LIMIT_400))):
+            self.call("POST", "/job-build-resume", self.a, json=dict(body, qa_history=newer))
+        with self.Session() as s:
+            self.assertEqual(s.get(ScanHistory, scan_id).result_data["qa_history"], newer, "new answers still replace old ones")
+
 
 class HealthAndPublicTools(unittest.TestCase):
     def setUp(self):

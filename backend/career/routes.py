@@ -1128,7 +1128,8 @@ async def job_build_resume(
 
     # Keep the gap-interview answers BEFORE the slow, costly AI call: if the AI is unavailable (or the allowance is spent) the
     # person's answers are already saved and nothing has to be typed again.
-    if scan is not None:
+    # (A build sent with no answers never replaces answers that are already saved.)
+    if scan is not None and (req.qa_history or not (scan.result_data or {}).get("qa_history")):
         scan.result_data = {**scan.result_data, "qa_history": req.qa_history}
         db.add(scan)
         db.commit()
