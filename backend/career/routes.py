@@ -84,6 +84,21 @@ def get_career_profile_or_404(db: Session, current_user: User) -> CareerProfile:
     return profile
 
 
+def require_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+) -> CareerProfile:
+    """Dependency for every route that sends text to the AI service: the person must have consented (consent creates the
+    Career Profile, see give_consent) BEFORE anything is read or sent. It runs ahead of the route body, so a refused request
+    never reaches the AI. Handlers still look the profile up themselves after the slow AI call, because the session is
+    released while waiting (release_db_connection)."""
+    return get_career_profile_or_404(db, current_user)
+
+
+# Order matters: the per-account rate limit first (an unconsented account still counts toward it), then consent.
+AI_ROUTE_GUARDS = [Depends(user_ai_guard), Depends(require_profile)]
+
+
 @router.get("/me")
 async def career_me(current_user: User = Depends(get_current_user)):
     return {
@@ -484,7 +499,7 @@ async def list_skills(
     return [_skill_to_dict(s) for s in entries]
 
 
-@router.post("/skills-tidy-suggest", dependencies=[Depends(user_ai_guard)])
+@router.post("/skills-tidy-suggest", dependencies=AI_ROUTE_GUARDS)
 async def suggest_skill_tidy(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
@@ -609,7 +624,7 @@ async def discard_resume_draft(
     return {"discarded": True}
 
 
-@router.post("/resume-start", dependencies=[Depends(user_ai_guard)])
+@router.post("/resume-start", dependencies=AI_ROUTE_GUARDS)
 async def resume_start(
     resume_file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
@@ -667,7 +682,7 @@ class ResumeDiscoverRequest(BaseModel):
     round_number: int = 1
 
 
-@router.post("/resume-discover", dependencies=[Depends(user_ai_guard)])
+@router.post("/resume-discover", dependencies=AI_ROUTE_GUARDS)
 async def resume_discover(
     req: ResumeDiscoverRequest,
     current_user: User = Depends(get_current_user),
@@ -936,7 +951,7 @@ class JobCompareRequest(BaseModel):
     job_description: str
 
 
-@router.post("/job-compare", dependencies=[Depends(user_ai_guard)])
+@router.post("/job-compare", dependencies=AI_ROUTE_GUARDS)
 async def job_compare(
     req: JobCompareRequest,
     current_user: User = Depends(get_current_user),
@@ -1020,7 +1035,7 @@ class JobKeywordCheckRequest(BaseModel):
     confirmed_facts: BoundedDictList = []
 
 
-@router.post("/job-keyword-check", dependencies=[Depends(user_ai_guard)])
+@router.post("/job-keyword-check", dependencies=AI_ROUTE_GUARDS)
 async def job_keyword_check(
     req: JobKeywordCheckRequest,
     current_user: User = Depends(get_current_user),
@@ -1051,7 +1066,7 @@ class JobDiscoverRequest(BaseModel):
     round_number: int = 1
 
 
-@router.post("/job-discover", dependencies=[Depends(user_ai_guard)])
+@router.post("/job-discover", dependencies=AI_ROUTE_GUARDS)
 async def job_discover(
     req: JobDiscoverRequest,
     current_user: User = Depends(get_current_user),
@@ -1096,7 +1111,7 @@ def _validate_scan_history_id(db: Session, profile: CareerProfile, scan_history_
     return scan
 
 
-@router.post("/job-build-resume", dependencies=[Depends(user_ai_guard)])
+@router.post("/job-build-resume", dependencies=AI_ROUTE_GUARDS)
 async def job_build_resume(
     req: JobBuildResumeRequest,
     current_user: User = Depends(get_current_user),
@@ -1156,7 +1171,7 @@ class GeneralResumeRequest(BaseModel):
     contact: Short
 
 
-@router.post("/build-general-resume", dependencies=[Depends(user_ai_guard)])
+@router.post("/build-general-resume", dependencies=AI_ROUTE_GUARDS)
 async def build_general_resume_route(
     req: GeneralResumeRequest,
     current_user: User = Depends(get_current_user),
@@ -1196,7 +1211,7 @@ async def build_general_resume_route(
 # gap-finding triggered it, it only ever sees categories/history/
 # questions as opaque context.
 
-@router.post("/skill-scan", dependencies=[Depends(user_ai_guard)])
+@router.post("/skill-scan", dependencies=AI_ROUTE_GUARDS)
 async def skill_scan(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
