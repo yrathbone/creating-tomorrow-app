@@ -178,7 +178,7 @@ class NoFillerParagraphs(unittest.TestCase):
                 self.assertEqual(len(doc_of(build(template=template, **kwargs)).sections), 1, (template, kwargs["ats"]))
 
     def test_the_two_column_skills_list_is_its_own_section_between_two_single_column_ones(self):
-        data = dict(PERSON, skills_style="", skills=["One", "Two", "Three", "Four"])
+        data = dict(PERSON, skills_style="columns", skills=["One", "Two", "Three", "Four"])
         for template in LAYOUTS:
             with self.subTest(template=template):
                 doc = doc_of(build(data, template))
@@ -193,11 +193,11 @@ class NoFillerParagraphs(unittest.TestCase):
     def test_the_same_words_come_out_in_the_same_order(self):
         # a golden check on well-formed data: nothing added, dropped or reordered
         expected = [
-            "Jordan Ellis\nChicago, IL | jordan.ellis@example.com | (555) 010-0142", "Customer Service | Teamwork",
+            "Jordan Ellis", "Chicago, IL | jordan.ellis@example.com | (555) 010-0142", "Customer Service | Teamwork",
             "PROFESSIONAL SUMMARY", "Dependable student with two years of food-service experience.\n\nReady to grow.",
             "CORE SKILLS & EXPERTISE", "Customer service: greeting guests, taking orders", "Teamwork: opening and closing routines",
-            "PROFESSIONAL EXPERIENCE", "Crew Member\nCorner Café, Chicago, IL — 06/24 – Present", "Served about 60 guests per shift", "Trained 3 new crew members",
-            "Volunteer Tutor\nLincoln Library — 09/24 – 05/25", "Helped younger students with reading",
+            "PROFESSIONAL EXPERIENCE", "Crew Member\nCorner Café, Chicago, IL — Jun 2024 – Present", "Served about 60 guests per shift", "Trained 3 new crew members",
+            "Volunteer Tutor\nLincoln Library — Sep 2024 – May 2025", "Helped younger students with reading",
             "EDUCATION", "Lincoln High School — Diploma expected 06/2027", "CERTIFICATIONS", "CPR and First Aid — Red Cross (2025)", "LANGUAGES", "English", "Spanish",
         ]
         for template in LAYOUTS:
@@ -240,7 +240,7 @@ class MessyInput(unittest.TestCase):
         self.assertIn("- keeps its hyphen", texts(doc))
 
     def test_a_string_where_a_list_belongs_is_one_item_not_one_per_character(self):
-        data = dict(PERSON, skills="Python, SQL", skills_style="", education="One school", certifications="One cert",
+        data = dict(PERSON, skills="Python, SQL", skills_style="columns", education="One school", certifications="One cert",
                     experience=[{"title": "T", "subtitle": "S", "bullets": "One long bullet."}])
         doc = doc_of(build(data))
         bullets = [p.text for p in doc.paragraphs if p.style.name == "List Bullet"]

@@ -10,7 +10,7 @@ Tomorrow template layout:
   [shaded bar] PROFESSIONAL SUMMARY
   Summary paragraph(s)
   [shaded bar] CORE SKILLS & EXPERTISE
-  Skills bullets, two columns by default (or one in ATS mode)
+  Skills in one column by default (Label: a, b lines, or one compact line); two columns only when asked for
   [shaded bar] PROFESSIONAL EXPERIENCE
   Job title (bold) / Company, Location - Dates
   Bulleted achievements
@@ -253,6 +253,54 @@ def clean_structure(value):
     return value
 
 
+# ---- employment dates: one format, only when the date is fully understood ------------------------------------------------
+
+_MONTHS = {m: i + 1 for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))}
+_MONTH_NAMES = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+_MONTH_WORD = r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?"
+_PRESENT = r"(?:present|current|currently|now|ongoing|to date|today)"
+_DATE = rf"(?:{_MONTH_WORD}\s+\d{{4}}|\d{{1,2}}\s*/\s*(?:\d{{4}}|\d{{2}})|\d{{4}}\s*-\s*\d{{1,2}}|\d{{4}}|{_PRESENT})"
+_RANGE_AT_END = re.compile(rf"(?P<start>{_DATE})\s*(?:–|—|-|(?<![A-Za-z])to(?![A-Za-z])|(?<![A-Za-z])until(?![A-Za-z]))\s*(?P<end>{_DATE})\s*$", re.IGNORECASE)
+_CURRENT_YEAR_LIMIT = datetime.now(timezone.utc).year + 1
+
+
+def _one_date(text):
+    """"Feb 2018" for a month and year, "2018" for a year alone, "Present" for an open end; None when it is not understood."""
+    t = text.strip().rstrip(".").strip()
+    if re.fullmatch(_PRESENT, t, re.IGNORECASE):
+        return "Present"
+    m = re.fullmatch(rf"({_MONTH_WORD})\s+(\d{{4}})", t, re.IGNORECASE)
+    if m:
+        return f"{_MONTH_NAMES[_MONTHS[m.group(1).lower()[:3]] - 1]} {m.group(2)}"
+    m = re.fullmatch(r"(\d{1,2})\s*/\s*(\d{4}|\d{2})", t)
+    if m:
+        month, year = int(m.group(1)), m.group(2)
+        if not 1 <= month <= 12:
+            return None
+        if len(year) == 2:
+            year = str(2000 + int(year) if 2000 + int(year) <= _CURRENT_YEAR_LIMIT else 1900 + int(year))
+        return f"{_MONTH_NAMES[month - 1]} {year}"
+    m = re.fullmatch(r"(\d{4})\s*-\s*(\d{1,2})", t)
+    if m and 1 <= int(m.group(2)) <= 12:
+        return f"{_MONTH_NAMES[int(m.group(2)) - 1]} {m.group(1)}"
+    if re.fullmatch(r"\d{4}", t):
+        return t
+    return None
+
+
+def standardize_dates(text: str) -> str:
+    """A date range at the END of a job's second line ("Employer, City — 02/18 - present") becomes "Feb 2018 – Present".
+    Only a range whose two ends are both understood is rewritten, and only that range: nothing is guessed, no month is added to a
+    year-only date, and anything else (seasons, words, single dates) is left exactly as written."""
+    m = _RANGE_AT_END.search(text or "")
+    if not m:
+        return text
+    start, end = _one_date(m.group("start")), _one_date(m.group("end"))
+    if not start or not end or start == "Present":
+        return text
+    return f"{text[:m.start()]}{start} – {end}"
+
+
 def normalize_resume(data) -> dict:
     """The resume as the builder needs it: only text, lists of text, and the known keys. Missing parts are empty (the
     sections are then simply left out); nothing here changes the words of well-formed data."""
@@ -265,7 +313,7 @@ def normalize_resume(data) -> dict:
             entry = {"title": entry}
         if not isinstance(entry, dict):
             continue
-        job = {"title": clean_line(entry.get("title")), "subtitle": clean_line(entry.get("subtitle")), "bullets": clean_items(entry.get("bullets"))}
+        job = {"title": clean_line(entry.get("title")), "subtitle": standardize_dates(clean_line(entry.get("subtitle"))), "bullets": clean_items(entry.get("bullets"))}
         if job["title"] or job["subtitle"] or job["bullets"]:
             jobs.append(job)
     extra = []
@@ -280,7 +328,7 @@ def normalize_resume(data) -> dict:
         "summary": [x for x in summary_items if x],
         "skills": clean_items(d.get("skills")),
         "skills_heading": clean_line(d.get("skills_heading")) or "CORE SKILLS & EXPERTISE",
-        "skills_style": "grouped" if d.get("skills_style") == "grouped" else "",
+        "skills_style": d.get("skills_style") if d.get("skills_style") in ("grouped", "columns") else "",  # "" = one column (default)
         "experience": jobs,
         "education": clean_items(d.get("education")),
         "certifications": clean_items(d.get("certifications")),
@@ -366,6 +414,34 @@ def end_section_after(doc, paragraph, columns=None, continuous=False):
     paragraph._p.get_or_add_pPr()._insert_sectPr(sect)
 
 
+def _is_labelled(skill: str) -> bool:
+    label, sep, _ = skill.partition(":")
+    return bool(sep) and len(label) <= 40
+
+
+def compact_skill_lines(skills):
+    """The lines of a one-column skills section. "Label: a, b" entries stay as they are; a run of plain skills becomes ONE line
+    ("Excel, SQL, Tableau"), in the same order, so nothing is dropped or reworded. A skill that itself contains a comma, or a run
+    that is already written as lines, is left one per line instead of being merged."""
+    lines, run = [], []
+
+    def flush():
+        if len(run) > 1 and not any("," in item for item in run):
+            lines.append(", ".join(run))
+        else:
+            lines.extend(run)
+        run.clear()
+
+    for skill in skills:
+        if _is_labelled(skill):
+            flush()
+            lines.append(skill)
+        else:
+            run.append(skill)
+    flush()
+    return lines
+
+
 def build_resume_bytes(data: dict, ats_mode: bool = False, template: str = DEFAULT_TEMPLATE) -> bytes:
     tpl = resolve_template(template)
     resume = normalize_resume(data)
@@ -393,13 +469,19 @@ def build_resume_bytes(data: dict, ats_mode: bool = False, template: str = DEFAU
             space_owed_after_skills[0] = 0
         return heading
 
-    p = doc.add_paragraph()
-    p.alignment = tpl["align"]
-    name_run = p.add_run(resume["name"])
-    style_run(name_run, bold=True, tpl=tpl, size=tpl["name_size"], color=tpl["name_color"])
-    p.add_run().add_break()
-    contact_run = p.add_run(resume["contact"])
-    style_run(contact_run, tpl=tpl, size=tpl["contact_size"], color=tpl["contact_color"])
+    # the name and the contact line are two paragraphs (a screen reader or a text extractor sees them as two things), and a
+    # missing one leaves no empty line behind
+    if resume["name"]:
+        p = doc.add_paragraph()
+        p.alignment = tpl["align"]
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.keep_with_next = True
+        style_run(p.add_run(resume["name"]), bold=True, tpl=tpl, size=tpl["name_size"], color=tpl["name_color"])
+    if resume["contact"]:
+        p = doc.add_paragraph()
+        p.alignment = tpl["align"]
+        p.paragraph_format.space_before = Pt(0)
+        style_run(p.add_run(resume["contact"]), tpl=tpl, size=tpl["contact_size"], color=tpl["contact_color"])
 
     if resume["headline"]:
         p = doc.add_paragraph()
@@ -422,15 +504,24 @@ def build_resume_bytes(data: dict, ats_mode: bool = False, template: str = DEFAU
     skills = resume["skills"]
     if skills:
         heading = section_title(resume["skills_heading"])
-        grouped = resume["skills_style"] == "grouped"
-        # "grouped" = a few compact "Label: skill, skill" lines (single column) instead of one bullet per skill in two columns;
-        # ATS mode is single column too. Only the two-column list needs section breaks, and they sit on real paragraphs.
-        two_columns = not (ats_mode or grouped)
+        style = resume["skills_style"]
+        # one column is the default (the safest layout for software that reads the file, and the most compact):
+        #   ""        "Label: skill, skill" entries are lines; plain skills run together in one compact paragraph, in order
+        #   "grouped" every entry is its own line (the job-targeted resume uses this)
+        #   "columns" one bullet per skill in two columns (only when asked for); ATS mode is one bullet per line
+        two_columns = style == "columns" and not ats_mode
         if two_columns:
             end_section_after(doc, heading)
         last = None
-        for skill in skills:
-            last = (add_skill_line if grouped else add_bullet)(doc, skill, tpl)
+        if style == "columns" or ats_mode:
+            for skill in skills:
+                last = add_bullet(doc, skill, tpl)
+        elif style == "grouped":
+            for skill in skills:
+                last = add_skill_line(doc, skill, tpl)
+        else:
+            for line in compact_skill_lines(skills):
+                last = add_skill_line(doc, line, tpl)
         if two_columns:
             end_section_after(doc, last, columns=2, continuous=True)
             doc.sections[-1].start_type = WD_SECTION.CONTINUOUS  # everything after the list is a normal single-column section again

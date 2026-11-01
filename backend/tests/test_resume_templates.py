@@ -78,7 +78,7 @@ class LayoutLooks(unittest.TestCase):
         self.assertEqual(name.alignment, WD_ALIGN_PARAGRAPH.LEFT)
         self.assertEqual(name.runs[0].font.size, Pt(22))
         self.assertEqual(str(name.runs[0].font.color.rgb), "1F3A8A")
-        self.assertEqual(str(name.runs[2].font.color.rgb), "4B5565")  # the contact line is softer
+        self.assertEqual(str(doc.paragraphs[1].runs[0].font.color.rgb), "4B5565")  # the contact line (its own paragraph) is softer
         headings = heading_paragraphs(doc)
         self.assertEqual({h.text for h in headings}, HEADINGS)
         for h in headings:
@@ -120,7 +120,7 @@ class SameWordsEverywhere(unittest.TestCase):
 
     def test_ats_mode_still_makes_the_skills_a_single_column_in_every_layout(self):
         def column_counts(template, ats):
-            doc = doc_of(build(template, ats))
+            doc = doc_of(build(template, ats, data=dict(SAMPLE, skills_style="columns")))  # two columns are now opt-in
             return [s._sectPr.find(qn("w:cols")).get(qn("w:num")) for s in doc.sections if s._sectPr.find(qn("w:cols")) is not None]
 
         for template in ("classic", "modern", "traditional"):
