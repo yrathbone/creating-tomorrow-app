@@ -26,6 +26,7 @@ from collections import deque
 from fastapi import Depends, HTTPException
 from starlette.responses import JSONResponse
 
+import ai_status
 import turnstile
 from auth.dependencies import get_current_user
 
@@ -206,6 +207,10 @@ class AbuseGuardMiddleware:
         # ---- rate limits and concurrency (public AI tools only) ----
         slot = False
         if method == "POST" and path in PUBLIC_AI_PATHS:
+            paused = ai_status.pause_response_parts()
+            if paused:  # the monthly AI allowance is spent: answer at once, without counting the visitor or calling the AI service
+                status, message, extra = paused
+                return await JSONResponse({"detail": message}, status_code=status, headers=extra)(scope, receive, send)
             key = client_key(headers, scope.get("client"))
             allowed, wait = LIMITER.check(f"ip:{key}", rules_from_env("RATE_LIMIT_PUBLIC_IP"))
             if allowed:
@@ -260,6 +265,10 @@ class AbuseGuardMiddleware:
 
 def user_ai_guard(current_user=Depends(get_current_user)):
     """FastAPI dependency for the signed-in AI routes: a per-account rate limit and a place in the shared concurrency cap."""
+    paused = ai_status.pause_response_parts()
+    if paused:  # the monthly AI allowance is spent: say so at once instead of calling the AI service again
+        status, message, extra = paused
+        raise HTTPException(status_code=status, detail=message, headers=extra)
     key = f"user:{current_user.id}"
     allowed, wait = LIMITER.check(key, rules_from_env("RATE_LIMIT_USER"))
     if not allowed:

@@ -40,6 +40,7 @@ from extractor import extract_text_async
 from models import Application, CareerProfile, Certification, Education, Experience, Language, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
 from limits import BoundedDict, BoundedDictList, BoundedList, Long, Medium, Short, Tiny
 from errors import internal_error
+from ai_status import ai_failure
 from abuse_guard import user_ai_guard
 from download_names import attachment_headers
 from profile_copy import build_profile_copy_bytes
@@ -517,7 +518,7 @@ async def suggest_skill_tidy(
     try:
         keywords = await run_in_threadpool(suggest_skill_keywords, candidates)
     except JobMatchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -651,7 +652,7 @@ async def resume_start(
     try:
         result = await run_in_threadpool(start_resume_review, resume_text, pdf_document_b64)
     except IngestionError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -694,7 +695,7 @@ async def resume_discover(
             discover, req.resume_data, req.categories, req.history, req.force_finish, req.round_number
         )
     except ElevateError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -966,7 +967,7 @@ async def job_compare(
     try:
         result = await run_in_threadpool(compare_to_job, profile_text, job_description)
     except JobMatchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -1053,7 +1054,7 @@ async def job_keyword_check(
     try:
         return await run_in_threadpool(keyword_check, profile_text, req.confirmed_facts, job_description)
     except JobMatchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -1078,7 +1079,7 @@ async def job_discover(
             discover, req.resume_data, req.categories, req.history, req.force_finish, req.round_number
         )
     except ElevateError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -1125,13 +1126,20 @@ async def job_build_resume(
     scan = _validate_scan_history_id(db, profile, req.scan_history_id)
     profile_text = _build_profile_text(db, profile)
 
+    # Keep the gap-interview answers BEFORE the slow, costly AI call: if the AI is unavailable (or the allowance is spent) the
+    # person's answers are already saved and nothing has to be typed again.
+    if scan is not None:
+        scan.result_data = {**scan.result_data, "qa_history": req.qa_history}
+        db.add(scan)
+        db.commit()
+
     release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(
             build_checked_resume, profile_text, job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
         )
     except JobMatchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -1152,14 +1160,7 @@ async def job_build_resume(
     )
     db.add(version)
 
-    # The gap-interview Q&A itself (every question asked, every answer given)
-    # otherwise only ever lived in the frontend's in-memory jobState - save
-    # it onto the scan it belongs to now that a resume was actually built
-    # from it, so "what was I asked, and how did I answer" survives reload.
-    if scan is not None:
-        scan.result_data = {**scan.result_data, "qa_history": req.qa_history}
-        db.add(scan)
-
+    # (The gap-interview Q&A was already saved onto the scan before the AI call, above.)
     db.commit()
     db.refresh(version)
 
@@ -1187,7 +1188,7 @@ async def build_general_resume_route(
     try:
         result = await run_in_threadpool(build_general_resume, profile_text, req.name.strip(), req.contact.strip())
     except JobMatchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -1223,7 +1224,7 @@ async def skill_scan(
     try:
         result = await run_in_threadpool(start_skill_scan, profile_text)
     except SkillScanError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 

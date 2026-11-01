@@ -94,6 +94,8 @@ from prepare import prepare, PrepareError
 from resume_builder import build_resume_bytes, build_match_recap_bytes, build_profile_review_recap_bytes
 from limits import BoundedDict, BoundedList, Long, Short, Tiny
 from errors import internal_error
+import ai_status
+from ai_status import ai_failure
 import turnstile
 from abuse_guard import AbuseGuardMiddleware
 from ai_health import check_ai_key, log_at_startup
@@ -240,7 +242,7 @@ async def api_analyze(
     try:
         result = await run_in_threadpool(analyze, resume_text, job_posting)
     except CoachError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -288,7 +290,7 @@ async def api_refine(resume_file: UploadFile = File(...)):
     try:
         result = await run_in_threadpool(upgrade, resume_text)
     except UpgradeError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -312,7 +314,7 @@ async def api_elevate_start(resume_file: UploadFile = File(...)):
     try:
         result = await run_in_threadpool(analyze_for_discovery, resume_text)
     except ElevateError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -334,7 +336,7 @@ async def api_elevate_discover(req: ElevateDiscoverRequest):
             discover, req.resume_data, req.categories, req.history, req.force_finish, req.round_number
         )
     except ElevateError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -351,7 +353,7 @@ async def api_elevate_finalize(req: ElevateFinalizeRequest):
     try:
         result = await run_in_threadpool(finalize_elevate, req.resume_data, req.confirmed_facts)
     except ElevateError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -450,7 +452,7 @@ async def api_profile_review(
     try:
         result = await run_in_threadpool(review_profile, images, pasted_text, pdf_text, resume_text, pdf_document_b64)
     except ProfileReviewError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -509,7 +511,7 @@ async def api_prepare(
     try:
         result = await run_in_threadpool(prepare, job_description, resume_text)
     except PrepareError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -534,7 +536,7 @@ async def api_scratch_entry(req: ScratchEntryRequest):
             draft_entry, req.entry_type, req.title, req.organization, req.dates, req.description
         )
     except ScratchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -553,7 +555,7 @@ async def api_scratch_finalize(req: ScratchFinalizeRequest):
     try:
         result = await run_in_threadpool(finalize, req.name, req.experience, req.education, req.existing_skills)
     except ScratchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
 
@@ -605,6 +607,8 @@ async def health(request: Request):
         "visitor_address_source": "cloudflare" if request.headers.get("cf-ray") and request.headers.get("cf-connecting-ip") else "direct",
         # whether the invisible bot check is on for the public AI tools (never shows a key)
         "bot_check": "on" if turnstile.enabled() else "off",
+        # true while the monthly AI allowance is spent (or billing refuses): the AI steps answer "paused" without calling the service
+        "ai_paused": ai_status.pause_state() is not None,
     }
 
 
@@ -621,6 +625,11 @@ async def health_ai():
     Answers HEAD as well as GET, because free uptime monitors check with HEAD."""
     status = await run_in_threadpool(check_ai_key)
     body = {"ai_key": status}
+    paused = ai_status.pause_state()
+    if paused:
+        # the key is accepted (the free models-list call works) but real requests are being refused: report it as an outage
+        body["paused"] = paused["kind"]
+        return Response(content=json.dumps(body), media_type="application/json", status_code=503)
     if status == "ok":
         return body
     return Response(content=json.dumps(body), media_type="application/json", status_code=503)
