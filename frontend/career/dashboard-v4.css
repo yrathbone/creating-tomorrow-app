@@ -1256,3 +1256,28 @@ body.dashboard-v4 .btn-danger,
 body.dashboard-v4 #delete-confirm-btn { background-image: none; background-color: #ffffff; color: #b93030; border: 2px solid #b93030; box-shadow: none; }
 body.dashboard-v4 .btn-danger:hover:not(:disabled),
 body.dashboard-v4 #delete-confirm-btn:hover:not(:disabled) { background-image: none; background-color: #fdecec; color: #8f1818; border-color: #8f1818; }
+
+/* ---------- Phase 02 batch 2.3: resume layout menus and action buttons on small screens ---------- */
+/* the layout menu never wider than its card (it ran past the edge on a 320 px phone) */
+body.dashboard-v4 .resume-layout-field { min-width: 0; max-width: min(22rem, 100%); }
+body.dashboard-v4 .resume-layout-field select { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+/* the inline "download didn't work" message sits right under its button */
+body.dashboard-v4 .resume-download-msg { margin: 0.5rem 0 0; font-size: 0.9rem; }
+
+@media (max-width: 640px) {
+  /* one button per row, 44 px tall, with an even gap (they used to sit side by side, shifted and touching) */
+  body.dashboard-v4 #general-resume-card button,
+  body.dashboard-v4 #job-download-btn,
+  body.dashboard-v4 #job-start-over-btn {
+    display: block;
+    width: 100%;
+    min-height: 44px !important; /* the dashboard's button rule is more specific than this one */
+    margin: 0.6rem 0 0;
+  }
+  body.dashboard-v4 #general-resume-card button.resume-layout-default,
+  body.dashboard-v4 .dashboard-grid > .card button.resume-layout-default { min-height: 44px !important; margin: 0.4rem 0 0.6rem; }
+  /* the buttons on a saved resume card wrap instead of running out of the card */
+  body.dashboard-v4 #resume-version-list .vcard-actions { flex-wrap: wrap; gap: 0.5rem; margin-left: 0; }
+  body.dashboard-v4 #resume-version-list .vcard-btn,
+  body.dashboard-v4 #resume-version-list .entry-remove-btn { min-height: 44px !important; }
+}

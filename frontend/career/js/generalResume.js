@@ -85,7 +85,14 @@ document.getElementById("general-resume-build-btn").addEventListener("click", as
 });
 
 document.getElementById("general-resume-download-btn").addEventListener("click", async () => {
-  if (!generalResumeState.resumeData) return;
+  const button = document.getElementById("general-resume-download-btn");
+  const messageEl = document.getElementById("general-download-msg");
+  clearResumeDownloadMessage(messageEl);
+  if (!generalResumeState.resumeData) {
+    showResumeDownloadMessage(messageEl, RESUME_NOT_READY_MESSAGE);
+    return;
+  }
+  button.disabled = true;
   try {
     const res = await authedFetch("/api/generate", {
       method: "POST",
@@ -96,17 +103,11 @@ document.getElementById("general-resume-download-btn").addEventListener("click",
       const err = await res.json().catch(() => ({}));
       throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (generalResumeState.resumeData.name || "Resume").replace(/\s+/g, "_") + "_Resume.docx";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    saveResumeBlob(await res.blob(), resumeFileName(generalResumeState.resumeData.name, ""));
   } catch (err) {
-    alert(err.message || "Something went wrong downloading your resume. Please try again.");
+    showResumeDownloadMessage(messageEl, resumeDownloadErrorText(err));
+  } finally {
+    button.disabled = false;
   }
 });
 

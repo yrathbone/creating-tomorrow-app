@@ -40,7 +40,7 @@ test("old resumes can be downloaded again in any layout (a menu on each Resumes 
   const values = [...js.matchAll(/\["(classic|modern|traditional)", "/g)].map((m) => m[1]);
   assert.deepStrictEqual(values, LAYOUTS);
   assert.match(js, /download\?template=" \+ encodeURIComponent\(template \|\| "classic"\)/);
-  assert.match(js, /downloadResumeVersion\(entry, \(entry\.resume_data \|\| \{\}\)\.name, layout\.value\)/);
+  assert.match(js, /downloadResumeVersion\(entry, \(entry\.resume_data \|\| \{\}\)\.name, layout\.value, info\.role\)/);
 });
 
 test("the layout names the pages offer are exactly the ones the server knows", () => {

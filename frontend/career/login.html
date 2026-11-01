@@ -377,6 +377,7 @@
             <button type="button" class="btn-secondary resume-layout-default" data-layout-default="job-resume-template" data-layout-msg="job-layout-msg">Make this my default</button>
             <span class="hint resume-layout-msg" id="job-layout-msg" role="status" hidden></span>
             <button type="button" id="job-download-btn">Download Resume (.docx)</button>
+            <p class="error resume-download-msg" id="job-download-msg" role="alert" hidden></p>
             <button type="button" id="job-start-over-btn" class="btn-secondary">Compare Another Job</button>
 
             <div id="job-applied-block" class="applied-block">
@@ -484,6 +485,7 @@
             <button type="button" class="btn-secondary resume-layout-default" data-layout-default="general-resume-template" data-layout-msg="general-layout-msg">Make this my default</button>
             <span class="hint resume-layout-msg" id="general-layout-msg" role="status" hidden></span>
             <button type="button" id="general-resume-download-btn">Download Resume (.docx)</button>
+            <p class="error resume-download-msg" id="general-download-msg" role="alert" hidden></p>
             <button type="button" id="general-resume-again-btn" class="btn-secondary">Build Again</button>
           </div>
         </div>
@@ -645,6 +647,7 @@
             <section class="snapshot-panel" id="panel-resumes" hidden>
         <h3>Resumes Built</h3>
         <p class="hint" id="resume-layout-status" role="status" hidden></p>
+        <p class="error resume-download-msg" id="resume-download-status" role="alert" hidden></p>
         <div id="resume-version-list"></div>
             </section>
 
@@ -891,6 +894,7 @@
   <script src="../loading.js"></script>
   <script src="js/visualCards.js"></script>
   <script src="js/resumeLayout.js"></script>
+  <script src="js/resumeDownload.js"></script>
   <script src="login.js"></script>
   <script src="js/profileBasics.js"></script>
   <script src="js/languages.js"></script>

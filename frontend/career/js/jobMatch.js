@@ -861,7 +861,14 @@ document.getElementById("job-applied-save-btn").addEventListener("click", async 
 });
 
 document.getElementById("job-download-btn").addEventListener("click", async () => {
-  if (!jobState.tailoredResumeData) return;
+  const button = document.getElementById("job-download-btn");
+  const messageEl = document.getElementById("job-download-msg");
+  clearResumeDownloadMessage(messageEl);
+  if (!jobState.tailoredResumeData) {
+    showResumeDownloadMessage(messageEl, RESUME_NOT_READY_MESSAGE);
+    return;
+  }
+  button.disabled = true;
   try {
     const res = await authedFetch("/api/generate", {
       method: "POST",
@@ -872,20 +879,12 @@ document.getElementById("job-download-btn").addEventListener("click", async () =
       const err = await res.json().catch(() => ({}));
       throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
     }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (jobState.tailoredResumeData.name || "Resume").replace(/\s+/g, "_") + "_Tailored_Resume.docx";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    saveResumeBlob(await res.blob(), resumeFileName(jobState.tailoredResumeData.name, jobState.jobTitle));
   } catch (err) {
-    // The done-state has no dedicated error slot - a failed download here
-    // is rare (the resume_data was already validated server-side to build
-    // it) and retryable by clicking the same button again.
-    alert(err.message || "Something went wrong downloading your resume. Please try again.");
+    // the message sits under the button; nothing on the page is cleared, so the same button can simply be pressed again
+    showResumeDownloadMessage(messageEl, resumeDownloadErrorText(err));
+  } finally {
+    button.disabled = false;
   }
 });
 

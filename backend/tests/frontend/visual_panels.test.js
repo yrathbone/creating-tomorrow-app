@@ -51,7 +51,7 @@ test("resume cards say what they were tailored to, or that they are general", ()
   const { resumeCardInfo } = load("history.js");
   const scans = [{ id: 5, job_title: "Customer Success Manager at Stripe" }, { id: 6, job_title: null }];
   const tailored = resumeCardInfo({ scan_history_id: 5, resume_data: { name: "Ada Lovelace", headline: "CSM" } }, scans);
-  assert.deepStrictEqual(plain(tailored), { title: "Ada Lovelace", headline: "CSM", kind: "tailored", subtitle: "Tailored to Customer Success Manager at Stripe" });
+  assert.deepStrictEqual(plain(tailored), { title: "Ada Lovelace", role: "Customer Success Manager at Stripe", headline: "CSM", kind: "tailored", subtitle: "Tailored to Customer Success Manager at Stripe" });
   assert.strictEqual(resumeCardInfo({ scan_history_id: 6, resume_data: {} }, scans).subtitle, "Tailored to a job");
   assert.strictEqual(resumeCardInfo({ scan_history_id: 99, resume_data: {} }, scans).subtitle, "Tailored to a job");
   const general = resumeCardInfo({ scan_history_id: null, resume_data: { name: "Sam" } }, scans);

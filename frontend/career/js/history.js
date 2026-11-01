@@ -65,6 +65,7 @@ function resumeCardInfo(entry, scans) {
   const jobTitle = scan && scan.job_title ? scan.job_title : null;
   return {
     title: data.name || "Resume",
+    role: jobTitle || "",
     headline: data.headline || "",
     kind: entry && entry.scan_history_id ? "tailored" : "general",
     subtitle: entry && entry.scan_history_id ? (jobTitle ? "Tailored to " + jobTitle : "Tailored to a job") : "General resume",
@@ -159,24 +160,18 @@ async function loadResumeVersions() {
   renderResumeCards();
 }
 
-async function downloadResumeVersion(entry, name, template) {
+async function downloadResumeVersion(entry, name, template, role) {
+  const messageEl = document.getElementById("resume-download-status");
+  clearResumeDownloadMessage(messageEl);
   try {
     const dlRes = await authedFetch("/api/career/resume-versions/" + entry.id + "/download?template=" + encodeURIComponent(template || "classic"));
     if (!dlRes.ok) {
       const err = await dlRes.json().catch(() => ({}));
       throw new Error(formatErrorDetail(err.detail, `Request failed (${dlRes.status})`));
     }
-    const blob = await dlRes.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (name || "Resume").replace(/\s+/g, "_") + "_Resume.docx";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    saveResumeBlob(await dlRes.blob(), resumeFileName(name, role));
   } catch (err) {
-    alert(err.message || "Something went wrong downloading your resume. Please try again.");
+    showResumeDownloadMessage(messageEl, resumeDownloadErrorText(err));
   }
 }
 
@@ -236,7 +231,7 @@ function renderResumeCards() {
       extra: [layout],
       footerText: "Built " + shortDate(entry.created_at),
       actions: [
-        visualButton("Download again", "btn-secondary vcard-btn", () => downloadResumeVersion(entry, (entry.resume_data || {}).name, layout.value)),
+        visualButton("Download again", "btn-secondary vcard-btn", () => downloadResumeVersion(entry, (entry.resume_data || {}).name, layout.value, info.role)),
         makeDefault,
         visualButton("Delete", "entry-remove-btn", async () => {
           await authedFetch("/api/career/resume-versions/" + entry.id, { method: "DELETE" });
