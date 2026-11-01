@@ -36,6 +36,8 @@ REGION, POOL, CLIENT = "us-test-1", "us-test-1_TESTPOOL", "test-app-client-id"
 ISSUER = f"https://cognito-idp.{REGION}.amazonaws.com/{POOL}"
 KID = "test-key-1"
 SUB_A, SUB_B = "aaaaaaaa-0000-4000-8000-00000000000a", "bbbbbbbb-0000-4000-8000-00000000000b"
+# long enough to pass the job-posting length check, so the ownership test is refused for the RIGHT reason
+JOB_TEXT = "Senior analyst wanted. Requires five years of experience with reporting, budgeting and stakeholder communication."
 
 
 def _new_key():
@@ -378,7 +380,7 @@ class Isolation(OwnershipTestCase):
         self.assertEqual(self.call("POST", "/applications", self.b, json={"job_title": "X", "resume_version_id": a["resume"]}).status_code, 400)
         self.assertEqual(self.call("PUT", f"/applications/{b['app']}", self.b, json={"job_title": "X", "scan_history_id": a["scan"]}).status_code, 400)
         # building a resume "for" A's scan is refused before any AI call
-        res = self.call("POST", "/job-build-resume", self.b, json={"job_description": "jd", "name": "B", "contact": "c", "scan_history_id": a["scan"]})
+        res = self.call("POST", "/job-build-resume", self.b, json={"job_description": JOB_TEXT, "name": "B", "contact": "c", "scan_history_id": a["scan"]})
         self.assertEqual(res.status_code, 400, res.text)
         # resume-save merging into A's role id must NOT touch A's role
         res = self.call("POST", "/resume-save", self.b, json={"roles": [{"title": "Hijack", "organization": "Org", "bullets": ["added by B"], "existing_id": a["exp"]}]})

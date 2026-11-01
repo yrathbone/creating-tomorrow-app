@@ -867,6 +867,19 @@ MIN_JOB_DESCRIPTION_CHARS = 40
 MAX_JOB_DESCRIPTION_CHARS = 15000
 
 
+def _checked_job_description(text: str) -> str:
+    """The pasted job posting, trimmed and checked against the same length limits on every route that sends it to the
+    paid AI service (compare, keyword check, build). Without a shared check one route had no limit at all."""
+    job_description = (text or "").strip()
+    if not job_description:
+        raise HTTPException(status_code=400, detail="Please paste the job description.")
+    if len(job_description) < MIN_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(status_code=400, detail="That job description looks too short to work with — please paste the full posting.")
+    if len(job_description) > MAX_JOB_DESCRIPTION_CHARS:
+        raise HTTPException(status_code=400, detail=f"That job description is too long ({len(job_description)} characters, {MAX_JOB_DESCRIPTION_CHARS} max).")
+    return job_description
+
+
 def _build_profile_text(db: Session, profile: CareerProfile) -> str:
     experiences = db.query(Experience).filter_by(career_profile_id=profile.id).order_by(Experience.created_at.desc()).all()
     education = db.query(Education).filter_by(career_profile_id=profile.id).all()
@@ -929,13 +942,7 @@ async def job_compare(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
 ):
-    job_description = req.job_description.strip()
-    if not job_description:
-        raise HTTPException(status_code=400, detail="Please paste the job description.")
-    if len(job_description) < MIN_JOB_DESCRIPTION_CHARS:
-        raise HTTPException(status_code=400, detail="That job description looks too short to work with — please paste the full posting.")
-    if len(job_description) > MAX_JOB_DESCRIPTION_CHARS:
-        raise HTTPException(status_code=400, detail=f"That job description is too long ({len(job_description)} characters, {MAX_JOB_DESCRIPTION_CHARS} max).")
+    job_description = _checked_job_description(req.job_description)
 
     profile = get_career_profile_or_404(db, current_user)
     profile_text = _build_profile_text(db, profile)
@@ -1022,11 +1029,7 @@ async def job_keyword_check(
     """Optional step before building: which posting terms the profile does not
     literally contain yet. Read-only; the candidate's choices are saved through
     the normal /skills endpoint (or kept as confirmed facts for one resume)."""
-    job_description = req.job_description.strip()
-    if len(job_description) < MIN_JOB_DESCRIPTION_CHARS:
-        raise HTTPException(status_code=400, detail="That job description looks too short to work with — please paste the full posting.")
-    if len(job_description) > MAX_JOB_DESCRIPTION_CHARS:
-        raise HTTPException(status_code=400, detail=f"That job description is too long ({len(job_description)} characters, {MAX_JOB_DESCRIPTION_CHARS} max).")
+    job_description = _checked_job_description(req.job_description)
 
     profile = get_career_profile_or_404(db, current_user)
     profile_text = _build_profile_text(db, profile)
@@ -1068,7 +1071,7 @@ async def job_discover(
 
 
 class JobBuildResumeRequest(BaseModel):
-    job_description: str
+    job_description: Long
     confirmed_facts: BoundedDictList = []
     name: Short
     contact: Short
@@ -1101,6 +1104,7 @@ async def job_build_resume(
 ):
     if not req.name.strip() or not req.contact.strip():
         raise HTTPException(status_code=400, detail="Name and contact info are both required.")
+    job_description = _checked_job_description(req.job_description)
 
     profile = get_career_profile_or_404(db, current_user)
     scan = _validate_scan_history_id(db, profile, req.scan_history_id)
@@ -1109,7 +1113,7 @@ async def job_build_resume(
     release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(
-            build_checked_resume, profile_text, req.job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
+            build_checked_resume, profile_text, job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
         )
     except JobMatchError as e:
         raise HTTPException(status_code=502, detail=str(e))
