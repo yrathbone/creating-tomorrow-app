@@ -421,7 +421,8 @@
         </div>
 
         <div class="card span-2 resume-card" id="general-resume-card">
-          <div class="dashboard-card-header"><h2>General Resume</h2></div>
+          <div class="dashboard-card-header"><h2 id="general-resume-heading" tabindex="-1">General Resume</h2></div>
+          <p id="general-resume-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
 
           <div id="general-resume-empty">
             <p class="hint">Build a polished resume straight from your verified Career Profile — no specific job needed.</p>
@@ -443,10 +444,10 @@
             <span class="hint resume-layout-msg" id="general-build-layout-msg" role="status" hidden></span>
             <button type="button" id="general-resume-build-btn" class="btn-crimson">Build My Resume</button>
             <button type="button" id="general-resume-cancel-btn" class="btn-secondary">Cancel</button>
-            <div id="general-resume-error" class="error" hidden></div>
+            <div id="general-resume-error" class="error" role="alert" hidden></div>
           </div>
 
-          <div id="general-resume-loading" class="processing-card" hidden aria-live="polite">
+          <div id="general-resume-loading" class="processing-card" tabindex="-1" hidden aria-live="polite">
             <div class="processing-visual" aria-hidden="true">
               <span class="processing-icon">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -12,6 +12,19 @@ const generalResumeEmpty = document.getElementById("general-resume-empty");
 const generalResumeForm = document.getElementById("general-resume-form");
 const generalResumeLoading = document.getElementById("general-resume-loading");
 const generalResumeDone = document.getElementById("general-resume-done");
+const generalResumeStatus = document.getElementById("general-resume-status"); // persistent role="status" region: always on the page, so a change in it is announced
+const generalResumeHeading = document.getElementById("general-resume-heading");
+
+// Keyboard focus stays inside this card while it changes. A button that is pressed and then hidden would otherwise leave focus
+// on the page body, and a keyboard or screen-reader user would have to start again from the top of the page.
+function focusGeneralResume(el) {
+  if (el && typeof el.focus === "function") el.focus({ preventScroll: true });
+}
+
+// Say it by changing the text of the live region. It is emptied when a build starts (and on Build Again), so the same sentence is announced again after a later build.
+function announceGeneralResume(text) {
+  if (generalResumeStatus) generalResumeStatus.textContent = text;
+}
 
 function hideAllGeneralResumeStates() {
   generalResumeEmpty.hidden = true;
@@ -20,11 +33,15 @@ function hideAllGeneralResumeStates() {
   generalResumeDone.hidden = true;
 }
 
-function startGeneralResumeFlow() {
+function startGeneralResumeFlow(event) {
   document.getElementById("general-resume-card").scrollIntoView({ behavior: "smooth", block: "start" });
   hideAllGeneralResumeStates();
   generalResumeForm.hidden = false;
   prefillResumeHeader(document.getElementById("general-resume-name"), document.getElementById("general-resume-contact"));
+  // Only when the button was pressed from the keyboard (it shows a keyboard focus ring, :focus-visible). A mouse or touch tap, or the
+  // "next step" shortcut clicking this button for the person, must not pop up an on-screen keyboard.
+  const button = event && event.currentTarget;
+  if (button && typeof button.matches === "function" && button.matches(":focus-visible")) focusGeneralResume(document.getElementById("general-resume-name"));
 }
 
 document.getElementById("general-resume-hero-btn").addEventListener("click", startGeneralResumeFlow);
@@ -34,6 +51,7 @@ document.getElementById("general-resume-start-btn").addEventListener("click", st
 document.getElementById("general-resume-cancel-btn").addEventListener("click", () => {
   hideAllGeneralResumeStates();
   generalResumeEmpty.hidden = false;
+  focusGeneralResume(document.getElementById("general-resume-start-btn"));
 });
 
 document.getElementById("general-resume-build-btn").addEventListener("click", async () => {
@@ -51,6 +69,8 @@ document.getElementById("general-resume-build-btn").addEventListener("click", as
 
   hideAllGeneralResumeStates();
   generalResumeLoading.hidden = false;
+  announceGeneralResume("");
+  focusGeneralResume(generalResumeLoading);
   startProcessingState(generalResumeLoading, [
     "Reviewing your Career Profile...",
     "Organizing your experience...",
@@ -75,12 +95,15 @@ document.getElementById("general-resume-build-btn").addEventListener("click", as
     generalResumeDone.hidden = false;
     carryLayoutChoice("general-build-layout", "general-resume-template");
     if (typeof loadResumeVersions === "function") loadResumeVersions();
+    announceGeneralResume("Your general resume is ready.");
+    focusGeneralResume(generalResumeHeading);
   } catch (err) {
     stopProcessingState(generalResumeLoading);
     hideAllGeneralResumeStates();
     generalResumeForm.hidden = false;
     errorEl.textContent = err.message || "Something went wrong building your resume.";
     errorEl.hidden = false;
+    focusGeneralResume(document.getElementById("general-resume-build-btn")); // the message above is an alert; focus is back where the person can try again
   }
 });
 
@@ -117,4 +140,6 @@ document.getElementById("general-resume-again-btn").addEventListener("click", ()
   document.getElementById("general-resume-contact").value = "";
   hideAllGeneralResumeStates();
   generalResumeEmpty.hidden = false;
+  announceGeneralResume("");
+  focusGeneralResume(document.getElementById("general-resume-start-btn"));
 });
