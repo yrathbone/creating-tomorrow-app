@@ -62,6 +62,14 @@ FONT_NAME = "Calibri"
 FONT_SIZE = Pt(11)
 PAGE_MARGIN = Inches(0.7)
 
+# Vertical rhythm (points). Word and LibreOffice both put the LARGER of "space after" and "space before" between two paragraphs, so
+# one section gap is guaranteed by giving every section title the same space above it and keeping everything that can end a
+# section (contact line, headline, summary, a bullet, a skills line) at or below it.
+SECTION_GAP = 10     # above every section title, whatever came before it
+LIST_GAP = 2         # between list items and skill lines (also what follows the last one)
+JOB_HEAD_GAP = 4     # between a job's title/company/dates lines and its first bullet
+JOB_GAP = SECTION_GAP  # between one job and the next
+
 CENTER = WD_ALIGN_PARAGRAPH.CENTER
 LEFT = WD_ALIGN_PARAGRAPH.LEFT
 
@@ -75,19 +83,19 @@ TEMPLATES = {
         "font": "Calibri", "size": 11, "name_size": 11, "name_color": None,
         "contact_size": 11, "contact_color": None, "align": CENTER,
         "heading": "bar", "heading_fill": "CADCF2", "heading_color": None,
-        "heading_align": CENTER, "rule_color": None, "heading_before": None,
+        "heading_align": CENTER, "rule_color": None,
     },
     "modern": {
         "font": "Calibri", "size": 10.5, "name_size": 22, "name_color": "1F3A8A",
         "contact_size": 10, "contact_color": "4B5565", "align": LEFT,
         "heading": "rule", "heading_fill": None, "heading_color": "1F3A8A",
-        "heading_align": LEFT, "rule_color": "1F3A8A", "heading_before": 10,
+        "heading_align": LEFT, "rule_color": "1F3A8A",
     },
     "traditional": {
         "font": "Times New Roman", "size": 11, "name_size": 18, "name_color": None,
         "contact_size": 10.5, "contact_color": None, "align": CENTER,
         "heading": "rule", "heading_fill": None, "heading_color": None,
-        "heading_align": LEFT, "rule_color": "000000", "heading_before": 8,
+        "heading_align": LEFT, "rule_color": "000000",
     },
 }
 DEFAULT_TEMPLATE = "classic"
@@ -159,12 +167,12 @@ def add_heading_bar(doc, text, tpl=None):
     tpl = tpl or TEMPLATES[DEFAULT_TEMPLATE]
     p = doc.add_paragraph(style="Heading 1")  # a real Word heading (Navigation Pane, screen readers); prepare_heading_style() keeps the look
     p.alignment = tpl["heading_align"]
+    p.paragraph_format.space_before = Pt(SECTION_GAP)
     run = p.add_run(text)
     style_run(run, bold=True, tpl=tpl, color=tpl["heading_color"])
     if tpl["heading"] == "bar":
         shade_paragraph(p, tpl["heading_fill"])
     else:
-        p.paragraph_format.space_before = Pt(tpl["heading_before"] or 8)
         p.paragraph_format.space_after = Pt(3)
         underline_paragraph(p, tpl["rule_color"])
     return p
@@ -172,7 +180,7 @@ def add_heading_bar(doc, text, tpl=None):
 
 def add_bullet(doc, text, tpl=None):
     p = doc.add_paragraph(style="List Bullet")
-    p.paragraph_format.space_after = Pt(2)
+    p.paragraph_format.space_after = Pt(LIST_GAP)
     run = p.add_run(clean_text(text))
     style_run(run, tpl=tpl)
     return p
@@ -182,7 +190,7 @@ def add_skill_line(doc, text, tpl=None):
     """A compact skills line like "Payments & Integration: API Connectivity, ISO 20022"
     - the part before the first colon (if any) is the bold group label."""
     p = doc.add_paragraph()
-    p.paragraph_format.space_after = Pt(2)
+    p.paragraph_format.space_after = Pt(LIST_GAP)
     text = clean_text(text)
     label, sep, rest = text.partition(":")
     if sep and len(label) <= 40:
@@ -455,19 +463,8 @@ def build_resume_bytes(data: dict, ats_mode: bool = False, template: str = DEFAU
     set_page_geometry(doc.sections[0])
     set_properties(doc, f"{resume['name']} \u2014 R\u00e9sum\u00e9" if resume["name"] else "R\u00e9sum\u00e9", resume["name"], resume["lang"])
 
-    # a rule-style layout used to get a tiny empty paragraph after the skills list as breathing room; the same space now
-    # comes from the next section title instead (no empty paragraph in the file)
-    space_owed_after_skills = [0]
-
-    def section_title(text, space_before=None):
-        heading = add_heading_bar(doc, text, tpl)
-        if space_before is not None:
-            heading.paragraph_format.space_before = Pt(space_before)
-        if space_owed_after_skills[0]:
-            current = heading.paragraph_format.space_before
-            heading.paragraph_format.space_before = Pt((current.pt if current is not None else 0) + space_owed_after_skills[0])
-            space_owed_after_skills[0] = 0
-        return heading
+    def section_title(text):
+        return add_heading_bar(doc, text, tpl)
 
     # the name and the contact line are two paragraphs (a screen reader or a text extractor sees them as two things), and a
     # missing one leaves no empty line behind
@@ -481,18 +478,21 @@ def build_resume_bytes(data: dict, ats_mode: bool = False, template: str = DEFAU
         p = doc.add_paragraph()
         p.alignment = tpl["align"]
         p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(SECTION_GAP)
         style_run(p.add_run(resume["contact"]), tpl=tpl, size=tpl["contact_size"], color=tpl["contact_color"])
 
     if resume["headline"]:
         p = doc.add_paragraph()
         p.alignment = tpl["align"]
         p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(SECTION_GAP)
         headline_run = p.add_run(resume["headline"])
         style_run(headline_run, bold=True, tpl=tpl)
 
     if resume["summary"]:
         section_title("PROFESSIONAL SUMMARY")
         p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(SECTION_GAP)
         for i, para_text in enumerate(resume["summary"]):
             if i > 0:
                 p.add_run().add_break()
@@ -525,15 +525,14 @@ def build_resume_bytes(data: dict, ats_mode: bool = False, template: str = DEFAU
         if two_columns:
             end_section_after(doc, last, columns=2, continuous=True)
             doc.sections[-1].start_type = WD_SECTION.CONTINUOUS  # everything after the list is a normal single-column section again
-        if tpl["heading"] == "rule":
-            space_owed_after_skills[0] = 6  # the next section title carries the breathing room the old empty paragraph gave
 
     if resume["experience"]:
         section_title("PROFESSIONAL EXPERIENCE")
         for i, job in enumerate(resume["experience"]):
             p = doc.add_paragraph()
             if i > 0:
-                p.paragraph_format.space_before = Pt(12)
+                p.paragraph_format.space_before = Pt(JOB_GAP)
+            p.paragraph_format.space_after = Pt(JOB_HEAD_GAP)
             p.paragraph_format.keep_with_next = True  # a job's title line stays with its first bullet
             p.paragraph_format.keep_together = True
             if job["title"]:
@@ -542,21 +541,27 @@ def build_resume_bytes(data: dict, ats_mode: bool = False, template: str = DEFAU
                 p.add_run().add_break()
             if job["subtitle"]:
                 style_run(p.add_run(job["subtitle"]), tpl=tpl)
-            for bullet in job["bullets"]:
-                add_bullet(doc, bullet, tpl)
+            count = len(job["bullets"])
+            for n, bullet in enumerate(job["bullets"]):
+                item = add_bullet(doc, bullet, tpl)
+                # natural page breaks: at least two bullets stay with the job's title lines, and a job never ends on a lone bullet
+                if count >= 2 and (n == 0 or n == count - 2):
+                    item.paragraph_format.keep_with_next = True
+                elif count == 3 and n == 1:
+                    item.paragraph_format.keep_with_next = True
 
     if resume["education"]:
-        section_title("EDUCATION", space_before=6)
+        section_title("EDUCATION")
         for entry in resume["education"]:
             add_bullet(doc, entry, tpl)
 
     if resume["certifications"]:
-        section_title("CERTIFICATIONS", space_before=6)
+        section_title("CERTIFICATIONS")
         for entry in resume["certifications"]:
             add_bullet(doc, entry, tpl)
 
     for section in resume["additional_sections"]:
-        section_title(section["heading"], space_before=6)
+        section_title(section["heading"])
         for entry in section["items"]:
             add_bullet(doc, entry, tpl)
 
