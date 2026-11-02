@@ -1286,3 +1286,8 @@ body.dashboard-v4 .resume-download-msg { margin: 0.5rem 0 0; font-size: 0.9rem; 
    on the card heading that keyboard focus moves to when a build finishes. */
 body.dashboard-v4 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 body.dashboard-v4 #general-resume-heading:focus-visible { outline: 3px solid var(--v4-blue); outline-offset: 2px; }
+
+/* Batch 2.6B: keyboard focus ring on the headings that focus moves to in the job card and the two history panels. */
+body.dashboard-v4 #job-card-heading:focus-visible,
+body.dashboard-v4 #panel-history-heading:focus-visible,
+body.dashboard-v4 #panel-resumes-heading:focus-visible { outline: 3px solid var(--v4-blue); outline-offset: 2px; }

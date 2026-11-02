@@ -73,9 +73,11 @@ if (typeof document !== "undefined") {
       const select = document.getElementById(btn.dataset.layoutDefault);
       const msg = document.getElementById(btn.dataset.layoutMsg);
       if (!select) return;
+      const hadFocus = document.activeElement === btn; // a button that is disabled while saving loses keyboard focus; give it back afterwards
       btn.disabled = true;
       const result = await savePreferredLayout(select.value);
       btn.disabled = false;
+      if (hadFocus && typeof btn.focus === "function") btn.focus({ preventScroll: true });
       if (msg) {
         msg.textContent = result.ok ? layoutSavedMessage(result.layout) : result.message;
         msg.hidden = false;

@@ -23,6 +23,13 @@ const RESUME_LAYOUTS = [
   ["traditional", "Traditional: serif, conservative"],
 ];
 
+// After a list is rebuilt (a card deleted, a filter chosen) the button that was pressed no longer exists, so keyboard focus would fall
+// to the page body. Put it on the panel's heading instead (Phase 02 batch 2.6B).
+function focusHistoryHeading(id) {
+  const heading = document.getElementById(id);
+  if (heading && typeof heading.focus === "function") heading.focus({ preventScroll: true });
+}
+
 // ---- pure helpers (unit-tested) -------------------------------------------------------
 
 // How a scan should look: a tone (colour), the big badge text and a short type label.
@@ -98,7 +105,10 @@ function renderScanFilter() {
     const chip = visualButton(label + " " + count, "vis-chip btn-secondary", () => {
       scanFilter = value;
       renderScanCards();
+      const again = bar.querySelector('[data-filter="' + value + '"]'); // the chips were rebuilt: keep focus on the one just chosen
+      if (again) again.focus({ preventScroll: true });
     });
+    chip.dataset.filter = value;
     chip.setAttribute("aria-pressed", String(scanFilter === value));
     bar.appendChild(chip);
   }
@@ -140,9 +150,11 @@ function renderScanCards() {
         await authedFetch("/api/career/scan-history/" + entry.id + "/unskip", { method: "POST" });
         await loadScanHistory();
         if (typeof restoreCurrentJobTarget === "function") restoreCurrentJobTarget();
+        focusHistoryHeading("panel-history-heading");
       })] : []).concat([visualButton("Delete", "entry-remove-btn", async () => {
         await authedFetch("/api/career/scan-history/" + entry.id, { method: "DELETE" });
         await loadScanHistory();
+        focusHistoryHeading("panel-history-heading");
       })]),
     }));
   }
@@ -212,7 +224,12 @@ function renderResumeCards() {
         status.textContent = result.ok ? layoutSavedMessage(result.layout) : result.message;
         status.hidden = false;
       }
-      if (!result.ok) syncDefault();
+      if (result.ok) {
+        focusHistoryHeading("panel-resumes-heading"); // saving rebuilds every resume card, so this button and menu no longer exist
+      } else {
+        syncDefault();
+        layout.focus({ preventScroll: true }); // nothing was rebuilt: stay on this card
+      }
     });
     // the button says so when the menu already shows the saved default
     const syncDefault = () => {
@@ -236,6 +253,7 @@ function renderResumeCards() {
         visualButton("Delete", "entry-remove-btn", async () => {
           await authedFetch("/api/career/resume-versions/" + entry.id, { method: "DELETE" });
           await loadResumeVersions();
+          focusHistoryHeading("panel-resumes-heading");
         }),
       ],
     }));

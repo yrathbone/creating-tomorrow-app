@@ -33,6 +33,39 @@ const jobKeywordsState = document.getElementById("job-keywords-state");
 const jobBuildLoadingState = document.getElementById("job-build-loading-state");
 const jobBuildDoneState = document.getElementById("job-build-done-state");
 
+// Keyboard focus and announcements (Phase 02 batch 2.6B), the same pattern as generalResume.js. A button that is pressed and then
+// hidden would leave focus on the page body, so focus stays inside this card, and a persistent polite status region says what happened.
+const jobStatus = document.getElementById("job-status");
+const jobHeading = document.getElementById("job-card-heading");
+const JOB_BUILD_FORM_MESSAGE = "Add your name and contact line, then build your resume.";
+
+function focusJob(el) {
+  if (el && typeof el.focus === "function") el.focus({ preventScroll: true });
+}
+
+function announceJob(text) {
+  if (jobStatus) jobStatus.textContent = text;
+}
+
+// True only when the button was pressed from the keyboard (it shows a keyboard focus ring, :focus-visible). A mouse or touch tap, or a
+// script's click, must not move focus into a field (a phone would pop up its on-screen keyboard).
+function jobKeyboardPress(event) {
+  const button = event && event.currentTarget;
+  return !!(button && typeof button.matches === "function" && button.matches(":focus-visible"));
+}
+
+// A slow step starts: empty the status (so the next message is announced again) and park focus on the progress card.
+function jobStepStarted(panel) {
+  announceJob("");
+  focusJob(panel);
+}
+
+// A step finished: say so once, and put focus on the card heading.
+function jobStepDone(message) {
+  announceJob(message);
+  focusJob(jobHeading);
+}
+
 // Whatever is typed here prints at the top of the resume exactly as written
 // (a version label like "Yovana Rathbone 3" or a missing email both hurt a
 // resume), so ask once before building. Also used by generalResume.js.
@@ -56,14 +89,17 @@ function hideAllJobStates() {
   jobBuildDoneState.hidden = true;
 }
 
-document.getElementById("job-target-add-btn").addEventListener("click", () => {
+document.getElementById("job-target-add-btn").addEventListener("click", (event) => {
+  const fromKeyboard = jobKeyboardPress(event); // read first: once the button is hidden the browser no longer says it had a keyboard focus ring
   hideAllJobStates();
   jobInputState.hidden = false;
+  if (fromKeyboard) focusJob(document.getElementById("job-description-input"));
 });
 
 document.getElementById("job-cancel-btn").addEventListener("click", () => {
   hideAllJobStates();
   jobTargetEmpty.hidden = false;
+  focusJob(document.getElementById("job-target-add-btn"));
 });
 
 document.getElementById("job-compare-form").addEventListener("submit", async (e) => {
@@ -77,6 +113,7 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
 
   hideAllJobStates();
   jobLoadingState.hidden = false;
+  jobStepStarted(jobLoadingState);
   startProcessingState(jobLoadingState, [
     "Reading the job posting...",
     "Comparing it to your Career Profile...",
@@ -111,12 +148,14 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
     stopProcessingState(jobLoadingState);
     jobLoadingState.hidden = true;
     jobMatchState.hidden = false;
+    jobStepDone("Job comparison ready.");
   } catch (err) {
     stopProcessingState(jobLoadingState);
     hideAllJobStates();
     jobInputState.hidden = false;
     errorEl.textContent = err.message || "Something went wrong. Please try again.";
     errorEl.hidden = false;
+    focusJob(document.getElementById("job-compare-btn")); // the message above is an alert; focus is back where the person can try again
   }
 });
 
@@ -203,14 +242,17 @@ document.getElementById("job-start-interview-btn").addEventListener("click", () 
   if (currentJobQuestions.length) {
     renderJobQuestionsBatch(currentJobQuestions);
     jobQuestionsState.hidden = false;
+    jobStepDone("Questions ready.");
   } else {
     showJobBuildForm();
+    jobStepDone(JOB_BUILD_FORM_MESSAGE);
   }
 });
 
 document.getElementById("job-skip-interview-btn").addEventListener("click", () => {
   hideAllJobStates();
   showJobBuildForm();
+  jobStepDone(JOB_BUILD_FORM_MESSAGE);
 });
 
 function renderJobQuestionsBatch(questions) {
@@ -279,6 +321,7 @@ async function submitJobAnswers(forceFinish) {
 
   jobQuestionsState.hidden = true;
   jobLoadingState.hidden = false;
+  jobStepStarted(jobLoadingState);
   startProcessingState(jobLoadingState, [
     "Reviewing your answers...",
     "Deciding what to ask next...",
@@ -311,17 +354,21 @@ async function submitJobAnswers(forceFinish) {
       jobState.discoveredFacts = data.discovered_facts || [];
       await refreshJobFit();
       showJobBuildForm();
+      jobStepDone(JOB_BUILD_FORM_MESSAGE);
     } else {
       currentJobQuestions = data.questions || [];
       jobState.roundNumber += 1;
       renderJobQuestionsBatch(currentJobQuestions);
       jobQuestionsState.hidden = false;
+      jobStepDone("More questions ready.");
     }
   } catch (err) {
     stopProcessingState(jobLoadingState);
+    jobLoadingState.hidden = true; // the progress card no longer stays on screen above the questions after a failure
     jobQuestionsState.hidden = false;
     errorEl.textContent = err.message || "Something went wrong. Please try again.";
     errorEl.hidden = false;
+    focusJob(document.getElementById("job-questions-submit-btn"));
   }
 }
 
@@ -400,6 +447,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
 
   hideAllJobStates();
   jobBuildLoadingState.hidden = false;
+  jobStepStarted(jobBuildLoadingState);
   startProcessingState(jobBuildLoadingState, [
     "Reading the posting's key terms...",
     "Matching them to your experience...",
@@ -438,12 +486,14 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     carryLayoutChoice("job-build-layout", "job-resume-template");
     if (typeof loadScanHistory === "function") loadScanHistory();
     if (typeof loadResumeVersions === "function") loadResumeVersions();
+    jobStepDone("Your tailored resume is ready.");
   } catch (err) {
     stopProcessingState(jobBuildLoadingState);
     hideAllJobStates();
     jobBuildFormState.hidden = false;
     errorEl.textContent = err.message || "Something went wrong building your resume.";
     errorEl.hidden = false;
+    focusJob(document.getElementById("job-build-btn"));
   }
 });
 
@@ -460,6 +510,7 @@ document.getElementById("job-keyword-check-btn").addEventListener("click", async
 
   hideAllJobStates();
   jobLoadingState.hidden = false;
+  jobStepStarted(jobLoadingState);
   startProcessingState(jobLoadingState, [
     "Reading the posting's key terms...",
     "Checking them against your profile...",
@@ -483,15 +534,18 @@ document.getElementById("job-keyword-check-btn").addEventListener("click", async
     if (keywordTerms.length === 0) {
       showJobBuildForm();
       showKeywordNote("Every key term in the posting is already backed by your profile. Nothing to add.");
+      focusJob(jobHeading);
       return;
     }
     renderKeywordCards(data.already_covered || 0);
     jobKeywordsState.hidden = false;
+    jobStepDone("Keyword choices ready.");
   } catch (err) {
     stopProcessingState(jobLoadingState);
     showJobBuildForm();
     errorEl.textContent = err.message || "Something went wrong checking the keywords.";
     errorEl.hidden = false;
+    focusJob(document.getElementById("job-keyword-check-btn"));
   }
 });
 
@@ -542,6 +596,7 @@ function showKeywordNote(text) {
   const note = document.getElementById("job-keyword-saved-note");
   note.textContent = text;
   note.hidden = !text;
+  announceJob(text); // the note is plain text that appears and disappears, so it is also said through the status region
 }
 
 function renderKeywordCards(alreadyCovered) {
@@ -630,6 +685,7 @@ function renderKeywordCards(alreadyCovered) {
 
 document.getElementById("job-keywords-back-btn").addEventListener("click", () => {
   showJobBuildForm();
+  jobStepDone("Keyword choices not saved. " + JOB_BUILD_FORM_MESSAGE);
 });
 
 document.getElementById("job-keywords-apply-btn").addEventListener("click", async () => {
@@ -679,6 +735,7 @@ document.getElementById("job-keywords-apply-btn").addEventListener("click", asyn
     errorEl.textContent = err.message + (savedSkills ? " (" + savedSkills + " were already saved and are now set to Skip. Press Save again to finish the rest.)" : "");
     errorEl.hidden = false;
     btn.disabled = false;
+    focusJob(btn); // a disabled button loses focus; give it back
     return;
   }
 
@@ -689,6 +746,7 @@ document.getElementById("job-keywords-apply-btn").addEventListener("click", asyn
   if (savedSkills) parts.push(savedSkills + " saved to your Skills");
   if (resumeOnly) parts.push(resumeOnly + " added for this resume only");
   showKeywordNote(parts.length ? "Keyword choices: " + parts.join(", ") + ". Now build your resume." : "No keywords added.");
+  focusJob(jobHeading);
 });
 
 // Opens the Add a skill form with the posting term filled in, so a skill the
@@ -825,7 +883,8 @@ function resetAppliedBlock() {
   btn.hidden = false;
 }
 
-document.getElementById("job-applied-btn").addEventListener("click", () => {
+document.getElementById("job-applied-btn").addEventListener("click", (event) => {
+  const fromKeyboard = jobKeyboardPress(event); // read before this button is hidden below
   // The comparison's label is usually "Job Title at Company": split it as a starting point.
   const label = jobState.jobTitle || "";
   const at = label.lastIndexOf(" at ");
@@ -834,9 +893,13 @@ document.getElementById("job-applied-btn").addEventListener("click", () => {
   document.getElementById("job-applied-date").value = todayIso();
   document.getElementById("job-applied-form").hidden = false;
   document.getElementById("job-applied-btn").hidden = true;
+  if (fromKeyboard) focusJob(document.getElementById("job-applied-title"));
 });
 
-document.getElementById("job-applied-cancel-btn").addEventListener("click", resetAppliedBlock);
+document.getElementById("job-applied-cancel-btn").addEventListener("click", () => {
+  resetAppliedBlock();
+  focusJob(document.getElementById("job-applied-btn"));
+});
 
 document.getElementById("job-applied-save-btn").addEventListener("click", async () => {
   const msg = document.getElementById("job-applied-msg");
@@ -857,6 +920,7 @@ document.getElementById("job-applied-save-btn").addEventListener("click", async 
   } finally {
     msg.hidden = false;
     saveBtn.disabled = false;
+    focusJob(msg); // the saved or failed message is read when it gets focus; the form is still below it after a failure
   }
 });
 
@@ -914,6 +978,8 @@ function resetJobTarget() {
   hideAllJobStates();
   document.getElementById("job-skipped-note").hidden = true;
   jobTargetEmpty.hidden = false;
+  announceJob("");
+  focusJob(document.getElementById("job-target-add-btn"));
 }
 
 document.getElementById("job-start-over-btn").addEventListener("click", resetJobTarget);
@@ -942,9 +1008,11 @@ document.getElementById("job-skip-job-btn").addEventListener("click", async () =
     const note = document.getElementById("job-skipped-note");
     note.textContent = "Skipped" + (title ? " \u201c" + title + "\u201d" : "") + ". You'll find it under Skipped jobs in Your Activity if you change your mind.";
     note.hidden = false;
+    announceJob(note.textContent);
   } catch (err) {
     errorEl.textContent = err.message || "Something went wrong. Please try again.";
     errorEl.hidden = false;
+    focusJob(btn);
   } finally {
     btn.disabled = false;
   }
@@ -988,4 +1056,5 @@ function openJobTarget(latest) {
   renderJobFit(jobState.jobFit);
   hideAllJobStates();
   jobMatchState.hidden = false;
+  jobStepDone("Job comparison ready.");
 }

@@ -211,10 +211,11 @@
 
       <div class="dashboard-grid">
         <div class="card span-2 job-card">
-          <div class="dashboard-card-header"><h2>Current Job Target</h2></div>
+          <div class="dashboard-card-header"><h2 id="job-card-heading" tabindex="-1">Current Job Target</h2></div>
+          <p id="job-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
 
           <div id="job-target-empty">
-            <p class="hint" id="job-skipped-note" role="status" hidden></p>
+            <p class="hint" id="job-skipped-note" hidden></p>
             <p class="hint">Found a job you're interested in? Add it here and we'll compare it with your verified career experience.</p>
             <button type="button" id="job-target-add-btn">+ Add a Job</button>
             <button type="button" id="job-resume-last-btn" class="btn-secondary" hidden></button>
@@ -229,10 +230,10 @@
               <button type="submit" id="job-compare-btn" class="btn-green">Compare to My Career Profile</button>
               <button type="button" id="job-cancel-btn" class="btn-secondary">Cancel</button>
             </form>
-            <div id="job-compare-error" class="error" hidden></div>
+            <div id="job-compare-error" class="error" role="alert" hidden></div>
           </div>
 
-          <div id="job-loading-state" class="processing-card" hidden aria-live="polite">
+          <div id="job-loading-state" class="processing-card" tabindex="-1" hidden aria-live="polite">
             <div class="processing-visual" aria-hidden="true">
               <span class="processing-icon">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -286,12 +287,12 @@
             <button type="button" id="job-match-new-btn" class="btn-secondary">Compare a Different Job</button>
             <button type="button" id="job-skip-job-btn" class="btn-secondary">Skip This Job</button>
             <p class="hint">Not worth pursuing? Skip it and we'll keep it under Skipped jobs in Your Activity, in case you change your mind.</p>
-            <div id="job-skip-error" class="error" hidden></div>
+            <div id="job-skip-error" class="error" role="alert" hidden></div>
           </div>
 
           <div id="job-questions-state" hidden>
             <div id="job-questions-list"></div>
-            <div id="job-questions-error" class="error" hidden></div>
+            <div id="job-questions-error" class="error" role="alert" hidden></div>
             <button type="button" id="job-questions-submit-btn">Continue</button>
             <button type="button" id="job-questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
           </div>
@@ -326,19 +327,19 @@
             <p class="hint">Only add something that is true for you. It will be printed on this resume if the job calls for it.</p>
             <button type="button" id="job-extra-term-resume-btn" class="btn-secondary">Use on this resume only</button>
             <button type="button" id="job-extra-term-skill-btn" class="btn-secondary">Save to my Skills</button>
-            <div id="job-build-error" class="error" hidden></div>
+            <div id="job-build-error" class="error" role="alert" hidden></div>
           </div>
 
           <div id="job-keywords-state" hidden>
             <h4>Keywords from the posting that aren't in your profile yet</h4>
             <p class="hint" id="job-keywords-intro"></p>
             <div id="job-keywords-list"></div>
-            <div id="job-keywords-error" class="error" hidden></div>
+            <div id="job-keywords-error" class="error" role="alert" hidden></div>
             <button type="button" id="job-keywords-apply-btn">Save my choices</button>
             <button type="button" id="job-keywords-back-btn" class="btn-secondary">Back without saving</button>
           </div>
 
-          <div id="job-build-loading-state" class="processing-card" hidden aria-live="polite">
+          <div id="job-build-loading-state" class="processing-card" tabindex="-1" hidden aria-live="polite">
             <div class="processing-visual" aria-hidden="true">
               <span class="processing-icon">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -389,7 +390,7 @@
                 <button type="button" id="job-applied-save-btn">Add to my tracker</button>
                 <button type="button" id="job-applied-cancel-btn" class="btn-secondary">Cancel</button>
               </div>
-              <p class="hint" id="job-applied-msg" hidden></p>
+              <p class="hint" id="job-applied-msg" tabindex="-1" hidden></p>
             </div>
 
             <div id="job-match-grade-block" class="match-grade" hidden>
@@ -640,13 +641,13 @@
 
           <div id="activity-panels">
             <section class="snapshot-panel" id="panel-history" hidden>
-        <h3>Job &amp; Skill Scan History</h3>
+        <h3 id="panel-history-heading" tabindex="-1">Job &amp; Skill Scan History</h3>
         <div id="scan-filter" class="vis-filter" role="group" aria-label="Filter scans" hidden></div>
         <div id="scan-history-list"></div>
             </section>
 
             <section class="snapshot-panel" id="panel-resumes" hidden>
-        <h3>Resumes Built</h3>
+        <h3 id="panel-resumes-heading" tabindex="-1">Resumes Built</h3>
         <p class="hint" id="resume-layout-status" role="status" hidden></p>
         <p class="error resume-download-msg" id="resume-download-status" role="alert" hidden></p>
         <div id="resume-version-list"></div>
