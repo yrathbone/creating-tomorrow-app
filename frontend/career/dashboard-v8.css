@@ -1,0 +1,92 @@
+/* Creating Tomorrow "dashboard v8": the signed-in dashboard takes the same look as the rest of the site:
+   Inter, royal blue #003395, amber gold #ffb000, the royal-blue header, the shared footer, regular weights.
+   Loaded by career/login.html after dashboard-v4.css and ../chrome-v6.css. Every selector starts with body.chrome-v6.dashboard-v4
+   (the class login.js sets while the dashboard shows), so the sign-in and sign-up screens and the public pages are untouched.
+   Presentation only: no markup, ids or scripts change. */
+
+/* ---------- tokens: the dashboard's own variables now point at the site's blue, gold, ink and Inter ---------- */
+body.chrome-v6.dashboard-v4 {
+  --c6-blue: #003395;
+  --c6-blue-deep: #002a7a;
+  --c6-gold: #ffb000;
+  --c6-gold-hover: #e69f00;
+  --c6-gold-footer: #e5a100;
+  --c6-crimson: #c8102e;
+  --c6-crimson-deep: #8f0b22;
+  --font-sans: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --blue: #003395;
+  --blue-deep: #002a7a;
+  --cobalt: #003395;
+  --gold: #ffb000;
+  --gold-hover: #e69f00;
+  --v4-blue: #003395;
+  --v4-blue-deep: #002a7a;
+  --v4-blue-ring: rgba(0, 51, 149, 0.22);
+  --v4-gold: #ffb000;
+  --v4-gold-deep: #e69f00;
+  --v4-ink: #0b1f4d;
+  font-family: var(--font-sans);
+}
+body.chrome-v6.dashboard-v4 .cp-progress-fill,
+body.chrome-v6.dashboard-v4 .btn-primary { background-image: none; background-color: #003395; }
+
+/* ---------- header ---------- */
+body.chrome-v6.dashboard-v4 .site-nav { background: var(--c6-blue); border-bottom: 0; }
+body.chrome-v6.dashboard-v4 .site-nav .nav-logo img { box-sizing: content-box; padding: 5px; background: #ffffff; border-radius: 50%; }
+body.chrome-v6.dashboard-v4 .site-nav .nav-wordmark-title { color: #ffffff; }
+body.chrome-v6.dashboard-v4 .site-nav .nav-wordmark-gold { color: var(--c6-gold); }
+body.chrome-v6.dashboard-v4 .nav-links a,
+body.chrome-v6.dashboard-v4 .nav-links a.nav-cta { color: #ffffff; }
+body.chrome-v6.dashboard-v4 .nav-links a:hover,
+body.chrome-v6.dashboard-v4 .nav-links a.nav-cta:hover { color: var(--c6-gold); background: none; }
+body.chrome-v6.dashboard-v4 .nav-links a.nav-active { color: #ffffff; border-bottom-color: var(--c6-gold); }
+body.chrome-v6.dashboard-v4 .nav-links a.nav-account { background: var(--c6-gold); border-color: var(--c6-gold); color: #071c42; }
+body.chrome-v6.dashboard-v4 .nav-links a.nav-account:hover { background: var(--c6-gold-hover); border-color: var(--c6-gold-hover); color: #071c42; }
+body.chrome-v6.dashboard-v4 .site-nav a:focus-visible,
+body.chrome-v6.dashboard-v4 .site-nav button:focus-visible { outline: 3px solid #ffffff; outline-offset: 3px; }
+
+/* ---------- footer: layout ---------- */
+body.chrome-v6.dashboard-v4 footer.h5-footer { padding-bottom: 0; border-top: 0; }
+body.chrome-v6.dashboard-v4 footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 2.25rem; background: var(--c6-blue); }
+body.chrome-v6.dashboard-v4 .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand"; align-items: center; column-gap: 2.5rem; row-gap: 1.5rem; }
+body.chrome-v6.dashboard-v4 .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-areas: "nav legal" "copy brand"; }
+body.chrome-v6.dashboard-v4 .h5-footer-row { display: contents; }
+body.chrome-v6.dashboard-v4 .h5-footer-nav { grid-area: nav; }
+body.chrome-v6.dashboard-v4 .h5-footer .footer-links { grid-area: legal; justify-self: end; }
+body.chrome-v6.dashboard-v4 .h5-footer-copy { grid-area: copy; margin: 0; max-width: none; }
+body.chrome-v6.dashboard-v4 .h5-footer-brand { grid-area: brand; justify-self: end; }
+/* the privacy sentence uses the full footer width, so on a desktop it stays on one line (on a phone it wraps as it must) */
+body.chrome-v6.dashboard-v4 .h5-footer-privacy { grid-area: privacy; justify-self: center; max-width: none; margin: 0.75rem 0 0.25rem; text-align: center; color: #000000; }
+/* free-tools wording: the first words are underlined, which sets that promise apart from the signed-in side, where data is saved */
+body.chrome-v6.dashboard-v4 .h5-footer-privacy .h5-nosave { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+/* ---------- footer: colours ---------- */
+body.chrome-v6.dashboard-v4 .h5-footer .nav-wordmark-title { color: var(--c6-blue); }
+body.chrome-v6.dashboard-v4 .h5-footer .nav-wordmark-gold { color: var(--c6-gold-footer); }
+/* only Privacy and Terms (and the & between them) are crimson */
+body.chrome-v6.dashboard-v4 .h5-footer .footer-links a:nth-of-type(-n+2) { color: var(--c6-crimson); }
+body.chrome-v6.dashboard-v4 .h5-footer .footer-links a:nth-of-type(-n+2):hover { color: var(--c6-crimson-deep); }
+body.chrome-v6.dashboard-v4 .h5-footer .footer-links .h5-amp { color: var(--c6-crimson); }
+
+/* ---------- phone ---------- */
+@media (max-width: 1000px) {
+  body.chrome-v6.dashboard-v4 .h5-footer .h5-wrap,
+  body.chrome-v6.dashboard-v4 .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "privacy" "copy"; row-gap: 1.1rem; }
+  body.chrome-v6.dashboard-v4 .h5-footer .footer-links,
+  body.chrome-v6.dashboard-v4 .h5-footer-brand { justify-self: start; }
+  body.chrome-v6.dashboard-v4 .h5-footer-privacy { justify-self: start; text-align: left; margin: 0.5rem 0 0; }
+}
+/* ---------- footer links: tap targets of at least 44px (WCAG 2.5.5), without changing how the text looks ---------- */
+body.chrome-v6.dashboard-v4 .h5-footer .h5-footer-nav a,
+body.chrome-v6.dashboard-v4 .h5-footer .footer-links a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0 0.25rem; }
+body.chrome-v6.dashboard-v4 .h5-footer .footer-links { display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.4rem; }
+body.chrome-v6.dashboard-v4 .h5-footer .h5-footer-nav { gap: 0 1.2rem; }
+
+/* ---------- no bold: the same rule as the public pages (regular text, medium buttons and nav, bold logo lettering) ---------- */
+body.chrome-v6.dashboard-v4 * { font-weight: 400 !important; }
+body.chrome-v6.dashboard-v4 button, body.chrome-v6.dashboard-v4 .btn-primary, body.chrome-v6.dashboard-v4 .btn-secondary,
+body.chrome-v6.dashboard-v4 .btn-green, body.chrome-v6.dashboard-v4 .btn-crimson, body.chrome-v6.dashboard-v4 .btn-danger,
+body.chrome-v6.dashboard-v4 .nav-links a, body.chrome-v6.dashboard-v4 .next-step-btn { font-weight: 500 !important; }
+body.chrome-v6.dashboard-v4 p b, body.chrome-v6.dashboard-v4 p strong, body.chrome-v6.dashboard-v4 li b, body.chrome-v6.dashboard-v4 li strong { font-weight: 500 !important; }
+body.chrome-v6.dashboard-v4 .nav-wordmark, body.chrome-v6.dashboard-v4 .nav-wordmark * { font-weight: 700 !important; }

@@ -65,9 +65,12 @@ test("every public page wears the shared chrome: the body class, and chrome-v6.c
     assert.ok(!html.includes("tool-hub"), name + " has no leftover single-page class");
     const links = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1]);
     const prefix = name.startsWith("career/") ? "../" : name === "not-found" ? "/" : "";
-    assert.strictEqual(links[links.length - 1], prefix + "chrome-v6.css", name + ": chrome-v6.css is the last stylesheet");
+    // the sign-in page is also the signed-in dashboard: dashboard-v8.css (every rule scoped to body.dashboard-v4) follows the chrome
+    const dashboardTail = name === "career/login" ? 1 : 0;
+    if (dashboardTail) assert.strictEqual(links[links.length - 1], "dashboard-v8.css", name + ": dashboard-v8.css is last");
+    assert.strictEqual(links[links.length - 1 - dashboardTail], prefix + "chrome-v6.css", name + ": chrome-v6.css is the last stylesheet (apart from the dashboard's own)");
     const own = LAST_CSS[name] || "pages-v4.css";
-    assert.strictEqual(links[links.length - 2], own, name + ": it follows " + own);
+    assert.strictEqual(links[links.length - 2 - dashboardTail], own, name + ": it follows " + own);
   }
 });
 
