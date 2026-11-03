@@ -94,3 +94,7 @@ body.chrome-v6.dashboard-v4 .btn-green, body.chrome-v6.dashboard-v4 .btn-crimson
 body.chrome-v6.dashboard-v4 .nav-links a, body.chrome-v6.dashboard-v4 .next-step-btn { font-weight: 500 !important; }
 body.chrome-v6.dashboard-v4 p b, body.chrome-v6.dashboard-v4 p strong, body.chrome-v6.dashboard-v4 li b, body.chrome-v6.dashboard-v4 li strong { font-weight: 500 !important; }
 body.chrome-v6.dashboard-v4 .nav-wordmark, body.chrome-v6.dashboard-v4 .nav-wordmark * { font-weight: 700 !important; }
+
+/* ---------- download explanation: a small title and two short lines ---------- */
+body.chrome-v6.dashboard-v4 .export-hint p { margin: 0 0 0.15rem; }
+body.chrome-v6.dashboard-v4 .export-hint p.export-hint-title { color: var(--v4-ink); }

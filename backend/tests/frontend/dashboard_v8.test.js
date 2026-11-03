@@ -65,3 +65,30 @@ test("Sign Out is a gold button with navy text, never white on white", () => {
   assert.match(css, /\.nav-links a\.nav-signout:hover \{ background: var\(--c6-gold-hover\)/);
   assert.ok(!/nav-signout[^}]*background: #ffffff/.test(css), "no white background on Sign Out");
 });
+
+test("the signed-in dashboard uses the founder-approved copy, word for word", () => {
+  const html = read("career", "login.html");
+  const next = read("career", "js", "nextStep.js");
+  for (const line of [
+    "<p>See Your Value. Build Your Tomorrow.</p>",
+    '<p class="hint">Showcase Your Experience</p>',
+    '<p class="hint">Your Experience Matters.</p>',
+    '<p class="hint export-hint-title">Your Files. Your Choice.</p>',
+    '<p class="hint">Readable Copy: Read, print, or share.</p>',
+    '<p class="hint">See Your Progress.</p>',
+    '<p class="hint">Help us grow. Share your experience, not your private information.</p>',
+    '<p class="hint">Your data belongs to you. Download it anytime, or delete your account and saved information.</p>',
+  ]) assert.ok(html.includes(line), line);
+  assert.ok(next.includes('text: "Stay on Track",'));
+  // the headings and controls are unchanged
+  for (const keep of ["Your Career,", "General Resume", "My Career", "Your Activity", "Tell us how it went", "Your Data",
+    'id="export-readable-btn"', 'id="export-profile-btn"', 'id="delete-account-start-btn"', 'id="feedback-link"']) {
+    assert.ok(html.includes(keep), keep);
+  }
+});
+
+test("the data backup line makes no restore or transfer promise the site cannot keep", () => {
+  const html = read("career", "login.html");
+  const line = html.match(/Data Backup: [^<]*/)[0];
+  assert.ok(!/restor|transfer|import|complete/i.test(line), line);
+});

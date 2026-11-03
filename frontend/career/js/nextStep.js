@@ -82,7 +82,7 @@ function chooseNextStep(f) {
     }
     if (!apps.length) {
       return { key: "track-application", title: "Applied for a job? Track it",
-        text: "Add it to your tracker so you can see where every application stands and when to follow up.",
+        text: "Stay on Track",
         button: "Open my applications", targets: tile("applications") };
     }
   }
