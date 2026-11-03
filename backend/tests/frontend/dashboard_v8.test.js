@@ -73,11 +73,11 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
     "<p>See Your Value. Build Your Tomorrow.</p>",
     '<p class="hint">Showcase Your Experience</p>',
     '<p class="hint">Your Experience Matters.</p>',
-    '<p class="hint export-hint-title">Your Files. Your Choice.</p>',
-    '<p class="hint">Readable Copy: Read, print, or share.</p>',
+    '<p class="hint">Discover Your Fit</p>',
+    '<p class="hint export-hint">Readable Copy: Read, print, or share.</p>',
     '<p class="hint">See Your Progress.</p>',
     '<p class="hint">Help us grow. Share your experience, not your private information.</p>',
-    '<p class="hint">Your data belongs to you. Download it anytime, or delete your account and saved information.</p>',
+    '<p class="hint">Download your information or choose to delete your account anytime.</p>',
   ]) assert.ok(html.includes(line), line);
   assert.ok(next.includes('text: "Stay on Track",'));
   // the headings and controls are unchanged
@@ -87,10 +87,12 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
   }
 });
 
-test("the data backup line makes no restore or transfer promise the site cannot keep", () => {
+test("the dashboard makes no restore, transfer or completeness promise about the data backup", () => {
   const html = read("career", "login.html");
-  const line = html.match(/Data Backup: [^<]*/)[0];
-  assert.ok(!/restor|transfer|import|complete/i.test(line), line);
+  // the founder removed the old explanation; the site has no import feature and the backup omits the resume header
+  assert.ok(!html.includes("Data Backup:"), "no Data Backup explanation");
+  assert.ok(!html.includes("Your Files. Your Choice."), "no download heading");
+  assert.ok(!/restor|transfer your|import your/i.test(html.slice(html.indexOf('id="export-readable-btn"') - 200, html.indexOf('id="export-profile-btn"') + 600)));
 });
 
 test("the next-step band is plain white with a smaller sentence, no yellow wash or gold edge", () => {
