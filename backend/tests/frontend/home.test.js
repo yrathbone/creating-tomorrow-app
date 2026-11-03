@@ -121,7 +121,7 @@ test("the page loads its stylesheets in order and marks the body; the new look i
 
 test("Inter is hosted on our own site (no outside fonts) and is the homepage typeface", () => {
   for (const w of [400, 500, 700]) {
-    assert.match(css7, new RegExp(`font-weight: ${w}; font-display: swap; src: url\\("fonts/inter-latin-${w}-normal\\.woff2"\\)`));
+    assert.match(read("chrome-v6.css"), new RegExp(`font-weight: ${w}; font-display: swap; src: url\\("fonts/inter-latin-${w}-normal\\.woff2"\\)`));
     assert.ok(fs.existsSync(path.join(FRONTEND, "fonts", `inter-latin-${w}-normal.woff2`)), `inter ${w} file`);
   }
   assert.ok(fs.existsSync(path.join(FRONTEND, "fonts", "Inter-OFL.txt")), "the Inter licence is kept beside the font files");

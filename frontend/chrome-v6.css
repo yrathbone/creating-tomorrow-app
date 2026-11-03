@@ -12,6 +12,11 @@
    Contrast: white on #003395 is 11:1; navy on the gold button is 9:1; crimson #C8102E on white is 5.9:1; the gold (#FFB000) on royal blue is 6:1 (header)
    and about 2.2:1 on white (footer wordmark), a deliberate brand choice for a large, heavy wordmark. */
 
+/* ---------- the typeface: Inter, hosted on our own site, on every public page ---------- */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/inter-latin-700-normal.woff2") format("woff2"); }
+
 /* ---------- tokens (names that cannot clash with any page's own) ---------- */
 body.chrome-v6:not(.dashboard-v4) {
   --c6-blue: #003395;
@@ -21,6 +26,9 @@ body.chrome-v6:not(.dashboard-v4) {
   --c6-gold-footer: #e5a100;
   --c6-crimson: #c8102e;
   --c6-crimson-deep: #8f0b22;
+  /* Inter replaces the serif headings and the system body font on the public pages (the dashboard keeps its own type) */
+  --font-sans: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   /* the sharper blue and gold also replace the pages' own cobalt and gold tokens */
   --blue: #003395;
   --blue-deep: #002a7a;
