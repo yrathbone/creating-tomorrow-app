@@ -107,3 +107,7 @@ body.chrome-v6.dashboard-v4 .next-step-btn-secondary[hidden] { display: none; }
 @media (max-width: 640px) {
   body.chrome-v6.dashboard-v4 .next-step-actions { width: 100%; flex-direction: column; align-items: stretch; }
 }
+
+/* ---------- the Discover Your Fit card shows only "+ Add a job": Continue comparison lives in the next-step band ----------
+   The card's own Continue button stays in the page (hidden) because the band's button presses it, so there is one reopen flow. */
+body.chrome-v6.dashboard-v4 #job-resume-last-btn { display: none !important; }

@@ -160,12 +160,29 @@ test("there is no second button without a saved comparison, for a skipped one, o
   assert.ok(!load().chooseNextStep(noReport).secondary);
 });
 
-test("no other step gets a second button", () => {
-  for (const f of [done({ roles: 0 }), done({ skills: 0 }), done({ education: 0 }), done({ resumes: [], scans: [] }),
-    done({ applications: [{ status: "interview", applied_on: daysAgo(1) }] }), done()]) {
-    const step = load().chooseNextStep(withComparison(f));
-    assert.ok(!step.secondary, step.key);
+test("Continue comparison is offered on every step except Finish your resume (whose main button already is Continue)", () => {
+  const overrides = [{ roles: 0 }, { skills: 0 }, { hasHeader: false }, { education: 0 },
+    { applications: [{ status: "interview", applied_on: daysAgo(1) }] }, { applications: [{ status: "applied", applied_on: daysAgo(3) }] },
+    { applications: [] }, { applications: [{ status: "applied", applied_on: daysAgo(40) }] }];
+  const seen = new Set();
+  for (const over of overrides) {
+    const step = load().chooseNextStep(done(withComparison(over)));
+    seen.add(step.key);
+    assert.strictEqual(step.secondary.button, "Continue comparison", step.key);
   }
+  assert.ok(["add-role", "add-skills", "add-header", "add-education", "prepare-interview", "keep-going", "track-application", "check-applications"].every((k) => seen.has(k)), [...seen].join());
+  // Finish your resume: a comparison with no resume built for it; its main button is already Continue
+  const finish = load().chooseNextStep(done({ scans: [{ id: 9, scan_type: "job_comparison", job_title: "Analyst", result_data: { match_report: {} } }], resumes: [{ scan_history_id: null }] }));
+  assert.strictEqual(finish.key, "finish-resume");
+  assert.ok(!finish.secondary);
+  assert.deepStrictEqual([...finish.targets], ["#job-resume-last-btn"]);
+});
+
+test("the card keeps no visible Continue button: it is hidden by the stylesheet and the band presses it", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "..", "..", "frontend", "career", "dashboard-v8.css"), "utf8");
+  assert.match(css, /body\.chrome-v6\.dashboard-v4 #job-resume-last-btn \{ display: none !important; \}/);
+  const html = fs.readFileSync(path.join(__dirname, "..", "..", "..", "frontend", "career", "login.html"), "utf8");
+  assert.match(html, /id="job-resume-last-btn"/);  // still in the page: the band's button presses it, so there is one reopen flow
 });
 
 test("the page has the second button, hidden until a step asks for it, and its click presses the card's button", () => {

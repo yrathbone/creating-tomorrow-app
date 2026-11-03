@@ -27,7 +27,7 @@ function continueButton(f) {
 //   f.resumes                          allResumeVersions entries ({ scan_history_id })
 //   f.applications                     allApplications entries ({ status, applied_on }) or null if unavailable
 //   f.today                            Date.now() (injectable for tests)
-function chooseNextStep(f) {
+function pickNextStep(f) {
   if (!f || !f.ready) return null;
   const tile = (key) => ['.stat-card[data-panel="' + key + '"]'];
 
@@ -90,18 +90,26 @@ function chooseNextStep(f) {
     if (waiting.length) {
       return { key: "check-applications", title: waiting.length === 1 ? "Check on an application" : "Check on " + waiting.length + " applications",
         text: "It’s been " + STALE_APPLICATION_DAYS + "+ days. Update the status or follow up.",
-        button: "Open my applications", targets: tile("applications"), secondary: continueButton(f) };
+        button: "Open my applications", targets: tile("applications") };
     }
     if (!apps.length) {
       return { key: "track-application", title: "Track Your Applications",
         text: "",
-        button: "Open my applications", targets: tile("applications"), secondary: continueButton(f) };
+        button: "Open my applications", targets: tile("applications") };
     }
   }
 
   return { key: "keep-going", title: "Compare another job",
     text: "Each comparison shows more experience to add.",
     button: "Add a Job", targets: ["#job-target-add-btn"] };
+}
+
+// The step, plus a Continue comparison button whenever a comparison is saved. The Discover Your Fit card no longer shows its own
+// button, so the band is where Continue lives: it is offered on every step except "Finish your resume", whose main button already is Continue.
+function chooseNextStep(f) {
+  const step = pickNextStep(f);
+  if (step && step.key !== "finish-resume" && !step.secondary) step.secondary = continueButton(f);
+  return step;
 }
 
 // Gathers the facts from the dashboard's own globals (all declared by earlier scripts).
