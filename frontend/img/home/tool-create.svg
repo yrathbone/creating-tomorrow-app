@@ -1,21 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 150" width="400" height="150">
-  <rect width="400" height="150" fill="#e6ecf8"/>
-  <path d="M148 18 a4 4 0 0 1 4 -4 H244 L264 34 V132 a4 4 0 0 1 -4 4 H152 a4 4 0 0 1 -4 -4 Z" fill="#ffffff"/>
-  <path d="M244 14 V30 a4 4 0 0 0 4 4 H264 Z" fill="#d6def0"/>
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.4" r="0.8"><stop offset="0" stop-color="#f4f7fd"/><stop offset="1" stop-color="#d3def4"/></radialGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e9edf6"/></linearGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c3cde4"/></linearGradient>
+    <linearGradient id="pencil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="0.4" stop-color="#ffb000"/><stop offset="1" stop-color="#b87800"/></linearGradient>
+    <radialGradient id="gold" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#e29a00"/></radialGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+  <rect width="400" height="150" fill="url(#bg)"/>
+  <path d="M156 26 H252 L272 46 V144 H156 Z" fill="#0b1f4d" fill-opacity="0.3" filter="url(#blur)"/>
+  <path d="M148 18 a4 4 0 0 1 4 -4 H244 L264 34 V132 a4 4 0 0 1 -4 4 H152 a4 4 0 0 1 -4 -4 Z" fill="#c9d3ea"/>
+  <path d="M148 16.5 a4 4 0 0 1 4 -4 H244 L264 32.5 V130.5 a4 4 0 0 1 -4 4 H152 a4 4 0 0 1 -4 -4 Z" fill="url(#paper)"/>
+  <path d="M244 12.5 V28.5 a4 4 0 0 0 4 4 H264 Z" fill="url(#fold)"/>
   <rect x="164" y="30" width="64" height="9" rx="2" fill="#003395"/>
   <rect x="164" y="44" width="44" height="4" rx="2" fill="#9aa7c7"/>
   <rect x="164" y="56" width="88" height="3" fill="#ffb000"/>
   <rect x="164" y="66" width="86" height="4" rx="2" fill="#c9d1e3"/>
   <rect x="164" y="76" width="68" height="4" rx="2" fill="#c9d1e3"/>
   <rect x="164" y="86" width="78" height="4" rx="2" fill="#c9d1e3"/>
-  <rect x="164" y="100" width="88" height="24" rx="3" fill="none" stroke="#ffb000" stroke-width="2" stroke-dasharray="5 4"/>
-  <circle cx="276" cy="120" r="17" fill="#ffb000"/>
-  <path d="M276 111 v18 M267 120 h18" stroke="#0b1f4d" stroke-width="4.5" stroke-linecap="round"/>
-  <g transform="translate(108 106) rotate(-40)">
-    <rect x="-40" y="-5" width="64" height="10" fill="#ffb000"/>
-    <rect x="-48" y="-5" width="10" height="10" rx="3" fill="#e8546a"/>
-    <rect x="-38" y="-5" width="4" height="10" fill="#cfd4df"/>
-    <polygon points="24,-5 38,0 24,5" fill="#f1c7a0"/>
-    <polygon points="34,-1.6 38,0 34,1.6" fill="#2b2b2b"/>
+  <rect x="164" y="100" width="88" height="24" rx="3" fill="#fff6dc" stroke="#ffb000" stroke-width="2" stroke-dasharray="5 4"/>
+  <circle cx="280" cy="128" r="17" fill="#6b4a00" fill-opacity="0.35" filter="url(#blur)"/>
+  <circle cx="278" cy="122" r="17" fill="url(#gold)"/>
+  <path d="M278 113 v18 M269 122 h18" stroke="#0b1f4d" stroke-width="4.5" stroke-linecap="round"/>
+  <ellipse cx="272" cy="113" rx="8" ry="3.5" fill="#ffffff" fill-opacity="0.35"/>
+  <g transform="translate(108 108) rotate(-40)">
+    <rect x="-40" y="2" width="70" height="12" rx="3" fill="#0b1f4d" fill-opacity="0.3" filter="url(#blur)" transform="translate(4 8)"/>
+    <rect x="-40" y="-6" width="64" height="12" fill="url(#pencil)"/>
+    <rect x="-48" y="-6" width="10" height="12" rx="3" fill="#e8546a"/>
+    <rect x="-38" y="-6" width="4" height="12" fill="#cfd4df"/>
+    <rect x="-34" y="-4" width="56" height="2" fill="#ffffff" fill-opacity="0.45"/>
+    <polygon points="24,-6 40,0 24,6" fill="#f1c7a0"/>
+    <polygon points="24,-6 40,0 24,-1" fill="#ffffff" fill-opacity="0.3"/>
+    <polygon points="35,-2 40,0 35,2" fill="#2b2b2b"/>
   </g>
 </svg>

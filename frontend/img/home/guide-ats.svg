@@ -1,20 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 160" width="360" height="160">
-  <rect width="360" height="160" fill="#e6ecf8"/>
-  <polyline points="62,66 44,82 62,98" fill="none" stroke="#003395" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  <polyline points="298,66 316,82 298,98" fill="none" stroke="#003395" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="100" y="18" width="160" height="102" rx="9" fill="#0b1f4d"/>
-  <rect x="108" y="26" width="144" height="86" rx="4" fill="#102a5c"/>
-  <rect x="116" y="36" width="30" height="5" rx="2.5" fill="#ffb000"/>
-  <rect x="150" y="36" width="44" height="5" rx="2.5" fill="#9db4f2"/>
-  <rect x="124" y="48" width="50" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.85"/>
-  <rect x="178" y="48" width="30" height="5" rx="2.5" fill="#5fd08a"/>
-  <rect x="124" y="60" width="36" height="5" rx="2.5" fill="#9db4f2"/>
-  <rect x="164" y="60" width="56" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.85"/>
-  <rect x="132" y="72" width="64" height="5" rx="2.5" fill="#5fd08a"/>
-  <rect x="124" y="84" width="44" height="5" rx="2.5" fill="#ffb000"/>
-  <rect x="172" y="84" width="26" height="5" rx="2.5" fill="#9db4f2"/>
-  <rect x="116" y="96" width="22" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.85"/>
-  <rect x="142" y="94" width="3" height="10" fill="#ffb000"/>
-  <path d="M82 124 H278 L292 138 Q293 143 288 143 H72 Q67 143 68 138 Z" fill="#c9d4ee"/>
-  <rect x="158" y="124" width="44" height="4" rx="2" fill="#9fb0d6"/>
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.4" r="0.75"><stop offset="0" stop-color="#f4f7fd"/><stop offset="1" stop-color="#d3def4"/></radialGradient>
+    <linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3f72"/><stop offset="1" stop-color="#0b1f4d"/></linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d3f86"/><stop offset="1" stop-color="#0a1f4f"/></linearGradient>
+    <linearGradient id="glare" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/><stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2fb"/><stop offset="1" stop-color="#b4c3e4"/></linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fb0d6"/><stop offset="1" stop-color="#6f83b3"/></linearGradient>
+    <linearGradient id="brk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f62d6"/><stop offset="1" stop-color="#002a7a"/></linearGradient>
+    <filter id="blur" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5"/></filter>
+  </defs>
+  <rect width="360" height="160" fill="url(#bg)"/>
+  <ellipse cx="180" cy="146" rx="128" ry="9" fill="#0b1f4d" fill-opacity="0.35" filter="url(#blur)"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="64,70 46,86 64,102" stroke="#0b1f4d" stroke-opacity="0.25" stroke-width="8" transform="translate(2 3)"/>
+    <polyline points="64,70 46,86 64,102" stroke="url(#brk)" stroke-width="7"/>
+    <polyline points="296,70 314,86 296,102" stroke="#0b1f4d" stroke-opacity="0.25" stroke-width="8" transform="translate(2 3)"/>
+    <polyline points="296,70 314,86 296,102" stroke="url(#brk)" stroke-width="7"/>
+  </g>
+  <polygon points="100,16 260,16 268,114 92,114" fill="url(#bezel)" stroke="#0b1f4d" stroke-width="5" stroke-linejoin="round"/>
+  <polygon points="108,24 252,24 259,106 101,106" fill="url(#screen)"/>
+  <g filter="url(#glow)" fill-opacity="0.5"><rect x="116" y="34" width="30" height="5" fill="#ffb000"/><rect x="124" y="58" width="36" height="5" fill="#9db4f2"/><rect x="132" y="70" width="64" height="5" fill="#5fd08a"/></g>
+  <rect x="116" y="34" width="30" height="5" rx="2.5" fill="#ffb000"/>
+  <rect x="150" y="34" width="44" height="5" rx="2.5" fill="#9db4f2"/>
+  <rect x="124" y="46" width="50" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="178" y="46" width="30" height="5" rx="2.5" fill="#5fd08a"/>
+  <rect x="124" y="58" width="36" height="5" rx="2.5" fill="#9db4f2"/>
+  <rect x="164" y="58" width="56" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="132" y="70" width="64" height="5" rx="2.5" fill="#5fd08a"/>
+  <rect x="124" y="82" width="44" height="5" rx="2.5" fill="#ffb000"/>
+  <rect x="172" y="82" width="26" height="5" rx="2.5" fill="#9db4f2"/>
+  <rect x="116" y="94" width="22" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="142" y="92" width="3" height="10" fill="#ffb000"/>
+  <polygon points="108,24 252,24 259,106 101,106" fill="url(#glare)"/>
+  <polygon points="92,114 268,114 306,138 54,138" fill="url(#deck)"/>
+  <g stroke="#8fa2cc" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.8">
+    <line x1="104" y1="120" x2="256" y2="120"/><line x1="98" y1="125" x2="262" y2="125"/><line x1="92" y1="130" x2="268" y2="130"/>
+  </g>
+  <polygon points="152,132 208,132 212,136 148,136" fill="#a9b9de"/>
+  <polygon points="54,138 306,138 306,143 54,143" fill="url(#edge)"/>
+  <line x1="92" y1="114" x2="268" y2="114" stroke="#ffffff" stroke-opacity="0.6" stroke-width="1.2"/>
 </svg>
