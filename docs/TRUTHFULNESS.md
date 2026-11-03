@@ -35,6 +35,20 @@ screen recording is not video editing, mentoring a colleague is not working with
      candidate's own evidence (so it cannot be traced to anything they said). Supported, transferable and traceable skills stay.
    - Whatever the checks could not fix is returned as `claim_review` and `skills_removed`, and logged (`[career.truth]`); nothing is hidden.
 
+## Last-resort strike and saved review (added after the PR #33 review)
+
+- `term_pipeline.strike_unsupported_claims` runs after the edit pass. Any **sentence** that still states an unsupported or denied posting
+  term is removed by plain code (a bullet with nothing left is dropped; a headline phrase is dropped; nothing is substituted), so a
+  flagged claim of that kind cannot reach the saved or downloaded resume even when the edit pass is unavailable or incomplete.
+  What was struck is returned as `claims_struck` and logged (`[career.truth] sentences_struck=N`).
+- The findings are saved with the resume as `resume_data.truth_review` (`answer_conflicts`, `skills_removed`, `claims_struck`, `claim_review`)
+  and are returned by `POST /api/career/job-build-resume` and `GET /api/career/resume-versions`. The Word file ignores them.
+- Cost: a sentence is struck whole, so a supported fact that shares a sentence with an unsupported claim is lost with it. The edit pass is
+  tried first precisely to avoid this.
+- Still only flagged, not struck: invented **figures and names** (the existing quality check hands them to the edit pass).
+- Still not caught: a **paraphrase** that uses none of the planned terms (for example "subject matter resource"), and an invented **duty**
+  that is not a posting term and not a denied topic.
+
 ## Known limits (be honest about these)
 
 - **Prose is checked only against planned posting terms and denials.** A fabricated duty that is *not* a posting term and not a denied
@@ -49,6 +63,6 @@ screen recording is not video editing, mentoring a colleague is not working with
 - **Word matching is simple** (five-letter stems). Rare spelling variants can be missed in either direction.
 - **The checks cannot prove a live model's wording.** The automated tests replace the AI with fixed answers and verify the code around it.
   Only a live rerun shows what the model writes under the new instructions.
-- **The interface does not yet show `answer_conflicts` or `claim_review`** to the candidate; they are returned by the API and logged.
+- **The interface does not yet show `answer_conflicts`, `claims_struck` or `claim_review`** to the candidate; they are returned by the API, saved with the resume as `truth_review`, and logged.
 - A **previously saved profile skill** that the candidate later denies for a specific job is overridden for that job's résumé only; it is not
   edited in the profile.

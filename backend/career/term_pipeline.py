@@ -575,6 +575,51 @@ def sanitize_skills(resume_data: dict, terms: list[dict], evidence_text: str) ->
     return {**resume_data, "skills": lines}, removed
 
 
+def strike_unsupported_claims(resume_data: dict, unsupported_terms: list[str]) -> tuple[dict, list[dict]]:
+    """The last-resort safeguard. After the edit pass (which may be unavailable or may not fix everything), any SENTENCE that still
+    states a qualification the evidence does not establish (a posting term marked unsupported, which includes everything the
+    candidate denied) is removed by plain code, so a flagged claim can never reach the saved or downloaded resume. Only the
+    offending sentence goes: the rest of a bullet or summary stays; a bullet with nothing left is dropped; a headline phrase
+    (split on "|") is dropped. Nothing is substituted. Returns (resume, what was struck)."""
+    struck: list[dict] = []
+
+    def offends(text: str) -> bool:
+        return bool(resume_quality.find_claim_issues({"summary": text, "headline": "", "experience": []}, unsupported_terms))
+
+    def keep(text: str, where: str) -> str:
+        sentences = [x for x in resume_quality._SENTENCE_SPLIT.split(text.strip()) if x.strip()]
+        kept = []
+        for sentence in sentences:
+            if offends(sentence):
+                struck.append({"where": where, "text": sentence.strip()})
+            else:
+                kept.append(sentence.strip())
+        return " ".join(kept)
+
+    if not unsupported_terms:
+        return resume_data, struck
+    out = dict(resume_data)
+    if out.get("summary"):
+        out["summary"] = keep(out["summary"], "summary")
+    if out.get("headline"):
+        parts = [x.strip() for x in str(out["headline"]).split("|")]
+        kept_parts = [x for x in parts if not offends(x)]
+        for x in parts:
+            if offends(x):
+                struck.append({"where": "headline", "text": x})
+        out["headline"] = " | ".join(kept_parts)
+    experience = []
+    for job in out.get("experience") or []:
+        bullets = []
+        for bullet in job.get("bullets") or []:
+            text = keep(str(bullet), f"bullet under \"{job.get('title', '')}\"")
+            if text:
+                bullets.append(text)
+        experience.append({**job, "bullets": bullets})
+    out["experience"] = experience
+    return out, struck
+
+
 def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, denials: list[dict] | None = None) -> dict:
     denials = denials or []
     # A confirmed fact that says again what the candidate denied is NOT silently used, and the denial is not silently dropped:
@@ -601,6 +646,7 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         result["resume_data"] = resume
         result["quality"] = quality
         result["skills_removed"] = removed
+        result["claims_struck"] = []
         result["claim_review"] = []
         log_quality(quality)
         result["term_report"] = []
@@ -626,12 +672,14 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     unsupported = [t["term"] for t in terms if t["support"] == "none" and t.get("kind") != "phrase"]
     resume, quality = improve_readability(resume, evidence_text, terms, unsupported)
     resume, removed = sanitize_skills(resume, terms, evidence_text)
+    resume, struck = strike_unsupported_claims(resume, unsupported)
     check_placement(resume, terms)
     # what the checks could not fix is reported, never hidden
     result["claim_review"] = resume_quality.find_claim_issues(resume, unsupported)
     result["skills_removed"] = removed
-    if removed or result["claim_review"] or conflicts:
-        print(f"[career.truth] skills_removed={len(removed)} unsupported_claims_left={len(result['claim_review'])} answer_conflicts={len(conflicts)}")
+    result["claims_struck"] = struck
+    if removed or struck or result["claim_review"] or conflicts:
+        print(f"[career.truth] skills_removed={len(removed)} sentences_struck={len(struck)} unsupported_claims_left={len(result['claim_review'])} answer_conflicts={len(conflicts)}")
     result["quality"] = quality
     log_quality(quality)
     result["resume_data"] = resume

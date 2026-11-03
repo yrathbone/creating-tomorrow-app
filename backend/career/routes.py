@@ -1162,6 +1162,13 @@ async def job_build_resume(
         "role_selection": result.get("role_selection") or [],
         "term_report": result.get("term_report") or [],
         "ats_match": result.get("ats_match"),
+        # what the truth checks found, kept with the saved resume so a reviewer can inspect it later (the Word file ignores it)
+        "truth_review": {
+            "answer_conflicts": result.get("answer_conflicts") or [],
+            "skills_removed": result.get("skills_removed") or [],
+            "claims_struck": result.get("claims_struck") or [],
+            "claim_review": result.get("claim_review") or [],
+        },
     }
     version = ResumeVersion(
         career_profile_id=profile.id,

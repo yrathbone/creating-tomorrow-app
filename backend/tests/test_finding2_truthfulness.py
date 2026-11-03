@@ -295,11 +295,14 @@ class DanielReyes(unittest.TestCase):
         for gone in ("video editing", "e-learning modules", "subject matter experts", "stakeholder collaboration"):
             self.assertNotIn(gone, skills, gone)
         self.assertIn("pilot sessions", skills)
-        # the prose claims it could not fix are REPORTED, never hidden
-        problems = " ".join(i["text"].lower() for i in result["claim_review"])
-        self.assertIn("e-learning modules", problems)
-        self.assertIn("subject matter experts", problems)
-        self.assertIn("video editing", problems)
+        # the prose claims the edit pass could not fix are STRUCK by code and REPORTED, never left in and never hidden
+        struck = " ".join(i["text"].lower() for i in result["claims_struck"])
+        self.assertIn("e-learning modules", struck)
+        self.assertIn("subject matter experts", struck)
+        self.assertIn("video editing", struck)
+        self.assertEqual(result["claim_review"], [])
+        for gone in ("e-learning modules", "subject matter experts", "video editing"):
+            self.assertNotIn(gone, prose(result["resume_data"]), gone)
         self.assertEqual(set(result["skills_removed"]) >= {"Video Editing", "E-Learning Modules", "Subject Matter Experts", "Stakeholder Collaboration"}, True)
 
     def test_skipped_keywords_are_not_forced_into_the_output(self):
@@ -350,8 +353,10 @@ class SearsCashierToBankTeller(unittest.TestCase):
         self.assertNotIn("bank account servicing", skills)
         self.assertNotIn("cash drawer reconciliation", skills)
         self.assertIn("customer service", skills)
-        reported = " ".join(i["text"].lower() for i in result["claim_review"])
-        self.assertIn("regulatory banking compliance", reported)  # named in the summary
+        struck = " ".join(i["text"].lower() for i in result["claims_struck"])
+        self.assertIn("regulatory banking compliance", struck)  # the summary sentence naming it was struck by code and reported
+        self.assertNotIn("regulatory banking compliance", prose(result["resume_data"]))
+        self.assertEqual(result["claim_review"], [])
         gaps = [r["term"] for r in result["term_report"] if r["status"] == "not_in_profile"]
         self.assertIn("bank account servicing", gaps)  # still visible as a gap, not claimed
         self.assertIn("cash drawer reconciliation", gaps)
