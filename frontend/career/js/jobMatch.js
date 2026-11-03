@@ -1034,7 +1034,10 @@ function restoreCurrentJobTarget() {
     btn.hidden = true;
     return;
   }
-  btn.textContent = latest.job_title ? "Continue: " + latest.job_title : "Pick up where I left off";
+  // The button says just "Continue" (a cleaner card). The job it reopens is still named for screen readers (aria-label) and on hover (title).
+  btn.textContent = "Continue";
+  btn.setAttribute("aria-label", latest.job_title ? "Continue: " + latest.job_title : "Continue");
+  btn.title = latest.job_title || "";
   btn.onclick = () => openJobTarget(latest);
   btn.hidden = false;
 }
