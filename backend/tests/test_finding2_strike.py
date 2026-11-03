@@ -120,12 +120,12 @@ class StrikeUnsupportedClaims(unittest.TestCase):
         self.assertEqual(result["claims_struck"], [])
         self.assertIn("balanced the cash drawer", prose(result["resume_data"]))
 
-    def test_an_invented_figure_is_flagged_by_the_existing_quality_check_but_not_struck(self):
+    def test_an_invented_figure_is_flagged_by_the_quality_check_and_then_struck(self):
         invented = copy.deepcopy(DANIEL_AFTER_EDIT)
         invented["experience"][0]["bullets"][3] = "Recorded 60 short lesson videos that raised unit test scores by 35%."
         result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, invented, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
         self.assertGreaterEqual(result["quality"]["found"], 1)  # flagged for the edit pass, never silent
-        self.assertIn("35%", prose(result["resume_data"]))  # documented: figures are flagged, not struck
+        self.assertNotIn("35%", prose(result["resume_data"]))  # and, when the edit pass cannot fix it, struck by code (PR 33 review)
 
 
 class SavedTruthReview(OwnershipTestCase):
@@ -160,6 +160,79 @@ class SavedTruthReview(OwnershipTestCase):
         text = "\n".join(p.text for p in Document(io.BytesIO(rb.build_resume_bytes(data, ats_mode=False, template="classic"))).paragraphs)
         self.assertNotIn("SECRET-MARKER", text)
         self.assertIn("handled cash payments", text)
+
+
+class StrikeInventedFigures(unittest.TestCase):
+    """A figure (number, amount or percentage) the candidate never gave must not reach the saved or downloaded resume, even when the
+    edit pass is unavailable. Names stay flagged-only (higher false-positive risk)."""
+
+    def docx(self, resume):
+        return "\n".join(p.text for p in Document(io.BytesIO(rb.build_resume_bytes(resume, ats_mode=False, template="classic"))).paragraphs)
+
+    def invented(self, bullet):
+        resume = copy.deepcopy(DANIEL_AFTER_EDIT)
+        resume["experience"][0]["bullets"][3] = bullet
+        return resume
+
+    def test_a_sentence_with_an_invented_figure_is_struck_and_never_reaches_the_word_file(self):
+        bad = self.invented("Recorded 60 short lesson videos that raised unit test scores by 35%.")
+        result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, bad, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
+        self.assertNotIn("35%", prose(result["resume_data"]))
+        self.assertNotIn("35%", self.docx(result["resume_data"]))
+        self.assertEqual([s["reason"] for s in result["claims_struck"]], ["figure not in the candidate's evidence"])
+        self.assertIn("35%", result["claims_struck"][0]["text"])  # the operator can see exactly what was removed
+
+    def test_the_candidates_own_figures_are_kept_including_digits_for_spelled_out_numbers(self):
+        for bullet in ("Recorded 60 short lesson videos during remote learning and shared them in Google Classroom.",
+                       "Planned and taught 5 sections a day of grades 6 to 8 science.",   # evidence says "five sections ... 6 to 8"
+                       "Built a year-long curriculum used by 4 other teachers.",           # evidence says "four other teachers"
+                       "Mentored 2 student teachers."):                                    # evidence says "two student teachers"
+            result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, self.invented(bullet), DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
+            self.assertEqual([s for s in result["claims_struck"] if "figure" in s["reason"]], [], bullet)
+            self.assertIn(bullet.split()[0], prose(result["resume_data"]).title() + prose(result["resume_data"]))
+
+    def test_no_figure_is_struck_in_any_genuine_fixture(self):
+        for built, profile, plan, history, facts in ((DANIEL_AFTER_EDIT, DANIEL_PROFILE, DANIEL_PLAN, DANIEL_HISTORY, [DANIEL_FACT]),
+                                                     (DANIEL_BEFORE, DANIEL_PROFILE, DANIEL_PLAN, DANIEL_HISTORY, [DANIEL_FACT]),
+                                                     (SEARS_GOOD, SEARS_PROFILE, SEARS_PLAN, [], [])):
+            result, _ = run(profile, SEARS_POSTING if profile is SEARS_PROFILE else "posting", plan, copy.deepcopy(built), history, facts, fail_edit=True)
+            self.assertEqual([s for s in result["claims_struck"] if "figure" in s["reason"]], [])
+
+    def test_a_true_fact_in_the_same_sentence_as_an_invented_figure_goes_with_it(self):
+        bad = self.invented("Recorded 60 short lesson videos that raised unit test scores by 35%.")
+        result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, bad, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
+        self.assertFalse(any("60 short lesson videos" in b for b in result["resume_data"]["experience"][0]["bullets"]))  # documented cost
+        split = self.invented("Recorded 60 short lesson videos. Raised unit test scores by 35%.")
+        result2, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, split, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
+        self.assertEqual(result2["resume_data"]["experience"][0]["bullets"][3], "Recorded 60 short lesson videos.")  # separate sentences: the true one stays
+
+    def test_an_invented_name_is_flagged_but_not_struck(self):
+        bad = self.invented("Recorded 60 short lesson videos and tracked results in Tableau.")
+        result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, bad, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
+        self.assertIn("Tableau", prose(result["resume_data"]).title())  # documented: names are flagged for the edit pass, not struck
+        self.assertEqual(result["claims_struck"], [])
+
+    def test_an_invented_figure_in_the_summary_or_headline_is_struck_too(self):
+        resume = copy.deepcopy(DANIEL_AFTER_EDIT)
+        resume["summary"] = "Educator with over 10 years of teaching experience. Raised school-wide scores by 50%."
+        resume["headline"] = "Instructional Design | 200 Lessons Built"
+        evidence = DANIEL_PROFILE + "2014 to 2025"
+        out, struck = term_pipeline.strike_unsupported_claims(resume, [], evidence)
+        self.assertEqual(out["summary"], "Educator with over 10 years of teaching experience.")
+        self.assertEqual(out["headline"], "Instructional Design")
+        self.assertEqual(sorted(s["where"] for s in struck), ["headline", "summary"])
+
+    def test_without_evidence_the_figure_rule_does_nothing(self):
+        resume = self.invented("Raised scores by 35%.")
+        self.assertEqual(term_pipeline.strike_unsupported_claims(resume, [], ""), (resume, []))
+        self.assertEqual(term_pipeline.invented_figures("Raised scores by 35%.", ""), [])
+
+    def test_the_struck_figure_is_saved_in_the_truth_review(self):
+        bad = self.invented("Recorded 60 short lesson videos that raised unit test scores by 35%.")
+        result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, bad, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
+        review = {k: result[k] for k in ("answer_conflicts", "skills_removed", "claims_struck", "claim_review")}
+        self.assertEqual(len(review["claims_struck"]), 1)
+        self.assertEqual(review["claim_review"], [])
 
 
 if __name__ == "__main__":

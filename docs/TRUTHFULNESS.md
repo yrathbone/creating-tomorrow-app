@@ -45,7 +45,12 @@ screen recording is not video editing, mentoring a colleague is not working with
   and are returned by `POST /api/career/job-build-resume` and `GET /api/career/resume-versions`. The Word file ignores them.
 - Cost: a sentence is struck whole, so a supported fact that shares a sentence with an unsupported claim is lost with it (for example
   "mentored two student teachers as a subject matter resource" loses the true mentoring). The edit pass is tried first precisely to avoid this.
-- Still only flagged, not struck: invented **figures and names** (the existing quality check hands them to the edit pass).
+- **Invented figures are struck too** (added after the second PR #33 review): a sentence containing a number, amount or percentage that is not in
+  the candidate's profile or confirmed facts is removed, with the reason `figure not in the candidate's evidence` in `claims_struck`. A number
+  the evidence spells out ("five sections") also supplies its digit form, so "5 sections" is not mistaken for an invented figure. A true fact in
+  the same sentence as the invented figure goes with it.
+- Still only flagged, not struck: invented **names** (tools, employers; the name check has a higher false-positive risk), which the quality
+  check hands to the edit pass.
 - Paraphrases are caught when a sentence uses most of an unsupported term's distinctive words (at least two, and two thirds) and at least one
   of them is not in the candidate's own evidence ("Managed customer bank accounts" for "bank account servicing"; "subject matter resource" for
   "subject matter experts"). A sentence made only of the candidate's own words is never struck by this rule.

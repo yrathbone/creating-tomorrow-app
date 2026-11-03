@@ -575,38 +575,71 @@ def sanitize_skills(resume_data: dict, terms: list[dict], evidence_text: str) ->
     return {**resume_data, "skills": lines}, removed
 
 
+_NUMBER_WORDS = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11,
+    "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19,
+    "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90, "hundred": 100,
+}
+
+
+def _evidence_with_number_digits(evidence_text: str) -> str:
+    """The evidence plus the digit form of every number it spells out ("five sections" also supplies "5"), so a writer who turns
+    "five" into "5" is not mistaken for inventing a figure."""
+    words = set(_WORD.findall((evidence_text or "").lower()))
+    return evidence_text + " " + " ".join(str(n) for w, n in _NUMBER_WORDS.items() if w in words)
+
+
+def invented_figures(text: str, evidence_text: str) -> list[str]:
+    """The figures in one piece of prose that are not in the candidate's evidence (a number, amount or percentage the profile and
+    confirmed facts do not contain), using the same check the quality pass uses. Names are NOT included: the name check has a
+    higher false-positive risk, so names stay flagged-only."""
+    if not evidence_text:
+        return []
+    issues = resume_quality.find_issues({"summary": text, "headline": "", "experience": []}, _evidence_with_number_digits(evidence_text), [], term_in_text, "")
+    return [i["problem"] for i in issues if "figure" in i["problem"]]
+
+
 def strike_unsupported_claims(resume_data: dict, unsupported_terms: list[str], evidence_text: str = "") -> tuple[dict, list[dict]]:
     """The last-resort safeguard. After the edit pass (which may be unavailable or may not fix everything), any SENTENCE that still
-    states a qualification the evidence does not establish (a posting term marked unsupported, which includes everything the
-    candidate denied) is removed by plain code, so a flagged claim can never reach the saved or downloaded resume. Only the
-    offending sentence goes: the rest of a bullet or summary stays; a bullet with nothing left is dropped; a headline phrase
-    (split on "|") is dropped. Nothing is substituted. Returns (resume, what was struck)."""
+    (a) states a qualification the evidence does not establish (a posting term marked unsupported, which includes everything the
+    candidate denied, written out or paraphrased) or (b) contains a figure that is not in the candidate's evidence is removed by
+    plain code, so a flagged claim can never reach the saved or downloaded resume. Only the offending sentence goes: the rest of a
+    bullet or summary stays; a bullet with nothing left is dropped; a headline phrase (split on "|") is dropped. Nothing is
+    substituted. Returns (resume, what was struck, each with its reason)."""
     struck: list[dict] = []
 
-    def offends(text: str) -> bool:
-        return bool(resume_quality.find_claim_issues({"summary": text, "headline": "", "experience": []}, unsupported_terms, evidence_text))
+    def reason(text: str) -> str:
+        if unsupported_terms and resume_quality.find_claim_issues({"summary": text, "headline": "", "experience": []}, unsupported_terms, evidence_text):
+            return "unsupported claim"
+        if invented_figures(text, evidence_text):
+            return "figure not in the candidate's evidence"
+        return ""
 
     def keep(text: str, where: str) -> str:
         sentences = [x for x in resume_quality._SENTENCE_SPLIT.split(text.strip()) if x.strip()]
         kept = []
         for sentence in sentences:
-            if offends(sentence):
-                struck.append({"where": where, "text": sentence.strip()})
+            why = reason(sentence)
+            if why:
+                struck.append({"where": where, "text": sentence.strip(), "reason": why})
             else:
                 kept.append(sentence.strip())
         return " ".join(kept)
 
-    if not unsupported_terms:
+    if not unsupported_terms and not evidence_text:
         return resume_data, struck
     out = dict(resume_data)
     if out.get("summary"):
         out["summary"] = keep(out["summary"], "summary")
     if out.get("headline"):
         parts = [x.strip() for x in str(out["headline"]).split("|")]
-        kept_parts = [x for x in parts if not offends(x)]
+        kept_parts = []
         for x in parts:
-            if offends(x):
-                struck.append({"where": "headline", "text": x})
+            why = reason(x)
+            if why:
+                struck.append({"where": "headline", "text": x, "reason": why})
+            else:
+                kept_parts.append(x)
         out["headline"] = " | ".join(kept_parts)
     experience = []
     for job in out.get("experience") or []:
