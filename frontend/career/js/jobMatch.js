@@ -779,16 +779,19 @@ function renderTermReport(report) {
   const onResume = report.filter((r) => r.status === "on_resume");
   const notPlaced = report.filter((r) => r.status === "not_placed").sort(byRank);
   const notInProfile = report.filter((r) => r.status === "not_in_profile").sort(byRank);
+  // Real experience that is different from what the posting names: shown as relevant, never claimed as the posting's own wording.
+  const transferable = report.filter((r) => r.status === "transferable").sort(byRank);
 
   let text = onResume.length + " of " + report.length + " terms from the posting are on your resume.";
   if (notInProfile.length) text += " " + notInProfile.length + " aren’t backed by your profile yet. If you have that experience, add it and rebuild.";
+  if (transferable.length) text += " " + transferable.length + (transferable.length === 1 ? " more is" : " more are") + " related to experience you already have, so you may be able to build on " + (transferable.length === 1 ? "it" : "them") + ".";
   if (notPlaced.length) text += " " + notPlaced.length + (notPlaced.length === 1 ? " is" : " are") + " in your profile but couldn’t be placed, so add " + (notPlaced.length === 1 ? "it" : "them") + " by hand.";
   summary.textContent = text;
 
-  for (const item of notPlaced.concat(notInProfile)) {
+  for (const item of notPlaced.concat(notInProfile, transferable)) {
     const li = document.createElement("li");
     const label = item.term + (item.importance && item.importance !== "mentioned" ? " (" + item.importance + ")" : "");
-    li.textContent = label + (item.status === "not_placed" ? " — in your profile, but couldn’t be placed on the resume " : " ");
+    li.textContent = label + (item.status === "not_placed" ? " — in your profile, but couldn’t be placed on the resume " : item.status === "transferable" ? " — your experience may be relevant" + (item.evidence ? ": " + item.evidence : "") : " ");
     if (item.status === "not_in_profile") {
       const btn = document.createElement("button");
       btn.type = "button";

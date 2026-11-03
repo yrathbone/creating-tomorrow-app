@@ -163,3 +163,147 @@ def drop_unsourced_bullets(resume: dict, sources: list[dict]) -> tuple[dict, lis
             job = {**job, "bullets": []}
         experience.append(job)
     return {**resume, "experience": experience}, emptied
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Evidence, denials and unsupported claims (Finding 2, Phase 02 Checkpoint B).
+#
+# Principle: discover the value, preserve the truth, communicate the potential. A posting is a source of RELEVANCE, never of
+# facts about the candidate. These checks are plain code (no AI). They trace a claim back to the candidate's own evidence,
+# they respect an explicit "No" with its SCOPE (a denied specialised activity is not a denied adjacent one), and they never
+# treat a skipped question as a "Yes". Their limits are listed in docs/TRUTHFULNESS.md.
+# ---------------------------------------------------------------------------------------------------------------------
+
+_SCOPE_CUT = re.compile(r"\b(?:beyond|other than|as opposed to|rather than|instead of|besides|outside of|outside)\b[^.;?)]*", re.I)
+
+# words that carry no skill or activity on their own (question wording, glue words, generic filler)
+_STOP_WORDS = set("""a an and are as at be been but by can could did do does for from had has have how i if in into is it its may me my
+of on or our so than that the their them then there these they this those to up us was we were what when where which who why will
+with would you your yours ever any some more most other such not no yes also very just like own about over under per via
+skill skills experience experienced ability able knowledge work working worked use used using familiar strong good basic simple
+including include includes related relevant role roles job jobs position years year day days time times level levels type types
+required preferred mentioned partial missing
+directly previously currently daily weekly regularly often helped help provide provided provides provide supported support
+""".split())
+
+
+def _root(word: str) -> str:
+    """A light stem: 'handled', 'handling' and 'handle' share one root; 'customers' and 'customer' too. Deliberately simple."""
+    w = word.lower()
+    for suffix in ("ing", "ed", "es", "s"):
+        if w.endswith(suffix) and len(w) - len(suffix) >= 4:
+            w = w[: -len(suffix)]
+            break
+    if w.endswith("e") and len(w) > 4:
+        w = w[:-1]
+    return w
+
+
+_STOP_ROOTS = {_root(w) for w in _STOP_WORDS} | _STOP_WORDS
+
+
+def distinct_roots(text: str) -> set[str]:
+    """The roots of the words in a text that say something (glue words, filler and one-letter tokens are dropped)."""
+    return {r for r in (_root(w) for w in _TOKEN.findall((text or "").lower())) if len(r) > 1 and r not in _STOP_ROOTS}
+
+
+def _scope_text(text: str) -> str:
+    """The part of a question the candidate was actually answering: what follows 'beyond ...', 'as opposed to ...' is the
+    contrast, not the subject ('video editing (beyond simple screen recording)' does not deny screen recording)."""
+    return _SCOPE_CUT.sub(" ", text or "")
+
+
+def denials_from_history(qa_history) -> list[dict]:
+    """The gap-interview questions the candidate explicitly answered NO. A skipped or unanswered question is not here and is
+    never read as a yes either; detail (free text) answers are not denials."""
+    denials = []
+    for entry in qa_history or []:
+        if not isinstance(entry, dict) or str(entry.get("type", "yes_no")) == "detail":
+            continue
+        if str(entry.get("answer", "")).strip().lower() != "no":
+            continue
+        question = str(entry.get("question", "")).strip()
+        if question:
+            denials.append({"question": question, "category": str(entry.get("category", "") or "")})
+    return denials
+
+
+def denied_by(term: str, denials: list[dict]) -> dict | None:
+    """The denial that covers a posting term, or None. A term is covered only when EVERY distinctive word of a multi-word term
+    sits inside what the candidate said no to, so 'video editing' is covered by a no to 'video editing software' while
+    'collaboration' or 'classroom collaboration' is not. One-word terms are never covered here (the planner judges those)."""
+    roots = distinct_roots(term)
+    if len(roots) < 2:
+        return None
+    for denial in denials or []:
+        # The gap the question was about ("Video editing (preferred)", "ADDIE or SAM") is the subject of the denial. Only when
+        # a question carries no gap name do its own words stand in for it. Matching every word of the whole question would make
+        # a no to "ADDIE or SAM instructional design models" wrongly deny the general skill "instructional design".
+        subject = distinct_roots(_scope_text(denial.get("category", "")))
+        if not subject:
+            subject = distinct_roots(_scope_text(denial["question"]))
+        if roots <= subject:
+            return denial
+    return None
+
+
+def find_conflicts(denials: list[dict], confirmed_facts: list) -> list[dict]:
+    """A confirmed fact that says again what the candidate denied (three or more distinctive words in common with the denied
+    question). Neither statement is silently overridden: the conflict is reported so the candidate can clarify."""
+    conflicts = []
+    for fact in confirmed_facts or []:
+        text = str((fact or {}).get("bullet_text", ""))
+        fact_roots = distinct_roots(text)
+        for denial in denials or []:
+            shared = fact_roots & distinct_roots(_scope_text(denial["question"]))
+            if len(shared) >= 3:
+                conflicts.append({"fact": text, "denied_question": denial["question"], "shared": sorted(shared)})
+                break
+    return conflicts
+
+
+def _claim_units(resume: dict) -> list[tuple[str, str]]:
+    units = [("summary", s["text"]) for s in prose_units(resume) if s["kind"] == "summary"]
+    if resume.get("headline"):
+        units.append(("headline", resume["headline"]))
+    for job in resume.get("experience") or []:
+        for bullet in job.get("bullets") or []:
+            units.append((f"bullet under \"{job.get('title', '')}\"", str(bullet)))
+    return units
+
+
+def _stems(text: str) -> set[str]:
+    """Distinctive words as five-letter stems, so 'regulated'/'regulatory' and 'account'/'accounts' compare equal."""
+    return {r[:5] for r in distinct_roots(text)}
+
+
+def sentence_claims_term(sentence: str, term: str, evidence_stems: set[str]) -> bool:
+    """Does this sentence state the unsupported term? Two ways, both plain code:
+    (1) the term's own words appear in a row (the exact phrase, case, plural and hyphen insensitive); or
+    (2) a PARAPHRASE: the sentence uses most of the term's distinctive words (at least two, and two thirds of them) and at least one
+        of those shared words is NOT in the candidate's own evidence. A sentence made of the candidate's own words is never flagged
+        by (2), so genuine adjacent experience that happens to share a word with a denied term is left alone."""
+    words = [_root(w) for w in _TOKEN.findall(term.lower())]
+    normalized = " ".join(_root(w) for w in _TOKEN.findall(sentence.lower()))
+    if len(distinct_roots(term)) >= 2 and f" {' '.join(words)} " in f" {normalized} ":
+        return True
+    term_stems = _stems(term)
+    if len(term_stems) < 2:
+        return False
+    overlap = term_stems & _stems(sentence)
+    need = max(2, -(-2 * len(term_stems) // 3))
+    return len(overlap) >= need and bool(overlap - evidence_stems)
+
+
+def find_claim_issues(resume: dict, unsupported_terms: list[str], evidence_text: str = "") -> list[dict]:
+    """Every sentence that states a qualification the candidate's evidence does not establish: a posting term the planner marked
+    'none' (or the candidate denied), written out or paraphrased, in the summary, headline or a bullet. Only multi-word terms are
+    checked, so a legitimate common word is never flagged. Returns [{where, problem, text}] in the shape find_issues uses."""
+    issues = []
+    evidence_stems = _stems(evidence_text)
+    for where, text in _claim_units(resume):
+        for term in unsupported_terms:
+            if sentence_claims_term(text, term, evidence_stems):
+                issues.append({"where": where, "problem": f"unsupported claim: \"{term}\" is not established by the candidate's evidence; remove it, or say only what the evidence says (do not swap in another unsupported claim)", "text": text})
+                break
+    return issues
