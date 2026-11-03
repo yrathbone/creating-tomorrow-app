@@ -5,9 +5,6 @@
    Guide popup, Learn opens the article popup), short phrases, and an image box on every guide and tool card.
    The royal blue and amber gold apply to the homepage only (its header and footer included). The inner pages keep their current blue. */
 
-@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
-@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); }
-@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/inter-latin-700-normal.woff2") format("woff2"); }
 
 /* the shared header and footer read these tokens, so the homepage's header, footer strip and gold button follow the new colours */
 body.home-v7.chrome-v6:not(.dashboard-v4) {
