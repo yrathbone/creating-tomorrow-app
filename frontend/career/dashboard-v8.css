@@ -98,3 +98,7 @@ body.chrome-v6.dashboard-v4 .nav-wordmark, body.chrome-v6.dashboard-v4 .nav-word
 /* ---------- download explanation: a small title and two short lines ---------- */
 body.chrome-v6.dashboard-v4 .export-hint p { margin: 0 0 0.15rem; }
 body.chrome-v6.dashboard-v4 .export-hint p.export-hint-title { color: var(--v4-ink); }
+
+/* ---------- "Your next step": a calm white band (no yellow wash or gold edge) with a smaller supporting sentence ---------- */
+body.chrome-v6.dashboard-v4 .next-step { background: #ffffff; background-image: none; box-shadow: none; border-bottom: 1px solid var(--v4-line-soft); }
+body.chrome-v6.dashboard-v4 .next-step p#next-step-text { font-size: 0.84rem; line-height: 1.4; }

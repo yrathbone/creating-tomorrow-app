@@ -92,3 +92,21 @@ test("the data backup line makes no restore or transfer promise the site cannot 
   const line = html.match(/Data Backup: [^<]*/)[0];
   assert.ok(!/restor|transfer|import|complete/i.test(line), line);
 });
+
+test("the next-step band is plain white with a smaller sentence, no yellow wash or gold edge", () => {
+  const rule = css.match(/body\.chrome-v6\.dashboard-v4 \.next-step \{[^}]*\}/)[0];
+  assert.match(rule, /background: #ffffff/);
+  assert.match(rule, /box-shadow: none/);
+  assert.ok(!/gold|ffb000|fdf8ea/i.test(rule), "no yellow in the band rule");
+  assert.match(css, /\.next-step p#next-step-text \{ font-size: 0\.84rem;/);
+});
+
+test("every next-step sentence is one short line (60 characters or fewer)", () => {
+  const src = read("career", "js", "nextStep.js");
+  const sentences = src.split("\n")
+    .map((line) => line.match(/^\s*text: (.*?),\s*$/))
+    .filter(Boolean)
+    .map((m) => new Function("STALE_APPLICATION_DAYS", "return " + m[1])(14));
+  assert.ok(sentences.length >= 10, "found the sentences: " + sentences.length);
+  for (const text of sentences) assert.ok(text.length <= 60, text.length + " characters: " + text);
+});
