@@ -102,3 +102,14 @@ class ReadableCopyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NoRestorePromise(unittest.TestCase):
+    """The readable copy must not imply a complete export, or that anything can be restored or imported (there is no such feature)."""
+
+    def test_the_closing_line_names_the_data_backup_without_promising_a_restore_or_a_complete_copy(self):
+        paragraphs, cells = text_of(build_profile_copy_bytes(SAMPLE, "Yovana Rathbone", "Chicago, IL | 555-0100 | me@example.com"))
+        text = "\n".join(paragraphs + cells)
+        self.assertIn("the data backup (.json)", text)
+        for banned in ("restored", "restore", "moved", "complete copy", "full data backup", "import"):
+            self.assertNotIn(banned, text.lower(), banned)
