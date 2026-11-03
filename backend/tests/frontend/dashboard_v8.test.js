@@ -59,3 +59,9 @@ test("the older dashboard and public-page stylesheets are not touched", () => {
   assert.ok(!/Inter/.test(read("career", "dashboard-v4.css")));
   assert.ok(read("chrome-v6.css").includes(":not(.dashboard-v4)"));
 });
+
+test("Sign Out is a gold button with navy text, never white on white", () => {
+  assert.match(css, /\.nav-links a\.nav-signout \{ background: var\(--c6-gold\); border-color: var\(--c6-gold\); color: #071c42;/);
+  assert.match(css, /\.nav-links a\.nav-signout:hover \{ background: var\(--c6-gold-hover\)/);
+  assert.ok(!/nav-signout[^}]*background: #ffffff/.test(css), "no white background on Sign Out");
+});
