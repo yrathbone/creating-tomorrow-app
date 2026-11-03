@@ -98,7 +98,7 @@ test("every footer says Privacy & Terms (two links, one crimson unit), and the f
 
 test("the chrome rules hold their contrast and layout: cobalt header, gold button, crimson links, one-line centred sentence, brand bottom right", () => {
   const css = read("chrome-v6.css");
-  assert.match(css, /--c6-blue: #0052f5;/);
+  assert.match(css, /--c6-blue: #003395;/);
   assert.match(css, /\.site-nav \{ background: var\(--c6-blue\); border-bottom: 0; \}/);
   assert.match(css, /\.nav-links a\.nav-account \{ background: var\(--c6-gold\); border-color: var\(--c6-gold\); color: #071c42; \}/);
   assert.match(css, /grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
@@ -110,11 +110,11 @@ test("the chrome rules hold their contrast and layout: cobalt header, gold butto
   const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
   const lum = (h) => 0.2126 * lin(hex(h.slice(0, 2))) + 0.7152 * lin(hex(h.slice(2, 4))) + 0.0722 * lin(hex(h.slice(4, 6)));
   const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
-  assert.ok(ratio("FFFFFF", "0052F5") >= 4.5, "white links on the cobalt header");
-  assert.ok(ratio("FFB300", "0052F5") >= 3, "the gold wordmark on cobalt");
-  assert.ok(ratio("071C42", "FFB300") >= 4.5, "navy text on the gold Sign In button");
+  assert.ok(ratio("FFFFFF", "003395") >= 4.5, "white links on the cobalt header");
+  assert.ok(ratio("FFB000", "003395") >= 3, "the gold wordmark on cobalt");
+  assert.ok(ratio("071C42", "FFB000") >= 4.5, "navy text on the gold Sign In button");
   assert.ok(ratio("C8102E", "FFFFFF") >= 4.5, "crimson Privacy & Terms on white");
-  assert.ok(ratio("0052F5", "FFFFFF") >= 4.5, "the cobalt page titles on white");
+  assert.ok(ratio("003395", "FFFFFF") >= 4.5, "the cobalt page titles on white");
 });
 
 test("only the inner pages are whitened: the homepage keeps its locked grey and white bands", () => {

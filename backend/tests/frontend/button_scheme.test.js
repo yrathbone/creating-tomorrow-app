@@ -92,5 +92,5 @@ test("every role colour holds its contrast with white text, and the hover is dar
 
 test("the scheme is written down once, with every role", () => {
   const doc = fs.readFileSync(path.join(FRONTEND, "..", "docs", "BUTTON-SCHEME.md"), "utf8");
-  for (const word of ["Blue", "Gold", "Green", "Crimson", "Outline", "Delete", "#1F7A3F", "#C8102E", "#FFB300"]) assert.ok(doc.includes(word), "scheme document mentions " + word);
+  for (const word of ["Blue", "Gold", "Green", "Crimson", "Outline", "Delete", "#1F7A3F", "#C8102E", "#FFB000"]) assert.ok(doc.includes(word), "scheme document mentions " + word);
 });

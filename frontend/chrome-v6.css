@@ -3,30 +3,30 @@
    signed-in dashboard (body.dashboard-v4), which keeps its own look.
 
    What it does:
-   - a sharper cobalt (#0052F5) header with white links, a white badge behind the logo mark, a gold "Sign In" button (navy text);
+   - a deep royal blue (#003395) header with white links, a white badge behind the logo mark, a gold "Sign In" button (navy text);
    - a footer with the page links top left, Privacy & Terms (crimson) top right, the privacy sentence centred in black, the copyright at
      the bottom left and the brand at the bottom right (diagonally opposite the header logo), and a cobalt strip along the very bottom;
    - the footer wordmark: "Creating" in the page blue, "Tomorrow" in a gold 10% darker than the header gold so it holds up on white;
    - on the inner pages (body.pages-v4): a white page (the pale grey token becomes white), borderless tool and guide cards, cobalt page titles.
    The homepage keeps its locked grey-and-white band order; only its header, footer and blue/gold are updated.
-   Contrast: white on #0052F5 is 5.9:1; navy on the gold button is 9:1; crimson #C8102E on white is 5.9:1; the gold on cobalt is 3.3:1 (header)
+   Contrast: white on #003395 is 11:1; navy on the gold button is 9:1; crimson #C8102E on white is 5.9:1; the gold (#FFB000) on royal blue is 6:1 (header)
    and about 2.2:1 on white (footer wordmark), a deliberate brand choice for a large, heavy wordmark. */
 
 /* ---------- tokens (names that cannot clash with any page's own) ---------- */
 body.chrome-v6:not(.dashboard-v4) {
-  --c6-blue: #0052f5;
-  --c6-blue-deep: #0043c9;
-  --c6-gold: #ffb300;
-  --c6-gold-hover: #f2a400;
+  --c6-blue: #003395;
+  --c6-blue-deep: #002a7a;
+  --c6-gold: #ffb000;
+  --c6-gold-hover: #e69f00;
   --c6-gold-footer: #e5a100;
   --c6-crimson: #c8102e;
   --c6-crimson-deep: #8f0b22;
   /* the sharper blue and gold also replace the pages' own cobalt and gold tokens */
-  --blue: #0052f5;
-  --blue-deep: #0043c9;
-  --cobalt: #0052f5;
-  --gold: #ffb300;
-  --gold-hover: #f2a400;
+  --blue: #003395;
+  --blue-deep: #002a7a;
+  --cobalt: #003395;
+  --gold: #ffb000;
+  --gold-hover: #e69f00;
 }
 
 /* ---------- header ---------- */
