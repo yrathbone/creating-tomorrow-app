@@ -21,22 +21,22 @@ function chooseNextStep(f) {
 
   if (!f.roles) {
     return { key: "add-role", title: "Add your most recent role",
-      text: "Everything here is built from your real experience. Upload your resume and we’ll pull your roles in for you to check, or add one by hand.",
+      text: "Upload your resume, or add a role by hand.",
       button: "Upload my resume", targets: ["#upload-resume-btn"] };
   }
   if (!f.skills) {
     return { key: "add-skills", title: "Add your skills",
-      text: "Skills are the keywords employers look for. Add the ones you really have, or run a skill scan to find ones hiding in your roles.",
+      text: "Add the keywords employers look for, or run a skill scan.",
       button: "Add my skills", targets: tile("skills") };
   }
   if (!f.hasHeader) {
     return { key: "add-header", title: "Add your name and contact line",
-      text: "Saved once, then filled in for you on every resume you build.",
+      text: "Saved once, filled in on every resume.",
       button: "Add them now", targets: ["#edit-profile-btn"] };
   }
   if (!f.education) {
     return { key: "add-education", title: "Add your education",
-      text: "Schools, degrees and training, even if unfinished. Most resumes need this section.",
+      text: "Schools, degrees and training, even if unfinished.",
       button: "Add my education", targets: tile("education") };
   }
 
@@ -45,19 +45,19 @@ function chooseNextStep(f) {
   const tailored = resumes.filter((r) => r.scan_history_id);
   if (!resumes.length) {
     return { key: "first-resume", title: "Build your first resume",
-      text: "Your Career Profile is ready. Turn it into a polished, honest resume in a couple of minutes.",
+      text: "Your profile is ready. Turn it into a polished resume.",
       button: "Build a general resume", targets: ["#general-resume-hero-btn"] };
   }
   if (!scans.length) {
     return { key: "compare-job", title: "Compare a job you’re interested in",
-      text: "Paste a job posting and we’ll show how your real experience lines up, and what you may be leaving out.",
+      text: "Paste a posting to see how your experience lines up.",
       button: "Add a Job", targets: ["#job-target-add-btn"] };
   }
   const built = new Set(tailored.map((r) => r.scan_history_id));
   const unfinished = scans.find((s) => !built.has(s.id));
   if (unfinished) {
     return { key: "finish-resume", title: unfinished.job_title ? "Finish your resume for " + unfinished.job_title : "Finish your tailored resume",
-      text: "You compared this job but haven’t built a resume for it yet. Pick up where you left off.",
+      text: "Pick up where you left off.",
       button: "Continue", targets: ["#job-resume-last-btn"] };
   }
 
@@ -71,24 +71,24 @@ function chooseNextStep(f) {
     const interviews = apps.filter((a) => a.status === "interview");
     if (interviews.length) {
       return { key: "prepare-interview", title: interviews.length === 1 ? "You have an interview: get ready" : "You have " + interviews.length + " interviews: get ready",
-        text: "Practice the questions you’re likely to hear, built from your own experience.",
+        text: "Practice questions built from your own experience.",
         button: "Prepare for it", href: "../prepare.html" };
     }
     const waiting = apps.filter((a) => a.status === "applied" && days(a) !== null && days(a) >= STALE_APPLICATION_DAYS);
     if (waiting.length) {
       return { key: "check-applications", title: waiting.length === 1 ? "Check on an application" : "Check on " + waiting.length + " applications",
-        text: "It’s been " + STALE_APPLICATION_DAYS + "+ days. Update the status, or follow up if you haven’t heard back.",
+        text: "It’s been " + STALE_APPLICATION_DAYS + "+ days. Update the status or follow up.",
         button: "Open my applications", targets: tile("applications") };
     }
     if (!apps.length) {
       return { key: "track-application", title: "Applied for a job? Track it",
-        text: "Add it to your tracker so you can see where every application stands and when to follow up.",
+        text: "Add it to your tracker to see where it stands.",
         button: "Open my applications", targets: tile("applications") };
     }
   }
 
   return { key: "keep-going", title: "Compare another job",
-    text: "Each job you compare shows more of your real experience to add to your profile.",
+    text: "Each comparison shows more experience to add.",
     button: "Add a Job", targets: ["#job-target-add-btn"] };
 }
 
