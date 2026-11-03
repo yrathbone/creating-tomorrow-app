@@ -8,7 +8,19 @@
 
 const STALE_APPLICATION_DAYS = 14;
 
-// Pure: facts -> { key, title, text, button, targets | href } or null (say nothing rather than guess).
+// The saved job comparison the Discover Your Fit card can reopen (the same rule as restoreCurrentJobTarget in jobMatch.js), or null.
+function savedComparison(f) {
+  const latest = (f.scans || []).find((s) => s.scan_type === "job_comparison" && !(s.result_data && s.result_data.skipped));
+  return latest && latest.result_data && latest.result_data.match_report ? latest : null;
+}
+
+// A second button for the two application steps: reopen the saved comparison (it presses the card's own Continue comparison button).
+function continueButton(f) {
+  const latest = savedComparison(f);
+  return latest ? { button: "Continue comparison", targets: ["#job-resume-last-btn"], jobTitle: latest.job_title || "" } : null;
+}
+
+// Pure: facts -> { key, title, text, button, targets | href, secondary? } or null (say nothing rather than guess).
 //   f.roles / f.education / f.skills   counts
 //   f.hasHeader                        a saved name or contact line
 //   f.scans                            allScanHistory entries ({ id, scan_type, job_title })
@@ -78,12 +90,12 @@ function chooseNextStep(f) {
     if (waiting.length) {
       return { key: "check-applications", title: waiting.length === 1 ? "Check on an application" : "Check on " + waiting.length + " applications",
         text: "It’s been " + STALE_APPLICATION_DAYS + "+ days. Update the status or follow up.",
-        button: "Open my applications", targets: tile("applications") };
+        button: "Open my applications", targets: tile("applications"), secondary: continueButton(f) };
     }
     if (!apps.length) {
       return { key: "track-application", title: "Track Your Applications",
         text: "",
-        button: "Open my applications", targets: tile("applications") };
+        button: "Open my applications", targets: tile("applications"), secondary: continueButton(f) };
     }
   }
 
@@ -140,6 +152,15 @@ function renderNextStep() {
   textEl.textContent = step.text;
   textEl.hidden = !step.text; // a one-line step (title only) shows no empty sentence
   document.getElementById("next-step-btn").textContent = step.button + (step.href ? " →" : "");
+  const second = document.getElementById("next-step-secondary-btn");
+  if (second) {
+    second.hidden = !step.secondary;
+    if (step.secondary) {
+      second.textContent = step.secondary.button;
+      second.setAttribute("aria-label", step.secondary.jobTitle ? step.secondary.button + ": " + step.secondary.jobTitle : step.secondary.button);
+      second.title = step.secondary.jobTitle;
+    }
+  }
 }
 
 function markNextStepReady() {
@@ -153,4 +174,7 @@ if (typeof updateDashboardSummary === "function") {
 }
 if (typeof document !== "undefined" && document.getElementById("next-step-btn")) {
   document.getElementById("next-step-btn").addEventListener("click", () => { if (nextStepCurrent) runNextStep(nextStepCurrent); });
+}
+if (typeof document !== "undefined" && document.getElementById("next-step-secondary-btn")) {
+  document.getElementById("next-step-secondary-btn").addEventListener("click", () => { if (nextStepCurrent && nextStepCurrent.secondary) runNextStep(nextStepCurrent.secondary); });
 }

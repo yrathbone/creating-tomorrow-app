@@ -133,3 +133,44 @@ test("the dashboard only counts the resume header as set when both the name and 
   assert.strictEqual(hasHeader({ display_name: "Ada", contact_line: null }), false);
   assert.strictEqual(hasHeader({ display_name: null, contact_line: "London" }), false);
 });
+
+// ---- the second button: Continue comparison beside Open my applications ---------------------------------------------------
+const withComparison = (over = {}) => ({
+  scans: [{ id: 7, scan_type: "job_comparison", job_title: "Instructional Designer", result_data: { match_report: { match_level: "High" } } }],
+  resumes: [{ scan_history_id: 7 }],
+  ...over,
+});
+
+test("the tracker and the stale-application steps carry a second button that reopens the saved comparison", () => {
+  for (const f of [done(withComparison({ applications: [] })), done(withComparison({ applications: [{ status: "applied", applied_on: daysAgo(40) }] }))]) {
+    const step = load().chooseNextStep(f);
+    assert.ok(["track-application", "check-applications"].includes(step.key), step.key);
+    assert.strictEqual(step.button, "Open my applications");  // the main button is unchanged
+    assert.strictEqual(step.secondary.button, "Continue comparison");
+    assert.deepStrictEqual([...step.secondary.targets], ["#job-resume-last-btn"]);  // it presses the card's own button: no new flow
+    assert.strictEqual(step.secondary.jobTitle, "Instructional Designer");
+  }
+});
+
+test("there is no second button without a saved comparison, for a skipped one, or one with no report", () => {
+  assert.ok(!load().chooseNextStep(done({ applications: [] })).secondary);  // the default scan has no saved report
+  const skipped = done(withComparison({ applications: [], scans: [{ id: 7, scan_type: "job_comparison", job_title: "A", result_data: { skipped: true, match_report: {} } }] }));
+  assert.ok(!load().chooseNextStep(skipped).secondary);  // a skipped comparison cannot be reopened
+  const noReport = done(withComparison({ applications: [], scans: [{ id: 7, scan_type: "job_comparison", job_title: "A", result_data: {} }] }));
+  assert.ok(!load().chooseNextStep(noReport).secondary);
+});
+
+test("no other step gets a second button", () => {
+  for (const f of [done({ roles: 0 }), done({ skills: 0 }), done({ education: 0 }), done({ resumes: [], scans: [] }),
+    done({ applications: [{ status: "interview", applied_on: daysAgo(1) }] }), done()]) {
+    const step = load().chooseNextStep(withComparison(f));
+    assert.ok(!step.secondary, step.key);
+  }
+});
+
+test("the page has the second button, hidden until a step asks for it, and its click presses the card's button", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "..", "..", "frontend", "career", "login.html"), "utf8");
+  assert.match(html, /<button type="button" id="next-step-secondary-btn" class="next-step-btn next-step-btn-secondary" hidden><\/button>/);
+  assert.match(source, /next-step-secondary-btn"\)\.addEventListener\("click", \(\) => \{ if \(nextStepCurrent && nextStepCurrent\.secondary\) runNextStep\(nextStepCurrent\.secondary\)/);
+  assert.match(source, /second\.setAttribute\("aria-label", step\.secondary\.jobTitle \? step\.secondary\.button \+ ": " \+ step\.secondary\.jobTitle : step\.secondary\.button\)/);
+});
