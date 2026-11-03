@@ -272,16 +272,38 @@ def _claim_units(resume: dict) -> list[tuple[str, str]]:
     return units
 
 
-def find_claim_issues(resume: dict, unsupported_terms: list[str]) -> list[dict]:
+def _stems(text: str) -> set[str]:
+    """Distinctive words as five-letter stems, so 'regulated'/'regulatory' and 'account'/'accounts' compare equal."""
+    return {r[:5] for r in distinct_roots(text)}
+
+
+def sentence_claims_term(sentence: str, term: str, evidence_stems: set[str]) -> bool:
+    """Does this sentence state the unsupported term? Two ways, both plain code:
+    (1) the term's own words appear in a row (the exact phrase, case, plural and hyphen insensitive); or
+    (2) a PARAPHRASE: the sentence uses most of the term's distinctive words (at least two, and two thirds of them) and at least one
+        of those shared words is NOT in the candidate's own evidence. A sentence made of the candidate's own words is never flagged
+        by (2), so genuine adjacent experience that happens to share a word with a denied term is left alone."""
+    words = [_root(w) for w in _TOKEN.findall(term.lower())]
+    normalized = " ".join(_root(w) for w in _TOKEN.findall(sentence.lower()))
+    if len(distinct_roots(term)) >= 2 and f" {' '.join(words)} " in f" {normalized} ":
+        return True
+    term_stems = _stems(term)
+    if len(term_stems) < 2:
+        return False
+    overlap = term_stems & _stems(sentence)
+    need = max(2, -(-2 * len(term_stems) // 3))
+    return len(overlap) >= need and bool(overlap - evidence_stems)
+
+
+def find_claim_issues(resume: dict, unsupported_terms: list[str], evidence_text: str = "") -> list[dict]:
     """Every sentence that states a qualification the candidate's evidence does not establish: a posting term the planner marked
-    'none' (or the candidate denied) appearing in the summary, headline or a bullet. Only multi-word terms are checked, so a
-    legitimate common word is never flagged. Returns [{where, problem, text}] in the shape find_issues uses."""
+    'none' (or the candidate denied), written out or paraphrased, in the summary, headline or a bullet. Only multi-word terms are
+    checked, so a legitimate common word is never flagged. Returns [{where, problem, text}] in the shape find_issues uses."""
     issues = []
+    evidence_stems = _stems(evidence_text)
     for where, text in _claim_units(resume):
-        normalized = " ".join(_root(w) for w in _TOKEN.findall(text.lower()))
         for term in unsupported_terms:
-            words = [_root(w) for w in _TOKEN.findall(term.lower())]
-            if len(distinct_roots(term)) >= 2 and f" {' '.join(words)} " in f" {normalized} ":
+            if sentence_claims_term(text, term, evidence_stems):
                 issues.append({"where": where, "problem": f"unsupported claim: \"{term}\" is not established by the candidate's evidence; remove it, or say only what the evidence says (do not swap in another unsupported claim)", "text": text})
                 break
     return issues

@@ -17,7 +17,8 @@ import abuse_guard
 import resume_builder as rb
 from career import term_pipeline
 from tests.test_finding2_truthfulness import (
-    DANIEL_AFTER_EDIT, DANIEL_BEFORE, DANIEL_FACT, DANIEL_HISTORY, DANIEL_PLAN, DANIEL_PROFILE, SEARS_GOOD, prose, run, skills_text,
+    DANIEL_AFTER_EDIT, DANIEL_BEFORE, DANIEL_FACT, DANIEL_HISTORY, DANIEL_PLAN, DANIEL_PROFILE, SEARS_BAD, SEARS_GOOD, SEARS_PLAN,
+    SEARS_POSTING, SEARS_PROFILE, prose, run, skills_text,
 )
 from tests.test_ownership import OwnershipTestCase
 
@@ -36,12 +37,13 @@ class StrikeUnsupportedClaims(unittest.TestCase):
     def test_a_bullet_with_nothing_left_is_dropped_and_nothing_is_substituted(self):
         out, struck = term_pipeline.strike_unsupported_claims(copy.deepcopy(DANIEL_BEFORE), UNSUPPORTED)
         bullets = out["experience"][0]["bullets"]
-        self.assertEqual(len(bullets), 4)  # the e-learning bullet is gone entirely (both its sentences were unsupported), not rewritten
+        self.assertEqual(len(bullets), 3)  # the e-learning bullet and the "subject matter resource" bullet are gone, not rewritten
         self.assertNotIn("e-learning modules", " ".join(bullets).lower())
         self.assertNotIn("video editing", " ".join(bullets).lower())
-        self.assertEqual(len(struck), 5)  # three summary sentences and the two sentences of that bullet
-        # known limit: "subject matter resource" is not the planned term "subject matter experts", so that bullet is not struck
-        self.assertIn("subject matter resource", " ".join(bullets).lower())
+        self.assertNotIn("subject matter", " ".join(bullets).lower())  # a paraphrase of "subject matter experts" is caught too
+        self.assertEqual(len(struck), 6)  # three summary sentences, two e-learning sentences and the "subject matter resource" sentence
+        # known cost: that last sentence also held the true "mentored two student teachers", which goes with it
+        self.assertNotIn("mentored two student teachers", " ".join(bullets).lower())
 
     def test_summary_sentences_and_headline_phrases_are_struck_too(self):
         out, _ = term_pipeline.strike_unsupported_claims(copy.deepcopy(DANIEL_BEFORE), UNSUPPORTED)
@@ -81,11 +83,42 @@ class StrikeUnsupportedClaims(unittest.TestCase):
         self.assertIn("60 short lesson videos", prose(result["resume_data"]))
         self.assertIn("mentored two student teachers", prose(result["resume_data"]))
 
-    def test_known_limit_a_paraphrase_that_uses_no_planned_term_is_not_caught(self):
+    def test_a_paraphrase_that_shares_the_denied_terms_words_is_caught(self):
         sneaky = copy.deepcopy(DANIEL_AFTER_EDIT)
-        sneaky["experience"][0]["bullets"][3] = "Edited the lesson recordings with editing software to polish each video."
+        sneaky["experience"][0]["bullets"][3] = "Edited the lesson videos with editing software to polish each recording."
         result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, sneaky, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
-        self.assertIn("editing software", prose(result["resume_data"]))  # a documented false negative (docs/TRUTHFULNESS.md)
+        self.assertNotIn("editing software", prose(result["resume_data"]))
+        self.assertEqual(len(result["claims_struck"]), 1)
+
+    def test_known_limit_a_paraphrase_that_shares_too_few_words_is_not_caught(self):
+        sneaky = copy.deepcopy(DANIEL_AFTER_EDIT)
+        sneaky["experience"][0]["bullets"][3] = "Polished each lesson recording before sharing it with students."
+        result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, sneaky, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
+        self.assertIn("polished each lesson recording", prose(result["resume_data"]))  # a documented false negative (docs/TRUTHFULNESS.md)
+
+    def test_sears_invented_banking_duties_are_struck_even_when_paraphrased_and_the_edit_pass_is_down(self):
+        result, _ = run(SEARS_PROFILE, SEARS_POSTING, SEARS_PLAN, SEARS_BAD, fail_edit=True)
+        text = prose(result["resume_data"])
+        for gone in ("managed customer bank accounts", "regulated banking", "financial compliance", "reconciled the cash drawer", "banking professional"):
+            self.assertNotIn(gone, text, gone)
+        self.assertEqual(len(result["claims_struck"]), 3)
+        self.assertEqual(result["claim_review"], [])
+        self.assertIn("customer service", skills_text(result["resume_data"]))  # the genuine transferable skills stay
+
+    def test_sears_genuine_wording_is_not_struck(self):
+        result, _ = run(SEARS_PROFILE, SEARS_POSTING, SEARS_PLAN, copy.deepcopy(SEARS_GOOD), fail_edit=True)
+        self.assertEqual(result["claims_struck"], [])
+        self.assertIn("handled cash payments", prose(result["resume_data"]))
+        self.assertIn("assisted customers", prose(result["resume_data"]))
+
+    def test_a_sentence_made_of_the_candidates_own_words_is_not_struck_by_the_paraphrase_rule(self):
+        profile = SEARS_PROFILE + "  * Balanced the cash drawer at the end of each shift.\n"
+        plan = SEARS_PLAN
+        resume = copy.deepcopy(SEARS_GOOD)
+        resume["experience"][0]["bullets"][0] = "Balanced the cash drawer at the end of each shift."
+        result, _ = run(profile, SEARS_POSTING, plan, resume, fail_edit=True)  # "cash drawer reconciliation" is still unsupported, but these are the candidate's words
+        self.assertEqual(result["claims_struck"], [])
+        self.assertIn("balanced the cash drawer", prose(result["resume_data"]))
 
     def test_an_invented_figure_is_flagged_by_the_existing_quality_check_but_not_struck(self):
         invented = copy.deepcopy(DANIEL_AFTER_EDIT)

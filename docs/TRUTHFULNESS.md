@@ -43,10 +43,13 @@ screen recording is not video editing, mentoring a colleague is not working with
   What was struck is returned as `claims_struck` and logged (`[career.truth] sentences_struck=N`).
 - The findings are saved with the resume as `resume_data.truth_review` (`answer_conflicts`, `skills_removed`, `claims_struck`, `claim_review`)
   and are returned by `POST /api/career/job-build-resume` and `GET /api/career/resume-versions`. The Word file ignores them.
-- Cost: a sentence is struck whole, so a supported fact that shares a sentence with an unsupported claim is lost with it. The edit pass is
-  tried first precisely to avoid this.
+- Cost: a sentence is struck whole, so a supported fact that shares a sentence with an unsupported claim is lost with it (for example
+  "mentored two student teachers as a subject matter resource" loses the true mentoring). The edit pass is tried first precisely to avoid this.
 - Still only flagged, not struck: invented **figures and names** (the existing quality check hands them to the edit pass).
-- Still not caught: a **paraphrase** that uses none of the planned terms (for example "subject matter resource"), and an invented **duty**
+- Paraphrases are caught when a sentence uses most of an unsupported term's distinctive words (at least two, and two thirds) and at least one
+  of them is not in the candidate's own evidence ("Managed customer bank accounts" for "bank account servicing"; "subject matter resource" for
+  "subject matter experts"). A sentence made only of the candidate's own words is never struck by this rule.
+- Still not caught: a paraphrase that shares too few words with the planned term ("Polished each lesson recording"), and an invented **duty**
   that is not a posting term and not a denied topic.
 
 ## Known limits (be honest about these)

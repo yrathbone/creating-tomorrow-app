@@ -455,7 +455,7 @@ def improve_readability(resume_data: dict, evidence_text: str, terms: list[dict]
 
     def check(resume):
         return (resume_quality.find_issues(resume, evidence_text, skill_names, term_in_text, extra)
-                + resume_quality.find_claim_issues(resume, unsupported_terms or []))
+                + resume_quality.find_claim_issues(resume, unsupported_terms or [], evidence_text))
 
     def truth_count(issues):
         return sum(1 for i in issues if "not in the candidate's profile" in i["problem"] or i["problem"].startswith("unsupported claim"))
@@ -575,7 +575,7 @@ def sanitize_skills(resume_data: dict, terms: list[dict], evidence_text: str) ->
     return {**resume_data, "skills": lines}, removed
 
 
-def strike_unsupported_claims(resume_data: dict, unsupported_terms: list[str]) -> tuple[dict, list[dict]]:
+def strike_unsupported_claims(resume_data: dict, unsupported_terms: list[str], evidence_text: str = "") -> tuple[dict, list[dict]]:
     """The last-resort safeguard. After the edit pass (which may be unavailable or may not fix everything), any SENTENCE that still
     states a qualification the evidence does not establish (a posting term marked unsupported, which includes everything the
     candidate denied) is removed by plain code, so a flagged claim can never reach the saved or downloaded resume. Only the
@@ -584,7 +584,7 @@ def strike_unsupported_claims(resume_data: dict, unsupported_terms: list[str]) -
     struck: list[dict] = []
 
     def offends(text: str) -> bool:
-        return bool(resume_quality.find_claim_issues({"summary": text, "headline": "", "experience": []}, unsupported_terms))
+        return bool(resume_quality.find_claim_issues({"summary": text, "headline": "", "experience": []}, unsupported_terms, evidence_text))
 
     def keep(text: str, where: str) -> str:
         sentences = [x for x in resume_quality._SENTENCE_SPLIT.split(text.strip()) if x.strip()]
@@ -672,10 +672,10 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     unsupported = [t["term"] for t in terms if t["support"] == "none" and t.get("kind") != "phrase"]
     resume, quality = improve_readability(resume, evidence_text, terms, unsupported)
     resume, removed = sanitize_skills(resume, terms, evidence_text)
-    resume, struck = strike_unsupported_claims(resume, unsupported)
+    resume, struck = strike_unsupported_claims(resume, unsupported, evidence_text)
     check_placement(resume, terms)
     # what the checks could not fix is reported, never hidden
-    result["claim_review"] = resume_quality.find_claim_issues(resume, unsupported)
+    result["claim_review"] = resume_quality.find_claim_issues(resume, unsupported, evidence_text)
     result["skills_removed"] = removed
     result["claims_struck"] = struck
     if removed or struck or result["claim_review"] or conflicts:
