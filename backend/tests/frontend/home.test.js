@@ -142,12 +142,12 @@ test("the hero: new headline, new line, Free Tools opens the Guide popup, Learni
   assert.match(css7, /\.h7-hero-photo::after \{[^}]*background: var\(--amber\)/);
 });
 
-test("the sizes the founder chose: headline 36px, line 19px, buttons 14px, no-cost line 11px, quote 9px, section headings 19px regular, titles 14px, descriptions 11px", () => {
+test("the sizes the founder chose: headline 36px, line 19px, buttons 14px, no-cost line 11px, quote 11px, section headings 19px regular, titles 14px, descriptions 11px", () => {
   assert.match(css7, /\.h7-hero h1 \{[^}]*font-size: clamp\(1\.9rem, 1\.3rem \+ 1\.6vw, 2\.25rem\)/); // 36px at desktop width
   assert.match(css7, /\.h7-lead \{[^}]*font-size: 1\.1875rem/);
   assert.match(css7, /\.h7-btn \{[^}]*font-size: 0\.875rem/);
   assert.match(css7, /\.h7-free \{[^}]*font-size: 0\.6875rem/);
-  assert.match(css7, /\.h7-statement p \{[^}]*font-size: 0\.5625rem/);
+  assert.match(css7, /\.h7-statement p \{[^}]*font-size: 0\.6875rem/);
   assert.match(css7, /\.h7-h2 \{[^}]*font-size: 1\.1875rem; font-weight: 400/);
   assert.match(css7, /\.h7-title \{[^}]*font-size: 0\.875rem/);
   assert.match(css7, /\.h7-text \{[^}]*font-size: 0\.6875rem/);
