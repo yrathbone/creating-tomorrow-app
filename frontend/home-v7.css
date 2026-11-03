@@ -1,8 +1,8 @@
 /* Creating Tomorrow homepage, new look ("v7"). Loaded only by index.html, after shared style.css, home-v5.css and chrome-v6.css.
    Everything is scoped to body.home-v7 or an h7- class, so no other page (and not the not-found page, which still uses home-v5.css) is affected.
 
-   What this look is: Inter type, a darker royal blue (#003395) and an amber gold (#ffb000), a white page, two hero buttons (Free Tools opens the
-   Guide popup, Learning opens the article popup), short phrases, and an image box on every guide and tool card.
+   What this look is: Inter type, a darker royal blue (#003395) and an amber gold (#ffb000), a white page, two hero buttons (Career Tools opens the
+   Guide popup, Learn opens the article popup), short phrases, and an image box on every guide and tool card.
    The royal blue and amber gold apply to the homepage only (its header and footer included). The inner pages keep their current blue. */
 
 @font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
@@ -64,6 +64,8 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 .h7-free { display: flex; align-items: center; gap: 0.6rem; margin: 1.25rem 0 0; font-size: 0.6875rem; font-weight: 500; color: var(--ink); }
 .h7-free svg { width: 24px; height: 24px; flex: none; }
 .h7-free circle { fill: var(--green); }
+.h7-trust { display: flex; align-items: center; gap: 0.6rem; margin: 0.75rem 0 0; font-size: 0.6875rem; color: var(--muted); }
+.h7-trust svg { width: 24px; height: 24px; flex: none; padding: 4px; fill: none; stroke: var(--royal); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .h7-free path { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 
 /* the photo sits between a royal block (top left) and an amber block (bottom right), both flat */
@@ -80,12 +82,19 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 .h7-statement p { margin: 0; text-align: center; font-size: 0.6875rem; font-style: italic; line-height: 1.4; color: var(--muted); }
 .h7-statement figcaption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* ---------- hover and keyboard focus: a soft shadow; the small lift only when the visitor has not asked for less motion ---------- */
+.h7-guide:hover .h7-img, .h7-guide:focus-visible .h7-img, .h7-tool:hover .h7-img, .h7-tool:focus-visible .h7-img { box-shadow: 0 10px 20px rgba(0, 51, 149, 0.18); }
+@media (prefers-reduced-motion: no-preference) {
+  .h7-guide .h7-img, .h7-tool .h7-img { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+  .h7-guide:hover .h7-img, .h7-guide:focus-visible .h7-img, .h7-tool:hover .h7-img, .h7-tool:focus-visible .h7-img { transform: translateY(-3px); }
+}
+
 /* ---------- section headings ---------- */
 .h7-h2 { margin: 0; font-family: inherit; font-size: 1.1875rem; font-weight: 400; line-height: 1.3; color: var(--royal); }
 .h7-sub { margin: 0.4rem 0 1.75rem; font-size: 0.6875rem; color: var(--muted); }
 
 /* ---------- cards ---------- */
-.h7-img { display: block; height: 5.25rem; border-radius: 8px; background: var(--tint-blue); }
+.h7-img { display: block; aspect-ratio: 360 / 160; border-radius: 8px; background: var(--tint-blue); overflow: hidden; }
 .h7-img img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 .h7-img-gold { background: var(--tint-gold); }
 .h7-img-green { background: var(--tint-green); }
@@ -97,22 +106,25 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 .h7-guides { display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 2.2rem; }
 .h7-guide { position: relative; display: flex; flex-direction: column; text-align: left; text-decoration: none; color: inherit; }
 .h7-guide + .h7-guide::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1.1rem; width: 1.5px; background: var(--amber); }
-.h7-guide .h7-title { text-transform: uppercase; letter-spacing: 0.03em; }
 .h7-guide .h7-link { margin-top: auto; padding-top: 0.75rem; }
 
 .h7-tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem 1.75rem; }
 .h7-tool { display: flex; flex-direction: column; text-align: left; text-decoration: none; color: inherit; }
-.h7-tool .h7-img { height: 6rem; }
+.h7-tool .h7-img { aspect-ratio: 400 / 150; }
 .h7-tool-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.75rem; }
 .h7-tool-body { min-width: 0; }
 .h7-tool .h7-title { margin: 0 0 0.25rem; }
 
 /* ---------- closing ---------- */
-.h7-closing { padding: 2.5rem 1.5rem; background: var(--royal); color: #ffffff; text-align: center; }
+.h7-closing { position: relative; overflow: hidden; padding: 2.5rem 1.5rem; background: var(--royal); color: #ffffff; text-align: center; }
 .h7-closing h2 { margin: 0; font-family: inherit; font-size: 1.1875rem; font-weight: 500; line-height: 1.3; color: #ffffff; }
 .h7-closing p { margin: 0.5rem 0 1.25rem; font-size: 0.6875rem; color: #ffffff; }
 .h7-closing .h7-btn { display: inline-flex; padding: 0 1.75rem; }
 .h7-closing a:focus-visible { outline-color: #ffffff; }
+.h7-mascot { position: absolute; right: max(1.5rem, calc((100% - 920px) / 2 + 1.5rem)); bottom: 0; width: auto; height: 8.5rem; }
+
+/* ---------- footer: the same narrow column as the page above ---------- */
+body.home-v7 .h5-footer .h5-wrap { max-width: 920px; padding-left: 3rem; padding-right: 3rem; }
 
 /* ---------- popups (the shared Guide popup, plus the Learning popup) ---------- */
 .learn-option { display: flex; flex-direction: column; gap: 0.2rem; text-align: left; text-decoration: none; }
@@ -136,6 +148,8 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
   .h7-wrap { padding-left: 1.1rem; padding-right: 1.1rem; }
   .h7-hero-photo { margin-right: 1rem; }
   .h7-cta { grid-template-columns: 1fr 1fr; }
+  .h7-mascot { display: none; }
+  body.home-v7 .h5-footer .h5-wrap { padding-left: 1.1rem; padding-right: 1.1rem; }
   .h7-guides, .h7-tools { grid-template-columns: 1fr; }
   .h7-closing .h7-btn { display: flex; width: 100%; }
 }

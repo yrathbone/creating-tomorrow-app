@@ -56,5 +56,5 @@ test("the homepage Explore Tools button is the site green, with the hover darker
   assert.match(css, /--green: #1f7a3f;/);
   assert.match(css, /--green-hover: #16602f;/);
   assert.match(css, /\.h7-btn-green \{ background: var\(--green\); color: #ffffff; \}/);
-  assert.match(fs.readFileSync(path.join(FRONTEND, "..", "index.html"), "utf8"), /class="h7-btn h7-btn-green" data-guide-open>Free Tools</);
+  assert.match(fs.readFileSync(path.join(FRONTEND, "..", "index.html"), "utf8"), /class="h7-btn h7-btn-green" data-guide-open>Career Tools</);
 });

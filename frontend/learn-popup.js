@@ -1,4 +1,4 @@
-// Homepage "Learning" button: opens a popup listing every article, so a visitor can pick one.
+// Homepage "Learn" button: opens a popup listing every article, so a visitor can pick one.
 // Same look and behaviour as the Guide Me popup (guide.js). The articles come from learn-data.js (ARTICLES),
 // so a new article shows up here with no change to this file. The button is also a plain link to learn.html,
 // so it still works when scripts do not run.

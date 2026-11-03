@@ -129,12 +129,12 @@ test("Inter is hosted on our own site (no outside fonts) and is the homepage typ
   assert.ok(!/googleapis|gstatic/.test(css7 + html), "no outside fonts");
 });
 
-test("the hero: new headline, new line, Free Tools opens the Guide popup, Learning opens the article popup, and both are real links", () => {
+test("the hero: new headline, new line, Career Tools opens the Guide popup, Learn opens the article popup, and both are real links", () => {
   assert.match(html, /<h1 id="hero-h">Your future is yours to shape\.<\/h1>/);
   assert.match(html, /<p class="h7-lead">Career tools to build your tomorrow<\/p>/);
-  assert.match(html, /<a href="tool\.html" aria-haspopup="dialog" class="h7-btn h7-btn-green" data-guide-open>Free Tools<\/a>/);
-  assert.match(html, /<a href="learn\.html" aria-haspopup="dialog" class="h7-btn h7-btn-gold" data-learn-open>Learning<\/a>/);
-  assert.match(html, /<span>No cost\. No Barriers\.<\/span>/);
+  assert.match(html, /<a href="tool\.html" aria-haspopup="dialog" class="h7-btn h7-btn-green" data-guide-open>Career Tools<\/a>/);
+  assert.match(html, /<a href="learn\.html" aria-haspopup="dialog" class="h7-btn h7-btn-gold" data-learn-open>Learn<\/a>/);
+  assert.match(html, /<span>No cost\. No barriers\.<\/span>/);
   assert.ok(html.indexOf("h7-cta") < html.indexOf("h7-free"), "the line sits after the buttons");
   assert.match(html, /<blockquote><p>“The best way to predict the future is to invent it\.”<\/p><\/blockquote>\s*<figcaption>— Alan Kay<\/figcaption>/);
   assert.ok(!html.includes("how we begin") && !html.includes('id="how"'), "the three-steps section is gone");
@@ -165,9 +165,9 @@ test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles
   const data = read("learn-data.js");
   for (const slug of slugs) assert.ok(data.includes(slug), `article ${slug} is not in learn-data.js`);
   const titles = [...html.matchAll(/class="h7-guide"[\s\S]*?<b class="h7-title">([^<]+)<\/b>\s*<span class="h7-text">([^<]+)<\/span>/g)].map((m) => [m[1], m[2]]);
-  assert.deepStrictEqual(titles, [["ATS Basics", "How Resume Screening Works"], ["Resume Basics", "Create a resume that works"], ["LinkedIn Basics", "Build your professional profile"], ["Interview Basics", "Prepare stories, not scripts"]]);
+  assert.deepStrictEqual(titles, [["ATS Basics", "How resume screening works"], ["Resume Basics", "Create a resume that works"], ["LinkedIn Basics", "Build your professional profile"], ["Interview Basics", "Prepare stories, not scripts"]]);
   assert.strictEqual((html.match(/<span class="h7-link">Read <span aria-hidden="true">→<\/span><\/span>/g) || []).length, 4);
-  assert.match(html, /aria-label="ATS Basics: What Is an ATS, Really\?\. Read the guide\."/); // the full title stays for screen readers
+  assert.match(html, /aria-label="ATS Basics: What Is an ATS, Really\? Read the guide\."/); // the full title stays for screen readers
   assert.match(css7, /\.h7-link \{[^}]*text-decoration: none/, "no underline on the links");
 });
 
@@ -176,14 +176,14 @@ test("six tool cards link to the same places the Guide recommends, with the shor
   const tileHrefs = [...html.matchAll(/<a class="h7-tool" href="([^"]+)"/g)].map((m) => m[1]).sort();
   assert.strictEqual(tileHrefs.length, 6);
   assert.deepStrictEqual(tileHrefs, guideHrefs);
-  const cards = [...html.matchAll(/<b class="h7-title">([^<]+)<\/b><span class="h7-text">([^<]+)<\/span><\/span>\s*<span class="h7-link">Start<\/span>/g)].map((m) => [m[1], m[2]]);
-  assert.deepStrictEqual(cards, [["Create", "Create your first resume."], ["Improve", "Optimize for screening."], ["Match", "Check your fit."], ["Discover", "Find hidden experiences."], ["LinkedIn", "Showcase your strengths."], ["Interview", "Master interview stories."]]);
+  const cards = [...html.matchAll(/<b class="h7-title">([^<]+)<\/b><span class="h7-text">([^<]+)<\/span><\/span>\s*<span class="h7-link">Start <span aria-hidden="true">→<\/span><\/span>/g)].map((m) => [m[1], m[2]]);
+  assert.deepStrictEqual(cards, [["Create", "Create your first resume"], ["Improve", "Optimize for screening"], ["Match", "Check your fit"], ["Discover", "Find hidden experiences"], ["LinkedIn", "Showcase your strengths"], ["Interview", "Master interview stories"]]);
   assert.strictEqual((html.match(/class="h7-img h7-img-(blue|gold|green)" aria-hidden="true"/g) || []).length, 10, "an image box on every guide and tool card");
 });
 
 test("the section headings, ids and closing line", () => {
   assert.match(html, /<h2 id="basics-h" class="h7-h2">Start with the basics\.<\/h2>\s*<p class="h7-sub">Learn how careers, resumes, and interviews work\.<\/p>/);
-  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career tools<\/h2>\s*<p class="h7-sub">Build your tomorrow!<\/p>/);
+  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career tools<\/h2>\s*<p class="h7-sub">Build your tomorrow\.<\/p>/);
   for (const id of ["basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
   assert.match(html, /<h2 id="close-h">We don’t invent your value\. We help you see it\.<\/h2>/);
   assert.match(html, /href="tool\.html" class="h7-btn h7-btn-gold">Get Started Today/);
@@ -227,12 +227,14 @@ test("the new look's colours: royal blue and amber gold, and every text pairing 
   assert.ok(!/gradient\(/.test(css7), "no gradients");
 });
 
-test("responsive: the hero stacks, the cards go 2-up then 1-up, and the new look adds no motion", () => {
+test("responsive: the hero stacks, the cards go 2-up then 1-up, and motion is limited to people who have not asked for less", () => {
   assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-hero \{ grid-template-columns: 1fr/);
   assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-guides \{ grid-template-columns: repeat\(2, 1fr\)/);
   assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-tools \{ grid-template-columns: repeat\(2, 1fr\)/);
   assert.match(css7, /@media \(max-width: 620px\)[\s\S]*\.h7-guides, \.h7-tools \{ grid-template-columns: 1fr/);
-  assert.ok(!/animation|transition/.test(css7), "no animation");
+  assert.ok(!/animation/.test(css7), "no animation");
+  const outsideMotionQuery = css7.replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\r?\n\}/, "");
+  assert.ok(!/transition|(?<!-)transform\s*:/.test(outsideMotionQuery), "movement lives only inside the no-preference media query");
 });
 
 test("accessibility: every tool card has a full spoken name, and the two popup buttons announce that they open a dialog", () => {
@@ -266,4 +268,33 @@ test("the six tool cards carry their own drawings (page being started, before an
     assert.ok(!/<script|onload=|onclick=|href=|<image|<foreignObject|<style/i.test(svg), `${f}.svg is plain shapes only`);
   }
   assert.ok(!/class="h7-img[^"]*" aria-hidden="true"><\/span>/.test(html), "no empty placeholder box is left on the homepage");
+});
+
+test("copy and layout polish: card images keep the drawing's shape at every width, and the page copy is punctuated the same way throughout", () => {
+  assert.match(css7, /\.h7-img \{[^}]*aspect-ratio: 360 \/ 160/);
+  assert.match(css7, /\.h7-tool \.h7-img \{[^}]*aspect-ratio: 400 \/ 150/);
+  assert.ok(!/\.h7-img \{[^}]*height:/.test(css7), "no fixed height that would crop the drawings at tablet width");
+  assert.ok(!/Really\?\./.test(html), "no double punctuation in the spoken names");
+  assert.ok(!html.includes("No Barriers"), "barriers is lower case");
+  assert.match(html, /<p class="guide-modal-descriptor">Pick a guide to begin\.<\/p>/);
+  const texts = [...html.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
+  assert.strictEqual(texts.length, 10);
+  for (const x of texts) assert.ok(!/[.!?]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": starts with a capital, no ending period`);
+});
+
+test("the trust line, the sunflower mascot, hover lift, an aligned footer, normal-case titles and the arrow on Start", () => {
+  assert.match(html, /<p class="h7-trust"><svg[^>]*aria-hidden="true">[\s\S]*?<\/svg><span>Our free tools don’t keep your resume or job posting\.<\/span><\/p>/);
+  assert.ok(html.indexOf("h7-free") < html.indexOf("h7-trust"), "the trust line sits under the no-cost line");
+  assert.match(html, /<img class="h7-mascot" src="mascot-welcome\.png" alt="" width="245" height="291" \/>/);
+  assert.ok(fs.existsSync(path.join(FRONTEND, "mascot-welcome.png")));
+  assert.ok(html.indexOf('class="h7-mascot"') > html.indexOf('class="h7-closing"') && html.indexOf('class="h7-mascot"') < html.indexOf("</main>"), "the mascot stands at the bottom of the closing band");
+  assert.match(css7, /\.h7-mascot \{[^}]*bottom: 0/);
+  assert.match(css7, /@media \(max-width: 620px\)[\s\S]*\.h7-mascot \{ display: none; \}/, "the mascot steps aside on a phone");
+  assert.match(css7, /\.h7-tool:hover \.h7-img[^{]*\{ box-shadow: [^}]*\}/);
+  assert.match(css7, /prefers-reduced-motion: no-preference\) \{[\s\S]*translateY\(-3px\)/);
+  assert.match(css7, /body\.home-v7 \.h5-footer \.h5-wrap \{ max-width: 920px/);
+  assert.ok(!/\.h7-guide \.h7-title \{[^}]*uppercase/.test(css7), "guide titles are normal case like the tool titles");
+  assert.match(html, /og:image:alt" content="Creating Tomorrow: Your future is yours to shape\."/);
+  const og = fs.readFileSync(path.join(FRONTEND, "og-image.png"));
+  assert.strictEqual(og.readUInt32BE(16), 1200); assert.strictEqual(og.readUInt32BE(20), 630); // PNG header: 1200 x 630
 });
