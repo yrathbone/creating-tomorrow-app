@@ -71,7 +71,7 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
   const next = read("career", "js", "nextStep.js");
   for (const line of [
     "<p>See Your Value. Build Your Tomorrow.</p>",
-    '<p class="hint">Showcase Your Experience</p>',
+    '<h2 id="general-resume-heading" tabindex="-1">Showcase your experience</h2>',
     '<p class="hint">Your Experience Matters.</p>',
     '<h2 id="job-card-heading" tabindex="-1">Discover Your Fit</h2>',
     '<p class="hint export-hint">Readable Copy: Read, print, or share.</p>',
@@ -84,7 +84,7 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
   assert.match(next, /key: "track-application", title: "Track Your Applications",\s+text: "",/);
   assert.ok(next.includes('textEl.hidden = !step.text'));
   // the headings and controls are unchanged
-  for (const keep of ["Your Career,", "General Resume", "My Career", "Your Activity", "Tell us how it went", "Your Data",
+  for (const keep of ["Your Career,", "Build a general resume", "My Career", "Your Activity", "Tell us how it went", "Your Data",
     'id="export-readable-btn"', 'id="export-profile-btn"', 'id="delete-account-start-btn"', 'id="feedback-link"']) {
     assert.ok(html.includes(keep), keep);
   }

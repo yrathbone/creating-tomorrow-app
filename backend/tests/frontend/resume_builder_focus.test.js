@@ -75,7 +75,7 @@ test("the ready message has a persistent polite status region, not an alert", ()
 
 test("the card heading and the loading panel can receive focus from a script, and the build error is an alert", () => {
   const html = read("login.html");
-  assert.match(html, /<h2 id="general-resume-heading" tabindex="-1">General Resume<\/h2>/);
+  assert.match(html, /<h2 id="general-resume-heading" tabindex="-1">Showcase your experience<\/h2>/);
   assert.match(html, /<div id="general-resume-loading"[^>]*tabindex="-1"/);
   assert.match(html, /<div id="general-resume-error" class="error" role="alert" hidden><\/div>/);
 });
