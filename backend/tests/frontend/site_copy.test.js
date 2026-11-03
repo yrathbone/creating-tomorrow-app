@@ -10,10 +10,35 @@ const FRONTEND = path.join(__dirname, "..", "..", "..", "frontend");
 const read = (p) => fs.readFileSync(path.join(FRONTEND, p), "utf8");
 const PAGES = ["index", "learn", "videos", "about", "tool", "scratch", "elevate", "spotlight", "prepare", "article", "contact", "accessibility", "not-found", "privacy", "terms", "career/login", "career/register"];
 
+// The text a visitor sees (plus placeholder, aria-label, alt and title values), read by walking the page one tag at a time.
+// It never rewrites the HTML, it only collects text, and it skips script, style and comment contents.
 function visibleText(html) {
-  const noCode = html.replace(/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>|<!--[\s\S]*?-->/gi, "");
-  const attrs = [...noCode.matchAll(/(?:placeholder|aria-label|alt|title)="([^"]*)"/g)].map((m) => m[1]).join(" ");
-  return noCode.replace(/<[^>]+>/g, " ") + " " + attrs;
+  const lower = html.toLowerCase();
+  const attrs = [];
+  let text = "";
+  let i = 0;
+  while (i < html.length) {
+    const lt = html.indexOf("<", i);
+    if (lt === -1) { text += html.slice(i); break; }
+    text += html.slice(i, lt) + " ";
+    if (html.startsWith("<!--", lt)) {
+      const end = html.indexOf("-->", lt + 4);
+      i = end === -1 ? html.length : end + 3;
+      continue;
+    }
+    const gt = html.indexOf(">", lt);
+    if (gt === -1) break;
+    const tag = html.slice(lt, gt + 1);
+    for (const m of tag.matchAll(/(?:placeholder|aria-label|alt|title)="([^"]*)"/g)) attrs.push(m[1]);
+    const name = (tag.match(/^<\s*([a-zA-Z0-9]+)/) || [])[1];
+    i = gt + 1;
+    if (name && (name.toLowerCase() === "script" || name.toLowerCase() === "style")) {
+      const close = lower.indexOf("</" + name.toLowerCase(), i);
+      const closeEnd = close === -1 ? -1 : html.indexOf(">", close);
+      i = closeEnd === -1 ? html.length : closeEnd + 1;
+    }
+  }
+  return text + " " + attrs.join(" ");
 }
 
 test("one apostrophe style: no straight apostrophe inside a word in any page's visible text", () => {
