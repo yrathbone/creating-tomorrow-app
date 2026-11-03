@@ -193,14 +193,14 @@ test("the dashboard has the Your Data card, the confirmation panel, the final sc
   assert.match(read("js", "auth.js"), /function deleteCurrentCognitoUser\(\)/);
 });
 
-test("the hero has two buttons and two quiet links, and every id the other scripts bind to is still there", () => {
+test("the hero has two buttons and one quiet link, and every id the other scripts bind to is still there", () => {
   const html = read("login.html");
   const actions = html.slice(html.indexOf('class="dashboard-hero-actions"'), html.indexOf('class="dashboard-hero-links"'));
   assert.deepStrictEqual([...actions.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1]), ["upload-resume-btn", "general-resume-hero-btn"]);
   const links = html.slice(html.indexOf('class="dashboard-hero-links"'), html.indexOf("</p>", html.indexOf('class="dashboard-hero-links"')));
-  assert.deepStrictEqual([...links.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1]), ["import-linkedin-btn", "update-profile-btn"]);
+  assert.deepStrictEqual([...links.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1]), ["update-profile-btn"]);  // LinkedIn import is folded into Upload my resume
   const login = read("login.js") + read("js", "generalResume.js");
-  for (const id of ["upload-resume-btn", "import-linkedin-btn", "general-resume-hero-btn", "update-profile-btn"]) assert.ok(login.includes(`"${id}"`), `${id} is still wired`);
+  for (const id of ["upload-resume-btn", "general-resume-hero-btn", "update-profile-btn"]) assert.ok(login.includes(`"${id}"`), `${id} is still wired`);
 });
 
 test("the consent screen no longer says deletion is 'coming soon'", () => {

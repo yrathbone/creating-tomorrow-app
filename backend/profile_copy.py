@@ -112,7 +112,7 @@ def build_profile_copy_bytes(data: dict, name: str | None = None, contact: str |
     _small(
         doc,
         f"A readable copy of what is saved in your Creating Tomorrow Career Profile, as of {pretty_date(data.get('exported_at'))}. "
-        "It shows only what is saved. For a complete copy that can be restored or moved, also keep the full data backup.",
+        "It shows only what is saved. Your saved information is also available as a data file: the data backup (.json).",
         italic=True, after=6,
     )
 
