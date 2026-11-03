@@ -264,7 +264,7 @@ Build the resume:
 1. A POSITIONING HEADLINE: 2-3 short pipe-separated capitalized phrases capturing the candidate's professional identity, supported only by their real experience.
 2. A PROFESSIONAL SUMMARY (3-5 lines) reflecting their real background as a whole.
 3. SKILLS: a polished, deduplicated list of skills drawn from the Career Profile, using exact standard terminology per the ATS note above wherever the evidence supports it. Keywords only: each skill is 1-4 words, never a sentence and never a phrase that starts with a verb; the longer sentences in the profile are reference for you, not skills to print.
-4. EXPERIENCE: every role from the Career Profile, with polished bullets - no role dropped.
+4. EXPERIENCE: every role from the Career Profile, with polished bullets - no role dropped. A role that has NO description lines and NO skills under it in the Career Profile gets its title, organization and dates and an EMPTY bullets list: write no bullet for it, not even a general one about what people in that kind of job usually do.
 5. EDUCATION and CERTIFICATIONS: pass through from the Career Profile unchanged.
 
 Call the submit_general_resume tool with the resume. Do not respond with plain text."""

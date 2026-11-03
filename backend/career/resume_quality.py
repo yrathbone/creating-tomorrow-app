@@ -144,3 +144,22 @@ def find_issues(resume: dict, evidence_text: str, term_names: list[str], present
         if repeated:
             issues.append({"where": where, "problem": f"the word \"{repeated[0]}\" is repeated three times in one sentence", "text": text})
     return issues
+
+
+def drop_unsourced_bullets(resume: dict, sources: list[dict]) -> tuple[dict, list[str]]:
+    """A role the candidate gave no description (and no skills) for may not carry bullets: any the AI wrote are invented duties.
+
+    sources: [{"title", "organization", "has_source"}] for each profile role. A resume role is matched by its title and by the
+    organization named in its subtitle; a role that matches nothing is left alone. Returns a copy of the resume with those bullets
+    emptied, and the titles of the roles that were emptied (for the log). Plain code, no AI."""
+    emptied: list[str] = []
+    experience = []
+    for job in resume.get("experience") or []:
+        title = str(job.get("title", "")).strip().lower()
+        subtitle = str(job.get("subtitle", "")).lower()
+        match = [s for s in sources if str(s.get("title", "")).strip().lower() == title and str(s.get("organization", "")).strip().lower() in subtitle]
+        if match and not any(s.get("has_source") for s in match) and job.get("bullets"):
+            emptied.append(str(job.get("title", "")))
+            job = {**job, "bullets": []}
+        experience.append(job)
+    return {**resume, "experience": experience}, emptied

@@ -33,6 +33,7 @@ from career.ingestion import IngestionError, discover, ElevateError, start_resum
 from career.job_match import JobMatchError, build_general_resume, compare_to_job
 from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
+from career.resume_quality import drop_unsourced_bullets
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
@@ -896,6 +897,13 @@ def _checked_job_description(text: str) -> str:
     return job_description
 
 
+def _bullet_sources(db: Session, profile: CareerProfile) -> list[dict]:
+    """For each profile role: does the candidate's own text (a description, or skills tied to that role) exist for bullets to come from?"""
+    experiences = db.query(Experience).filter_by(career_profile_id=profile.id).all()
+    tied = {s.experience_id for s in db.query(Skill).filter_by(career_profile_id=profile.id).all() if s.experience_id}
+    return [{"title": e.title, "organization": e.organization, "has_source": bool((e.description or "").strip()) or e.id in tied} for e in experiences]
+
+
 def _build_profile_text(db: Session, profile: CareerProfile) -> str:
     experiences = db.query(Experience).filter_by(career_profile_id=profile.id).order_by(Experience.created_at.desc()).all()
     education = db.query(Education).filter_by(career_profile_id=profile.id).all()
@@ -1184,6 +1192,7 @@ async def build_general_resume_route(
 
     profile = get_career_profile_or_404(db, current_user)
     profile_text = _build_profile_text(db, profile)
+    bullet_sources = _bullet_sources(db, profile)
 
     release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
@@ -1194,6 +1203,9 @@ async def build_general_resume_route(
         raise internal_error(e)
 
     result["resume_data"] = dedupe_skills(result["resume_data"])
+    result["resume_data"], emptied = drop_unsourced_bullets(result["resume_data"], bullet_sources)
+    if emptied:
+        logger.warning("general resume: dropped bullets written for roles with no description: %s", emptied)
     version = ResumeVersion(
         career_profile_id=profile.id,
         scan_history_id=None,
