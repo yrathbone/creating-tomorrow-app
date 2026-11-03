@@ -85,7 +85,7 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 .h7-sub { margin: 0.4rem 0 1.75rem; font-size: 0.6875rem; color: var(--muted); }
 
 /* ---------- cards ---------- */
-.h7-img { display: block; height: 5.25rem; border-radius: 8px; background: var(--tint-blue); }
+.h7-img { display: block; aspect-ratio: 360 / 160; border-radius: 8px; background: var(--tint-blue); overflow: hidden; }
 .h7-img img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 .h7-img-gold { background: var(--tint-gold); }
 .h7-img-green { background: var(--tint-green); }
@@ -102,7 +102,7 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 
 .h7-tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem 1.75rem; }
 .h7-tool { display: flex; flex-direction: column; text-align: left; text-decoration: none; color: inherit; }
-.h7-tool .h7-img { height: 6rem; }
+.h7-tool .h7-img { aspect-ratio: 400 / 150; }
 .h7-tool-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.75rem; }
 .h7-tool-body { min-width: 0; }
 .h7-tool .h7-title { margin: 0 0 0.25rem; }

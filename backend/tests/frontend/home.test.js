@@ -134,7 +134,7 @@ test("the hero: new headline, new line, Free Tools opens the Guide popup, Learni
   assert.match(html, /<p class="h7-lead">Career tools to build your tomorrow<\/p>/);
   assert.match(html, /<a href="tool\.html" aria-haspopup="dialog" class="h7-btn h7-btn-green" data-guide-open>Free Tools<\/a>/);
   assert.match(html, /<a href="learn\.html" aria-haspopup="dialog" class="h7-btn h7-btn-gold" data-learn-open>Learning<\/a>/);
-  assert.match(html, /<span>No cost\. No Barriers\.<\/span>/);
+  assert.match(html, /<span>No cost\. No barriers\.<\/span>/);
   assert.ok(html.indexOf("h7-cta") < html.indexOf("h7-free"), "the line sits after the buttons");
   assert.match(html, /<blockquote><p>“The best way to predict the future is to invent it\.”<\/p><\/blockquote>\s*<figcaption>— Alan Kay<\/figcaption>/);
   assert.ok(!html.includes("how we begin") && !html.includes('id="how"'), "the three-steps section is gone");
@@ -165,9 +165,9 @@ test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles
   const data = read("learn-data.js");
   for (const slug of slugs) assert.ok(data.includes(slug), `article ${slug} is not in learn-data.js`);
   const titles = [...html.matchAll(/class="h7-guide"[\s\S]*?<b class="h7-title">([^<]+)<\/b>\s*<span class="h7-text">([^<]+)<\/span>/g)].map((m) => [m[1], m[2]]);
-  assert.deepStrictEqual(titles, [["ATS Basics", "How Resume Screening Works"], ["Resume Basics", "Create a resume that works"], ["LinkedIn Basics", "Build your professional profile"], ["Interview Basics", "Prepare stories, not scripts"]]);
+  assert.deepStrictEqual(titles, [["ATS Basics", "How resume screening works"], ["Resume Basics", "Create a resume that works"], ["LinkedIn Basics", "Build your professional profile"], ["Interview Basics", "Prepare stories, not scripts"]]);
   assert.strictEqual((html.match(/<span class="h7-link">Read <span aria-hidden="true">→<\/span><\/span>/g) || []).length, 4);
-  assert.match(html, /aria-label="ATS Basics: What Is an ATS, Really\?\. Read the guide\."/); // the full title stays for screen readers
+  assert.match(html, /aria-label="ATS Basics: What Is an ATS, Really\? Read the guide\."/); // the full title stays for screen readers
   assert.match(css7, /\.h7-link \{[^}]*text-decoration: none/, "no underline on the links");
 });
 
@@ -177,7 +177,7 @@ test("six tool cards link to the same places the Guide recommends, with the shor
   assert.strictEqual(tileHrefs.length, 6);
   assert.deepStrictEqual(tileHrefs, guideHrefs);
   const cards = [...html.matchAll(/<b class="h7-title">([^<]+)<\/b><span class="h7-text">([^<]+)<\/span><\/span>\s*<span class="h7-link">Start<\/span>/g)].map((m) => [m[1], m[2]]);
-  assert.deepStrictEqual(cards, [["Create", "Create your first resume."], ["Improve", "Optimize for screening."], ["Match", "Check your fit."], ["Discover", "Find hidden experiences."], ["LinkedIn", "Showcase your strengths."], ["Interview", "Master interview stories."]]);
+  assert.deepStrictEqual(cards, [["Create", "Create your first resume"], ["Improve", "Optimize for screening"], ["Match", "Check your fit"], ["Discover", "Find hidden experiences"], ["LinkedIn", "Showcase your strengths"], ["Interview", "Master interview stories"]]);
   assert.strictEqual((html.match(/class="h7-img h7-img-(blue|gold|green)" aria-hidden="true"/g) || []).length, 10, "an image box on every guide and tool card");
 });
 
@@ -266,4 +266,16 @@ test("the six tool cards carry their own drawings (page being started, before an
     assert.ok(!/<script|onload=|onclick=|href=|<image|<foreignObject|<style/i.test(svg), `${f}.svg is plain shapes only`);
   }
   assert.ok(!/class="h7-img[^"]*" aria-hidden="true"><\/span>/.test(html), "no empty placeholder box is left on the homepage");
+});
+
+test("copy and layout polish: card images keep the drawing's shape at every width, and the page copy is punctuated the same way throughout", () => {
+  assert.match(css7, /\.h7-img \{[^}]*aspect-ratio: 360 \/ 160/);
+  assert.match(css7, /\.h7-tool \.h7-img \{[^}]*aspect-ratio: 400 \/ 150/);
+  assert.ok(!/\.h7-img \{[^}]*height:/.test(css7), "no fixed height that would crop the drawings at tablet width");
+  assert.ok(!/Really\?\./.test(html), "no double punctuation in the spoken names");
+  assert.ok(!html.includes("No Barriers"), "barriers is lower case");
+  assert.match(html, /<p class="guide-modal-descriptor">Pick a guide to begin\.<\/p>/);
+  const texts = [...html.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
+  assert.strictEqual(texts.length, 10);
+  for (const x of texts) assert.ok(!/[.!?]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": starts with a capital, no ending period`);
 });
