@@ -132,8 +132,8 @@ test("Inter is hosted on our own site (no outside fonts) and is the homepage typ
 test("the hero: new headline, new line, Free Tools opens the Guide popup, Learning opens the article popup, and both are real links", () => {
   assert.match(html, /<h1 id="hero-h">Your future is yours to shape\.<\/h1>/);
   assert.match(html, /<p class="h7-lead">Career tools to build your tomorrow<\/p>/);
-  assert.match(html, /<a href="tool\.html" class="h7-btn h7-btn-green" data-guide-open>Free Tools<\/a>/);
-  assert.match(html, /<a href="learn\.html" class="h7-btn h7-btn-gold" data-learn-open>Learning<\/a>/);
+  assert.match(html, /<a href="tool\.html" aria-haspopup="dialog" class="h7-btn h7-btn-green" data-guide-open>Free Tools<\/a>/);
+  assert.match(html, /<a href="learn\.html" aria-haspopup="dialog" class="h7-btn h7-btn-gold" data-learn-open>Learning<\/a>/);
   assert.match(html, /<span>No cost\. No Barriers\.<\/span>/);
   assert.ok(html.indexOf("h7-cta") < html.indexOf("h7-free"), "the line sits after the buttons");
   assert.match(html, /<blockquote><p>“The best way to predict the future is to invent it\.”<\/p><\/blockquote>\s*<figcaption>— Alan Kay<\/figcaption>/);
@@ -233,4 +233,13 @@ test("responsive: the hero stacks, the cards go 2-up then 1-up, and the new look
   assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-tools \{ grid-template-columns: repeat\(2, 1fr\)/);
   assert.match(css7, /@media \(max-width: 620px\)[\s\S]*\.h7-guides, \.h7-tools \{ grid-template-columns: 1fr/);
   assert.ok(!/animation|transition/.test(css7), "no animation");
+});
+
+test("accessibility: every tool card has a full spoken name, and the two popup buttons announce that they open a dialog", () => {
+  const labels = [...html.matchAll(/<a class="h7-tool" href="[^"]+" aria-label="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(labels, [
+    "Create: Create your first resume. Start this tool.", "Improve: Optimize for screening. Start this tool.", "Match: Check your fit. Start this tool.",
+    "Discover: Find hidden experiences. Start this tool.", "LinkedIn: Showcase your strengths. Start this tool.", "Interview: Master interview stories. Start this tool.",
+  ]);
+  assert.strictEqual((html.match(/aria-haspopup="dialog"/g) || []).length, 2);
 });
