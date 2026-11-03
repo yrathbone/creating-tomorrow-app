@@ -1,4 +1,4 @@
-// The two profile downloads: a readable Word copy (for people) and the full data backup (for restoring).
+// The two profile downloads: a readable Word copy (for people) and the data backup (a data file of the saved information; the site has no import or restore feature).
 // Run:  node --test backend/tests/frontend
 const test = require("node:test");
 const assert = require("node:assert");
@@ -46,13 +46,14 @@ const today = new Date().toISOString().slice(0, 10);
 
 test("the dashboard offers both downloads, clearly named, with a plain explanation", () => {
   assert.match(html, /id="export-readable-btn"[^>]*>Download a readable copy \(Word\)<\/button>/);
-  assert.match(html, /id="export-profile-btn"[^>]*>Download full data backup \(\.json\)<\/button>/);
+  assert.match(html, /id="export-profile-btn"[^>]*>Download data backup \(\.json\)<\/button>/);
   assert.match(html, /Readable Copy: Read, print, or share\./);
 });
 
 test("the delete panel offers both copies before anything is erased", () => {
   assert.match(html, /id="delete-readable-btn"[^>]*>Download a readable copy \(Word\)<\/button>/);
-  assert.match(html, /id="delete-backup-btn"[^>]*>Download full data backup \(\.json\)<\/button>/);
+  assert.match(html, /id="delete-backup-btn"[^>]*>Download data backup \(\.json\)<\/button>/);
+  assert.ok(!/full data backup/i.test(html), "no button or line calls the backup full or complete");
 });
 
 test("the readable button asks for the Word copy and saves it as a .docx, untouched", async () => {

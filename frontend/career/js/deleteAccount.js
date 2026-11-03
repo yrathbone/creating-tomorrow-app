@@ -65,7 +65,7 @@ function wireDeleteAccount() {
   input.addEventListener("input", sync);
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); }); // Enter never deletes
 
-  // The two copy buttons here just press the dashboard's own download buttons (readable Word copy, full data backup).
+  // The two copy buttons here just press the dashboard's own download buttons (readable Word copy, data backup).
   el("delete-readable-btn").addEventListener("click", () => { const b = el("export-readable-btn"); if (b) b.click(); });
   el("delete-backup-btn").addEventListener("click", () => { const b = el("export-profile-btn"); if (b) b.click(); });
 
