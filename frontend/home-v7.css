@@ -86,6 +86,7 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 
 /* ---------- cards ---------- */
 .h7-img { display: block; height: 5.25rem; border-radius: 8px; background: var(--tint-blue); }
+.h7-img img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 .h7-img-gold { background: var(--tint-gold); }
 .h7-img-green { background: var(--tint-green); }
 .h7-title { display: block; margin: 0.75rem 0 0.25rem; font-size: 0.875rem; font-weight: 500; line-height: 1.25; color: var(--royal); }

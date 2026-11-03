@@ -243,3 +243,15 @@ test("accessibility: every tool card has a full spoken name, and the two popup b
   ]);
   assert.strictEqual((html.match(/aria-haspopup="dialog"/g) || []).length, 2);
 });
+
+test("the four guide cards carry their own drawings (code, resume with red pen, LinkedIn, interview): real files, decorative, and safe SVG", () => {
+  const files = ["guide-ats", "guide-resume", "guide-linkedin", "guide-interview"];
+  const used = [...html.matchAll(/<img src="img\/home\/(guide-[a-z]+)\.svg" alt="" width="360" height="160" \/>/g)].map((m) => m[1]);
+  assert.deepStrictEqual(used, files, "each guide card shows its own drawing, in order, with empty alt text (decorative)");
+  for (const f of files) {
+    const svg = read("img", "home", `${f}.svg`);
+    assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 360 160"/);
+    assert.ok(!/<script|onload=|onclick=|href=|<image|<foreignObject|<style/i.test(svg), `${f}.svg is plain shapes only`);
+  }
+  assert.match(css7, /\.h7-img img \{[^}]*object-fit: cover/);
+});
