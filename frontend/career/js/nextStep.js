@@ -8,14 +8,26 @@
 
 const STALE_APPLICATION_DAYS = 14;
 
-// Pure: facts -> { key, title, text, button, targets | href } or null (say nothing rather than guess).
+// The saved job comparison the Discover Your Fit card can reopen (the same rule as restoreCurrentJobTarget in jobMatch.js), or null.
+function savedComparison(f) {
+  const latest = (f.scans || []).find((s) => s.scan_type === "job_comparison" && !(s.result_data && s.result_data.skipped));
+  return latest && latest.result_data && latest.result_data.match_report ? latest : null;
+}
+
+// A second button for the two application steps: reopen the saved comparison (it presses the card's own Continue comparison button).
+function continueButton(f) {
+  const latest = savedComparison(f);
+  return latest ? { button: "Continue comparison", targets: ["#job-resume-last-btn"], jobTitle: latest.job_title || "" } : null;
+}
+
+// Pure: facts -> { key, title, text, button, targets | href, secondary? } or null (say nothing rather than guess).
 //   f.roles / f.education / f.skills   counts
 //   f.hasHeader                        a saved name or contact line
 //   f.scans                            allScanHistory entries ({ id, scan_type, job_title })
 //   f.resumes                          allResumeVersions entries ({ scan_history_id })
 //   f.applications                     allApplications entries ({ status, applied_on }) or null if unavailable
 //   f.today                            Date.now() (injectable for tests)
-function chooseNextStep(f) {
+function pickNextStep(f) {
   if (!f || !f.ready) return null;
   const tile = (key) => ['.stat-card[data-panel="' + key + '"]'];
 
@@ -81,8 +93,8 @@ function chooseNextStep(f) {
         button: "Open my applications", targets: tile("applications") };
     }
     if (!apps.length) {
-      return { key: "track-application", title: "Applied for a job? Track it",
-        text: "Stay on Track",
+      return { key: "track-application", title: "Track Your Applications",
+        text: "",
         button: "Open my applications", targets: tile("applications") };
     }
   }
@@ -90,6 +102,14 @@ function chooseNextStep(f) {
   return { key: "keep-going", title: "Compare another job",
     text: "Each comparison shows more experience to add.",
     button: "Add a Job", targets: ["#job-target-add-btn"] };
+}
+
+// The step, plus a Continue comparison button whenever a comparison is saved. The Discover Your Fit card no longer shows its own
+// button, so the band is where Continue lives: it is offered on every step except "Finish your resume", whose main button already is Continue.
+function chooseNextStep(f) {
+  const step = pickNextStep(f);
+  if (step && step.key !== "finish-resume" && !step.secondary) step.secondary = continueButton(f);
+  return step;
 }
 
 // Gathers the facts from the dashboard's own globals (all declared by earlier scripts).
@@ -136,8 +156,19 @@ function renderNextStep() {
   if (!step) return;
   box.dataset.step = step.key;
   document.getElementById("next-step-title").textContent = step.title;
-  document.getElementById("next-step-text").textContent = step.text;
+  const textEl = document.getElementById("next-step-text");
+  textEl.textContent = step.text;
+  textEl.hidden = !step.text; // a one-line step (title only) shows no empty sentence
   document.getElementById("next-step-btn").textContent = step.button + (step.href ? " →" : "");
+  const second = document.getElementById("next-step-secondary-btn");
+  if (second) {
+    second.hidden = !step.secondary;
+    if (step.secondary) {
+      second.textContent = step.secondary.button;
+      second.setAttribute("aria-label", step.secondary.jobTitle ? step.secondary.button + ": " + step.secondary.jobTitle : step.secondary.button);
+      second.title = step.secondary.jobTitle;
+    }
+  }
 }
 
 function markNextStepReady() {
@@ -151,4 +182,7 @@ if (typeof updateDashboardSummary === "function") {
 }
 if (typeof document !== "undefined" && document.getElementById("next-step-btn")) {
   document.getElementById("next-step-btn").addEventListener("click", () => { if (nextStepCurrent) runNextStep(nextStepCurrent); });
+}
+if (typeof document !== "undefined" && document.getElementById("next-step-secondary-btn")) {
+  document.getElementById("next-step-secondary-btn").addEventListener("click", () => { if (nextStepCurrent && nextStepCurrent.secondary) runNextStep(nextStepCurrent.secondary); });
 }

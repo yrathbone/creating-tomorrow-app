@@ -71,17 +71,21 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
   const next = read("career", "js", "nextStep.js");
   for (const line of [
     "<p>See Your Value. Build Your Tomorrow.</p>",
-    '<p class="hint">Showcase Your Experience</p>',
-    '<p class="hint">Your Experience Matters.</p>',
-    '<p class="hint">Discover Your Fit</p>',
+    '<h2 id="general-resume-heading" tabindex="-1">Showcase your experience</h2>',
+    '<h2 id="job-card-heading" tabindex="-1">Discover Your Fit</h2>',
     '<p class="hint export-hint">Readable Copy: Read, print, or share.</p>',
-    '<p class="hint">See Your Progress.</p>',
+    '<h2>See your progress</h2>',
     '<p class="hint">Help us grow. Share your experience, not your private information.</p>',
     '<p class="hint">Download your information or choose to delete your account anytime.</p>',
   ]) assert.ok(html.includes(line), line);
-  assert.ok(next.includes('text: "Stay on Track",'));
+  // the application tracker step is one line: a title only (founder-approved "Track Your Applications"), no sentence under it
+  assert.ok(next.includes('title: "Track Your Applications",'));
+  assert.match(next, /key: "track-application", title: "Track Your Applications",\s+text: "",/);
+  assert.ok(next.includes('textEl.hidden = !step.text'));
+  // the My Career card is its heading and the tiles, with no sentence between them (founder, 2026-11-03)
+  assert.ok(!html.includes("Your Experience Matters."));
   // the headings and controls are unchanged
-  for (const keep of ["Your Career,", "General Resume", "My Career", "Your Activity", "Tell us how it went", "Your Data",
+  for (const keep of ["Your Career,", "Build a general resume", "My Career", "See your progress", "Tell us how it went", "Your Data",
     'id="export-readable-btn"', 'id="export-profile-btn"', 'id="delete-account-start-btn"', 'id="feedback-link"']) {
     assert.ok(html.includes(keep), keep);
   }

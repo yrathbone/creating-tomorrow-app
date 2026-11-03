@@ -87,7 +87,7 @@ test("the job card has a persistent polite status region and a heading that scri
   assert.match(region[0], /aria-live="polite"/);
   assert.match(region[0], /aria-atomic="true"/);
   assert.doesNotMatch(region[0], /\bhidden\b|role="alert"|aria-live="assertive"/);
-  assert.match(html, /<h2 id="job-card-heading" tabindex="-1">Current Job Target<\/h2>/);
+  assert.match(html, /<h2 id="job-card-heading" tabindex="-1">Discover Your Fit<\/h2>/);
   const card = html.slice(html.indexOf('class="card span-2 job-card"'), html.indexOf('id="general-resume-card"'));
   assert.ok(card.indexOf("job-status") < card.indexOf('id="job-target-empty"'), "the region must sit outside the panels that are shown and hidden");
 });
@@ -324,4 +324,18 @@ test("Make this my default gives the button its focus back after saving, and onl
   const src = read("js", "resumeLayout.js");
   assert.match(src, /const hadFocus = document\.activeElement === btn;/); // only when the button had focus before it was disabled
   assert.match(src, /if \(hadFocus && typeof btn\.focus === "function"\) btn\.focus\(\{ preventScroll: true \}\);/);
+});
+
+test("the Continue button says Continue comparison; the job is named for screen readers and on hover", () => {
+  const w = world();
+  w.sandbox.allScanHistory.push({ id: 9, scan_type: "job_comparison", job_title: "Instructional Designer at Brightpath", result_data: { match_report: { match_level: "High", strengths: [], required_qualification_gaps: [] } } });
+  const attrs = {};
+  const btn = w.sandbox.document.getElementById("job-resume-last-btn"); // the fake page creates an element on first use
+  btn.setAttribute = (k, v) => { attrs[k] = v; };
+  w.sandbox.restoreCurrentJobTarget();
+  assert.strictEqual(btn.textContent, "Continue comparison");
+  assert.strictEqual(attrs["aria-label"], "Continue comparison: Instructional Designer at Brightpath");
+  assert.ok(attrs["aria-label"].startsWith(btn.textContent), "the accessible name starts with the visible words");
+  assert.strictEqual(btn.title, "Instructional Designer at Brightpath");
+  assert.strictEqual(btn.hidden, false);
 });

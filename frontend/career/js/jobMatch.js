@@ -988,7 +988,7 @@ function resetJobTarget() {
 document.getElementById("job-start-over-btn").addEventListener("click", resetJobTarget);
 document.getElementById("job-match-new-btn").addEventListener("click", resetJobTarget);
 
-// "Skip this job": mark the saved comparison as skipped (it stays in Your Activity > Skipped jobs and can be brought back), then go
+// "Skip this job": mark the saved comparison as skipped (it stays under Skipped jobs in the "See your progress" card and can be brought back), then go
 // back to the empty Current Job Target, so it no longer shows up as "Continue" or as an unfinished resume.
 document.getElementById("job-skip-job-btn").addEventListener("click", async () => {
   const btn = document.getElementById("job-skip-job-btn");
@@ -1009,7 +1009,7 @@ document.getElementById("job-skip-job-btn").addEventListener("click", async () =
     if (typeof loadScanHistory === "function") await loadScanHistory();
     restoreCurrentJobTarget();
     const note = document.getElementById("job-skipped-note");
-    note.textContent = "Skipped" + (title ? " \u201c" + title + "\u201d" : "") + ". You’ll find it under Skipped jobs in Your Activity if you change your mind.";
+    note.textContent = "Skipped" + (title ? " \u201c" + title + "\u201d" : "") + ". You’ll find it under Skipped jobs lower on this page if you change your mind.";
     note.hidden = false;
     announceJob(note.textContent);
   } catch (err) {
@@ -1037,7 +1037,11 @@ function restoreCurrentJobTarget() {
     btn.hidden = true;
     return;
   }
-  btn.textContent = latest.job_title ? "Continue: " + latest.job_title : "Pick up where I left off";
+  // The button says "Continue comparison" (short, and it cannot be mistaken for the application tracker). The job it reopens is still
+  // named for screen readers (aria-label, which starts with the visible words) and on hover (title).
+  btn.textContent = "Continue comparison";
+  btn.setAttribute("aria-label", latest.job_title ? "Continue comparison: " + latest.job_title : "Continue comparison");
+  btn.title = latest.job_title || "";
   btn.onclick = () => openJobTarget(latest);
   btn.hidden = false;
 }

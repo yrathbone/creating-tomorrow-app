@@ -159,7 +159,10 @@
             <h2 id="next-step-title"></h2>
             <p id="next-step-text"></p>
           </div>
-          <button type="button" id="next-step-btn" class="next-step-btn"></button>
+          <div class="next-step-actions">
+            <button type="button" id="next-step-btn" class="next-step-btn"></button>
+            <button type="button" id="next-step-secondary-btn" class="next-step-btn next-step-btn-secondary" hidden></button>
+          </div>
         </div>
       </section>
 
@@ -212,12 +215,11 @@
 
       <div class="dashboard-grid">
         <div class="card span-2 job-card">
-          <div class="dashboard-card-header"><h2 id="job-card-heading" tabindex="-1">Current Job Target</h2></div>
+          <div class="dashboard-card-header"><h2 id="job-card-heading" tabindex="-1">Discover Your Fit</h2></div>
           <p id="job-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
 
           <div id="job-target-empty">
             <p class="hint" id="job-skipped-note" hidden></p>
-            <p class="hint">Discover Your Fit</p>
             <button type="button" id="job-target-add-btn">+ Add a job</button>
             <button type="button" id="job-resume-last-btn" class="btn-secondary" hidden></button>
           </div>
@@ -287,7 +289,7 @@
             <button type="button" id="job-skip-interview-btn" class="btn-secondary">Skip to building my resume</button>
             <button type="button" id="job-match-new-btn" class="btn-secondary">Compare a different job</button>
             <button type="button" id="job-skip-job-btn" class="btn-secondary">Skip this job</button>
-            <p class="hint">Not worth pursuing? Skip it and we’ll keep it under Skipped jobs in Your Activity, in case you change your mind.</p>
+            <p class="hint">Not worth pursuing? Skip it and we’ll keep it under Skipped jobs lower on this page, in case you change your mind.</p>
             <div id="job-skip-error" class="error" role="alert" hidden></div>
           </div>
 
@@ -423,11 +425,10 @@
         </div>
 
         <div class="card span-2 resume-card" id="general-resume-card">
-          <div class="dashboard-card-header"><h2 id="general-resume-heading" tabindex="-1">General Resume</h2></div>
+          <div class="dashboard-card-header"><h2 id="general-resume-heading" tabindex="-1">Showcase your experience</h2></div>
           <p id="general-resume-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
 
           <div id="general-resume-empty">
-            <p class="hint">Showcase Your Experience</p>
             <button type="button" id="general-resume-start-btn" class="btn-secondary">Build a general resume</button>
           </div>
 
@@ -497,7 +498,6 @@
           <div class="dashboard-card-header">
             <h2>My Career</h2>
           </div>
-          <p class="hint">Your Experience Matters.</p>
 
           <div class="stat-row" id="career-stat-row"></div>
 
@@ -636,8 +636,7 @@
 
 
         <div class="card span-2 snapshot-card activity-card">
-          <div class="dashboard-card-header"><h2>Your Activity</h2></div>
-          <p class="hint">See Your Progress.</p>
+          <div class="dashboard-card-header"><h2>See your progress</h2></div>
           <div class="stat-row" id="activity-stat-row"></div>
 
           <div id="activity-panels">
