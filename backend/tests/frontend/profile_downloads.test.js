@@ -47,7 +47,7 @@ const today = new Date().toISOString().slice(0, 10);
 test("the dashboard offers both downloads, clearly named, with a plain explanation", () => {
   assert.match(html, /id="export-readable-btn"[^>]*>Download a readable copy \(Word\)<\/button>/);
   assert.match(html, /id="export-profile-btn"[^>]*>Download full data backup \(\.json\)<\/button>/);
-  assert.match(html, /The readable copy is for you to read, print or share\. The data backup is the complete technical file/);
+  assert.match(html, /Readable Copy: Read, print, or share\./);
 });
 
 test("the delete panel offers both copies before anything is erased", () => {

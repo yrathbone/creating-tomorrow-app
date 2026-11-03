@@ -59,3 +59,56 @@ test("the older dashboard and public-page stylesheets are not touched", () => {
   assert.ok(!/Inter/.test(read("career", "dashboard-v4.css")));
   assert.ok(read("chrome-v6.css").includes(":not(.dashboard-v4)"));
 });
+
+test("Sign Out is a gold button with navy text, never white on white", () => {
+  assert.match(css, /\.nav-links a\.nav-signout \{ background: var\(--c6-gold\); border-color: var\(--c6-gold\); color: #071c42;/);
+  assert.match(css, /\.nav-links a\.nav-signout:hover \{ background: var\(--c6-gold-hover\)/);
+  assert.ok(!/nav-signout[^}]*background: #ffffff/.test(css), "no white background on Sign Out");
+});
+
+test("the signed-in dashboard uses the founder-approved copy, word for word", () => {
+  const html = read("career", "login.html");
+  const next = read("career", "js", "nextStep.js");
+  for (const line of [
+    "<p>See Your Value. Build Your Tomorrow.</p>",
+    '<p class="hint">Showcase Your Experience</p>',
+    '<p class="hint">Your Experience Matters.</p>',
+    '<p class="hint">Discover Your Fit</p>',
+    '<p class="hint export-hint">Readable Copy: Read, print, or share.</p>',
+    '<p class="hint">See Your Progress.</p>',
+    '<p class="hint">Help us grow. Share your experience, not your private information.</p>',
+    '<p class="hint">Download your information or choose to delete your account anytime.</p>',
+  ]) assert.ok(html.includes(line), line);
+  assert.ok(next.includes('text: "Stay on Track",'));
+  // the headings and controls are unchanged
+  for (const keep of ["Your Career,", "General Resume", "My Career", "Your Activity", "Tell us how it went", "Your Data",
+    'id="export-readable-btn"', 'id="export-profile-btn"', 'id="delete-account-start-btn"', 'id="feedback-link"']) {
+    assert.ok(html.includes(keep), keep);
+  }
+});
+
+test("the dashboard makes no restore, transfer or completeness promise about the data backup", () => {
+  const html = read("career", "login.html");
+  // the founder removed the old explanation; the site has no import feature and the backup omits the resume header
+  assert.ok(!html.includes("Data Backup:"), "no Data Backup explanation");
+  assert.ok(!html.includes("Your Files. Your Choice."), "no download heading");
+  assert.ok(!/restor|transfer your|import your/i.test(html.slice(html.indexOf('id="export-readable-btn"') - 200, html.indexOf('id="export-profile-btn"') + 600)));
+});
+
+test("the next-step band is plain white with a smaller sentence, no yellow wash or gold edge", () => {
+  const rule = css.match(/body\.chrome-v6\.dashboard-v4 \.next-step \{[^}]*\}/)[0];
+  assert.match(rule, /background: #ffffff/);
+  assert.match(rule, /box-shadow: none/);
+  assert.ok(!/gold|ffb000|fdf8ea/i.test(rule), "no yellow in the band rule");
+  assert.match(css, /\.next-step p#next-step-text \{ font-size: 0\.84rem;/);
+});
+
+test("every next-step sentence is one short line (60 characters or fewer)", () => {
+  const src = read("career", "js", "nextStep.js");
+  const sentences = src.split("\n")
+    .map((line) => line.match(/^\s*text: (.*?),\s*$/))
+    .filter(Boolean)
+    .map((m) => new Function("STALE_APPLICATION_DAYS", "return " + m[1])(14));
+  assert.ok(sentences.length >= 10, "found the sentences: " + sentences.length);
+  for (const text of sentences) assert.ok(text.length <= 60, text.length + " characters: " + text);
+});

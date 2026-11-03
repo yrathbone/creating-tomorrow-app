@@ -131,9 +131,10 @@ test("the dashboard has a feedback card with an email link that carries no perso
   assert.ok(!/@|password/i.test(body), "the pre-filled message holds no email address or password");
 });
 
-test("the feedback card sits above Your Data, inside the dashboard, and asks people not to send passwords", () => {
+test("the feedback card sits above Your Data, inside the dashboard, and asks people not to send private information", () => {
   assert.ok(loginHtml.indexOf('id="feedback-card"') < loginHtml.indexOf('id="your-data-card"'));
-  assert.match(loginHtml, /Please don’t include passwords or private details/);
+  // founder-approved wording (2026-11-03); "private information" covers passwords and private details
+  assert.match(loginHtml, /Help us grow\. Share your experience, not your private information\./);
 });
 
 test("the address used for feedback and help is the one on the Contact page", () => {

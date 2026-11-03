@@ -46,6 +46,10 @@ body.chrome-v6.dashboard-v4 .nav-links a.nav-account:hover { background: var(--c
 body.chrome-v6.dashboard-v4 .site-nav a:focus-visible,
 body.chrome-v6.dashboard-v4 .site-nav button:focus-visible { outline: 3px solid #ffffff; outline-offset: 3px; }
 
+/* Sign Out is the dashboard's account button: gold with navy text, like the account button on the public pages (the older dashboard style gave it a white box, which hid the white header text) */
+body.chrome-v6.dashboard-v4 .nav-links a.nav-signout { background: var(--c6-gold); border-color: var(--c6-gold); color: #071c42; border-radius: 10px; }
+body.chrome-v6.dashboard-v4 .nav-links a.nav-signout:hover { background: var(--c6-gold-hover); border-color: var(--c6-gold-hover); color: #071c42; }
+
 /* ---------- footer: layout ---------- */
 body.chrome-v6.dashboard-v4 footer.h5-footer { padding-bottom: 0; border-top: 0; }
 body.chrome-v6.dashboard-v4 footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 2.25rem; background: var(--c6-blue); }
@@ -90,3 +94,7 @@ body.chrome-v6.dashboard-v4 .btn-green, body.chrome-v6.dashboard-v4 .btn-crimson
 body.chrome-v6.dashboard-v4 .nav-links a, body.chrome-v6.dashboard-v4 .next-step-btn { font-weight: 500 !important; }
 body.chrome-v6.dashboard-v4 p b, body.chrome-v6.dashboard-v4 p strong, body.chrome-v6.dashboard-v4 li b, body.chrome-v6.dashboard-v4 li strong { font-weight: 500 !important; }
 body.chrome-v6.dashboard-v4 .nav-wordmark, body.chrome-v6.dashboard-v4 .nav-wordmark * { font-weight: 700 !important; }
+
+/* ---------- "Your next step": a calm white band (no yellow wash or gold edge) with a smaller supporting sentence ---------- */
+body.chrome-v6.dashboard-v4 .next-step { background: #ffffff; background-image: none; box-shadow: none; border-bottom: 1px solid var(--v4-line-soft); }
+body.chrome-v6.dashboard-v4 .next-step p#next-step-text { font-size: 0.84rem; line-height: 1.4; }
