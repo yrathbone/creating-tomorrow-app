@@ -138,3 +138,9 @@ body.chrome-v6:not(.dashboard-v4) * { font-weight: 400 !important; }
 body.chrome-v6:not(.dashboard-v4) button, body.chrome-v6:not(.dashboard-v4) .btn-primary, body.chrome-v6:not(.dashboard-v4) .btn-secondary, body.chrome-v6:not(.dashboard-v4) .btn-green, body.chrome-v6:not(.dashboard-v4) .btn-crimson, body.chrome-v6:not(.dashboard-v4) .h5-btn, body.chrome-v6:not(.dashboard-v4) .h7-btn, body.chrome-v6:not(.dashboard-v4) .nav-links a, body.chrome-v6:not(.dashboard-v4) .h7-link, body.chrome-v6:not(.dashboard-v4) .hv-vfoot { font-weight: 500 !important; }
 body.chrome-v6:not(.dashboard-v4) p b, body.chrome-v6:not(.dashboard-v4) p strong, body.chrome-v6:not(.dashboard-v4) li b, body.chrome-v6:not(.dashboard-v4) li strong { font-weight: 500 !important; }
 body.chrome-v6:not(.dashboard-v4) .nav-wordmark, body.chrome-v6:not(.dashboard-v4) .nav-wordmark * { font-weight: 700 !important; }
+
+/* ---------- footer links: tap targets of at least 44px (WCAG 2.5.5), without changing how the text looks ---------- */
+body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-footer-nav a,
+body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0 0.25rem; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links { display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.4rem; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-footer-nav { gap: 0 1.2rem; }
