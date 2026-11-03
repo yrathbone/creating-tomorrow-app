@@ -1,0 +1,140 @@
+/* Creating Tomorrow homepage, new look ("v7"). Loaded only by index.html, after shared style.css, home-v5.css and chrome-v6.css.
+   Everything is scoped to body.home-v7 or an h7- class, so no other page (and not the not-found page, which still uses home-v5.css) is affected.
+
+   What this look is: Inter type, a darker royal blue (#0033a0) and an amber gold (#ffb000), a white page, two hero buttons (Free Tools opens the
+   Guide popup, Learning opens the article popup), short phrases, and an image box on every guide and tool card.
+   The royal blue and amber gold apply to the homepage only (its header and footer included). The inner pages keep their current blue. */
+
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/inter-latin-700-normal.woff2") format("woff2"); }
+
+/* the shared header and footer read these tokens, so the homepage's header, footer strip and gold button follow the new colours */
+body.home-v7.chrome-v6:not(.dashboard-v4) {
+  --c6-blue: #0033a0;
+  --c6-blue-deep: #002a85;
+  --c6-gold: #ffb000;
+  --c6-gold-hover: #e69f00;
+  --blue: #0033a0;
+  --blue-deep: #002a85;
+  --cobalt: #0033a0;
+  --gold: #ffb000;
+  --gold-hover: #e69f00;
+}
+
+body.home-v7 {
+  --royal: #0033a0;
+  --amber: #ffb000;
+  --amber-hover: #e69f00;
+  --green: #1f7a3f;
+  --green-hover: #16602f;
+  --ink: #0b1f4d;
+  --muted: #44527a;
+  --tint-blue: #e6ecf8;
+  --tint-gold: #fff1cc;
+  --tint-green: #e3f2e9;
+  font-family: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #ffffff;
+  color: var(--ink);
+}
+body.home-v7 .site-nav, body.home-v7 .h5-footer, body.home-v7 button { font-family: inherit; }
+body.home-v7 a:focus-visible, body.home-v7 button:focus-visible { outline: 3px solid var(--royal); outline-offset: 3px; }
+
+/* ---------- layout ---------- */
+body.home-v7 main { max-width: none; margin: 0; padding: 0; }
+.h7-wrap { width: 100%; max-width: 920px; margin: 0 auto; padding-left: 3rem; padding-right: 3rem; box-sizing: border-box; }
+.h7-wrap *, .h7-closing * { box-sizing: border-box; }
+.h7-band { padding-bottom: 3rem; text-align: center; }
+
+/* ---------- hero ---------- */
+.h7-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; padding-top: 3.5rem; padding-bottom: 2.5rem; }
+.h7-hero h1 { margin: 0; font-family: inherit; font-size: clamp(1.9rem, 1.3rem + 1.6vw, 2.25rem); font-weight: 700; line-height: 1.15; letter-spacing: -0.015em; color: var(--royal); }
+.h7-hero h1::after { content: ""; display: block; width: 3rem; height: 3px; margin: 1.25rem 0; background: var(--amber); }
+.h7-lead { margin: 0 0 1.75rem; font-size: 1.1875rem; line-height: 1.35; color: var(--ink); }
+.h7-cta { display: grid; grid-template-columns: repeat(2, 9.4rem); gap: 0.75rem; }
+.h7-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  min-height: 46px; padding: 0 1.25rem; border: 0; border-radius: 8px;
+  font-family: inherit; font-size: 0.875rem; font-weight: 500; line-height: 1; text-decoration: none; cursor: pointer;
+}
+.h7-btn-green { background: var(--green); color: #ffffff; }
+.h7-btn-green:hover { background: var(--green-hover); }
+.h7-btn-gold { background: var(--amber); color: var(--ink); }
+.h7-btn-gold:hover { background: var(--amber-hover); }
+.h7-free { display: flex; align-items: center; gap: 0.6rem; margin: 1.25rem 0 0; font-size: 0.6875rem; font-weight: 500; color: var(--ink); }
+.h7-free svg { width: 24px; height: 24px; flex: none; }
+.h7-free circle { fill: var(--green); }
+.h7-free path { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+
+/* the photo sits between a royal block (top left) and an amber block (bottom right), both flat */
+.h7-hero-photo { position: relative; isolation: isolate; margin: 0.9rem 1rem 1rem 0.9rem; }
+.h7-hero-photo img { position: relative; z-index: 1; display: block; width: 100%; height: auto; border-radius: 6px; }
+.h7-hero-photo::before, .h7-hero-photo::after { content: ""; position: absolute; z-index: 0; width: 62%; height: 62%; }
+.h7-hero-photo::before { top: -0.9rem; left: -0.9rem; background: var(--royal); }
+.h7-hero-photo::after { right: -1rem; bottom: -1rem; background: var(--amber); }
+
+/* ---------- quote ---------- */
+.h7-statement { margin-top: 0; margin-bottom: 0; padding-bottom: 3rem; }
+.h7-statement blockquote { display: flex; align-items: center; gap: 1.25rem; margin: 0; }
+.h7-statement blockquote::before, .h7-statement blockquote::after { content: ""; flex: 1; height: 1px; background: #f1d68a; }
+.h7-statement p { margin: 0; text-align: center; font-size: 0.5625rem; font-style: italic; line-height: 1.4; color: var(--muted); }
+.h7-statement figcaption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- section headings ---------- */
+.h7-h2 { margin: 0; font-family: inherit; font-size: 1.1875rem; font-weight: 400; line-height: 1.3; color: var(--royal); }
+.h7-sub { margin: 0.4rem 0 1.75rem; font-size: 0.6875rem; color: var(--muted); }
+
+/* ---------- cards ---------- */
+.h7-img { display: block; height: 5.25rem; border-radius: 8px; background: var(--tint-blue); }
+.h7-img-gold { background: var(--tint-gold); }
+.h7-img-green { background: var(--tint-green); }
+.h7-title { display: block; margin: 0.75rem 0 0.25rem; font-size: 0.875rem; font-weight: 500; line-height: 1.25; color: var(--royal); }
+.h7-text { display: block; font-size: 0.6875rem; line-height: 1.45; color: var(--muted); }
+.h7-link { font-size: 0.6875rem; font-weight: 500; color: var(--royal); text-decoration: none; }
+.h7-guide:hover .h7-title, .h7-tool:hover .h7-title { text-decoration: underline; text-underline-offset: 3px; }
+
+.h7-guides { display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 2.2rem; }
+.h7-guide { position: relative; display: flex; flex-direction: column; text-align: left; text-decoration: none; color: inherit; }
+.h7-guide + .h7-guide::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1.1rem; width: 1.5px; background: var(--amber); }
+.h7-guide .h7-title { text-transform: uppercase; letter-spacing: 0.03em; }
+.h7-guide .h7-link { margin-top: auto; padding-top: 0.75rem; }
+
+.h7-tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem 1.75rem; }
+.h7-tool { display: flex; flex-direction: column; text-align: left; text-decoration: none; color: inherit; }
+.h7-tool .h7-img { height: 6rem; }
+.h7-tool-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.75rem; }
+.h7-tool-body { min-width: 0; }
+.h7-tool .h7-title { margin: 0 0 0.25rem; }
+
+/* ---------- closing ---------- */
+.h7-closing { padding: 2.5rem 1.5rem; background: var(--royal); color: #ffffff; text-align: center; }
+.h7-closing h2 { margin: 0; font-family: inherit; font-size: 1.1875rem; font-weight: 500; line-height: 1.3; color: #ffffff; }
+.h7-closing p { margin: 0.5rem 0 1.25rem; font-size: 0.6875rem; color: #ffffff; }
+.h7-closing .h7-btn { display: inline-flex; padding: 0 1.75rem; }
+.h7-closing a:focus-visible { outline-color: #ffffff; }
+
+/* ---------- popups (the shared Guide popup, plus the Learning popup) ---------- */
+.learn-option { display: flex; flex-direction: column; gap: 0.2rem; text-align: left; text-decoration: none; }
+.learn-option-category { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--royal); }
+.learn-option-title { font-size: 1rem; font-weight: 500; color: var(--ink); }
+.learn-modal-all { margin: 1.25rem 0 0; font-size: 0.875rem; }
+.learn-modal-all a { font-weight: 500; color: var(--royal); text-decoration: none; }
+.learn-modal-all a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- tablet ---------- */
+@media (max-width: 1000px) {
+  .h7-hero { grid-template-columns: 1fr; gap: 2.25rem; padding-top: 2.5rem; }
+  .h7-hero-photo { max-width: 32rem; }
+  .h7-guides { grid-template-columns: repeat(2, 1fr); gap: 1.75rem 1.5rem; }
+  .h7-guide + .h7-guide::before { display: none; }
+  .h7-tools { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---------- phone ---------- */
+@media (max-width: 620px) {
+  .h7-wrap { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .h7-hero-photo { margin-right: 1rem; }
+  .h7-cta { grid-template-columns: 1fr 1fr; }
+  .h7-guides, .h7-tools { grid-template-columns: 1fr; }
+  .h7-closing .h7-btn { display: flex; width: 100%; }
+}

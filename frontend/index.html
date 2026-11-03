@@ -26,9 +26,10 @@
   <meta name="theme-color" content="#ffffff" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="home-v5.css" />
+  <link rel="stylesheet" href="home-v7.css" />
   <link rel="stylesheet" href="chrome-v6.css" />
 </head>
-<body class="home-v5 chrome-v6">
+<body class="home-v5 chrome-v6 home-v7">
   <nav class="site-nav">
     <a href="index.html" class="nav-logo"><img src="logo-icon.png" alt="" /><span class="nav-wordmark"><span class="nav-wordmark-title">Creating <span class="nav-wordmark-gold">Tomorrow</span></span></span></a>
     <div class="nav-links">
@@ -43,154 +44,114 @@
   <script src="auth-nav.js"></script>
 
   <main>
-    <!-- Hero: pale gray. The picture is a PLACEHOLDER until the final image file is supplied. -->
-    <section class="h5-band h5-band-pale h5-hero-band" aria-labelledby="hero-h">
-      <div class="h5-wrap">
-        <div class="h5-hero">
-          <div class="h5-hero-copy">
-            <p class="h5-eyebrow">Tools today. Brighter tomorrow.</p>
-            <h1 id="hero-h">See your value.<br /><span>Build your future.</span></h1>
-            <p class="h5-lead">Free career tools to help you build a better tomorrow.</p>
-            <div class="h5-cta">
-              <button type="button" class="h5-btn h5-btn-gold" data-guide-open>Guide Me <span aria-hidden="true">→</span></button>
-              <a href="#tools" class="h5-btn h5-btn-green">Explore Tools</a>
-            </div>
-            <p class="h5-free"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg><span><b>Free for everyone.</b> No paywall.</span></p>
-          </div>
-          <div class="h5-hero-photo">
-            <img src="img/home/hero-graduate-placeholder.jpg" alt="A graduate in a blue cap and gown, seen from behind, looking toward a sunlit campus" width="826" height="616" />
-          </div>
+    <!-- Hero: Free Tools opens the Guide popup (guide.js), Learning opens the article popup (learn-popup.js).
+         Both are real links too (tool.html, learn.html), so they still work if scripts do not run. The picture is a PLACEHOLDER until the final image file is supplied. -->
+    <section class="h7-wrap h7-hero" aria-labelledby="hero-h">
+      <div class="h7-hero-copy">
+        <h1 id="hero-h">Your future is yours to shape.</h1>
+        <p class="h7-lead">Career tools to build your tomorrow</p>
+        <div class="h7-cta">
+          <a href="tool.html" class="h7-btn h7-btn-green" data-guide-open>Free Tools</a>
+          <a href="learn.html" class="h7-btn h7-btn-gold" data-learn-open>Learning</a>
         </div>
-        <figure class="h5-statement">
-          <blockquote><p>“The best way to predict the future is to invent it.”</p></blockquote>
-          <figcaption>— Alan Kay</figcaption>
-        </figure>
+        <p class="h7-free"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12"/><path d="M6.5 12.5l4 4L17.5 9"/></svg><span>No cost. No Barriers.</span></p>
+      </div>
+      <div class="h7-hero-photo">
+        <img src="img/home/hero-graduate-placeholder.jpg" alt="A graduate in a blue cap and gown, seen from behind, looking toward a sunlit campus" width="826" height="616" />
       </div>
     </section>
 
-    <!-- How we begin: white, three steps, solid cobalt numbers, hairline separators -->
-    <section class="h5-band h5-band-white" id="how" aria-labelledby="how-h">
-      <div class="h5-wrap">
-        <h2 id="how-h" class="h5-h2">Here’s how we begin.</h2>
-        <p class="h5-sub">Get started now.</p>
-        <ol class="h5-steps">
-          <li><a class="h5-step" href="#" data-guide-open title="Open Guide Me to tell us where you are">
-            <span class="h5-step-n">01</span>
-            <b class="h5-step-title">Tell us where you are.</b>
-            <span class="h5-step-text">Share your background and goals.</span></a></li>
-          <li><a class="h5-step" href="#tools" title="Jump to the six free tools">
-            <span class="h5-step-n">02</span>
-            <b class="h5-step-title">Build your next version.</b>
-            <span class="h5-step-text">Use our free tools.</span></a></li>
-          <li><a class="h5-step" href="prepare.html" title="Get ready for interviews with Prepare">
-            <span class="h5-step-n">03</span>
-            <b class="h5-step-title">Move forward with confidence.</b>
-            <span class="h5-step-text">Apply and prepare for interviews.</span></a></li>
-        </ol>
+    <figure class="h7-wrap h7-statement">
+      <blockquote><p>“The best way to predict the future is to invent it.”</p></blockquote>
+      <figcaption>— Alan Kay</figcaption>
+    </figure>
+
+    <!-- Start with the basics: four guide cards, each with an image box -->
+    <section class="h7-wrap h7-band" id="basics" aria-labelledby="basics-h">
+      <h2 id="basics-h" class="h7-h2">Start with the basics.</h2>
+      <p class="h7-sub">Learn how careers, resumes, and interviews work.</p>
+      <div class="h7-guides">
+          <a class="h7-guide" href="article.html?slug=what-is-ats" aria-label="ATS Basics: What Is an ATS, Really?. Read the guide.">
+            <span class="h7-img h7-img-blue" aria-hidden="true"></span>
+            <b class="h7-title">ATS Basics</b>
+            <span class="h7-text">How Resume Screening Works</span>
+            <span class="h7-link">Read <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="h7-guide" href="article.html?slug=resume-calling-card" aria-label="Resume Basics: Your Resume Is Your Calling Card. Read the guide.">
+            <span class="h7-img h7-img-blue" aria-hidden="true"></span>
+            <b class="h7-title">Resume Basics</b>
+            <span class="h7-text">Create a resume that works</span>
+            <span class="h7-link">Read <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="h7-guide" href="article.html?slug=honest-self-marketing" aria-label="LinkedIn Basics: Your LinkedIn Profile Is Your Professional Story. Read the guide.">
+            <span class="h7-img h7-img-blue" aria-hidden="true"></span>
+            <b class="h7-title">LinkedIn Basics</b>
+            <span class="h7-text">Build your professional profile</span>
+            <span class="h7-link">Read <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="h7-guide" href="article.html?slug=how-we-grade" aria-label="Interview Basics: Prepare Stories, Not Perfect Answers. Read the guide.">
+            <span class="h7-img h7-img-blue" aria-hidden="true"></span>
+            <b class="h7-title">Interview Basics</b>
+            <span class="h7-text">Prepare stories, not scripts</span>
+            <span class="h7-link">Read <span aria-hidden="true">→</span></span>
+          </a>
       </div>
     </section>
 
-    <!-- Start with the basics: pale gray, four equal guide cards -->
-    <section class="h5-band h5-band-pale" id="basics" aria-labelledby="basics-h">
-      <div class="h5-wrap">
-        <h2 id="basics-h" class="h5-h2">Start with the basics.</h2>
-        <p class="h5-sub">Learn the fundamentals with our quick, practical guides.</p>
-        <div class="h5-grid h5-grid-4">
-        <a class="h5-card h5-guide" href="article.html?slug=what-is-ats" aria-label="ATS Basics: What Is an ATS, Really?. Read the guide.">
-          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></span>
-          <b class="h5-card-title">ATS Basics</b>
-          <span class="h5-card-text">See how resumes get screened.</span>
-          <span class="h5-card-link">Read the Guide <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="h5-card h5-guide" href="article.html?slug=resume-calling-card" aria-label="Resume Basics: Your Resume Is Your Calling Card. Read the guide.">
-          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V6a3 3 0 0 1 6 0v1.5"/><path d="M3.5 12.5h17"/></svg></span>
-          <b class="h5-card-title">Resume Basics</b>
-          <span class="h5-card-text">Keep your story ready.</span>
-          <span class="h5-card-link">Read the Guide <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="h5-card h5-guide" href="article.html?slug=honest-self-marketing" aria-label="LinkedIn Basics: Your LinkedIn Profile Is Your Professional Story. Read the guide.">
-          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg></span>
-          <b class="h5-card-title">LinkedIn Basics</b>
-          <span class="h5-card-text">Show your experience honestly.</span>
-          <span class="h5-card-link">Read the Guide <span aria-hidden="true">→</span></span>
-        </a>
-        <a class="h5-card h5-guide" href="article.html?slug=how-we-grade" aria-label="Interview Basics: Prepare Stories, Not Perfect Answers. Read the guide.">
-          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9.5" r="2.4"/><path d="M3.5 19c.5-3.2 2.7-5 5.5-5s5 1.8 5.5 5"/><path d="M15.5 14.4c2.6-.4 4.6 1 5 4.1"/></svg></span>
-          <b class="h5-card-title">Interview Basics</b>
-          <span class="h5-card-text">Prepare stories, not scripts.</span>
-          <span class="h5-card-link">Read the Guide <span aria-hidden="true">→</span></span>
-        </a>
-        </div>
-        <p class="h5-more"><a href="learn.html">See all learning resources <span aria-hidden="true">→</span></a></p>
+    <!-- Career tools: six tool cards, each with an image box -->
+    <section class="h7-wrap h7-band" id="tools" aria-labelledby="tools-h">
+      <h2 id="tools-h" class="h7-h2">Career tools</h2>
+      <p class="h7-sub">Build your tomorrow!</p>
+      <div class="h7-tools">
+          <a class="h7-tool" href="scratch.html">
+            <span class="h7-img h7-img-blue" aria-hidden="true"></span>
+            <span class="h7-tool-row">
+              <span class="h7-tool-body"><b class="h7-title">Create</b><span class="h7-text">Create your first resume.</span></span>
+              <span class="h7-link">Start</span>
+            </span>
+          </a>
+          <a class="h7-tool" href="tool.html?mode=refine">
+            <span class="h7-img h7-img-gold" aria-hidden="true"></span>
+            <span class="h7-tool-row">
+              <span class="h7-tool-body"><b class="h7-title">Improve</b><span class="h7-text">Optimize for screening.</span></span>
+              <span class="h7-link">Start</span>
+            </span>
+          </a>
+          <a class="h7-tool" href="tool.html?mode=analyze">
+            <span class="h7-img h7-img-green" aria-hidden="true"></span>
+            <span class="h7-tool-row">
+              <span class="h7-tool-body"><b class="h7-title">Match</b><span class="h7-text">Check your fit.</span></span>
+              <span class="h7-link">Start</span>
+            </span>
+          </a>
+          <a class="h7-tool" href="elevate.html">
+            <span class="h7-img h7-img-blue" aria-hidden="true"></span>
+            <span class="h7-tool-row">
+              <span class="h7-tool-body"><b class="h7-title">Discover</b><span class="h7-text">Find hidden experiences.</span></span>
+              <span class="h7-link">Start</span>
+            </span>
+          </a>
+          <a class="h7-tool" href="spotlight.html">
+            <span class="h7-img h7-img-gold" aria-hidden="true"></span>
+            <span class="h7-tool-row">
+              <span class="h7-tool-body"><b class="h7-title">LinkedIn</b><span class="h7-text">Showcase your strengths.</span></span>
+              <span class="h7-link">Start</span>
+            </span>
+          </a>
+          <a class="h7-tool" href="prepare.html">
+            <span class="h7-img h7-img-green" aria-hidden="true"></span>
+            <span class="h7-tool-row">
+              <span class="h7-tool-body"><b class="h7-title">Interview</b><span class="h7-text">Master interview stories.</span></span>
+              <span class="h7-link">Start</span>
+            </span>
+          </a>
       </div>
     </section>
 
-    <!-- Six free tools: white, 2 x 3 compact horizontal cards -->
-    <section class="h5-band h5-band-white" id="tools" aria-labelledby="tools-h">
-      <div class="h5-wrap">
-        <h2 id="tools-h" class="h5-h2">Six free tools for your next step.</h2>
-        <p class="h5-sub">Practical tools to help you create, improve and explore what’s next.</p>
-        <div class="h5-grid h5-grid-3">
-        <a class="h5-card h5-tool" href="scratch.html">
-          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M12 11v6M9 14h6"/></svg></span>
-          <span class="h5-tool-body">
-            <b class="h5-card-title">Create</b>
-            <span class="h5-card-text">Build your first resume.</span>
-            <span class="h5-card-link">Start Beginning <span aria-hidden="true">→</span></span>
-          </span>
-        </a>
-        <a class="h5-card h5-tool" href="tool.html?mode=refine">
-          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M11 20V4M17 20v-6"/><path d="M2.5 20.5h19"/></svg></span>
-          <span class="h5-tool-body">
-            <b class="h5-card-title">Improve</b>
-            <span class="h5-card-text">Polish the resume you have.</span>
-            <span class="h5-card-link">Start Refine <span aria-hidden="true">→</span></span>
-          </span>
-        </a>
-        <a class="h5-card h5-tool" href="tool.html?mode=analyze">
-          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg></span>
-          <span class="h5-tool-body">
-            <b class="h5-card-title">Match</b>
-            <span class="h5-card-text">Check your fit for a job.</span>
-            <span class="h5-card-link">Start Right Fit <span aria-hidden="true">→</span></span>
-          </span>
-        </a>
-        <a class="h5-card h5-tool" href="elevate.html">
-          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5L13 13l-4.5 2.5L11 11z"/></svg></span>
-          <span class="h5-tool-body">
-            <b class="h5-card-title">Discover</b>
-            <span class="h5-card-text">Find experience you left out.</span>
-            <span class="h5-card-link">Start Elevate <span aria-hidden="true">→</span></span>
-          </span>
-        </a>
-        <a class="h5-card h5-tool" href="spotlight.html">
-          <span class="h5-icon h5-icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 10v6M8 7.6v.1M12 16v-3.5a2 2 0 0 1 4 0V16"/></svg></span>
-          <span class="h5-tool-body">
-            <b class="h5-card-title">LinkedIn</b>
-            <span class="h5-card-text">Strengthen your LinkedIn.</span>
-            <span class="h5-card-link">Start Spotlight <span aria-hidden="true">→</span></span>
-          </span>
-        </a>
-        <a class="h5-card h5-tool" href="prepare.html">
-          <span class="h5-icon h5-icon-gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></span>
-          <span class="h5-tool-body">
-            <b class="h5-card-title">Interview</b>
-            <span class="h5-card-text">Get ready for interviews.</span>
-            <span class="h5-card-link">Start Prepare <span aria-hidden="true">→</span></span>
-          </span>
-        </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Closing: the one strong colour moment -->
-    <section class="h5-closing" aria-labelledby="close-h">
-      <div class="h5-closing-inner">
-        <h2 id="close-h">We don’t invent your value. We help you see it.</h2>
-        <p>Real tools. Real support. A brighter tomorrow is possible.</p>
-        <a href="tool.html" class="h5-btn h5-btn-gold">Get Started Today <span aria-hidden="true">→</span></a>
-        <p class="h5-closing-free">Free for everyone. No paywall.</p>
-      </div>
+    <section class="h7-closing" aria-labelledby="close-h">
+      <h2 id="close-h">We don’t invent your value. We help you see it.</h2>
+      <p>Real tools. Real support. A brighter tomorrow is possible.</p>
+      <a href="tool.html" class="h7-btn h7-btn-gold">Get Started Today <span aria-hidden="true">→</span></a>
     </section>
   </main>
 
@@ -243,6 +204,22 @@
     </div>
   </div>
 
+  <div id="learn-modal" class="guide-modal-overlay" hidden>
+    <div class="guide-modal" role="dialog" aria-modal="true" aria-labelledby="learn-modal-heading">
+      <button type="button" id="learn-close-btn" class="guide-modal-close" aria-label="Close">&times;</button>
+      <div class="guide-modal-header">
+        <div>
+          <h2 id="learn-modal-heading">What would you like to read?</h2>
+          <p class="guide-modal-descriptor">Pick a guide to start with.</p>
+        </div>
+      </div>
+      <div class="guide-options" id="learn-options-list"></div>
+      <p class="learn-modal-all"><a href="learn.html">See all learning resources <span aria-hidden="true">→</span></a></p>
+    </div>
+  </div>
+
   <script src="guide.js"></script>
+  <script src="learn-data.js"></script>
+  <script src="learn-popup.js"></script>
 </body>
 </html>

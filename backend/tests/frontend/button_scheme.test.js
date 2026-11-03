@@ -44,14 +44,17 @@ test("green is used by exactly the explore and compare buttons, crimson by exact
 });
 
 test("the homepage and 404 use the same green, and Guide Me / Get Started stay gold", () => {
-  assert.match(read("index.html"), /class="h5-btn h5-btn-green">Explore Tools</);
+  assert.match(read("index.html"), /class="h7-btn h7-btn-green" data-guide-open>Free Tools</);
   assert.match(read("not-found.html"), /class="h5-btn h5-btn-green">Free career tools</);
   const home = read("index.html");
-  assert.match(home, /class="h5-btn h5-btn-gold" data-guide-open>Guide Me/);
-  assert.match(home, /class="h5-btn h5-btn-gold">Get Started Today/);
+  assert.match(home, /class="h7-btn h7-btn-gold" data-learn-open>Learning/);
+  assert.match(home, /class="h7-btn h7-btn-gold">Get Started Today/);
   const css = read("home-v5.css");
   assert.match(css, /\.h5-btn-green \{ background: #1f7a3f; color: #ffffff; \}/);
   assert.match(css, /\.h5-btn-green:hover \{ background: #16602f; \}/);
+  const v7 = read("home-v7.css");
+  assert.match(v7, /--green: #1f7a3f;/);
+  assert.match(v7, /--green-hover: #16602f;/);
 });
 
 test("the two roles are defined once for every page, again for the free tools and the dashboard, and no one-off id rules are left", () => {

@@ -52,8 +52,9 @@ test("answers are shown as editable sentences before the build, with a nudge tow
 });
 
 test("the homepage Explore Tools button is the site green, with the hover darker and white text readable", () => {
-  const css = fs.readFileSync(path.join(FRONTEND, "..", "home-v5.css"), "utf8");
-  assert.match(css, /\.h5-btn-green \{ background: #1f7a3f; color: #ffffff; \}/);
-  assert.match(css, /\.h5-btn-green:hover \{ background: #16602f; \}/);
-  assert.match(fs.readFileSync(path.join(FRONTEND, "..", "index.html"), "utf8"), /class="h5-btn h5-btn-green">Explore Tools</);
+  const css = fs.readFileSync(path.join(FRONTEND, "..", "home-v7.css"), "utf8");
+  assert.match(css, /--green: #1f7a3f;/);
+  assert.match(css, /--green-hover: #16602f;/);
+  assert.match(css, /\.h7-btn-green \{ background: var\(--green\); color: #ffffff; \}/);
+  assert.match(fs.readFileSync(path.join(FRONTEND, "..", "index.html"), "utf8"), /class="h7-btn h7-btn-green" data-guide-open>Free Tools</);
 });

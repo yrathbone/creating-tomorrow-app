@@ -56,7 +56,7 @@ test("the inner pages never scroll sideways: the centred Career Tools panel (siz
 });
 
 const PUBLIC = ["index", "about", "accessibility", "article", "contact", "elevate", "learn", "prepare", "privacy", "scratch", "spotlight", "terms", "tool", "videos", "not-found", "career/login", "career/register"];
-const LAST_CSS = { index: "home-v5.css", "not-found": "/home-v5.css", "career/login": "auth-v5.css", "career/register": "auth-v5.css" };
+const LAST_CSS = { index: "home-v7.css", "not-found": "/home-v5.css", "career/login": "auth-v5.css", "career/register": "auth-v5.css" };
 
 test("every public page wears the shared chrome: the body class, and chrome-v6.css loaded after the page's own stylesheet", () => {
   for (const name of PUBLIC) {

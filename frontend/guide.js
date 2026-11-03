@@ -76,17 +76,24 @@ function showGuideRecommendation(option) {
 
   guideStepOptions.hidden = true;
   guideStepRecommendation.hidden = false;
+  guideStartBtn.focus();
 }
 
+let guideOpener = null;
+
 function openGuide() {
+  guideOpener = document.activeElement;
   renderGuideOptions();
   guideStepOptions.hidden = false;
   guideStepRecommendation.hidden = true;
   guideModal.hidden = false;
+  const first = guideOptionsList.querySelector("button");
+  if (first) first.focus();
 }
 
 function closeGuide() {
   guideModal.hidden = true;
+  if (guideOpener && guideOpener.focus) guideOpener.focus();
 }
 
 // Any "Guide Me" / "Talk to Guide" button can carry data-guide-open (the redesigned homepage uses
@@ -122,6 +129,8 @@ document.getElementById("guide-close-btn").addEventListener("click", closeGuide)
 document.getElementById("guide-back-btn").addEventListener("click", () => {
   guideStepRecommendation.hidden = true;
   guideStepOptions.hidden = false;
+  const first = guideOptionsList.querySelector("button");
+  if (first) first.focus();
 });
 
 guideModal.addEventListener("click", (e) => {
@@ -129,5 +138,14 @@ guideModal.addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !guideModal.hidden) closeGuide();
+  if (guideModal.hidden) return;
+  if (e.key === "Escape") closeGuide();
+  if (e.key === "Tab") {
+    // keep keyboard focus inside the popup while it is open
+    const items = [...guideModal.querySelectorAll("a[href], button")].filter((el) => !el.closest("[hidden]"));
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
 });

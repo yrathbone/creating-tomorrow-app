@@ -10,6 +10,8 @@ const read = (...p) => fs.readFileSync(path.join(FRONTEND, ...p), "utf8");
 const html = read("index.html");
 const css = read("home-v5.css");
 const guide = read("guide.js");
+const css7 = read("home-v7.css");
+const learnPopup = read("learn-popup.js");
 
 function luminance(hex) {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
@@ -19,41 +21,12 @@ function luminance(hex) {
 const contrast = (a, b) => { const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05); };
 const token = (name) => css.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`))[1];
 
-test("the page loads the shared stylesheet, then home-v5.css, and marks the body", () => {
-  const shared = html.indexOf('href="style.css"');
-  const home = html.indexOf('href="home-v5.css"');
-  assert.ok(shared > -1 && home > shared, "home-v5.css must load after style.css");
-  assert.match(html, /<body class="home-v5 chrome-v6">/);
-  assert.ok(html.indexOf('href="chrome-v6.css"') > home, "chrome-v6.css (the shared header and footer) loads last");
-  assert.ok(!html.includes("home-v4"), "the old homepage styles are gone from this page");
-});
-
 test("every element guide.js looks up by id still exists (the Guide modal is intact)", () => {
   const ids = [...guide.matchAll(/getElementById\("([^"]+)"\)/g)].map((m) => m[1]);
   const optional = new Set(["guide-open-btn", "guide-character-slot", "guide-headline-open"]);
   for (const id of new Set(ids)) {
     if (optional.has(id)) continue;
     assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
-  }
-});
-
-test("there are Guide Me buttons, and guide.js wires them up", () => {
-  assert.ok((html.match(/data-guide-open/g) || []).length >= 2);
-  assert.match(guide, /querySelectorAll\("\[data-guide-open\]"\)/);
-  assert.match(guide, /if \(guideOpenBtn\)/);
-  assert.match(guide, /if \(!el\) return/);
-});
-
-test("the six tool cards link to the same places the Guide recommends, and keep their real names", () => {
-  const guideHrefs = [...guide.matchAll(/toolHref: "([^"]+)"/g)].map((m) => m[1]).sort();
-  const tileHrefs = [...html.matchAll(/<a class="h5-card h5-tool" href="([^"]+)"/g)].map((m) => m[1]).sort();
-  assert.strictEqual(tileHrefs.length, 6);
-  assert.deepStrictEqual(tileHrefs, guideHrefs);
-  for (const name of ["Beginning", "Refine", "Right Fit", "Elevate", "Spotlight", "Prepare"]) {
-    assert.match(html, new RegExp(`Start ${name} <span aria-hidden="true">`), `${name} link text`);
-  }
-  for (const verb of ["Create", "Improve", "Match", "Discover", "LinkedIn", "Interview"]) {
-    assert.match(html, new RegExp(`<b class="h5-card-title">${verb}</b>`), `${verb} card title`);
   }
 });
 
@@ -83,61 +56,6 @@ test("home-v5.css only touches the homepage: every rule is scoped to body.home-v
       assert.ok(ok, `unscoped selector: ${part}`);
     }
   }
-});
-
-test("the page is seven bands in the reference order: header, pale hero, white steps, pale guides, white tools, cobalt close, footer", () => {
-  const order = ['<nav class="site-nav">', 'h5-band h5-band-pale h5-hero-band', 'id="how"', 'id="basics"', 'id="tools"', 'class="h5-closing"', '<footer class="h5-footer">'].map((s) => html.indexOf(s));
-  assert.ok(order.every((n) => n > -1), "every band exists");
-  assert.deepStrictEqual([...order].sort((a, b) => a - b), order, "bands appear in order");
-  assert.match(html, /<section class="h5-band h5-band-white" id="how"/);
-  assert.match(html, /<section class="h5-band h5-band-pale" id="basics"/);
-  assert.match(html, /<section class="h5-band h5-band-white" id="tools"/);
-  assert.match(css, /\.h5-closing \{[^}]*background: var\(--cobalt\)/);
-  assert.ok(!/\.h5-closing::(before|after) \{[^}]*border-radius: 50%/.test(css), "no decorative spheres");
-});
-
-test("the hero says what the design says, with the cobalt second line, the gold rule and the free note right under the buttons", () => {
-  assert.match(html, /<p class="h5-eyebrow">Tools today\. Brighter tomorrow\.<\/p>/);
-  assert.match(html, /<h1 id="hero-h">See your value\.<br \/><span>Build your future\.<\/span><\/h1>/);
-  assert.match(css, /\.h5-hero h1 span \{[^}]*color: var\(--cobalt\)/);
-  assert.match(css, /\.h5-hero h1::after \{[^}]*background: var\(--gold\)/);
-  assert.match(html, /<p class="h5-lead">Free career tools to help you build a better tomorrow\.<\/p>/);
-  const hero = html.slice(html.indexOf('class="h5-hero"'), html.indexOf('class="h5-hero-photo"'));
-  assert.match(hero, /Guide Me <span aria-hidden="true">→<\/span>/);
-  assert.match(hero, /href="#tools" class="h5-btn h5-btn-green">Explore Tools/);
-  assert.match(hero, /Free for everyone\./);
-  assert.match(hero, /No paywall\./);
-  assert.ok(hero.indexOf("h5-cta") < hero.indexOf("h5-free"), "the line sits after the buttons");
-  assert.match(html, /<blockquote><p>“The best way to predict the future is to invent it\.”<\/p><\/blockquote>\s*<figcaption>— Alan Kay<\/figcaption>/);
-  assert.ok(!html.includes("You can’t become what you can’t picture"), "the old line was swapped out on purpose");
-});
-
-test("the section headings and the ids that links rely on are unchanged", () => {
-  assert.match(html, /<h2 id="how-h" class="h5-h2">Here’s how we begin\.<\/h2>/);
-  assert.match(html, /<h2 id="basics-h" class="h5-h2">Start with the basics\.<\/h2>/);
-  assert.match(html, /<h2 id="tools-h" class="h5-h2">Six free tools for your next step\.<\/h2>/);
-  for (const id of ["how", "basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
-  assert.match(html, /href="#tools"/); // Explore Tools and step 2 still jump to the tools
-  assert.match(html, /<h2 id="close-h">We don’t invent your value\. We help you see it\.<\/h2>/);
-  assert.match(html, /href="tool\.html" class="h5-btn h5-btn-gold">Get Started Today/);
-});
-
-test("the three steps keep their real links (Guide, tools, Prepare)", () => {
-  const steps = [...html.matchAll(/<a class="h5-step" href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepStrictEqual(steps, ["#", "#tools", "prepare.html"]);
-  assert.match(html, /<a class="h5-step" href="#" data-guide-open/);
-});
-
-test("four guide cards open the real articles, and the Learn link is still there", () => {
-  const slugs = [...html.matchAll(/class="h5-card h5-guide" href="article\.html\?slug=([^"]+)"/g)].map((m) => m[1]);
-  assert.deepStrictEqual(slugs, ["what-is-ats", "resume-calling-card", "honest-self-marketing", "how-we-grade"]);
-  assert.match(html, /<p class="h5-more"><a href="learn\.html">See all learning resources/);
-  const data = read("learn-data.js");
-  for (const slug of slugs) assert.ok(data.includes(slug), `article ${slug} is not in learn-data.js`);
-  for (const label of ["ATS Basics", "Resume Basics", "LinkedIn Basics", "Interview Basics"]) assert.match(html, new RegExp(`<b class="h5-card-title">${label}</b>`));
-  assert.strictEqual((html.match(/Read the Guide <span aria-hidden="true">/g) || []).length, 4);
-  // the full article title stays available to screen readers and search tools
-  assert.match(html, /aria-label="ATS Basics: What Is an ATS, Really\?\. Read the guide\."/);
 });
 
 test("the page does not name a person, and nothing the design dropped is left behind", () => {
@@ -181,34 +99,138 @@ test("responsive: tablet and phone layouts exist (stacked hero, 2-up then 1-up c
   assert.match(css, /prefers-reduced-motion: no-preference/);
 });
 
-test("less wording, because phones lose long text: a short lead, a short intro, and one short line per step", () => {
-  const words = (re) => html.match(re)[1].trim().split(/\s+/).length;
-  assert.ok(words(/<p class="h5-lead">([^<]+)<\/p>/) <= 12, "the hero line stays short");
-  assert.match(html, /<p class="h5-sub">Get started now\.<\/p>/);
-  const lines = [...html.matchAll(/<span class="h5-step-text">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(lines, ["Share your background and goals.", "Use our free tools.", "Apply and prepare for interviews."]);
-  for (const l of lines) assert.ok(l.split(/\s+/).length <= 6, `"${l}" is short enough for a phone`);
-  for (const gone of ["in minutes", "meaningful steps", "see your experience clearly", "kind of work you"]) assert.ok(!html.includes(gone), `old wording left: ${gone}`);
-});
-
-test("card descriptions are a few words each, so they stay readable on a phone", () => {
-  const guides = [...html.matchAll(/class="h5-card h5-guide"[\s\S]*?<span class="h5-card-text">([^<]+)<\/span>/g)].map((m) => m[1]);
-  const tools = [...html.matchAll(/class="h5-card h5-tool"[\s\S]*?<span class="h5-card-text">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(guides, ["See how resumes get screened.", "Keep your story ready.", "Show your experience honestly.", "Prepare stories, not scripts."]);
-  assert.deepStrictEqual(tools, ["Build your first resume.", "Polish the resume you have.", "Check your fit for a job.", "Find experience you left out.", "Strengthen your LinkedIn.", "Get ready for interviews."]);
-  for (const g of guides) assert.ok(g.split(/\s+/).length <= 5, `"${g}" is too long`);
-  for (const t of tools) assert.ok(t.split(/\s+/).length <= 6, `"${t}" is too long`);
-});
-
 test("the old headline gold is gone: the headline's second line is cobalt and the 404 numeral uses the dark gold", () => {
   assert.ok(!/gold-display|e49107/i.test(css), "the retired headline gold is not left behind");
   assert.match(css, /\.h5-notfound-code \{[^}]*color: var\(--gold-text\)/);
 });
 
-test("the hero photo is framed by a cobalt block and a gold block, and the steps use large numerals", () => {
-  assert.match(css, /\.h5-hero-photo::before \{[^}]*background: var\(--cobalt\)/);
-  assert.match(css, /\.h5-hero-photo::after \{[^}]*background: var\(--gold\)/);
-  assert.deepStrictEqual([...html.matchAll(/<span class="h5-step-n">([^<]+)<\/span>/g)].map((m) => m[1]), ["01", "02", "03"]);
-  assert.match(css, /\.h5-step-n \{[^}]*color: var\(--cobalt\)/);
-  assert.match(css, /\.h5-tool \{ border-top: 3px solid var\(--cobalt\)/);
+
+// ---------- the new look (home-v7.css, learn-popup.js): Inter type, royal blue and amber gold, two hero buttons, image boxes ----------
+test("the page loads its stylesheets in order and marks the body; the new look is scoped to the homepage", () => {
+  const order = ["style.css", "home-v5.css", "home-v7.css", "chrome-v6.css"].map((f) => html.indexOf(`href="${f}"`));
+  assert.ok(order.every((n) => n > -1), "all four stylesheets are linked");
+  assert.deepStrictEqual([...order].sort((a, b) => a - b), order, "style.css, home-v5.css, home-v7.css, chrome-v6.css (chrome last)");
+  assert.match(html, /<body class="home-v5 chrome-v6 home-v7">/);
+  assert.ok(!read("not-found.html").includes("home-v7"), "the not-found page keeps the old look");
+  const stripped = css7.replace(/\/\*[\s\S]*?\*\//g, "");
+  const rules = [...stripped.matchAll(/(^|\})\s*([^{}@]+)\{/g)].map((m) => m[2].trim());
+  for (const sel of rules) for (const part of sel.split(",").map((s) => s.trim()).filter(Boolean)) {
+    assert.ok(/^body\.home-v7/.test(part) || /^\.(h7|learn)-/.test(part), `unscoped selector in home-v7.css: ${part}`);
+  }
+});
+
+test("Inter is hosted on our own site (no outside fonts) and is the homepage typeface", () => {
+  for (const w of [400, 500, 700]) {
+    assert.match(css7, new RegExp(`font-weight: ${w}; font-display: swap; src: url\\("fonts/inter-latin-${w}-normal\\.woff2"\\)`));
+    assert.ok(fs.existsSync(path.join(FRONTEND, "fonts", `inter-latin-${w}-normal.woff2`)), `inter ${w} file`);
+  }
+  assert.ok(fs.existsSync(path.join(FRONTEND, "fonts", "Inter-OFL.txt")), "the Inter licence is kept beside the font files");
+  assert.match(css7, /body\.home-v7 \{[^}]*font-family: "Inter"/);
+  assert.ok(!/googleapis|gstatic/.test(css7 + html), "no outside fonts");
+});
+
+test("the hero: new headline, new line, Free Tools opens the Guide popup, Learning opens the article popup, and both are real links", () => {
+  assert.match(html, /<h1 id="hero-h">Your future is yours to shape\.<\/h1>/);
+  assert.match(html, /<p class="h7-lead">Career tools to build your tomorrow<\/p>/);
+  assert.match(html, /<a href="tool\.html" class="h7-btn h7-btn-green" data-guide-open>Free Tools<\/a>/);
+  assert.match(html, /<a href="learn\.html" class="h7-btn h7-btn-gold" data-learn-open>Learning<\/a>/);
+  assert.match(html, /<span>No cost\. No Barriers\.<\/span>/);
+  assert.ok(html.indexOf("h7-cta") < html.indexOf("h7-free"), "the line sits after the buttons");
+  assert.match(html, /<blockquote><p>“The best way to predict the future is to invent it\.”<\/p><\/blockquote>\s*<figcaption>— Alan Kay<\/figcaption>/);
+  assert.ok(!html.includes("how we begin") && !html.includes('id="how"'), "the three-steps section is gone");
+  assert.match(css7, /\.h7-hero-photo::before \{[^}]*background: var\(--royal\)/);
+  assert.match(css7, /\.h7-hero-photo::after \{[^}]*background: var\(--amber\)/);
+});
+
+test("the sizes the founder chose: headline 36px, line 19px, buttons 14px, no-cost line 11px, quote 9px, section headings 19px regular, titles 14px, descriptions 11px", () => {
+  assert.match(css7, /\.h7-hero h1 \{[^}]*font-size: clamp\(1\.9rem, 1\.3rem \+ 1\.6vw, 2\.25rem\)/); // 36px at desktop width
+  assert.match(css7, /\.h7-lead \{[^}]*font-size: 1\.1875rem/);
+  assert.match(css7, /\.h7-btn \{[^}]*font-size: 0\.875rem/);
+  assert.match(css7, /\.h7-free \{[^}]*font-size: 0\.6875rem/);
+  assert.match(css7, /\.h7-statement p \{[^}]*font-size: 0\.5625rem/);
+  assert.match(css7, /\.h7-h2 \{[^}]*font-size: 1\.1875rem; font-weight: 400/);
+  assert.match(css7, /\.h7-title \{[^}]*font-size: 0\.875rem/);
+  assert.match(css7, /\.h7-text \{[^}]*font-size: 0\.6875rem/);
+  assert.match(css7, /\.h7-sub \{[^}]*font-size: 0\.6875rem/);
+});
+
+test("both hero buttons are the same size, with the text centred (equal columns, one height)", () => {
+  assert.match(css7, /\.h7-cta \{[^}]*grid-template-columns: repeat\(2, 9\.4rem\)/);
+  assert.match(css7, /\.h7-btn \{[^}]*align-items: center; justify-content: center;[^}]*min-height: 46px/);
+});
+
+test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles, each with an image box and a short Read link", () => {
+  const slugs = [...html.matchAll(/class="h7-guide" href="article\.html\?slug=([^"]+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(slugs, ["what-is-ats", "resume-calling-card", "honest-self-marketing", "how-we-grade"]);
+  const data = read("learn-data.js");
+  for (const slug of slugs) assert.ok(data.includes(slug), `article ${slug} is not in learn-data.js`);
+  const titles = [...html.matchAll(/class="h7-guide"[\s\S]*?<b class="h7-title">([^<]+)<\/b>\s*<span class="h7-text">([^<]+)<\/span>/g)].map((m) => [m[1], m[2]]);
+  assert.deepStrictEqual(titles, [["ATS Basics", "How Resume Screening Works"], ["Resume Basics", "Create a resume that works"], ["LinkedIn Basics", "Build your professional profile"], ["Interview Basics", "Prepare stories, not scripts"]]);
+  assert.strictEqual((html.match(/<span class="h7-link">Read <span aria-hidden="true">→<\/span><\/span>/g) || []).length, 4);
+  assert.match(html, /aria-label="ATS Basics: What Is an ATS, Really\?\. Read the guide\."/); // the full title stays for screen readers
+  assert.match(css7, /\.h7-link \{[^}]*text-decoration: none/, "no underline on the links");
+});
+
+test("six tool cards link to the same places the Guide recommends, with the short phrases, an image box and a plain Start link", () => {
+  const guideHrefs = [...guide.matchAll(/toolHref: "([^"]+)"/g)].map((m) => m[1]).sort();
+  const tileHrefs = [...html.matchAll(/<a class="h7-tool" href="([^"]+)"/g)].map((m) => m[1]).sort();
+  assert.strictEqual(tileHrefs.length, 6);
+  assert.deepStrictEqual(tileHrefs, guideHrefs);
+  const cards = [...html.matchAll(/<b class="h7-title">([^<]+)<\/b><span class="h7-text">([^<]+)<\/span><\/span>\s*<span class="h7-link">Start<\/span>/g)].map((m) => [m[1], m[2]]);
+  assert.deepStrictEqual(cards, [["Create", "Create your first resume."], ["Improve", "Optimize for screening."], ["Match", "Check your fit."], ["Discover", "Find hidden experiences."], ["LinkedIn", "Showcase your strengths."], ["Interview", "Master interview stories."]]);
+  assert.strictEqual((html.match(/class="h7-img h7-img-(blue|gold|green)" aria-hidden="true"/g) || []).length, 10, "an image box on every guide and tool card");
+});
+
+test("the section headings, ids and closing line", () => {
+  assert.match(html, /<h2 id="basics-h" class="h7-h2">Start with the basics\.<\/h2>\s*<p class="h7-sub">Learn how careers, resumes, and interviews work\.<\/p>/);
+  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career tools<\/h2>\s*<p class="h7-sub">Build your tomorrow!<\/p>/);
+  for (const id of ["basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
+  assert.match(html, /<h2 id="close-h">We don’t invent your value\. We help you see it\.<\/h2>/);
+  assert.match(html, /href="tool\.html" class="h7-btn h7-btn-gold">Get Started Today/);
+});
+
+test("the Learning popup lists every article from learn-data.js, is a real dialog, and keeps keyboard focus inside", () => {
+  assert.match(html, /<div id="learn-modal" class="guide-modal-overlay" hidden>/);
+  assert.match(html, /role="dialog" aria-modal="true" aria-labelledby="learn-modal-heading"/);
+  assert.match(html, /id="learn-close-btn"[^>]*aria-label="Close"/);
+  assert.match(html, /<a href="learn\.html">See all learning resources/);
+  const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(scripts.indexOf("learn-data.js") > -1 && scripts.indexOf("learn-data.js") < scripts.indexOf("learn-popup.js"), "learn-data.js loads before learn-popup.js");
+  for (const id of new Set([...learnPopup.matchAll(/getElementById\("([^"]+)"\)/g)].map((m) => m[1]))) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
+  assert.match(learnPopup, /ARTICLES\.forEach/);
+  assert.match(learnPopup, /article\.html\?slug=\$\{encodeURIComponent\(article\.slug\)\}/);
+  assert.match(learnPopup, /querySelectorAll\("\[data-learn-open\]"\)/);
+  assert.match(learnPopup, /e\.key === "Escape"/);
+  assert.match(learnPopup, /learnOpener\.focus\(\)/, "focus goes back to the Learning button on close");
+  assert.match(learnPopup, /e\.key === "Tab"/, "Tab stays inside the popup");
+  assert.ok(!/\.innerHTML\s*=\s*[^"\s]/.test(learnPopup), "article titles are set as text, never as markup");
+});
+
+test("the Guide popup also moves focus in, keeps Tab inside and returns focus on close", () => {
+  assert.match(guide, /guideOpener = document\.activeElement/);
+  assert.match(guide, /guideOpener\.focus\(\)/);
+  assert.match(guide, /e\.key === "Tab"/);
+});
+
+test("the new look's colours: royal blue and amber gold, and every text pairing meets WCAG AA", () => {
+  const t7 = (name) => css7.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`))[1].toLowerCase();
+  assert.strictEqual(t7("royal"), "#0033a0");
+  assert.strictEqual(t7("amber"), "#ffb000");
+  assert.match(css7, /--c6-blue: #0033a0;/);
+  assert.match(css7, /--c6-gold: #ffb000;/);
+  assert.ok(contrast("#ffffff", t7("royal")) >= 4.5, "white on royal (header, closing band)");
+  assert.ok(contrast(t7("royal"), "#ffffff") >= 4.5, "royal text on white");
+  assert.ok(contrast(t7("ink"), t7("amber")) >= 4.5, "navy on the amber buttons");
+  assert.ok(contrast("#ffffff", t7("green")) >= 4.5, "white on the green button");
+  assert.ok(contrast(t7("muted"), "#ffffff") >= 4.5, "description text on white");
+  assert.ok(contrast(t7("royal"), t7("tint-blue")) >= 4.5, "royal on the pale blue tint");
+  assert.ok(!/gradient\(/.test(css7), "no gradients");
+});
+
+test("responsive: the hero stacks, the cards go 2-up then 1-up, and the new look adds no motion", () => {
+  assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-hero \{ grid-template-columns: 1fr/);
+  assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-guides \{ grid-template-columns: repeat\(2, 1fr\)/);
+  assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-tools \{ grid-template-columns: repeat\(2, 1fr\)/);
+  assert.match(css7, /@media \(max-width: 620px\)[\s\S]*\.h7-guides, \.h7-tools \{ grid-template-columns: 1fr/);
+  assert.ok(!/animation|transition/.test(css7), "no animation");
 });
