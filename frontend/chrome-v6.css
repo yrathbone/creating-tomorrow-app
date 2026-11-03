@@ -129,3 +129,12 @@ body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img { display: block; width: 100%
 body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img-guide { aspect-ratio: 360 / 160; }
 body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img-tool { aspect-ratio: 400 / 150; }
 body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- no bold on the public pages ----------
+   One switch for the whole public site (the signed-in dashboard keeps its own type): headings, titles, labels and card text are regular weight (400);
+   buttons, the header links and the small "Read" and "Start" links are medium (500) so they still read as things to click; emphasis inside a paragraph
+   is medium; the logo lettering keeps its weight because it is a logo. !important is deliberate here: older rules, some more specific, set 600 and 700. */
+body.chrome-v6:not(.dashboard-v4) * { font-weight: 400 !important; }
+body.chrome-v6:not(.dashboard-v4) button, body.chrome-v6:not(.dashboard-v4) .btn-primary, body.chrome-v6:not(.dashboard-v4) .btn-secondary, body.chrome-v6:not(.dashboard-v4) .btn-green, body.chrome-v6:not(.dashboard-v4) .btn-crimson, body.chrome-v6:not(.dashboard-v4) .h5-btn, body.chrome-v6:not(.dashboard-v4) .h7-btn, body.chrome-v6:not(.dashboard-v4) .nav-links a, body.chrome-v6:not(.dashboard-v4) .h7-link, body.chrome-v6:not(.dashboard-v4) .hv-vfoot { font-weight: 500 !important; }
+body.chrome-v6:not(.dashboard-v4) p b, body.chrome-v6:not(.dashboard-v4) p strong, body.chrome-v6:not(.dashboard-v4) li b, body.chrome-v6:not(.dashboard-v4) li strong { font-weight: 500 !important; }
+body.chrome-v6:not(.dashboard-v4) .nav-wordmark, body.chrome-v6:not(.dashboard-v4) .nav-wordmark * { font-weight: 700 !important; }
