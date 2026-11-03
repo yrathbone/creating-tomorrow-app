@@ -87,7 +87,7 @@ test("the job card has a persistent polite status region and a heading that scri
   assert.match(region[0], /aria-live="polite"/);
   assert.match(region[0], /aria-atomic="true"/);
   assert.doesNotMatch(region[0], /\bhidden\b|role="alert"|aria-live="assertive"/);
-  assert.match(html, /<h2 id="job-card-heading" tabindex="-1">Current Job Target<\/h2>/);
+  assert.match(html, /<h2 id="job-card-heading" tabindex="-1">Discover Your Fit<\/h2>/);
   const card = html.slice(html.indexOf('class="card span-2 job-card"'), html.indexOf('id="general-resume-card"'));
   assert.ok(card.indexOf("job-status") < card.indexOf('id="job-target-empty"'), "the region must sit outside the panels that are shown and hidden");
 });

@@ -73,7 +73,7 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
     "<p>See Your Value. Build Your Tomorrow.</p>",
     '<p class="hint">Showcase Your Experience</p>',
     '<p class="hint">Your Experience Matters.</p>',
-    '<p class="hint">Discover Your Fit</p>',
+    '<h2 id="job-card-heading" tabindex="-1">Discover Your Fit</h2>',
     '<p class="hint export-hint">Readable Copy: Read, print, or share.</p>',
     '<p class="hint">See Your Progress.</p>',
     '<p class="hint">Help us grow. Share your experience, not your private information.</p>',
