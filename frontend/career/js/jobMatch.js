@@ -985,7 +985,7 @@ function resetJobTarget() {
 document.getElementById("job-start-over-btn").addEventListener("click", resetJobTarget);
 document.getElementById("job-match-new-btn").addEventListener("click", resetJobTarget);
 
-// "Skip this job": mark the saved comparison as skipped (it stays in Your Activity > Skipped jobs and can be brought back), then go
+// "Skip this job": mark the saved comparison as skipped (it stays under Skipped jobs in the "See your progress" card and can be brought back), then go
 // back to the empty Current Job Target, so it no longer shows up as "Continue" or as an unfinished resume.
 document.getElementById("job-skip-job-btn").addEventListener("click", async () => {
   const btn = document.getElementById("job-skip-job-btn");
@@ -1006,7 +1006,7 @@ document.getElementById("job-skip-job-btn").addEventListener("click", async () =
     if (typeof loadScanHistory === "function") await loadScanHistory();
     restoreCurrentJobTarget();
     const note = document.getElementById("job-skipped-note");
-    note.textContent = "Skipped" + (title ? " \u201c" + title + "\u201d" : "") + ". You’ll find it under Skipped jobs in Your Activity if you change your mind.";
+    note.textContent = "Skipped" + (title ? " \u201c" + title + "\u201d" : "") + ". You’ll find it under Skipped jobs lower on this page if you change your mind.";
     note.hidden = false;
     announceJob(note.textContent);
   } catch (err) {

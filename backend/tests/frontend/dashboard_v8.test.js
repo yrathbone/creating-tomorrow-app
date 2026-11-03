@@ -74,7 +74,7 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
     '<h2 id="general-resume-heading" tabindex="-1">Showcase your experience</h2>',
     '<h2 id="job-card-heading" tabindex="-1">Discover Your Fit</h2>',
     '<p class="hint export-hint">Readable Copy: Read, print, or share.</p>',
-    '<p class="hint">See Your Progress.</p>',
+    '<h2>See your progress</h2>',
     '<p class="hint">Help us grow. Share your experience, not your private information.</p>',
     '<p class="hint">Download your information or choose to delete your account anytime.</p>',
   ]) assert.ok(html.includes(line), line);
@@ -85,7 +85,7 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
   // the My Career card is its heading and the tiles, with no sentence between them (founder, 2026-11-03)
   assert.ok(!html.includes("Your Experience Matters."));
   // the headings and controls are unchanged
-  for (const keep of ["Your Career,", "Build a general resume", "My Career", "Your Activity", "Tell us how it went", "Your Data",
+  for (const keep of ["Your Career,", "Build a general resume", "My Career", "See your progress", "Tell us how it went", "Your Data",
     'id="export-readable-btn"', 'id="export-profile-btn"', 'id="delete-account-start-btn"', 'id="feedback-link"']) {
     assert.ok(html.includes(keep), keep);
   }

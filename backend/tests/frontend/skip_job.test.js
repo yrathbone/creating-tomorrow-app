@@ -62,7 +62,7 @@ test("the match screen has a Skip this job button that is separate from Compare 
   assert.match(handler, /"\/api\/career\/scan-history\/" \+ id \+ "\/skip", \{ method: "POST" \}/);
   assert.ok(handler.indexOf("resetJobTarget();") > handler.indexOf("/skip"), "goes back to the empty Current Job Target after skipping");
   assert.match(handler, /loadScanHistory\(\)/, "the Activity list is refreshed");
-  assert.match(handler, /Skipped jobs in Your Activity/, "tells them where it went");
+  assert.match(handler, /Skipped jobs lower on this page/, "tells them where it went");
 });
 
 test("a skipped card can be brought back and deleted", () => {
