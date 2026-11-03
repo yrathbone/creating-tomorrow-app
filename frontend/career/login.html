@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Log In — Creating Tomorrow</title>
-  <meta name="description" content="Log in to your Creating Tomorrow Career Profile account." />
+  <title>Sign In — Creating Tomorrow</title>
+  <meta name="description" content="Sign in to your Creating Tomorrow Career Profile account." />
   <meta name="robots" content="noindex" />
   <link rel="icon" href="../favicon.ico" sizes="48x48" />
   <link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png" />
@@ -32,7 +32,7 @@
 
   <header class="page-header" id="page-header">
     <p class="guide-eyebrow" style="text-align: center;">Career Profile</p>
-    <h1>Log in</h1>
+    <h1>Sign in</h1>
     <p class="tagline">This is an early, invite-only preview.</p>
   </header>
 
@@ -50,17 +50,17 @@
           <span>Password</span>
           <input type="password" id="login-password" name="password" autocomplete="current-password" required />
         </label>
-        <button type="submit" id="login-btn">Log In</button>
+        <button type="submit" id="login-btn">Sign In</button>
       </form>
       <p class="login-help"><button type="button" id="forgot-open-btn" class="link-button">Forgot your password?</button> <span aria-hidden="true">·</span> <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20sign-in%20help">Trouble signing in? Email us</a></p>
-      <p class="hint">Career Profile is in <strong>beta testing</strong> and is <strong>by invitation only</strong>. If you were invited, log in with the email address and temporary password from your invitation; you will choose your own password the first time. Want an invitation? <a href="register.html">Find out how</a>.</p>
+      <p class="hint">Career Profile is in <strong>beta testing</strong> and is <strong>by invitation only</strong>. If you were invited, sign in with the email address and temporary password from your invitation; you will choose your own password the first time. Want an invitation? <a href="register.html">Find out how</a>.</p>
       <div id="login-error" class="error" hidden></div>
     </section>
 
     <section class="card" id="step-forgot" hidden>
       <h2>Reset your password</h2>
       <form id="forgot-request-form">
-        <p>Type the email address you log in with. We will email you a 6-digit code.</p>
+        <p>Type the email address you sign in with. We will email you a 6-digit code.</p>
         <label class="field">
           <span>Email</span>
           <input type="email" id="forgot-email" name="email" autocomplete="username" required />
@@ -85,7 +85,7 @@
         <button type="submit" id="forgot-confirm-btn">Save new password</button>
         <p class="login-help"><button type="button" id="forgot-resend-btn" class="link-button">Send a new code</button></p>
       </form>
-      <p class="login-help"><button type="button" id="forgot-back-btn" class="link-button">Back to log in</button> <span aria-hidden="true">·</span> <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20sign-in%20help">Need help? Email us</a></p>
+      <p class="login-help"><button type="button" id="forgot-back-btn" class="link-button">Back to sign in</button> <span aria-hidden="true">·</span> <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20sign-in%20help">Need help? Email us</a></p>
       <div id="forgot-error" class="error" role="alert" hidden></div>
     </section>
 
@@ -109,7 +109,7 @@
 
     <section class="card" id="step-consent" hidden>
       <h2>Your Career Profile belongs to you</h2>
-      <p>Creating Tomorrow can securely save the career information you choose to confirm so you don't have to rebuild your history every time you apply.</p>
+      <p>Creating Tomorrow can securely save the career information you choose to confirm so you don’t have to rebuild your history every time you apply.</p>
       <ul>
         <li>Your Career Profile information will be stored for future use.</li>
         <li>AI may suggest career information, but suggestions do not become verified evidence until you confirm them.</li>
@@ -216,7 +216,7 @@
 
           <div id="job-target-empty">
             <p class="hint" id="job-skipped-note" hidden></p>
-            <p class="hint">Found a job you're interested in? Add it here and we'll compare it with your verified career experience.</p>
+            <p class="hint">Found a job you’re interested in? Add it here and we’ll compare it with your verified career experience.</p>
             <button type="button" id="job-target-add-btn">+ Add a Job</button>
             <button type="button" id="job-resume-last-btn" class="btn-secondary" hidden></button>
           </div>
@@ -265,7 +265,7 @@
               <div class="match-grade-text">
                 <strong id="job-fit-title"></strong>
                 <p id="job-fit-verdict"></p>
-                <p class="hint">Job Fit: how much of what this posting asks for your profile already shows (required items count the most). It's about whether to apply, not a score to chase. Other tools score differently.</p>
+                <p class="hint">Job Fit: how much of what this posting asks for your profile already shows (required items count the most). It’s about whether to apply, not a score to chase. Other tools score differently.</p>
               </div>
             </div>
             <div id="job-fit-close-block" hidden>
@@ -286,7 +286,7 @@
             <button type="button" id="job-skip-interview-btn" class="btn-secondary">Skip to Building My Resume</button>
             <button type="button" id="job-match-new-btn" class="btn-secondary">Compare a Different Job</button>
             <button type="button" id="job-skip-job-btn" class="btn-secondary">Skip This Job</button>
-            <p class="hint">Not worth pursuing? Skip it and we'll keep it under Skipped jobs in Your Activity, in case you change your mind.</p>
+            <p class="hint">Not worth pursuing? Skip it and we’ll keep it under Skipped jobs in Your Activity, in case you change your mind.</p>
             <div id="job-skip-error" class="error" role="alert" hidden></div>
           </div>
 
@@ -294,7 +294,7 @@
             <div id="job-questions-list"></div>
             <div id="job-questions-error" class="error" role="alert" hidden></div>
             <button type="button" id="job-questions-submit-btn">Continue</button>
-            <button type="button" id="job-questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
+            <button type="button" id="job-questions-finish-btn" class="btn-secondary">I’m done answering questions</button>
           </div>
 
           <div id="job-build-form-state" hidden>
@@ -318,7 +318,7 @@
             <button type="button" class="btn-secondary resume-layout-default" data-layout-default="job-build-layout" data-layout-msg="job-build-layout-msg">Make this my default</button>
             <span class="hint resume-layout-msg" id="job-build-layout-msg" role="status" hidden></span>
             <button type="button" id="job-build-btn" class="btn-crimson">Build My Resume</button>
-            <button type="button" id="job-keyword-check-btn" class="btn-gold">Check the posting's keywords first (optional)</button>
+            <button type="button" id="job-keyword-check-btn" class="btn-gold">Check the posting’s keywords first (optional)</button>
             <p class="hint" id="job-keyword-saved-note" hidden></p>
             <label class="field">
               <span>Add a term for this resume</span>
@@ -331,7 +331,7 @@
           </div>
 
           <div id="job-keywords-state" hidden>
-            <h4>Keywords from the posting that aren't in your profile yet</h4>
+            <h4>Keywords from the posting that aren’t in your profile yet</h4>
             <p class="hint" id="job-keywords-intro"></p>
             <div id="job-keywords-list"></div>
             <div id="job-keywords-error" class="error" role="alert" hidden></div>
@@ -415,7 +415,7 @@
 
             <div id="job-role-selection-block" hidden>
               <h4>How I chose what to include</h4>
-              <p class="hint">The most recent roles that matter for this job keep their strongest bullets. Older or less relevant roles are left off to keep the resume short; your summary can still reflect your full years of experience. Left off something you want? Tell me and I'll adjust.</p>
+              <p class="hint">The most recent roles that matter for this job keep their strongest bullets. Older or less relevant roles are left off to keep the resume short; your summary can still reflect your full years of experience. Left off something you want? Tell me and I’ll adjust.</p>
               <ul id="job-role-selection-list"></ul>
             </div>
           </div>
@@ -496,7 +496,7 @@
           <div class="dashboard-card-header">
             <h2>My Career</h2>
           </div>
-          <p class="hint">What you've done: the evidence everything else is built from. Click a tile to open it, and again to close it.</p>
+          <p class="hint">What you’ve done: the evidence everything else is built from. Click a tile to open it, and again to close it.</p>
 
           <div class="stat-row" id="career-stat-row"></div>
 
@@ -522,7 +522,7 @@
 
             <section class="snapshot-panel" id="panel-skills" hidden>
         <h3>Skills</h3>
-        <p class="hint">A skill's name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
+        <p class="hint">A skill’s name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
         <h4 class="recent-heading">Recently confirmed</h4>
         <ul id="recently-confirmed-list" class="recent-skills"></ul>
         <form id="skill-quick-add-form">
@@ -538,7 +538,7 @@
           <p class="hint" id="skill-tidy-intro"></p>
           <div id="skill-tidy-list"></div>
           <div id="skill-tidy-error" class="error" hidden></div>
-          <button type="button" id="skill-tidy-apply-btn">Save the ones I've ticked</button>
+          <button type="button" id="skill-tidy-apply-btn">Save the ones I’ve ticked</button>
           <button type="button" id="skill-tidy-cancel-btn" class="btn-secondary">Close</button>
         </div>
         <div id="skill-view-toggle" class="app-view-toggle" role="group" aria-label="How to show your skills" hidden>
@@ -549,7 +549,7 @@
 <h3>Scan for missing skills</h3>
         <div id="skill-scan-start">
           <button type="button" id="skill-scan-btn" class="btn-secondary btn-green">Scan for Missing Skills</button>
-          <p class="hint">Reviews your whole profile against what's typical for your kinds of roles, and asks about anything that looks like a real blind spot.</p>
+          <p class="hint">Reviews your whole profile against what’s typical for your kinds of roles, and asks about anything that looks like a real blind spot.</p>
         </div>
 
         <div id="skill-scan-loading" class="processing-card" hidden aria-live="polite">
@@ -583,13 +583,13 @@
           <div id="skill-scan-questions-list"></div>
           <div id="skill-scan-questions-error" class="error" hidden></div>
           <button type="button" id="skill-scan-questions-submit-btn">Continue</button>
-          <button type="button" id="skill-scan-questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
+          <button type="button" id="skill-scan-questions-finish-btn" class="btn-secondary">I’m done answering questions</button>
         </div>
 
         <div id="skill-scan-complete" hidden>
           <p class="success">Your Career Profile already looks well-rounded for the kinds of roles it shows — nothing new stood out this time.</p>
           <p id="skill-scan-complete-summary" class="hint"></p>
-          <p class="hint">Add more experience or run the scan again later and it'll pick up from there.</p>
+          <p class="hint">Add more experience or run the scan again later and it’ll pick up from there.</p>
           <button type="button" id="skill-scan-complete-ok-btn" class="btn-secondary">OK</button>
         </div>
 
@@ -636,7 +636,7 @@
 
         <div class="card span-2 snapshot-card activity-card">
           <div class="dashboard-card-header"><h2>Your Activity</h2></div>
-          <p class="hint">What you've done with it: job scans, resumes you built, jobs you applied for, and your LinkedIn.</p>
+          <p class="hint">What you’ve done with it: job scans, resumes you built, jobs you applied for, and your LinkedIn.</p>
           <div class="stat-row" id="activity-stat-row"></div>
 
           <div id="activity-panels">
@@ -655,7 +655,7 @@
 
             <section class="snapshot-panel" id="panel-applications" hidden>
               <h3>Applications</h3>
-              <p class="hint">Jobs you've applied for. Come back and update each one: no response, interview, rejection or offer.</p>
+              <p class="hint">Jobs you’ve applied for. Come back and update each one: no response, interview, rejection or offer.</p>
               <p id="application-summary" class="application-summary"></p>
               <button type="button" id="application-add-toggle-btn" class="btn-secondary">+ Add an application by hand</button>
               <form id="application-form" hidden>
@@ -676,7 +676,7 @@
 
         <div class="card span-2 feedback-card" id="feedback-card">
           <div class="dashboard-card-header"><h2>Tell us how it went</h2></div>
-          <p class="hint">Career Profile is in beta, so your honest feedback shapes what we build next. What worked, what confused you, what broke: all of it helps. Please don't include passwords or private details.</p>
+          <p class="hint">Career Profile is in beta, so your honest feedback shapes what we build next. What worked, what confused you, what broke: all of it helps. Please don’t include passwords or private details.</p>
           <a id="feedback-link" class="btn-secondary feedback-btn" href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20beta%20feedback&amp;body=What%20were%20you%20trying%20to%20do%3F%0A%0A%0AWhat%20happened%3F%0A%0A%0AWhat%20did%20you%20expect%3F%0A%0A">Send feedback by email</a>
         </div>
 
@@ -777,7 +777,7 @@
 
         <div id="resume-upload-state" hidden>
           <h3 id="resume-upload-heading">Upload your resume</h3>
-          <p class="hint">We'll pull out each role, then ask a few quick questions to surface experience your resume may not fully capture — nothing is added to your profile until you confirm it.</p>
+          <p class="hint">We’ll pull out each role, then ask a few quick questions to surface experience your resume may not fully capture — nothing is added to your profile until you confirm it.</p>
           <form id="resume-upload-form">
             <label class="field">
               <span>Resume or LinkedIn profile file (.docx, .pdf or .txt)</span>
@@ -787,7 +787,7 @@
               <span>Or paste the text instead (for example your LinkedIn profile)</span>
               <textarea id="resume-paste-text" rows="5" placeholder="Paste your profile or resume text here..."></textarea>
             </label>
-            <p class="hint" id="resume-linkedin-tip" hidden><strong>Importing from LinkedIn?</strong> On your own LinkedIn profile choose <strong>More</strong>, then <strong>Save to PDF</strong>, and upload that file (or paste your text). Only what's new to your Career Profile is added; anything that matches a role, school, certification or skill you already have is shown for you to confirm, never duplicated. To also see how well your LinkedIn reads, use <a href="../spotlight.html">the LinkedIn review</a>.</p>
+            <p class="hint" id="resume-linkedin-tip" hidden><strong>Importing from LinkedIn?</strong> On your own LinkedIn profile choose <strong>More</strong>, then <strong>Save to PDF</strong>, and upload that file (or paste your text). Only what’s new to your Career Profile is added; anything that matches a role, school, certification or skill you already have is shown for you to confirm, never duplicated. To also see how well your LinkedIn reads, use <a href="../spotlight.html">the LinkedIn review</a>.</p>
             <button type="submit" id="resume-upload-btn" class="btn-green">Analyze My Resume</button>
           </form>
           <div id="resume-upload-error" class="error" hidden></div>
@@ -824,12 +824,12 @@
           <div id="resume-questions-list"></div>
           <div id="resume-questions-error" class="error" hidden></div>
           <button type="button" id="resume-questions-submit-btn">Continue</button>
-          <button type="button" id="resume-questions-finish-btn" class="btn-secondary">I'm done answering questions</button>
+          <button type="button" id="resume-questions-finish-btn" class="btn-secondary">I’m done answering questions</button>
         </div>
 
         <div id="resume-review-state" hidden>
           <h3>Review your roles</h3>
-          <p class="hint">Edit anything that's not quite right before saving.</p>
+          <p class="hint">Edit anything that’s not quite right before saving.</p>
           <p class="import-match-note" id="resume-match-note" hidden></p>
           <div id="resume-roles-list"></div>
 
@@ -862,7 +862,7 @@
         <div id="resume-save-summary" hidden>
           <h3>Your Career Profile is ready to use</h3>
           <p id="resume-save-summary-text"></p>
-          <p class="hint">You can keep building this any time — there's no finish line, just more evidence to add as you think of it.</p>
+          <p class="hint">You can keep building this any time — there’s no finish line, just more evidence to add as you think of it.</p>
           <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
             <a href="../tool.html?mode=analyze" class="btn-secondary">Match a Job (Right Fit)</a>
             <button type="button" id="general-resume-hero-btn-2" class="btn-secondary">Build a General Resume</button>
@@ -886,7 +886,7 @@
         <nav class="h5-footer-nav" aria-label="Footer"><a href="../index.html">Home</a><a href="../learn.html">Learn</a><a href="../videos.html">Videos</a><a href="../about.html">About</a><a href="../tool.html">Career Tools</a></nav>
         <p class="footer-links"><a href="../privacy.html">Privacy</a> <span class="h5-amp">&amp;</span> <a href="../terms.html">Terms</a> · <a href="../accessibility.html">Accessibility</a> · <a href="../contact.html">Contact</a></p>
       </div>
-      <p class="h5-footer-privacy">Creating Tomorrow's Career Profile is an early, invite-only preview. Everything else on this site remains free and fully anonymous.</p>
+      <p class="h5-footer-privacy">Creating Tomorrow’s Career Profile is an early, invite-only preview. Everything else on this site remains free and fully anonymous.</p>
       <p class="h5-footer-copy">© 2026 Creating Tomorrow. All rights reserved.</p>
     </div>
   </footer>

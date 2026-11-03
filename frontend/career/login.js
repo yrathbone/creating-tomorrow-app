@@ -1156,7 +1156,7 @@ forgotConfirmForm.addEventListener("submit", async (e) => {
     forgotConfirmForm.reset();
     document.getElementById("login-email").value = resetEmail;
     document.getElementById("login-password").value = "";
-    backToLogin("Your password has been changed. Log in with your new password.");
+    backToLogin("Your password has been changed. Sign in with your new password.");
   } catch (err) {
     forgotError.textContent = passwordResetMessage(err);
     forgotError.hidden = false;

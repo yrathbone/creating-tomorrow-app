@@ -111,7 +111,7 @@ test("login.js: the new password is checked before the service is called, and su
   const block = loginJs.slice(i);
   assert.ok(block.indexOf("newPasswordProblem(") < block.indexOf("confirmPasswordReset("), "mismatched or short passwords never reach the service");
   assert.match(block, /confirmPasswordReset\(resetEmail, document\.getElementById\("forgot-code"\)\.value\.trim\(\), password\)/);
-  assert.match(block, /backToLogin\("Your password has been changed\. Log in with your new password\."\)/);
+  assert.match(block, /backToLogin\("Your password has been changed\. Sign in with your new password\."\)/);
 });
 
 test("login.js: the reset flow never stores the code or the passwords anywhere", () => {
@@ -133,7 +133,7 @@ test("the dashboard has a feedback card with an email link that carries no perso
 
 test("the feedback card sits above Your Data, inside the dashboard, and asks people not to send passwords", () => {
   assert.ok(loginHtml.indexOf('id="feedback-card"') < loginHtml.indexOf('id="your-data-card"'));
-  assert.match(loginHtml, /Please don't include passwords or private details/);
+  assert.match(loginHtml, /Please don’t include passwords or private details/);
 });
 
 test("the address used for feedback and help is the one on the Contact page", () => {
