@@ -116,7 +116,7 @@ test("a failed build: the error is shown, focus returns to the Build button, and
   await w.els["general-resume-build-btn"].fire("click");
   assert.deepStrictEqual(focused(w), ["general-resume-loading", "general-resume-build-btn"]);
   assert.strictEqual(w.els["general-resume-error"].hidden, false);
-  assert.match(w.els["general-resume-error"].textContent, /couldn't build your resume/);
+  assert.match(w.els["general-resume-error"].textContent, /couldn['’]t build your resume/);
   assert.strictEqual(w.els["general-resume-form"].hidden, false); // what the person typed is still there
   assert.strictEqual(w.els["general-resume-name"].value, "María José Peña-Núñez");
   assert.deepStrictEqual(w.log.status, [""]);

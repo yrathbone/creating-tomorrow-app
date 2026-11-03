@@ -4,14 +4,14 @@ const VIDEOS = [
   {
     slug: "what-is-a-resume",
     title: "What Is a Resume, Really?",
-    summary: "A resume is proof of what you can already do, written down. Here's what it's actually for.",
+    summary: "A resume is proof of what you can already do, written down. Here’s what it’s actually for.",
     duration: "~70 sec",
     youtube_id: null,
   },
   {
     slug: "what-is-ats",
     title: "What Is an ATS?",
-    summary: "It's a filing cabinet with a search bar, not a bouncer. What actually trips it up (and what doesn't).",
+    summary: "It’s a filing cabinet with a search bar, not a bouncer. What actually trips it up (and what doesn’t).",
     duration: "~75 sec",
     youtube_id: null,
   },
@@ -24,8 +24,8 @@ const VIDEOS = [
   },
   {
     slug: "closing-skill-gaps",
-    title: "Missing a Skill? Here's What Actually Works",
-    summary: "Why typing in a keyword you can't back up backfires — and real, affordable ways to actually close the gap.",
+    title: "Missing a Skill? Here’s What Actually Works",
+    summary: "Why typing in a keyword you can’t back up backfires — and real, affordable ways to actually close the gap.",
     duration: "~85 sec",
     youtube_id: null,
   },

@@ -80,7 +80,7 @@ test("a failed download saves nothing, says why, and re-enables the button", asy
   await w.handlers["export-readable-btn"]({ currentTarget: w.buttons["export-readable-btn"] });
   assert.strictEqual(w.saved.length, 0);
   assert.strictEqual(w.errorEl.hidden, false);
-  assert.match(w.errorEl.textContent, /couldn't build your readable copy/);
+  assert.match(w.errorEl.textContent, /couldn['’]t build your readable copy/);
   assert.strictEqual(w.buttons["export-readable-btn"].disabled, false);
 });
 

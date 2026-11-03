@@ -135,7 +135,7 @@ test("if only the sign-in account could not be removed, we say so plainly and gi
   assert.strictEqual(w.els["step-deleted"].hidden, false);
   assert.strictEqual(w.els["step-profile"].hidden, true);
   assert.match(w.els["deleted-message"].textContent, /saved data has been permanently deleted/);
-  assert.match(w.els["deleted-message"].textContent, /couldn't remove your sign-in account/);
+  assert.match(w.els["deleted-message"].textContent, /couldn['’]t remove your sign-in account/);
   assert.match(w.els["deleted-message"].textContent, /yovanarathbone@creatingtomorrow\.net/);
   assert.ok(w.log.includes("keys-cleared"), "signed out either way");
 });
@@ -161,7 +161,7 @@ test("if the connection drops mid-request we do not claim either outcome", async
   await w.els["delete-confirm-btn"].click();
   assert.ok(!w.log.includes("cognito-delete"));
   const msg = w.els["delete-error"].textContent;
-  assert.match(msg, /couldn't confirm that the deletion finished/);
+  assert.match(msg, /couldn['’]t confirm that the deletion finished/);
   assert.doesNotMatch(msg, /Nothing was deleted/);
 });
 

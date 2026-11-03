@@ -48,7 +48,7 @@ function clearResumeDownloadMessage(el) {
 }
 
 const RESUME_NOT_READY_MESSAGE = "There is no resume to download yet. Build your resume first, then download it here.";
-const RESUME_DOWNLOAD_FAILED_MESSAGE = "We couldn't prepare your download. Your information is still here; please try again.";
+const RESUME_DOWNLOAD_FAILED_MESSAGE = "We couldn’t prepare your download. Your information is still here; please try again.";
 
 // What to tell the person when a download failed: the server's own words when it gave any, otherwise a plain sentence.
 function resumeDownloadErrorText(err) {

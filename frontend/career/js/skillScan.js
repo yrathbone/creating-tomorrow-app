@@ -35,7 +35,7 @@ document.getElementById("skill-scan-btn").addEventListener("click", async () => 
   skillScanLoading.hidden = false;
   startProcessingState(skillScanLoading, [
     "Reviewing your Career Profile...",
-    "Thinking about what's typical for these roles...",
+    "Thinking about what’s typical for these roles...",
     "Preparing a few questions...",
   ]);
 
@@ -310,7 +310,7 @@ document.getElementById("skill-scan-save-btn").addEventListener("click", async (
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(formatErrorDetail(err.detail, "Couldn't save those changes."));
+        throw new Error(formatErrorDetail(err.detail, "Couldn’t save those changes."));
       }
     }
 

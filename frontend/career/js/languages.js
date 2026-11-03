@@ -40,10 +40,10 @@ async function loadLanguages() {
       const data = await res.json();
       if (Array.isArray(data)) allLanguages = data;
     } else {
-      loadError = "Languages couldn't be loaded right now.";
+      loadError = "Languages couldn’t be loaded right now.";
     }
   } catch (err) {
-    loadError = "Languages couldn't be loaded right now.";
+    loadError = "Languages couldn’t be loaded right now.";
   }
 
   container.textContent = "";
@@ -68,7 +68,7 @@ async function loadLanguages() {
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
+            throw new Error(formatErrorDetail(body.detail, "Couldn’t save that change."));
           }
           await loadLanguages();
         },
@@ -100,12 +100,12 @@ if (typeof document !== "undefined" && document.getElementById("language-form"))
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(formatErrorDetail(body.detail, "Couldn't add that language."));
+        throw new Error(formatErrorDetail(body.detail, "Couldn’t add that language."));
       }
       document.getElementById("language-form").reset();
       await loadLanguages();
     } catch (err) {
-      errorEl.textContent = (err && err.message) || "Couldn't add that language.";
+      errorEl.textContent = (err && err.message) || "Couldn’t add that language.";
       errorEl.hidden = false;
     } finally {
       btn.disabled = false;

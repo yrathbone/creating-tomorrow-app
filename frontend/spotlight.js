@@ -146,9 +146,9 @@ const inputError = document.getElementById("input-error");
 
 const PROCESSING_MESSAGES = [
   "Got it. Let me look at how your profile tells your story.",
-  "Reading what you've shared...",
+  "Reading what you’ve shared...",
   "Looking at how your story comes across...",
-  "Identifying what's already working...",
+  "Identifying what’s already working...",
   "Preparing your review...",
 ];
 
@@ -265,7 +265,7 @@ function renderResults(data) {
   const expNote = document.getElementById("experience-note");
   const expDetail = document.getElementById("experience-detail");
   if (!exp.supplied) {
-    expNote.textContent = exp.note || "I don't have your experience yet - paste it or include a screenshot, and I'll take a look.";
+    expNote.textContent = exp.note || "I don’t have your experience yet - paste it or include a screenshot, and I’ll take a look.";
     expNote.hidden = false;
     expDetail.hidden = true;
   } else {
@@ -384,7 +384,7 @@ function renderSection(sectionData, prefix, ids) {
   const section = sectionData || {};
 
   if (!section.supplied) {
-    note.textContent = section.note || `I don't have your ${prefix} yet - paste it or include a screenshot, and I'll take a look.`;
+    note.textContent = section.note || `I don’t have your ${prefix} yet - paste it or include a screenshot, and I’ll take a look.`;
     note.hidden = false;
     detail.hidden = true;
     return;
@@ -419,7 +419,7 @@ function copyToClipboard(btn, text, fallbackTarget) {
         selection.removeAllRanges();
         selection.addRange(range);
       }
-      btn.textContent = fallbackTarget ? "Selected \u2014 press Ctrl+C" : "Couldn't copy \u2014 select the text instead";
+      btn.textContent = fallbackTarget ? "Selected \u2014 press Ctrl+C" : "Couldn’t copy \u2014 select the text instead";
       setTimeout(() => (btn.textContent = original), 2500);
     });
 }
@@ -536,7 +536,7 @@ document.getElementById("compare-signin-form").addEventListener("submit", async 
     document.getElementById("compare-password").value = "";
     await runCompare();
   } catch (err) {
-    showError(errorEl, (err && err.message) || "Couldn't sign in or compare. Please try again.");
+    showError(errorEl, (err && err.message) || "Couldn’t sign in or compare. Please try again.");
   } finally {
     btn.disabled = false;
   }
@@ -575,7 +575,7 @@ document.getElementById("compare-roles-add-btn").addEventListener("click", async
     if (added && remaining === 0) btn.hidden = true;
     msg.textContent = added
       ? added + (added === 1 ? " role" : " roles") + " added to your Career Profile. Open " + (added === 1 ? "it" : "them") + " on your dashboard (Roles tile) and add the dates."
-      : failed ? "Couldn't add that role. Please try again." : "Nothing was ticked.";
+      : failed ? "Couldn’t add that role. Please try again." : "Nothing was ticked.";
   } finally {
     msg.hidden = false;
     btn.disabled = false;

@@ -219,7 +219,7 @@ function renderResumeCards() {
       const status = document.getElementById("resume-layout-status");
       makeDefault.disabled = true;
       makeDefault.textContent = "Saving...";
-      const result = typeof savePreferredLayout === "function" ? await savePreferredLayout(layout.value) : { ok: false, message: "Couldn't save that right now." };
+      const result = typeof savePreferredLayout === "function" ? await savePreferredLayout(layout.value) : { ok: false, message: "Couldn’t save that right now." };
       if (status) {
         status.textContent = result.ok ? layoutSavedMessage(result.layout) : result.message;
         status.hidden = false;

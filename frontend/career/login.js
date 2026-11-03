@@ -76,7 +76,7 @@ async function authedFetch(path, options = {}) {
     token = (await getValidSession()).getAccessToken().getJwtToken();
   } catch (err) {
     if (!isTransientAuthError(err)) endSessionAndShowLogin();
-    throw new Error(isTransientAuthError(err) ? "Couldn't reach the sign-in service. Please try again." : SESSION_ENDED_MESSAGE);
+    throw new Error(isTransientAuthError(err) ? "Couldn’t reach the sign-in service. Please try again." : SESSION_ENDED_MESSAGE);
   }
   currentAccessToken = token;
   let res = await send(token);
@@ -88,7 +88,7 @@ async function authedFetch(path, options = {}) {
     try {
       retryToken = (await forceRefreshSession()).getAccessToken().getJwtToken();
     } catch (err) {
-      if (isTransientAuthError(err)) throw new Error("Couldn't reach the sign-in service. Please try again.");
+      if (isTransientAuthError(err)) throw new Error("Couldn’t reach the sign-in service. Please try again.");
     }
     if (!retryToken) {
       endSessionAndShowLogin();
@@ -209,7 +209,7 @@ function renderDetailCard(container, entity, fieldDefs, { onSave, onDelete }) {
       try {
         await onSave(entity, draft);
       } catch (err) {
-        saveError.textContent = (err && err.message) || "Couldn't save that change.";
+        saveError.textContent = (err && err.message) || "Couldn’t save that change.";
         saveError.hidden = false;
         saveBtn.disabled = false;
         return;
@@ -387,7 +387,7 @@ function renderExperienceDetailList() {
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
+          throw new Error(formatErrorDetail(body.detail, "Couldn’t save that change."));
         }
         await loadExperiences();
       },
@@ -459,7 +459,7 @@ async function loadEducation() {
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
+            throw new Error(formatErrorDetail(body.detail, "Couldn’t save that change."));
           }
           await loadEducation();
         },
@@ -496,7 +496,7 @@ async function loadCertifications() {
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
+            throw new Error(formatErrorDetail(body.detail, "Couldn’t save that change."));
           }
           await loadCertifications();
         },
@@ -535,7 +535,7 @@ async function loadSkills() {
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(formatErrorDetail(body.detail, "Couldn't save that change."));
+            throw new Error(formatErrorDetail(body.detail, "Couldn’t save that change."));
           }
           await loadSkills();
         },
@@ -791,7 +791,7 @@ async function restoreSession() {
   }
   try {
     const res = await authedFetch("/api/career/me");
-    if (!res.ok) throw new Error("Couldn't load your account. Please try again.");
+    if (!res.ok) throw new Error("Couldn’t load your account. Please try again.");
     const me = await res.json();
     if (me.consent_given) {
       await showProfileStep();
@@ -800,7 +800,7 @@ async function restoreSession() {
     }
   } catch (err) {
     if (sessionEnding) return; // the page is being reloaded to the signed-out state
-    showLoginForm((err && err.message) || "Couldn't restore your session. Please sign in.");
+    showLoginForm((err && err.message) || "Couldn’t restore your session. Please sign in.");
   }
 }
 
@@ -844,19 +844,19 @@ let completeNewPassword = null;
 // Pure (unit-tested): what to tell the person about the two password boxes, or "" if they are fine.
 function newPasswordProblem(password, again) {
   if (!password || password.length < 8) return "Your password needs at least 8 characters.";
-  if (password !== again) return "The two passwords don't match.";
+  if (password !== again) return "The two passwords don’t match.";
   return "";
 }
 
 // Pure (unit-tested): turns the sign-in service's reset errors into plain words. Never says whether an email has an account.
 function passwordResetMessage(err) {
   const code = err && err.code;
-  if (code === "CodeMismatchException") return "That code isn't right. Check the email and try again.";
+  if (code === "CodeMismatchException") return "That code isn’t right. Check the email and try again.";
   if (code === "ExpiredCodeException") return "That code has expired. Choose \"Send a new code\" and use the newest email.";
   if (code === "LimitExceededException" || code === "TooManyRequestsException") return "Too many tries. Please wait a few minutes and try again.";
-  if (code === "InvalidPasswordException") return (err && err.message) || "That password isn't strong enough. Try a longer one.";
+  if (code === "InvalidPasswordException") return (err && err.message) || "That password isn’t strong enough. Try a longer one.";
   if (code === "InvalidParameterException" || code === "NotAuthorizedException") {
-    return "We can't reset this password online yet. If you haven't logged in for the first time, use the temporary password from your invitation. Otherwise, email us and we'll help.";
+    return "We can’t reset this password online yet. If you haven’t logged in for the first time, use the temporary password from your invitation. Otherwise, email us and we’ll help.";
   }
   return (err && err.message) || "Something went wrong. Please try again.";
 }
@@ -911,7 +911,7 @@ document.getElementById("newpassword-form").addEventListener("submit", async (e)
     document.getElementById("newpassword-form").reset();
     await finishSignIn(accessToken);
   } catch (err) {
-    errorEl.textContent = (err && err.message) || "We couldn't save that password. Please try again.";
+    errorEl.textContent = (err && err.message) || "We couldn’t save that password. Please try again.";
     errorEl.hidden = false;
   } finally {
     btn.disabled = false;
@@ -925,11 +925,11 @@ consentBtn.addEventListener("click", async () => {
     const res = await authedFetch("/api/career/consent", { method: "POST" });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(formatErrorDetail(body.detail, "Couldn't save consent."));
+      throw new Error(formatErrorDetail(body.detail, "Couldn’t save consent."));
     }
     await showProfileStep();
   } catch (err) {
-    consentError.textContent = (err && err.message) || "Couldn't save consent.";
+    consentError.textContent = (err && err.message) || "Couldn’t save consent.";
     consentError.hidden = false;
   } finally {
     consentBtn.disabled = false;
@@ -958,12 +958,12 @@ experienceForm.addEventListener("submit", async (e) => {
     });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(formatErrorDetail(body.detail, "Couldn't add that role."));
+      throw new Error(formatErrorDetail(body.detail, "Couldn’t add that role."));
     }
     experienceForm.reset();
     await loadExperiences();
   } catch (err) {
-    expError.textContent = (err && err.message) || "Couldn't add that role.";
+    expError.textContent = (err && err.message) || "Couldn’t add that role.";
     expError.hidden = false;
   } finally {
     expSubmitBtn.disabled = false;
@@ -990,12 +990,12 @@ educationForm.addEventListener("submit", async (e) => {
     });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(formatErrorDetail(body.detail, "Couldn't add that education entry."));
+      throw new Error(formatErrorDetail(body.detail, "Couldn’t add that education entry."));
     }
     educationForm.reset();
     await loadEducation();
   } catch (err) {
-    eduError.textContent = (err && err.message) || "Couldn't add that education entry.";
+    eduError.textContent = (err && err.message) || "Couldn’t add that education entry.";
     eduError.hidden = false;
   } finally {
     eduSubmitBtn.disabled = false;
@@ -1021,12 +1021,12 @@ certificationForm.addEventListener("submit", async (e) => {
     });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(formatErrorDetail(body.detail, "Couldn't add that certification."));
+      throw new Error(formatErrorDetail(body.detail, "Couldn’t add that certification."));
     }
     certificationForm.reset();
     await loadCertifications();
   } catch (err) {
-    certError.textContent = (err && err.message) || "Couldn't add that certification.";
+    certError.textContent = (err && err.message) || "Couldn’t add that certification.";
     certError.hidden = false;
   } finally {
     certSubmitBtn.disabled = false;
@@ -1053,12 +1053,12 @@ skillForm.addEventListener("submit", async (e) => {
     });
     if (!res.ok) {
       const body = await res.json();
-      throw new Error(formatErrorDetail(body.detail, "Couldn't add that skill."));
+      throw new Error(formatErrorDetail(body.detail, "Couldn’t add that skill."));
     }
     skillForm.reset();
     await loadSkills();
   } catch (err) {
-    skillError.textContent = (err && err.message) || "Couldn't add that skill.";
+    skillError.textContent = (err && err.message) || "Couldn’t add that skill.";
     skillError.hidden = false;
   } finally {
     skillSubmitBtn.disabled = false;

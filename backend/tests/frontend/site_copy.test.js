@@ -86,3 +86,44 @@ test("the Career Tools page uses the homepage's short phrases, the Learn page sa
   assert.match(nf, /h5-btn-green">Career Tools<\/a>/);
   assert.match(nf, /h5-btn-outline">Learn<\/a>/);
 });
+
+// Visitor-facing text inside the scripts uses the curly apostrophe too. This walks each script the way a JavaScript reader would
+// (skipping comments, and only looking inside double-quoted strings and template-literal text) and reports a straight apostrophe
+// that sits between two letters, for example "Couldn't".
+function straightApostrophesInStrings(src) {
+  const found = [];
+  const isLetter = (c) => /[A-Za-z]/.test(c || "");
+  const stack = [];
+  let mode = "code", depth = 0, i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (mode === "code") {
+      if (c === "/" && src[i + 1] === "/") { const j = src.indexOf("\n", i); i = j === -1 ? src.length : j; continue; }
+      if (c === "/" && src[i + 1] === "*") { const j = src.indexOf("*/", i + 2); i = j === -1 ? src.length : j + 2; continue; }
+      if (c === '"') mode = "dq"; else if (c === "'") mode = "sq"; else if (c === "`") mode = "tpl";
+      else if (stack.length && c === "{") depth++;
+      else if (stack.length && c === "}") { if (depth === 0) { mode = "tpl"; depth = stack.pop(); } else depth--; }
+      i++; continue;
+    }
+    if (c === "\\") { i += 2; continue; }
+    if (mode === "dq" || mode === "sq") {
+      if ((mode === "dq" && c === '"') || (mode === "sq" && c === "'")) { mode = "code"; i++; continue; }
+    } else if (c === "`") { mode = "code"; i++; continue; }
+    else if (c === "$" && src[i + 1] === "{") { stack.push(depth); depth = 0; mode = "code"; i += 2; continue; }
+    if (c === "'" && mode !== "sq" && isLetter(src[i - 1]) && /[a-z]/.test(src[i + 1] || "")) found.push(src.slice(Math.max(0, i - 12), i + 12).replace(/\s+/g, " "));
+    i++;
+  }
+  return found;
+}
+
+test("one apostrophe style in the scripts: no straight apostrophe between letters inside a string", () => {
+  const files = [];
+  for (const dir of ["", "career", "career/js"]) {
+    for (const f of fs.readdirSync(path.join(FRONTEND, dir))) if (f.endsWith(".js")) files.push(path.posix.join(dir, f));
+  }
+  assert.ok(files.length > 30, "the scripts were found");
+  for (const f of files) assert.deepStrictEqual(straightApostrophesInStrings(read(f)), [], `${f}: use the curly apostrophe (\u2019) in visible text`);
+  // and the helper itself sees what it should
+  assert.strictEqual(straightApostrophesInStrings('const a = "Couldn\'t save"; // it\'s a comment\nconst b = \'x\';').length, 1);
+  assert.strictEqual(straightApostrophesInStrings("const a = `Here\u2019s ${b} and don't`;").length, 1);
+});

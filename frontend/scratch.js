@@ -363,7 +363,7 @@ async function runFinalize() {
     reviewLoading.hidden = true;
     reviewContent.hidden = false;
     document.getElementById("review-summary").value = "";
-    showError(document.getElementById("generate-error"), err.message || "Couldn't put together suggestions, but you can still write your own summary below and generate your resume.");
+    showError(document.getElementById("generate-error"), err.message || "Couldn’t put together suggestions, but you can still write your own summary below and generate your resume.");
   }
 }
 
@@ -428,7 +428,7 @@ document.getElementById("generate-btn").addEventListener("click", async () => {
     URL.revokeObjectURL(url);
 
     const generateSuccess = document.getElementById("generate-success");
-    generateSuccess.textContent = "Your resume is downloading. Need another version (like switching ATS mode)? Generate again below. Otherwise, you're all set.";
+    generateSuccess.textContent = "Your resume is downloading. Need another version (like switching ATS mode)? Generate again below. Otherwise, you’re all set.";
     generateSuccess.hidden = false;
     document.getElementById("finish-btn").hidden = false;
   } catch (err) {

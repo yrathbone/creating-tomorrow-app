@@ -45,13 +45,13 @@ async function saveProfileBasics(displayName, contactLine) {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      return { ok: false, message: typeof body.detail === "string" ? body.detail : "Couldn't save that right now." };
+      return { ok: false, message: typeof body.detail === "string" ? body.detail : "Couldn’t save that right now." };
     }
     const data = await res.json();
     profileBasics = { display_name: data.display_name || null, contact_line: data.contact_line || null };
     return { ok: true };
   } catch (err) {
-    return { ok: false, message: (err && err.message) || "Couldn't save that right now." };
+    return { ok: false, message: (err && err.message) || "Couldn’t save that right now." };
   }
 }
 

@@ -22,7 +22,7 @@ const ARTICLES = [
   {
     slug: "honest-self-marketing",
     title: "Your LinkedIn Profile Is Your Professional Story",
-    summary: "Present yourself honestly by showing what you know, what you've accomplished, and how you add value.",
+    summary: "Present yourself honestly by showing what you know, what you’ve accomplished, and how you add value.",
     category: "LinkedIn Basics",
     video_youtube_id: null,
   },
