@@ -100,3 +100,24 @@ body.chrome-v6.home-v5:not(.dashboard-v4) .h5-notfound.h5-band-pale { background
 
 /* the About page's "Why I built this" note: pale gold instead of grey, so the white page has no grey fill left */
 body.chrome-v6.pages-v4:not(.dashboard-v4) .about-note { background: #fff5dd; }
+
+/* ---------- one type scale on the public pages, the same as the homepage ----------
+   Page titles, section headings, card titles and links are bold or medium royal blue; the line under a title, the lead text and the card
+   descriptions are the dark navy (never the pale gray); gray stays for small print, hints and legal text. */
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-head p,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .page-header .tagline,
+body.chrome-v6.pages-v4:not(.dashboard-v4).spotlight-page .page-header .tagline,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-sub,
+body.chrome-v6.pages-v4:not(.dashboard-v4) span.hv-vdesc { color: #0b1f4d; }
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-band .hv-h2,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-band h2,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .hv-guide b,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .hv-tool b,
+body.chrome-v6.pages-v4:not(.dashboard-v4) .mode-btn.hv-tool b,
+body.chrome-v6.pages-v4:not(.dashboard-v4) span.hv-vtype { color: var(--c6-blue); }
+
+/* the drawings on the Learn and Career Tools cards (the same ten drawings as the homepage) */
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img { display: block; width: 100%; overflow: hidden; border-radius: 8px; margin-bottom: 0.75rem; }
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img-guide { aspect-ratio: 360 / 160; }
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img-tool { aspect-ratio: 400 / 150; }
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
