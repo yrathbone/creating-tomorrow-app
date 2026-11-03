@@ -33,7 +33,7 @@ from career.ingestion import IngestionError, discover, ElevateError, start_resum
 from career.job_match import JobMatchError, build_general_resume, compare_to_job
 from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
-from career.resume_quality import drop_unsourced_bullets
+from career.resume_quality import denials_from_history, drop_unsourced_bullets
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
@@ -1145,7 +1145,8 @@ async def job_build_resume(
     release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(
-            build_checked_resume, profile_text, job_description, req.confirmed_facts, req.name.strip(), req.contact.strip()
+            build_checked_resume, profile_text, job_description, req.confirmed_facts, req.name.strip(), req.contact.strip(),
+            denials_from_history(req.qa_history),  # the candidate's explicit No answers reach the planner and the writer
         )
     except JobMatchError as e:
         raise ai_failure(e)
@@ -1161,6 +1162,13 @@ async def job_build_resume(
         "role_selection": result.get("role_selection") or [],
         "term_report": result.get("term_report") or [],
         "ats_match": result.get("ats_match"),
+        # what the truth checks found, kept with the saved resume so a reviewer can inspect it later (the Word file ignores it)
+        "truth_review": {
+            "answer_conflicts": result.get("answer_conflicts") or [],
+            "skills_removed": result.get("skills_removed") or [],
+            "claims_struck": result.get("claims_struck") or [],
+            "claim_review": result.get("claim_review") or [],
+        },
     }
     version = ResumeVersion(
         career_profile_id=profile.id,
