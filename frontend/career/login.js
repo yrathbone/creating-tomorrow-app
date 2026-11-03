@@ -726,16 +726,13 @@ function revealCareerProfileSections(scrollToId) {
 document.getElementById("update-profile-btn").addEventListener("click", () => {
   revealCareerProfileSections("career-profile-editor");
 });
-// The same import flow serves a resume and a LinkedIn export; only the wording differs.
-function openImportFlow(fromLinkedIn) {
+// One upload flow serves a resume and a LinkedIn export (the form shows the LinkedIn tip every time), so there is one hero button for it.
+function openImportFlow() {
   revealCareerProfileSections("career-profile-editor");
   document.getElementById("mode-resume-btn").click();
-  document.getElementById("resume-upload-heading").textContent = fromLinkedIn ? "Import from LinkedIn" : "Upload your resume";
-  document.getElementById("resume-linkedin-tip").hidden = !fromLinkedIn;
 }
 
-document.getElementById("upload-resume-btn").addEventListener("click", () => openImportFlow(false));
-document.getElementById("import-linkedin-btn").addEventListener("click", () => openImportFlow(true));
+document.getElementById("upload-resume-btn").addEventListener("click", openImportFlow);
 
 document.getElementById("mode-manual-btn").addEventListener("click", () => {
   document.getElementById("manual-entry-section").hidden = false;

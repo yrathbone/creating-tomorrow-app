@@ -68,7 +68,7 @@ test("the dashboard keeps every existing tile, id and card and adds Languages, t
                     "career-progress", "career-progress-bar", "career-progress-sub",
                     "career-profile-status", "cp-name", "cp-contact", "cp-evidence", "edit-profile-btn", "profile-basics-cancel-btn",
                     // hero actions, cards and flows the scripts rely on
-                    "upload-resume-btn", "import-linkedin-btn", "general-resume-hero-btn", "update-profile-btn",
+                    "upload-resume-btn", "general-resume-hero-btn", "update-profile-btn",
                     "job-target-add-btn", "job-resume-last-btn", "general-resume-start-btn", "general-resume-card", "activity-stat-row", "activity-panels",
                     "panel-history", "panel-resumes", "panel-applications", "career-profile-editor", "nav-signout"]) {
     assert.ok(html.includes('id="' + id + '"'), "missing id " + id);
