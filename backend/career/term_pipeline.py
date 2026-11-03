@@ -156,6 +156,21 @@ def _require_term_shape(data: dict) -> dict:
     return data
 
 
+def posting_title(job_description: str) -> str:
+    """The job title a posting opens with: its first line, when that is short and not a sentence (an optional "Job title:" label is
+    dropped). Empty when the first line does not look like a title. Used to enforce "never state the target" in code."""
+    for line in (job_description or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        line = re.sub(r"^(?:job\s*title|position|role)\s*[:\-]\s*", "", line, flags=re.I)
+        words = line.split()
+        if 1 <= len(words) <= 6 and not re.search(r"[.!?;]", line):
+            return line
+        return ""
+    return ""
+
+
 def denials_text_for(denials: list[dict] | None) -> str:
     if not denials:
         return "(none)"
@@ -213,6 +228,14 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str, denials
             "evidence": evidence,
             "denied": denial is not None,
         })
+    # The posting's own job title is where the candidate is APPLYING, not something they hold: unless the evidence literally says it,
+    # a term equal to the title is never supported (it was marked "related" in the live Daniel rerun, and the writer then called him
+    # an "Instructional Designer").
+    title = posting_title(job_description)
+    if title:
+        for t in terms:
+            if t["support"] != "literal" and normalize(t["term"]) == normalize(title):
+                t["support"], t["evidence"] = "none", ""
     return terms
 
 
@@ -703,6 +726,10 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
             resume = dedupe_skills({**resume, **revised}, wording)
             check_placement(resume, terms)
     unsupported = [t["term"] for t in terms if t["support"] == "none" and t.get("kind") != "phrase"]
+    # Never state the target: a sentence that says the candidate IS the posting's job title (when their evidence never says so) is unsupported.
+    title = posting_title(job_description)
+    if title and not term_in_text(title, evidence_text) and title not in unsupported:
+        unsupported.append(title)
     resume, quality = improve_readability(resume, evidence_text, terms, unsupported)
     resume, removed = sanitize_skills(resume, terms, evidence_text)
     resume, struck = strike_unsupported_claims(resume, unsupported, evidence_text)

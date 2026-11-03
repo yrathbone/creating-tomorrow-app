@@ -74,3 +74,22 @@ screen recording is not video editing, mentoring a colleague is not working with
 - **The interface does not yet show `answer_conflicts`, `claims_struck` or `claim_review`** to the candidate; they are returned by the API, saved with the resume as `truth_review`, and logged.
 - A **previously saved profile skill** that the candidate later denies for a specific job is overridden for that job's résumé only; it is not
   edited in the profile.
+
+## Fixes from the live Daniel Reyes rerun (2026-11-03)
+The first live run on the deployed code (saved resume version 31) kept every denied claim out and kept the genuine collaboration with fellow
+teachers, but four of OUR checks misfired. Each is fixed and has regression tests built from the live facts, answers and writer output
+(`backend/tests/test_finding2_live_fixes.py`).
+1. **Conflicts compare against the denied subject, not the whole question** (`resume_quality.find_conflicts`). A true fact about assessments tracked in
+   Google Sheets was reported as conflicting with a No about "other software to build digital learning content" (shared words: "based", "google",
+   "learn"). A fact now conflicts only when it shares two distinctive words with the denial's named gap (one when the gap has one word); without a gap
+   name the whole question is used and three words are needed, as before.
+2. **K-12 is not a figure** (`resume_quality._numbers`). "K-12", "K12" and "pre-K-12" are school ranges; reading the "12" as an invented number
+   struck a true headline phrase and a summary sentence. A bare "12" is still a number.
+3. **Never state the target is now enforced in code** (`term_pipeline.posting_title`). The posting's own job title (its short first line) is never
+   a supported term, and a sentence that says the candidate IS that title is struck unless the evidence literally says so. The live writer had
+   called Daniel an "Instructional Designer" (the false K-12 strike had been hiding this). "Instructional design" as a skill is untouched.
+4. **A long gap label no longer denies a general skill** (`resume_quality.denied_by`). The live gap was labelled "ADDIE or SAM instructional design
+   models", which made the guard deny the general skill "instructional design". A term must now also make up at least half of the label's distinctive
+   words. The things actually denied (video editing, corporate training, subject matter experts) are still denied.
+Known limits that remain: the interview can still paraphrase the candidate's verbs upward ("recorded" became "produced", which supported the skill
+"Video Production"); that is a wording fix in the interview prompt and is not changed here. Other number-like terms (401(k), 24/7, 3D) are not exempted.

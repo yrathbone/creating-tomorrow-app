@@ -53,9 +53,15 @@ def _number_key(raw: str) -> str:
     return digits
 
 
+# "K-12" (also "K12", "pre-K-12") names a school range, not a figure. Reading its "12" as a number wrongly flagged, and the strike then
+# removed, a true headline phrase and summary sentence in the live Daniel Reyes rerun (2026-11-03).
+_SCHOOL_RANGE = re.compile(r"\b(?:pre-?)?K\s*[-–—]?\s*12\b", re.I)
+
+
 def _numbers(text: str) -> list[tuple[str, bool, bool]]:
-    """(normalised number, followed by '+', followed by 'years') for each number in the text."""
-    return [(_number_key(m.group(1)), bool(m.group(2)), bool(m.group(3))) for m in _NUMBER.finditer(text or "")]
+    """(normalised number, followed by '+', followed by 'years') for each number in the text (a school range such as K-12 is not a number)."""
+    text = _SCHOOL_RANGE.sub(" ", text or "")
+    return [(_number_key(m.group(1)), bool(m.group(2)), bool(m.group(3))) for m in _NUMBER.finditer(text)]
 
 
 def _words(text: str) -> int:
@@ -242,21 +248,34 @@ def denied_by(term: str, denials: list[dict]) -> dict | None:
         subject = distinct_roots(_scope_text(denial.get("category", "")))
         if not subject:
             subject = distinct_roots(_scope_text(denial["question"]))
-        if roots <= subject:
+        # The term must also make up at least half of the subject's distinctive words. A long gap label ("ADDIE or SAM instructional
+        # design models") describes the TYPE of thing denied; a general skill that merely sits inside it ("instructional design") is
+        # not what was denied. In the live Daniel rerun this over-reach removed the genuine skill "instructional design".
+        if roots <= subject and len(roots) * 2 >= len(subject):
             return denial
     return None
 
 
 def find_conflicts(denials: list[dict], confirmed_facts: list) -> list[dict]:
-    """A confirmed fact that says again what the candidate denied (three or more distinctive words in common with the denied
-    question). Neither statement is silently overridden: the conflict is reported so the candidate can clarify."""
+    """A confirmed fact that says again what the candidate denied. Neither statement is silently overridden: the conflict is
+    reported so the candidate can clarify.
+
+    The comparison is against the SUBJECT of the denial (the gap it was named for, such as "Video editing"), the same scope
+    denied_by uses, and needs two shared distinctive words (one when the subject has only one). Comparing a fact with the whole
+    question wrongly flagged a true fact about assessments tracked in Google Sheets as conflicting with a No about "other software
+    to build digital learning content", because they shared the incidental words "based", "google" and "learn". When a denial has
+    no gap name, its question stands in for it and three shared words are needed, as before."""
     conflicts = []
     for fact in confirmed_facts or []:
         text = str((fact or {}).get("bullet_text", ""))
         fact_roots = distinct_roots(text)
         for denial in denials or []:
-            shared = fact_roots & distinct_roots(_scope_text(denial["question"]))
-            if len(shared) >= 3:
+            subject = distinct_roots(_scope_text(denial.get("category", "")))
+            need = min(2, len(subject)) if subject else 3
+            if not subject:
+                subject = distinct_roots(_scope_text(denial["question"]))
+            shared = fact_roots & subject
+            if shared and len(shared) >= need:
                 conflicts.append({"fact": text, "denied_question": denial["question"], "shared": sorted(shared)})
                 break
     return conflicts
