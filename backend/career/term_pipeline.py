@@ -23,6 +23,7 @@ from career.job_match import JobMatchError
 MAX_TERMS = 60  # long postings have 40+ distinct terms (one real posting filled 45 of 45); scanners such as Jobscan count them all
 MAX_TERM_WORDS = 5  # longer "terms" are sentence fragments, not keywords
 SUPPORTED = ("literal", "related")
+TRANSFERABLE = "transferable"  # a real, different activity behind a skill the posting values; never claims the posting's own specialised wording
 
 PLAN_SYSTEM_PROMPT = """You are Nova, a careful resume strategist. You are given a job posting and a candidate's verified Career Profile (plus any facts the candidate confirmed in an interview about this posting). Produce a TERM PLAN.
 
@@ -30,9 +31,12 @@ PLAN_SYSTEM_PROMPT = """You are Nova, a careful resume strategist. You are given
 
 2. For EACH term decide whether the candidate's evidence supports it:
 - "literal": the exact term (ignoring capitalization, plurals and hyphens) appears in the Career Profile or the confirmed facts.
-- "related": not literal, but the profile genuinely shows the same underlying skill or domain under different wording. Give the evidence. Examples: RFP responses support "proposal development"; being the technical advisor to treasury and IT teams supports "technical expertise"; training and coaching support "technical training"; demonstrating products and equipping sales teams supports "product education"; directing the "full sales lifecycle" or an end-to-end sales engagement supports "sales cycle" and "sales process"; account management, client onboarding, adoption and post-sales or renewal work supports "customer success". Domain labels count when the work substantively involves that domain: building, integrating or selling payments or banking technology (APIs, ERP/TMS bank connectivity, payment rails, real-time payments such as Zelle or FastPayments, embedded finance) supports "financial technology" and "fintech"; working at a bank supports "banking" and "financial services". Role titles are evidence too: a title containing Sales, Account, Client, Relationship or Consultant supports sales experience, customer-facing work and customer relationships.
-- "none": no real support in the profile. Never stretch a term to make it fit; an honest "none" is the correct answer for something the candidate has not done.
-For "literal" and "related" give a short evidence note naming the role and the phrase or activity that proves it.
+- "related": not literal, but the profile genuinely shows the SAME underlying activity, skill or domain under different wording. RELATED MEANS THE SAME ACTIVITY IN OTHER WORDS, never a similar-looking or lesser activity. Never relabel one kind of work as another: a lesson video is not an e-learning module, screen recording is not video editing, mentoring a colleague is not working with subject matter experts, classroom teaching is not corporate training, handling cash at a retail register is not bank-teller compliance work. When the evidence is only an adjacent or weaker activity, answer "transferable" or "none", never "related". Give the evidence. Examples: RFP responses support "proposal development"; being the technical advisor to treasury and IT teams supports "technical expertise"; training and coaching support "technical training"; demonstrating products and equipping sales teams supports "product education"; directing the "full sales lifecycle" or an end-to-end sales engagement supports "sales cycle" and "sales process"; account management, client onboarding, adoption and post-sales or renewal work supports "customer success". Domain labels count when the work substantively involves that domain: building, integrating or selling payments or banking technology (APIs, ERP/TMS bank connectivity, payment rails, real-time payments such as Zelle or FastPayments, embedded finance) supports "financial technology" and "fintech"; working at a bank supports "banking" and "financial services". Role titles are evidence too: a title containing Sales, Account, Client, Relationship or Consultant supports sales experience, customer-facing work and customer relationships.
+- "transferable": the candidate's evidence shows a REAL but DIFFERENT activity that builds a skill the posting values (for example processing purchases, handling cash and assisting customers at a retail register build cash handling, transaction accuracy and customer service that matter for a bank teller role). The posting's own specialised wording is NOT claimed. Name the real activity in the evidence note. Use it only when the activity truly demonstrates the underlying skill.
+- "none": no real support in the profile. Never stretch a term to make it fit; an honest "none" is the correct answer for something the candidate has not done, and for anything the candidate explicitly said no to.
+For "literal", "related" and "transferable" give a short evidence note naming the role and the phrase or activity that proves it.
+
+THE CANDIDATE'S EXPLICIT NO ANSWERS: the request lists questions the candidate answered NO. A term that IS the denied activity is "none", even when a loosely similar activity exists. A denial covers only what the question asked: do not mark a different, genuinely evidenced activity "none" just because it shares a word (a no to working with corporate subject matter experts does not erase evidence of collaborating with classroom teachers). A skipped or unanswered question is NOT evidence in either direction; never treat it as a yes. The posting is a source of what is relevant, never of facts about the candidate.
 
 Call the submit_term_plan tool. Do not respond with plain text."""
 
@@ -41,6 +45,9 @@ PLAN_USER_TEMPLATE = """CANDIDATE'S CAREER PROFILE (verified, already-confirmed 
 
 CONFIRMED FACTS FROM THE INTERVIEW (approved by the candidate):
 {facts_text}
+
+THE CANDIDATE EXPLICITLY ANSWERED NO TO THESE (a skipped question is not listed and is not evidence):
+{denials_text}
 
 JOB POSTING:
 {job_description}
@@ -61,7 +68,7 @@ PLAN_TOOL = {
                         "term": {"type": "string", "description": "The posting's exact wording."},
                         "importance": {"type": "string", "enum": ["required", "preferred", "mentioned"]},
                         "kind": {"type": "string", "enum": ["skill", "phrase"]},
-                        "support": {"type": "string", "enum": ["literal", "related", "none"]},
+                        "support": {"type": "string", "enum": ["literal", "related", "transferable", "none"]},
                         "evidence": {"type": "string", "description": "Role and phrase/activity that supports it; empty if none."},
                     },
                     "required": ["term", "importance", "support", "evidence"],
@@ -149,9 +156,16 @@ def _require_term_shape(data: dict) -> dict:
     return data
 
 
-def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list[dict]:
+def denials_text_for(denials: list[dict] | None) -> str:
+    if not denials:
+        return "(none)"
+    return "\n".join(f"- {d['question']}" for d in denials)
+
+
+def plan_terms(profile_text: str, facts_text: str, job_description: str, denials: list[dict] | None = None) -> list[dict]:
     user_prompt = PLAN_USER_TEMPLATE.format(
-        profile_text=profile_text, facts_text=facts_text, job_description=job_description
+        profile_text=profile_text, facts_text=facts_text, job_description=job_description,
+        denials_text=denials_text_for(denials),
     )
     data = job_match._call_with_retry(
         "career_term_plan",
@@ -178,8 +192,17 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
             support = "literal"
         elif support == "literal":
             support = "related"
-        if support == "related" and not evidence:
-            support = "none"  # "related" without a stated reason is not evidence
+        if support in ("related", TRANSFERABLE) and not evidence:
+            support = "none"  # "related" or "transferable" without a stated reason is not evidence
+        if support not in ("literal", "related", TRANSFERABLE):
+            support = "none"
+
+        # Code guard for the candidate's explicit No answers: a term that sits entirely inside what the candidate denied is
+        # never supported, whatever the model said. The match is by scope (every distinctive word of the term), so an adjacent,
+        # genuinely evidenced activity that merely shares one word is NOT removed.
+        denial = resume_quality.denied_by(term, denials or [])
+        if denial is not None and support != "none":
+            support, evidence = "none", ""
 
         kind = "phrase" if raw.get("kind") == "phrase" else "skill"
         terms.append({
@@ -188,6 +211,7 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str) -> list
             "importance": raw.get("importance", "mentioned"),
             "support": support,
             "evidence": evidence,
+            "denied": denial is not None,
         })
     return terms
 
@@ -349,7 +373,7 @@ def dedupe_skills(resume_data: dict, wording_terms: set[str] | None = None) -> d
 def check_placement(resume_data: dict, terms: list[dict]) -> None:
     text = resume_text(resume_data)
     for t in terms:
-        t["on_resume"] = t["support"] in SUPPORTED and term_in_text(t["term"], text)
+        t["on_resume"] = (t["support"] in SUPPORTED or t["support"] == TRANSFERABLE) and term_in_text(t["term"], text)
 
 
 def add_missing_terms(resume_data: dict, missing: list[dict]) -> dict | None:
@@ -379,6 +403,9 @@ def add_missing_terms(resume_data: dict, missing: list[dict]) -> dict | None:
 
 
 def _status(t: dict) -> str:
+    if t["support"] == TRANSFERABLE:
+        # a real, different activity: shown to the candidate as relevant experience to build on, never as a claimed qualification
+        return "on_resume" if t.get("on_resume") else "transferable"
     if t["support"] not in SUPPORTED:
         return "not_in_profile"
     if t.get("on_resume"):
@@ -393,6 +420,7 @@ Fix ONLY the flagged items:
 - Too long or run-on: split into shorter sentences or tighten. Cut filler and repeated words. Prefer plain verbs over a string of nouns. No more than one dash in a sentence.
 - Too many keywords in one sentence: keep the sentence's real meaning, spread keywords over neighbouring sentences or drop the repeat from this one. Never delete a keyword from the resume altogether: every KEEP keyword must still appear on the resume in its exact wording (the skills section already carries most of them).
 - A figure or name that is not in the evidence: delete it, or restate the sentence using only what the evidence says.
+- An unsupported claim (a qualification the evidence does not establish, or one the candidate said no to): take the claim out and keep what the evidence DOES say about that activity, in the candidate's own plain wording (for example keep "recorded 60 short lesson videos shared in Google Classroom" and drop "e-learning modules"). Never replace it with another unsupported claim, and never keep a keyword in a sentence if it changes what the candidate did.
 Never add a fact, number, name, tool, title, employer, scope or result that is not in the EVIDENCE. Never turn "supported" into "led". Do not touch the skills list, education, certifications, headline, or any item that was not flagged. Keep every role and every bullet (rewrite a bullet in place; do not delete one unless the problem says to remove its content). Return the COMPLETE resume_data with the same structure. Call the submit_revised_resume tool. Do not respond with plain text."""
 
 POLISH_USER_TEMPLATE = """CURRENT RESUME (JSON):
@@ -414,7 +442,7 @@ def _prose_signature(resume_data: dict) -> list[str]:
     return [u["text"] for u in resume_quality.prose_units(resume_data)]
 
 
-def improve_readability(resume_data: dict, evidence_text: str, terms: list[dict]) -> tuple[dict, dict]:
+def improve_readability(resume_data: dict, evidence_text: str, terms: list[dict], unsupported_terms: list[str] | None = None) -> tuple[dict, dict]:
     """Truth and readability checks (career/resume_quality.py), and at most ONE targeted edit pass when they find problems.
 
     The edit is accepted only if it (a) keeps the same roles and bullets, (b) loses no posting term that was on the resume,
@@ -426,10 +454,11 @@ def improve_readability(resume_data: dict, evidence_text: str, terms: list[dict]
     extra = "\n".join(t["term"] + " " + (t.get("evidence") or "") for t in supported)
 
     def check(resume):
-        return resume_quality.find_issues(resume, evidence_text, skill_names, term_in_text, extra)
+        return (resume_quality.find_issues(resume, evidence_text, skill_names, term_in_text, extra)
+                + resume_quality.find_claim_issues(resume, unsupported_terms or []))
 
     def truth_count(issues):
-        return sum(1 for i in issues if "not in the candidate's profile" in i["problem"])
+        return sum(1 for i in issues if "not in the candidate's profile" in i["problem"] or i["problem"].startswith("unsupported claim"))
 
     try:
         issues = check(resume_data)
@@ -459,7 +488,7 @@ def improve_readability(resume_data: dict, evidence_text: str, terms: list[dict]
         if len(new_jobs) != len(old_jobs) or any(len(a.get("bullets") or []) != len(b.get("bullets") or []) for a, b in zip(old_jobs, new_jobs)):
             return resume_data, info
         before_text, after_text = resume_text(resume_data), resume_text(revised)
-        if any(term_in_text(t["term"], before_text) and not term_in_text(t["term"], after_text) for t in terms):
+        if any(term_in_text(t["term"], before_text) and not term_in_text(t["term"], after_text) for t in supported):
             print("[career.quality] edit rejected: it lost a posting keyword")
             return resume_data, info
         after = check(revised)
@@ -504,27 +533,75 @@ def log_term_summary(terms: list[dict], ats: dict) -> None:
         f"[career.terms] planned={len(terms)} ats_style={ats['pct']}% "
         f"not_placed=[{names([t for t in left_off if t['support'] in SUPPORTED and t.get('kind') != 'phrase'])}] "
         f"phrases_unused=[{names([t for t in left_off if t['support'] in SUPPORTED and t.get('kind') == 'phrase'])}] "
-        f"not_in_profile=[{names([t for t in left_off if t['support'] not in SUPPORTED])}]"
+        f"transferable=[{names([t for t in left_off if t['support'] == TRANSFERABLE])}] "
+        f"not_in_profile=[{names([t for t in left_off if t['support'] not in SUPPORTED and t['support'] != TRANSFERABLE])}]"
     )
 
 
-def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str) -> dict:
+def sanitize_skills(resume_data: dict, terms: list[dict], evidence_text: str) -> tuple[dict, list[str]]:
+    """The last, plain-code pass over SKILLS. A skill is removed only when it (a) is a posting term the evidence does not
+    establish (support "none", including everything the candidate denied), or (b) shares no distinctive word at all with the
+    candidate's evidence, so it cannot be traced to anything they said. Skills that are literal, related or transferable
+    terms, and skills traceable to the evidence, stay. Returns (resume, the skills removed)."""
+    # Words are compared by their first five letters, so 'resolved' traces to 'resolution' and 'handled' to 'handling': a
+    # genuine skill the candidate describes in different words must not be dropped for a spelling difference.
+    def stems(text):
+        return {r[:5] for r in resume_quality.distinct_roots(text)}
+
+    # Traceable means: a distinctive word of the skill appears in what the CANDIDATE said (profile and confirmed facts). Words that
+    # only appear in a planned posting term do not count, or a skill like "Stakeholder Collaboration" would pass on the strength
+    # of an unrelated term that happens to share the word "collaboration".
+    evidence_roots = stems(evidence_text)
+    keep_terms = [t for t in terms if t["support"] in SUPPORTED or t["support"] == TRANSFERABLE]
+    none_terms = [t["term"] for t in terms if t["support"] == "none" and t.get("kind") != "phrase"]
+    removed: list[str] = []
+    lines: list[str] = []
+    for line in resume_data.get("skills") or []:
+        label, sep, rest = line.partition(":")
+        grouped = bool(sep) and len(label) <= 40
+        kept = []
+        for item in _split_top_level(rest if grouped else line):
+            item = _clean_item(item)
+            roots = stems(item)
+            is_keep_term = any(term_in_text(t["term"], item) or normalize(t["term"]) == normalize(item) for t in keep_terms)
+            matches_none = any(normalize(n) == normalize(item) or (len(resume_quality.distinct_roots(n)) >= 2 and term_in_text(n, item)) for n in none_terms)
+            untraceable = bool(roots) and not (roots & evidence_roots)
+            if (matches_none or untraceable) and not is_keep_term:
+                removed.append(item)
+                continue
+            kept.append(item)
+        if kept:
+            lines.append(f"{label.strip()}: {', '.join(kept)}" if grouped else ", ".join(kept))
+    return {**resume_data, "skills": lines}, removed
+
+
+def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, denials: list[dict] | None = None) -> dict:
+    denials = denials or []
+    # A confirmed fact that says again what the candidate denied is NOT silently used, and the denial is not silently dropped:
+    # the fact is held back and the conflict is reported so the candidate can clarify.
+    conflicts = resume_quality.find_conflicts(denials, confirmed_facts)
+    held = {c["fact"] for c in conflicts}
+    confirmed_facts = [f for f in confirmed_facts or [] if str(f.get("bullet_text", "")) not in held]
     facts_text = facts_text_for(confirmed_facts)
 
     try:
-        terms = plan_terms(profile_text, facts_text, job_description)
+        terms = plan_terms(profile_text, facts_text, job_description, denials)
     except JobMatchError:
         print("[career.terms] planning failed; building without a term plan")
         terms = None  # fall back to the plain one-call build, no report
 
     result = job_match.build_tailored_resume(
-        profile_text, job_description, confirmed_facts, name, contact, term_plan=terms
+        profile_text, job_description, confirmed_facts, name, contact, term_plan=terms, denials=denials
     )
     evidence_text = profile_text + "\n" + facts_text
+    result["answer_conflicts"] = conflicts
     if not terms:
         resume, quality = improve_readability(dedupe_skills(result["resume_data"]), evidence_text, [])
+        resume, removed = sanitize_skills(resume, [], evidence_text)
         result["resume_data"] = resume
         result["quality"] = quality
+        result["skills_removed"] = removed
+        result["claim_review"] = []
         log_quality(quality)
         result["term_report"] = []
         return result
@@ -546,8 +623,15 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         if revised:
             resume = dedupe_skills({**resume, **revised}, wording)
             check_placement(resume, terms)
-    resume, quality = improve_readability(resume, evidence_text, terms)
+    unsupported = [t["term"] for t in terms if t["support"] == "none" and t.get("kind") != "phrase"]
+    resume, quality = improve_readability(resume, evidence_text, terms, unsupported)
+    resume, removed = sanitize_skills(resume, terms, evidence_text)
     check_placement(resume, terms)
+    # what the checks could not fix is reported, never hidden
+    result["claim_review"] = resume_quality.find_claim_issues(resume, unsupported)
+    result["skills_removed"] = removed
+    if removed or result["claim_review"] or conflicts:
+        print(f"[career.truth] skills_removed={len(removed)} unsupported_claims_left={len(result['claim_review'])} answer_conflicts={len(conflicts)}")
     result["quality"] = quality
     log_quality(quality)
     result["resume_data"] = resume
