@@ -214,9 +214,9 @@ test("the Guide popup also moves focus in, keeps Tab inside and returns focus on
 
 test("the new look's colours: royal blue and amber gold, and every text pairing meets WCAG AA", () => {
   const t7 = (name) => css7.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`))[1].toLowerCase();
-  assert.strictEqual(t7("royal"), "#0033a0");
+  assert.strictEqual(t7("royal"), "#003395");
   assert.strictEqual(t7("amber"), "#ffb000");
-  assert.match(css7, /--c6-blue: #0033a0;/);
+  assert.match(css7, /--c6-blue: #003395;/);
   assert.match(css7, /--c6-gold: #ffb000;/);
   assert.ok(contrast("#ffffff", t7("royal")) >= 4.5, "white on royal (header, closing band)");
   assert.ok(contrast(t7("royal"), "#ffffff") >= 4.5, "royal text on white");
