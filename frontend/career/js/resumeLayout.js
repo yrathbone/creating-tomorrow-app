@@ -47,14 +47,14 @@ async function savePreferredLayout(layout) {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      return { ok: false, message: typeof body.detail === "string" ? body.detail : "Couldn't save that right now." };
+      return { ok: false, message: typeof body.detail === "string" ? body.detail : "Couldn’t save that right now." };
     }
     const data = await res.json();
     preferredResumeLayout = normalizeResumeLayout(data.layout);
     applyPreferredLayout();
     return { ok: true, layout: preferredResumeLayout };
   } catch (err) {
-    return { ok: false, message: (err && err.message) || "Couldn't save that right now." };
+    return { ok: false, message: (err && err.message) || "Couldn’t save that right now." };
   }
 }
 

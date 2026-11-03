@@ -32,7 +32,7 @@ function showResumeError(el, message) {
   el.hidden = false;
 }
 
-// Matches newly extracted resume data against what's already in the
+// Matches newly extracted resume data against what’s already in the
 // profile (allExperiences/allEducation/allCertifications, from login.js)
 // so uploading another resume consolidates into the same roles instead of
 // creating duplicates every time. Heuristic, not exact - always shown as
@@ -269,7 +269,7 @@ resumeUploadForm.addEventListener("submit", async (e) => {
     uploadFile = new File([pasted], "pasted-profile.txt", { type: "text/plain" });
   }
   if (!uploadFile) {
-    showResumeError(resumeUploadError, pasted ? "That's a bit short. Paste more of your profile or resume." : "Please choose a file, or paste your profile or resume text.");
+    showResumeError(resumeUploadError, pasted ? "That’s a bit short. Paste more of your profile or resume." : "Please choose a file, or paste your profile or resume text.");
     return;
   }
 
@@ -615,7 +615,7 @@ function renderResumeSkills() {
   resumeState.newSkills = fresh;
   const dup = found.length - fresh.length;
   note.textContent = fresh.length
-    ? fresh.length + " new skill" + (fresh.length === 1 ? "" : "s") + " from your document. Untick any you don't want." + (dup ? " " + dup + " you already have " + (dup === 1 ? "is" : "are") + " not shown." : "")
+    ? fresh.length + " new skill" + (fresh.length === 1 ? "" : "s") + " from your document. Untick any you don’t want." + (dup ? " " + dup + " you already have " + (dup === 1 ? "is" : "are") + " not shown." : "")
     : "All " + found.length + " skills in your document are already in your profile. Nothing to add.";
   for (const name of fresh) {
     const li = document.createElement("li");
@@ -642,7 +642,7 @@ function renderImportMatchNote() {
   const certMatches = resumeState.certifications.filter((c) => findBestCertificationMatch(c)).length;
   if (resumeState.certifications.length) parts.push(certMatches + " of " + resumeState.certifications.length + " certifications");
   el.hidden = parts.length === 0;
-  el.textContent = parts.length ? "Already in your profile: " + parts.join(", ") + ". Matches are preselected as updates, so they won't be duplicated; change any you disagree with." : "";
+  el.textContent = parts.length ? "Already in your profile: " + parts.join(", ") + ". Matches are preselected as updates, so they won’t be duplicated; change any you disagree with." : "";
 }
 
 function renderResumeFacts() {

@@ -9,21 +9,21 @@ const GUIDE_OPTIONS = [
     label: "I need to create a resume",
     toolName: "Beginning",
     toolHref: "scratch.html",
-    explanation: "Since you don't have a resume yet, Beginning walks you through building one from scratch, step by step, using your real experience.",
+    explanation: "Since you don’t have a resume yet, Beginning walks you through building one from scratch, step by step, using your real experience.",
   },
   {
     id: "improve",
     label: "I want to improve the resume I already have",
     toolName: "Refine",
     toolHref: "tool.html?mode=refine",
-    explanation: "Since you already have a resume and want it to read more polished and professional, Refine strengthens your language and formatting using only what's already true.",
+    explanation: "Since you already have a resume and want it to read more polished and professional, Refine strengthens your language and formatting using only what’s already true.",
   },
   {
     id: "hidden-experience",
-    label: "My resume doesn't show everything I can do",
+    label: "My resume doesn’t show everything I can do",
     toolName: "Elevate",
     toolHref: "elevate.html",
-    explanation: "Since you already have a resume but feel it doesn't fully represent your experience, Elevate can help uncover what may be missing.",
+    explanation: "Since you already have a resume but feel it doesn’t fully represent your experience, Elevate can help uncover what may be missing.",
   },
   {
     id: "specific-job",
@@ -37,7 +37,7 @@ const GUIDE_OPTIONS = [
     label: "I want to review my LinkedIn profile",
     toolName: "Spotlight",
     toolHref: "spotlight.html",
-    explanation: "Since it's your LinkedIn profile you want a second look at, Spotlight reviews your headline, About section, experience, and skills using screenshots, pasted text, or a PDF you share.",
+    explanation: "Since it’s your LinkedIn profile you want a second look at, Spotlight reviews your headline, About section, experience, and skills using screenshots, pasted text, or a PDF you share.",
   },
   {
     id: "interview-prep",
@@ -69,7 +69,7 @@ function renderGuideOptions() {
 }
 
 function showGuideRecommendation(option) {
-  guideRecommendationHeading.textContent = `Here's where I'd start: ${option.toolName}.`;
+  guideRecommendationHeading.textContent = `Here’s where I’d start: ${option.toolName}.`;
   guideRecommendationText.textContent = option.explanation;
   guideStartBtn.textContent = `Start ${option.toolName}`;
   guideStartBtn.href = option.toolHref;

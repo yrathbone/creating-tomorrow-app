@@ -42,7 +42,7 @@ const MODE_CONFIG = {
   refine: {
     endpoint: "/api/refine",
     uploadHeading: "1. Refine: Tell us about you",
-    uploadHint: "Upload your current resume. We'll format it for ATS and rewrite it in polished, professional language — no job posting needed, and we won't add anything that isn't already true on your resume.",
+    uploadHint: "Upload your current resume. We’ll format it for ATS and rewrite it in polished, professional language — no job posting needed, and we won’t add anything that isn’t already true on your resume.",
     messages: [
       "Reading your resume...",
       "Reviewing your experience...",
@@ -56,7 +56,7 @@ const MODE_CONFIG = {
   analyze: {
     endpoint: "/api/analyze",
     uploadHeading: "1. Right Fit: Tell us about the role",
-    uploadHint: "Upload your current resume and paste in the job posting you're aiming for. We'll compare them honestly — not just by counting keywords.",
+    uploadHint: "Upload your current resume and paste in the job posting you’re aiming for. We’ll compare them honestly — not just by counting keywords.",
     messages: [
       "Reading your resume...",
       "Reviewing the job posting...",

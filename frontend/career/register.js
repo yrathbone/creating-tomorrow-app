@@ -4,7 +4,7 @@
 const signupForm = document.getElementById("signup-form");
 const signupError = document.getElementById("signup-error");
 
-const INVITE_ONLY_MESSAGE = "Sorry, we can't create this account. Career Profile is currently in beta testing and is by invitation only.";
+const INVITE_ONLY_MESSAGE = "Sorry, we can’t create this account. Career Profile is currently in beta testing and is by invitation only.";
 
 signupForm.addEventListener("submit", (e) => {
   e.preventDefault();

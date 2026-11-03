@@ -117,7 +117,7 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
   startProcessingState(jobLoadingState, [
     "Reading the job posting...",
     "Comparing it to your Career Profile...",
-    "Identifying what's worth exploring...",
+    "Identifying what’s worth exploring...",
   ]);
 
   try {
@@ -449,7 +449,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
   jobBuildLoadingState.hidden = false;
   jobStepStarted(jobBuildLoadingState);
   startProcessingState(jobBuildLoadingState, [
-    "Reading the posting's key terms...",
+    "Reading the posting’s key terms...",
     "Matching them to your experience...",
     "Writing your resume...",
     "Double-checking nothing was missed...",
@@ -512,7 +512,7 @@ document.getElementById("job-keyword-check-btn").addEventListener("click", async
   jobLoadingState.hidden = false;
   jobStepStarted(jobLoadingState);
   startProcessingState(jobLoadingState, [
-    "Reading the posting's key terms...",
+    "Reading the posting’s key terms...",
     "Checking them against your profile...",
   ]);
 
@@ -571,7 +571,7 @@ async function addExtraTerm(saveToSkills) {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      errorEl.textContent = formatErrorDetail(err.detail, "Couldn't save that skill.");
+      errorEl.textContent = formatErrorDetail(err.detail, "Couldn’t save that skill.");
       errorEl.hidden = false;
       return;
     }
@@ -601,7 +601,7 @@ function showKeywordNote(text) {
 
 function renderKeywordCards(alreadyCovered) {
   document.getElementById("job-keywords-intro").textContent =
-    alreadyCovered + " other key terms are already backed by your profile. For each term below, tell me honestly whether it's true for you. " +
+    alreadyCovered + " other key terms are already backed by your profile. For each term below, tell me honestly whether it’s true for you. " +
     "Anything you skip stays off your resume.";
   const container = document.getElementById("job-keywords-list");
   container.textContent = "";
@@ -715,7 +715,7 @@ document.getElementById("job-keywords-apply-btn").addEventListener("click", asyn
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(formatErrorDetail(err.detail, `Couldn't save "${t.term}" (${res.status})`));
+          throw new Error(formatErrorDetail(err.detail, `Couldn’t save "${t.term}" (${res.status})`));
         }
         savedSkills += 1;
         // Saved: flip the card to Skip so a retry after a later error can't save it twice.
@@ -781,14 +781,14 @@ function renderTermReport(report) {
   const notInProfile = report.filter((r) => r.status === "not_in_profile").sort(byRank);
 
   let text = onResume.length + " of " + report.length + " terms from the posting are on your resume.";
-  if (notInProfile.length) text += " " + notInProfile.length + " aren't backed by your profile yet. If you have that experience, add it and rebuild.";
-  if (notPlaced.length) text += " " + notPlaced.length + (notPlaced.length === 1 ? " is" : " are") + " in your profile but couldn't be placed, so add " + (notPlaced.length === 1 ? "it" : "them") + " by hand.";
+  if (notInProfile.length) text += " " + notInProfile.length + " aren’t backed by your profile yet. If you have that experience, add it and rebuild.";
+  if (notPlaced.length) text += " " + notPlaced.length + (notPlaced.length === 1 ? " is" : " are") + " in your profile but couldn’t be placed, so add " + (notPlaced.length === 1 ? "it" : "them") + " by hand.";
   summary.textContent = text;
 
   for (const item of notPlaced.concat(notInProfile)) {
     const li = document.createElement("li");
     const label = item.term + (item.importance && item.importance !== "mentioned" ? " (" + item.importance + ")" : "");
-    li.textContent = label + (item.status === "not_placed" ? " — in your profile, but couldn't be placed on the resume " : " ");
+    li.textContent = label + (item.status === "not_placed" ? " — in your profile, but couldn’t be placed on the resume " : " ");
     if (item.status === "not_in_profile") {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -821,7 +821,7 @@ const MATCH_GRADES = [
   { min: 90, letter: "A", band: "90%+", title: "Strong match", text: "Nearly every key term in the posting is on your resume." },
   { min: 80, letter: "B", band: "80–89%", title: "Good match", text: "Most key terms are on your resume. A few are missing; see below." },
   { min: 70, letter: "C", band: "70–79%", title: "Fair match", text: "Many key terms are on your resume, but several the posting asks for are not." },
-  { min: 0, letter: "D", band: "under 70%", title: "Weak match", text: "A lot of what the posting asks for isn't on this resume yet. Check the list below for terms you can honestly add." },
+  { min: 0, letter: "D", band: "under 70%", title: "Weak match", text: "A lot of what the posting asks for isn’t on this resume yet. Check the list below for terms you can honestly add." },
 ];
 
 function computeMatchGrade(report) {
@@ -852,10 +852,10 @@ function renderMatchGrade(report, ats) {
   const atsLine = document.getElementById("job-ats-line");
   atsLine.hidden = !(ats && ats.total);
   if (ats && ats.total) {
-    atsLine.textContent = "ATS-style score: " + ats.pct + "% (" + ats.found + " of " + ats.total + " posting terms appear on this resume). Outside scanners such as Jobscan count every term the posting uses, even ones you can't honestly claim, so this is the number to compare with them.";
+    atsLine.textContent = "ATS-style score: " + ats.pct + "% (" + ats.found + " of " + ats.total + " posting terms appear on this resume). Outside scanners such as Jobscan count every term the posting uses, even ones you can’t honestly claim, so this is the number to compare with them.";
   }
   document.getElementById("job-match-grade-note").textContent =
-    "Based on the key terms we found in this posting and what your profile honestly supports. Other scoring tools may pick different terms, and terms you don't have should stay off.";
+    "Based on the key terms we found in this posting and what your profile honestly supports. Other scoring tools may pick different terms, and terms you don’t have should stay off.";
 }
 
 // Shows which roles kept their full bullets and which were shortened to one
@@ -916,7 +916,7 @@ document.getElementById("job-applied-save-btn").addEventListener("click", async 
     document.getElementById("job-applied-form").hidden = true;
     msg.textContent = "Added to your tracker. Find it under Applications in your Career Snapshot, and update it when you hear back.";
   } catch (err) {
-    msg.textContent = err.message || "Couldn't add that application.";
+    msg.textContent = err.message || "Couldn’t add that application.";
   } finally {
     msg.hidden = false;
     saveBtn.disabled = false;
@@ -999,14 +999,14 @@ document.getElementById("job-skip-job-btn").addEventListener("click", async () =
       const res = await authedFetch("/api/career/scan-history/" + id + "/skip", { method: "POST" });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(formatErrorDetail(err.detail, `Couldn't skip this job (${res.status})`));
+        throw new Error(formatErrorDetail(err.detail, `Couldn’t skip this job (${res.status})`));
       }
     }
     resetJobTarget();
     if (typeof loadScanHistory === "function") await loadScanHistory();
     restoreCurrentJobTarget();
     const note = document.getElementById("job-skipped-note");
-    note.textContent = "Skipped" + (title ? " \u201c" + title + "\u201d" : "") + ". You'll find it under Skipped jobs in Your Activity if you change your mind.";
+    note.textContent = "Skipped" + (title ? " \u201c" + title + "\u201d" : "") + ". You’ll find it under Skipped jobs in Your Activity if you change your mind.";
     note.hidden = false;
     announceJob(note.textContent);
   } catch (err) {

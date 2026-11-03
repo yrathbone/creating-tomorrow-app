@@ -18,18 +18,18 @@ function deleteConfirmationMatches(text) {
 
 function deletedMessage(accountRemoved) {
   return accountRemoved
-    ? "Your saved data and your sign-in account have been permanently deleted. If you ever want to use the Career Profile again, you're welcome to create a new account."
-    : "Your saved data has been permanently deleted and you have been signed out. We couldn't remove your sign-in account automatically. Email " + DELETE_CONTACT_EMAIL + " and we'll remove it for you.";
+    ? "Your saved data and your sign-in account have been permanently deleted. If you ever want to use the Career Profile again, you’re welcome to create a new account."
+    : "Your saved data has been permanently deleted and you have been signed out. We couldn’t remove your sign-in account automatically. Email " + DELETE_CONTACT_EMAIL + " and we’ll remove it for you.";
 }
 
 // The server answered "no": it rolls back as one transaction, so nothing was deleted.
 function deleteFailureMessage(detail) {
-  return (typeof detail === "string" && detail ? detail : "We couldn't delete your data just now.") + " Nothing was deleted. Please try again in a moment.";
+  return (typeof detail === "string" && detail ? detail : "We couldn’t delete your data just now.") + " Nothing was deleted. Please try again in a moment.";
 }
 
 // The request never got an answer (connection lost): we cannot know whether it finished, so we do not claim either.
 function deleteUnknownMessage() {
-  return "We couldn't confirm that the deletion finished. Reload this page: if it asks you to sign in again, your data was deleted. If you can still see your dashboard, try again.";
+  return "We couldn’t confirm that the deletion finished. Reload this page: if it asks you to sign in again, your data was deleted. If you can still see your dashboard, try again.";
 }
 
 function wireDeleteAccount() {

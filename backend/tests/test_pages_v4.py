@@ -77,10 +77,10 @@ class CareerToolsHub(unittest.TestCase):
         self.assertIn('id="step-mode"', h)
         self.assertIn('.mode-btn[data-mode]', read("app.js"))
 
-    def test_hub_tiles_have_an_icon_a_name_a_description_and_a_start_line(self):
+    def test_hub_tiles_have_a_picture_a_name_a_description_and_a_start_line(self):
         h = read("tool.html")
         block = h[h.index('id="step-mode"'):h.index('id="step-upload"')]
-        for part in ("hv-vicon", "hv-vtype", "<b>", "hv-vdesc", "hv-vfoot"):
+        for part in ("class=\"pv-img ", "hv-vtype", "<b>", "hv-vdesc", "hv-vfoot"):
             self.assertEqual(block.count(part), 6, part)
 
 

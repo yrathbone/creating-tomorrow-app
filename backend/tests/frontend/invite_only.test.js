@@ -96,7 +96,7 @@ test("newPasswordProblem: at least 8 characters and both boxes must match", () =
   assert.strictEqual(ctx.newPasswordProblem("abcdefgh", "abcdefgh"), "");
   assert.match(ctx.newPasswordProblem("short", "short"), /at least 8 characters/);
   assert.match(ctx.newPasswordProblem("", ""), /at least 8 characters/);
-  assert.match(ctx.newPasswordProblem("abcdefgh", "abcdefgx"), /don't match/);
+  assert.match(ctx.newPasswordProblem("abcdefgh", "abcdefgx"), /don['’]t match/);
 });
 
 test("login.js: the invited person's temporary password leads to the new-password step, then the same sign-in as everyone", () => {

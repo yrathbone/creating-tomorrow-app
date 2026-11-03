@@ -124,7 +124,7 @@ test("an error with no readable detail gets one plain sentence, not a status cod
   const w = generalWorld({ server: async () => ({ ok: false, status: 500, json: async () => { throw new Error("not json"); } }) });
   w.state.resumeData = { name: "Casey Rowan" };
   await w.els["general-resume-download-btn"].fire("click");
-  assert.match(w.els["general-download-msg"].textContent, /couldn't prepare your download/i);
+  assert.match(w.els["general-download-msg"].textContent, /couldn['’]t prepare your download/i);
   assert.doesNotMatch(w.els["general-download-msg"].textContent, /500/);
 });
 

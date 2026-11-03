@@ -80,7 +80,7 @@ function runSlice(from, to, extra = {}) {
 test("passwordResetMessage: plain words for each failure, and the service's own text when it has one", () => {
   const ctx = runSlice("function passwordResetMessage", "loginForm.addEventListener");
   const m = (code, message) => ctx.passwordResetMessage({ code, message });
-  assert.match(m("CodeMismatchException"), /isn't right/);
+  assert.match(m("CodeMismatchException"), /isn['’]t right/);
   assert.match(m("ExpiredCodeException"), /expired/);
   assert.match(m("LimitExceededException"), /Too many/);
   assert.match(m("TooManyRequestsException"), /Too many/);

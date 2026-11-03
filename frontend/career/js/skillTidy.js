@@ -13,7 +13,7 @@ document.getElementById("skill-quick-add-form").addEventListener("submit", async
   if (!name) return;
   msg.hidden = false;
   if (name.split(/\s+/).length > 4) {
-    msg.textContent = "Keep a skill to a short keyword (up to 4 words). Put longer detail in the skill's edit form.";
+    msg.textContent = "Keep a skill to a short keyword (up to 4 words). Put longer detail in the skill’s edit form.";
     return;
   }
   const res = await authedFetch("/api/career/skills", {
@@ -23,7 +23,7 @@ document.getElementById("skill-quick-add-form").addEventListener("submit", async
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    msg.textContent = formatErrorDetail(err.detail, "Couldn't save that skill.");
+    msg.textContent = formatErrorDetail(err.detail, "Couldn’t save that skill.");
     return;
   }
   input.value = "";
@@ -135,7 +135,7 @@ document.getElementById("skill-tidy-apply-btn").addEventListener("click", async 
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(formatErrorDetail(err.detail, `Couldn't rename "${s.name}" (${res.status})`));
+        throw new Error(formatErrorDetail(err.detail, `Couldn’t rename "${s.name}" (${res.status})`));
       }
       saved += 1;
       card.querySelector(".tidy-check").checked = false;

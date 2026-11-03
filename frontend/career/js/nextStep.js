@@ -21,7 +21,7 @@ function chooseNextStep(f) {
 
   if (!f.roles) {
     return { key: "add-role", title: "Add your most recent role",
-      text: "Everything here is built from your real experience. Upload your resume and we'll pull your roles in for you to check, or add one by hand.",
+      text: "Everything here is built from your real experience. Upload your resume and we’ll pull your roles in for you to check, or add one by hand.",
       button: "Upload my resume", targets: ["#upload-resume-btn"] };
   }
   if (!f.skills) {
@@ -49,15 +49,15 @@ function chooseNextStep(f) {
       button: "Build a general resume", targets: ["#general-resume-hero-btn"] };
   }
   if (!scans.length) {
-    return { key: "compare-job", title: "Compare a job you're interested in",
-      text: "Paste a job posting and we'll show how your real experience lines up, and what you may be leaving out.",
+    return { key: "compare-job", title: "Compare a job you’re interested in",
+      text: "Paste a job posting and we’ll show how your real experience lines up, and what you may be leaving out.",
       button: "Add a Job", targets: ["#job-target-add-btn"] };
   }
   const built = new Set(tailored.map((r) => r.scan_history_id));
   const unfinished = scans.find((s) => !built.has(s.id));
   if (unfinished) {
     return { key: "finish-resume", title: unfinished.job_title ? "Finish your resume for " + unfinished.job_title : "Finish your tailored resume",
-      text: "You compared this job but haven't built a resume for it yet. Pick up where you left off.",
+      text: "You compared this job but haven’t built a resume for it yet. Pick up where you left off.",
       button: "Continue", targets: ["#job-resume-last-btn"] };
   }
 
@@ -71,13 +71,13 @@ function chooseNextStep(f) {
     const interviews = apps.filter((a) => a.status === "interview");
     if (interviews.length) {
       return { key: "prepare-interview", title: interviews.length === 1 ? "You have an interview: get ready" : "You have " + interviews.length + " interviews: get ready",
-        text: "Practice the questions you're likely to hear, built from your own experience.",
+        text: "Practice the questions you’re likely to hear, built from your own experience.",
         button: "Prepare for it", href: "../prepare.html" };
     }
     const waiting = apps.filter((a) => a.status === "applied" && days(a) !== null && days(a) >= STALE_APPLICATION_DAYS);
     if (waiting.length) {
       return { key: "check-applications", title: waiting.length === 1 ? "Check on an application" : "Check on " + waiting.length + " applications",
-        text: "It's been " + STALE_APPLICATION_DAYS + "+ days. Update the status, or follow up if you haven't heard back.",
+        text: "It’s been " + STALE_APPLICATION_DAYS + "+ days. Update the status, or follow up if you haven’t heard back.",
         button: "Open my applications", targets: tile("applications") };
     }
     if (!apps.length) {

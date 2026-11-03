@@ -106,7 +106,7 @@ async function saveApplication(entry, changes) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(formatErrorDetail(err.detail, "Couldn't save that change."));
+    throw new Error(formatErrorDetail(err.detail, "Couldn’t save that change."));
   }
   await loadApplications();
 }
@@ -120,7 +120,7 @@ async function addApplication(payload) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(formatErrorDetail(err.detail, "Couldn't add that application."));
+    throw new Error(formatErrorDetail(err.detail, "Couldn’t add that application."));
   }
   await loadApplications();
 }
@@ -136,7 +136,7 @@ function renderApplications() {
     summary.textContent = "";
     const p = document.createElement("p");
     p.className = "hint";
-    p.textContent = "The application tracker isn't switched on yet. It needs a one-time database step on the server.";
+    p.textContent = "The application tracker isn’t switched on yet. It needs a one-time database step on the server.";
     list.appendChild(p);
     return;
   }
