@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 150" width="400" height="150">
+  <rect width="400" height="150" fill="#e6ecf8"/>
+  <path d="M148 18 a4 4 0 0 1 4 -4 H244 L264 34 V132 a4 4 0 0 1 -4 4 H152 a4 4 0 0 1 -4 -4 Z" fill="#ffffff"/>
+  <path d="M244 14 V30 a4 4 0 0 0 4 4 H264 Z" fill="#d6def0"/>
+  <rect x="164" y="30" width="64" height="9" rx="2" fill="#003395"/>
+  <rect x="164" y="44" width="44" height="4" rx="2" fill="#9aa7c7"/>
+  <rect x="164" y="56" width="88" height="3" fill="#ffb000"/>
+  <rect x="164" y="66" width="86" height="4" rx="2" fill="#c9d1e3"/>
+  <rect x="164" y="76" width="68" height="4" rx="2" fill="#c9d1e3"/>
+  <rect x="164" y="86" width="78" height="4" rx="2" fill="#c9d1e3"/>
+  <rect x="164" y="100" width="88" height="24" rx="3" fill="none" stroke="#ffb000" stroke-width="2" stroke-dasharray="5 4"/>
+  <circle cx="276" cy="120" r="17" fill="#ffb000"/>
+  <path d="M276 111 v18 M267 120 h18" stroke="#0b1f4d" stroke-width="4.5" stroke-linecap="round"/>
+  <g transform="translate(108 106) rotate(-40)">
+    <rect x="-40" y="-5" width="64" height="10" fill="#ffb000"/>
+    <rect x="-48" y="-5" width="10" height="10" rx="3" fill="#e8546a"/>
+    <rect x="-38" y="-5" width="4" height="10" fill="#cfd4df"/>
+    <polygon points="24,-5 38,0 24,5" fill="#f1c7a0"/>
+    <polygon points="34,-1.6 38,0 34,1.6" fill="#2b2b2b"/>
+  </g>
+</svg>
