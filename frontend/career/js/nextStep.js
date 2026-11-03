@@ -81,8 +81,8 @@ function chooseNextStep(f) {
         button: "Open my applications", targets: tile("applications") };
     }
     if (!apps.length) {
-      return { key: "track-application", title: "Applied for a job? Track it",
-        text: "Stay on Track",
+      return { key: "track-application", title: "Track Your Applications",
+        text: "",
         button: "Open my applications", targets: tile("applications") };
     }
   }
@@ -136,7 +136,9 @@ function renderNextStep() {
   if (!step) return;
   box.dataset.step = step.key;
   document.getElementById("next-step-title").textContent = step.title;
-  document.getElementById("next-step-text").textContent = step.text;
+  const textEl = document.getElementById("next-step-text");
+  textEl.textContent = step.text;
+  textEl.hidden = !step.text; // a one-line step (title only) shows no empty sentence
   document.getElementById("next-step-btn").textContent = step.button + (step.href ? " →" : "");
 }
 

@@ -95,7 +95,8 @@ test("every step has a title, text, a button and somewhere to go", () => {
     done({ applications: [] }), done()];
   for (const f of cases) {
     const s = load().chooseNextStep(f);
-    assert.ok(s.title && s.text && s.button, s.key);
+    // the tracker step is one line by design (a title only); every other step also has a short sentence
+    assert.ok(s.title && s.button && (s.text || s.key === "track-application"), s.key);
     assert.ok(s.href || (s.targets && s.targets.length), s.key);
   }
 });

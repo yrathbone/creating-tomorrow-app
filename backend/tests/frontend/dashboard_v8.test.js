@@ -79,7 +79,10 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
     '<p class="hint">Help us grow. Share your experience, not your private information.</p>',
     '<p class="hint">Download your information or choose to delete your account anytime.</p>',
   ]) assert.ok(html.includes(line), line);
-  assert.ok(next.includes('text: "Stay on Track",'));
+  // the application tracker step is one line: a title only (founder-approved "Track Your Applications"), no sentence under it
+  assert.ok(next.includes('title: "Track Your Applications",'));
+  assert.match(next, /key: "track-application", title: "Track Your Applications",\s+text: "",/);
+  assert.ok(next.includes('textEl.hidden = !step.text'));
   // the headings and controls are unchanged
   for (const keep of ["Your Career,", "General Resume", "My Career", "Your Activity", "Tell us how it went", "Your Data",
     'id="export-readable-btn"', 'id="export-profile-btn"', 'id="delete-account-start-btn"', 'id="feedback-link"']) {
