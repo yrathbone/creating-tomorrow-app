@@ -45,7 +45,7 @@ test("green is used by exactly the explore and compare buttons, crimson by exact
 
 test("the homepage and 404 use the same green, and Guide Me / Get Started stay gold", () => {
   assert.match(read("index.html"), /class="h7-btn h7-btn-green" data-guide-open>Career Tools</);
-  assert.match(read("not-found.html"), /class="h5-btn h5-btn-green">Free career tools</);
+  assert.match(read("not-found.html"), /class="h5-btn h5-btn-green">Career Tools</);
   const home = read("index.html");
   assert.match(home, /class="h7-btn h7-btn-gold" data-learn-open>Learn/);
   assert.match(home, /class="h7-btn h7-btn-gold">Get Started Today/);

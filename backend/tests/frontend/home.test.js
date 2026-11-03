@@ -142,16 +142,17 @@ test("the hero: new headline, new line, Career Tools opens the Guide popup, Lear
   assert.match(css7, /\.h7-hero-photo::after \{[^}]*background: var\(--amber\)/);
 });
 
-test("the sizes the founder chose: headline 36px, line 19px, buttons 14px, no-cost line 11px, quote 11px, section headings 19px regular, titles 14px, descriptions 11px", () => {
+test("the sizes the founder chose: headline 36px, line 19px, buttons 14px, no-cost line 11px, quote 11px, section headings 24px bold, sublines 14px, titles 14px bold, descriptions 12px, all in the hero's navy and blue", () => {
   assert.match(css7, /\.h7-hero h1 \{[^}]*font-size: clamp\(1\.9rem, 1\.3rem \+ 1\.6vw, 2\.25rem\)/); // 36px at desktop width
   assert.match(css7, /\.h7-lead \{[^}]*font-size: 1\.1875rem/);
   assert.match(css7, /\.h7-btn \{[^}]*font-size: 0\.875rem/);
   assert.match(css7, /\.h7-free \{[^}]*font-size: 0\.6875rem/);
   assert.match(css7, /\.h7-statement p \{[^}]*font-size: 0\.6875rem/);
-  assert.match(css7, /\.h7-h2 \{[^}]*font-size: 1\.1875rem; font-weight: 400/);
-  assert.match(css7, /\.h7-title \{[^}]*font-size: 0\.875rem/);
-  assert.match(css7, /\.h7-text \{[^}]*font-size: 0\.6875rem/);
-  assert.match(css7, /\.h7-sub \{[^}]*font-size: 0\.6875rem/);
+  assert.match(css7, /\.h7-h2 \{[^}]*font-size: 1\.5rem; font-weight: 700[^}]*color: var\(--royal\)/);
+  assert.match(css7, /\.h7-title \{[^}]*font-size: 0\.875rem; font-weight: 700/);
+  assert.match(css7, /\.h7-text \{[^}]*font-size: 0\.75rem[^}]*color: var\(--ink\)/);
+  assert.match(css7, /\.h7-sub \{[^}]*font-size: 0\.875rem; color: var\(--ink\)/);
+  assert.match(css7, /\.h7-closing h2 \{[^}]*font-size: 1\.5rem; font-weight: 700/);
 });
 
 test("both hero buttons are the same size, with the text centred (equal columns, one height)", () => {
@@ -289,7 +290,7 @@ test("the trust line, the sunflower mascot, hover lift, an aligned footer, norma
   assert.ok(fs.existsSync(path.join(FRONTEND, "mascot-welcome.png")));
   assert.ok(html.indexOf('class="h7-mascot"') > html.indexOf('class="h7-closing"') && html.indexOf('class="h7-mascot"') < html.indexOf("</main>"), "the mascot stands at the bottom of the closing band");
   assert.match(css7, /\.h7-mascot \{[^}]*bottom: 0/);
-  assert.match(css7, /@media \(max-width: 620px\)[\s\S]*\.h7-mascot \{ display: none; \}/, "the mascot steps aside on a phone");
+  assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-mascot \{ display: none; \}/, "the mascot steps aside when the closing headline could reach it (tablet and phone)");
   assert.match(css7, /\.h7-tool:hover \.h7-img[^{]*\{ box-shadow: [^}]*\}/);
   assert.match(css7, /prefers-reduced-motion: no-preference\) \{[\s\S]*translateY\(-3px\)/);
   assert.match(css7, /body\.home-v7 \.h5-footer \.h5-wrap \{ max-width: 920px/);

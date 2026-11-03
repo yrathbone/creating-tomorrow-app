@@ -14,7 +14,7 @@ test("the About story uses the simpler text, in order, ending with the promise a
   assert.strictEqual((html.match(/one person can change the way you see yourself/g) || []).length, 1);
   const lines = [
     "Someone once helped me see how important it is to value my own experience.",
-    "A résumé is just a piece of paper.",
+    "A resume is just a piece of paper.",
     "That lesson stayed with me.",
     "Since then, I’ve helped many people see their experience differently",
     "That’s why I started Creating Tomorrow: to use AI tools to help others.",

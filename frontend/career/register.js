@@ -17,7 +17,7 @@ signupForm.addEventListener("submit", (e) => {
   const rest = document.createTextNode(". If you were already invited, ");
   const login = document.createElement("a");
   login.href = "login.html";
-  login.textContent = "log in here";
+  login.textContent = "sign in here";
   signupError.append(text, link, rest, login, document.createTextNode("."));
   signupError.hidden = false;
 });
