@@ -176,7 +176,7 @@ test("six tool cards link to the same places the Guide recommends, with the shor
   const tileHrefs = [...html.matchAll(/<a class="h7-tool" href="([^"]+)"/g)].map((m) => m[1]).sort();
   assert.strictEqual(tileHrefs.length, 6);
   assert.deepStrictEqual(tileHrefs, guideHrefs);
-  const cards = [...html.matchAll(/<b class="h7-title">([^<]+)<\/b><span class="h7-text">([^<]+)<\/span><\/span>\s*<span class="h7-link">Start<\/span>/g)].map((m) => [m[1], m[2]]);
+  const cards = [...html.matchAll(/<b class="h7-title">([^<]+)<\/b><span class="h7-text">([^<]+)<\/span><\/span>\s*<span class="h7-link">Start <span aria-hidden="true">→<\/span><\/span>/g)].map((m) => [m[1], m[2]]);
   assert.deepStrictEqual(cards, [["Create", "Create your first resume"], ["Improve", "Optimize for screening"], ["Match", "Check your fit"], ["Discover", "Find hidden experiences"], ["LinkedIn", "Showcase your strengths"], ["Interview", "Master interview stories"]]);
   assert.strictEqual((html.match(/class="h7-img h7-img-(blue|gold|green)" aria-hidden="true"/g) || []).length, 10, "an image box on every guide and tool card");
 });
@@ -227,12 +227,14 @@ test("the new look's colours: royal blue and amber gold, and every text pairing 
   assert.ok(!/gradient\(/.test(css7), "no gradients");
 });
 
-test("responsive: the hero stacks, the cards go 2-up then 1-up, and the new look adds no motion", () => {
+test("responsive: the hero stacks, the cards go 2-up then 1-up, and motion is limited to people who have not asked for less", () => {
   assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-hero \{ grid-template-columns: 1fr/);
   assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-guides \{ grid-template-columns: repeat\(2, 1fr\)/);
   assert.match(css7, /@media \(max-width: 1000px\)[\s\S]*\.h7-tools \{ grid-template-columns: repeat\(2, 1fr\)/);
   assert.match(css7, /@media \(max-width: 620px\)[\s\S]*\.h7-guides, \.h7-tools \{ grid-template-columns: 1fr/);
-  assert.ok(!/animation|transition/.test(css7), "no animation");
+  assert.ok(!/animation/.test(css7), "no animation");
+  const outsideMotionQuery = css7.replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\r?\n\}/, "");
+  assert.ok(!/transition|(?<!-)transform\s*:/.test(outsideMotionQuery), "movement lives only inside the no-preference media query");
 });
 
 test("accessibility: every tool card has a full spoken name, and the two popup buttons announce that they open a dialog", () => {
@@ -278,4 +280,21 @@ test("copy and layout polish: card images keep the drawing's shape at every widt
   const texts = [...html.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
   assert.strictEqual(texts.length, 10);
   for (const x of texts) assert.ok(!/[.!?]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": starts with a capital, no ending period`);
+});
+
+test("the trust line, the sunflower mascot, hover lift, an aligned footer, normal-case titles and the arrow on Start", () => {
+  assert.match(html, /<p class="h7-trust"><svg[^>]*aria-hidden="true">[\s\S]*?<\/svg><span>Our free tools don’t keep your resume or job posting\.<\/span><\/p>/);
+  assert.ok(html.indexOf("h7-free") < html.indexOf("h7-trust"), "the trust line sits under the no-cost line");
+  assert.match(html, /<img class="h7-mascot" src="mascot-welcome\.png" alt="" width="245" height="291" \/>/);
+  assert.ok(fs.existsSync(path.join(FRONTEND, "mascot-welcome.png")));
+  assert.ok(html.indexOf('class="h7-mascot"') > html.indexOf('class="h7-closing"') && html.indexOf('class="h7-mascot"') < html.indexOf("</main>"), "the mascot stands at the bottom of the closing band");
+  assert.match(css7, /\.h7-mascot \{[^}]*bottom: 0/);
+  assert.match(css7, /@media \(max-width: 620px\)[\s\S]*\.h7-mascot \{ display: none; \}/, "the mascot steps aside on a phone");
+  assert.match(css7, /\.h7-tool:hover \.h7-img[^{]*\{ box-shadow: [^}]*\}/);
+  assert.match(css7, /prefers-reduced-motion: no-preference\) \{[\s\S]*translateY\(-3px\)/);
+  assert.match(css7, /body\.home-v7 \.h5-footer \.h5-wrap \{ max-width: 920px/);
+  assert.ok(!/\.h7-guide \.h7-title \{[^}]*uppercase/.test(css7), "guide titles are normal case like the tool titles");
+  assert.match(html, /og:image:alt" content="Creating Tomorrow: Your future is yours to shape\."/);
+  const og = fs.readFileSync(path.join(FRONTEND, "og-image.png"));
+  assert.strictEqual(og.readUInt32BE(16), 1200); assert.strictEqual(og.readUInt32BE(20), 630); // PNG header: 1200 x 630
 });
