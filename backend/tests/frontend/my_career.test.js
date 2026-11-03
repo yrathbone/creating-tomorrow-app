@@ -145,6 +145,6 @@ test("the resume-header form is no longer permanently shown: it is hidden until 
   assert.ok(form < grid && form < card, "the form is no longer inside the My Career card");
   assert.match(html, /id="job-target-add-btn"/);
   assert.match(html, /id="job-resume-last-btn"/);
-  assert.match(read("career", "js", "jobMatch.js"), /btn\.textContent = "Continue";/);
-  assert.match(read("career", "js", "jobMatch.js"), /"Continue: " \+ latest\.job_title : "Continue"/); // the job is still named for screen readers
+  assert.match(read("career", "js", "jobMatch.js"), /btn\.textContent = "Continue comparison";/);
+  assert.match(read("career", "js", "jobMatch.js"), /"Continue comparison: " \+ latest\.job_title : "Continue comparison"/); // the job is still named for screen readers
 });

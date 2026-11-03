@@ -326,15 +326,16 @@ test("Make this my default gives the button its focus back after saving, and onl
   assert.match(src, /if \(hadFocus && typeof btn\.focus === "function"\) btn\.focus\(\{ preventScroll: true \}\);/);
 });
 
-test("the Continue button shows only the word Continue; the job is named for screen readers and on hover", () => {
+test("the Continue button says Continue comparison; the job is named for screen readers and on hover", () => {
   const w = world();
   w.sandbox.allScanHistory.push({ id: 9, scan_type: "job_comparison", job_title: "Instructional Designer at Brightpath", result_data: { match_report: { match_level: "High", strengths: [], required_qualification_gaps: [] } } });
   const attrs = {};
   const btn = w.sandbox.document.getElementById("job-resume-last-btn"); // the fake page creates an element on first use
   btn.setAttribute = (k, v) => { attrs[k] = v; };
   w.sandbox.restoreCurrentJobTarget();
-  assert.strictEqual(btn.textContent, "Continue");
-  assert.strictEqual(attrs["aria-label"], "Continue: Instructional Designer at Brightpath");
+  assert.strictEqual(btn.textContent, "Continue comparison");
+  assert.strictEqual(attrs["aria-label"], "Continue comparison: Instructional Designer at Brightpath");
+  assert.ok(attrs["aria-label"].startsWith(btn.textContent), "the accessible name starts with the visible words");
   assert.strictEqual(btn.title, "Instructional Designer at Brightpath");
   assert.strictEqual(btn.hidden, false);
 });

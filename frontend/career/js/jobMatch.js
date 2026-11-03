@@ -1034,9 +1034,10 @@ function restoreCurrentJobTarget() {
     btn.hidden = true;
     return;
   }
-  // The button says just "Continue" (a cleaner card). The job it reopens is still named for screen readers (aria-label) and on hover (title).
-  btn.textContent = "Continue";
-  btn.setAttribute("aria-label", latest.job_title ? "Continue: " + latest.job_title : "Continue");
+  // The button says "Continue comparison" (short, and it cannot be mistaken for the application tracker). The job it reopens is still
+  // named for screen readers (aria-label, which starts with the visible words) and on hover (title).
+  btn.textContent = "Continue comparison";
+  btn.setAttribute("aria-label", latest.job_title ? "Continue comparison: " + latest.job_title : "Continue comparison");
   btn.title = latest.job_title || "";
   btn.onclick = () => openJobTarget(latest);
   btn.hidden = false;
