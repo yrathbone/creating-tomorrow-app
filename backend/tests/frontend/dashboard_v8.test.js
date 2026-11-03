@@ -72,7 +72,6 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
   for (const line of [
     "<p>See Your Value. Build Your Tomorrow.</p>",
     '<h2 id="general-resume-heading" tabindex="-1">Showcase your experience</h2>',
-    '<p class="hint">Your Experience Matters.</p>',
     '<h2 id="job-card-heading" tabindex="-1">Discover Your Fit</h2>',
     '<p class="hint export-hint">Readable Copy: Read, print, or share.</p>',
     '<p class="hint">See Your Progress.</p>',
@@ -83,6 +82,8 @@ test("the signed-in dashboard uses the founder-approved copy, word for word", ()
   assert.ok(next.includes('title: "Track Your Applications",'));
   assert.match(next, /key: "track-application", title: "Track Your Applications",\s+text: "",/);
   assert.ok(next.includes('textEl.hidden = !step.text'));
+  // the My Career card is its heading and the tiles, with no sentence between them (founder, 2026-11-03)
+  assert.ok(!html.includes("Your Experience Matters."));
   // the headings and controls are unchanged
   for (const keep of ["Your Career,", "Build a general resume", "My Career", "Your Activity", "Tell us how it went", "Your Data",
     'id="export-readable-btn"', 'id="export-profile-btn"', 'id="delete-account-start-btn"', 'id="feedback-link"']) {
