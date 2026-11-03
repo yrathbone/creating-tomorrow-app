@@ -129,11 +129,11 @@ test("Inter is hosted on our own site (no outside fonts) and is the homepage typ
   assert.ok(!/googleapis|gstatic/.test(css7 + html), "no outside fonts");
 });
 
-test("the hero: new headline, new line, Free Tools opens the Guide popup, Learning opens the article popup, and both are real links", () => {
+test("the hero: new headline, new line, Career Tools opens the Guide popup, Learn opens the article popup, and both are real links", () => {
   assert.match(html, /<h1 id="hero-h">Your future is yours to shape\.<\/h1>/);
   assert.match(html, /<p class="h7-lead">Career tools to build your tomorrow<\/p>/);
-  assert.match(html, /<a href="tool\.html" aria-haspopup="dialog" class="h7-btn h7-btn-green" data-guide-open>Free Tools<\/a>/);
-  assert.match(html, /<a href="learn\.html" aria-haspopup="dialog" class="h7-btn h7-btn-gold" data-learn-open>Learning<\/a>/);
+  assert.match(html, /<a href="tool\.html" aria-haspopup="dialog" class="h7-btn h7-btn-green" data-guide-open>Career Tools<\/a>/);
+  assert.match(html, /<a href="learn\.html" aria-haspopup="dialog" class="h7-btn h7-btn-gold" data-learn-open>Learn<\/a>/);
   assert.match(html, /<span>No cost\. No barriers\.<\/span>/);
   assert.ok(html.indexOf("h7-cta") < html.indexOf("h7-free"), "the line sits after the buttons");
   assert.match(html, /<blockquote><p>“The best way to predict the future is to invent it\.”<\/p><\/blockquote>\s*<figcaption>— Alan Kay<\/figcaption>/);
@@ -183,7 +183,7 @@ test("six tool cards link to the same places the Guide recommends, with the shor
 
 test("the section headings, ids and closing line", () => {
   assert.match(html, /<h2 id="basics-h" class="h7-h2">Start with the basics\.<\/h2>\s*<p class="h7-sub">Learn how careers, resumes, and interviews work\.<\/p>/);
-  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career tools<\/h2>\s*<p class="h7-sub">Build your tomorrow!<\/p>/);
+  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career tools<\/h2>\s*<p class="h7-sub">Build your tomorrow\.<\/p>/);
   for (const id of ["basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
   assert.match(html, /<h2 id="close-h">We don’t invent your value\. We help you see it\.<\/h2>/);
   assert.match(html, /href="tool\.html" class="h7-btn h7-btn-gold">Get Started Today/);

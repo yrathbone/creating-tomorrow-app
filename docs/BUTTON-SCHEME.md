@@ -5,8 +5,8 @@ One colour per job, so a visitor learns what a button does from its colour. Appr
 | Role | Colour | Used for | Examples |
 |---|---|---|---|
 | **Blue** (solid) | cobalt `#0052F5` (dashboard `--v4-blue`) | the everyday main action on a screen | Upload My Resume, + Add a Job, Continue, Save, Add Role, Download Resume |
-| **Gold** (solid, dark text) | `#FFB300` (the dashboard's own gold is `#FFBC00`) | start here, get going | Learning, Get Started Today, Build a General Resume, I applied for this job, Check the posting's keywords |
-| **Green** (solid) | `#1F7A3F`, hover `#16602F` | explore and compare | Free Tools (opens the Guide popup), Compare to My Career Profile, Explore These With Me, Scan for Missing Skills, Analyze My Resume, Review My Profile, Prepare Me |
+| **Gold** (solid, dark text) | `#FFB300` (the dashboard's own gold is `#FFBC00`) | start here, get going | Learn (hero button), Get Started Today, Build a General Resume, I applied for this job, Check the posting's keywords |
+| **Green** (solid) | `#1F7A3F`, hover `#16602F` | explore and compare | Career Tools (hero button, opens the Guide popup), Compare to My Career Profile, Explore These With Me, Scan for Missing Skills, Analyze My Resume, Review My Profile, Prepare Me |
 | **Crimson** (solid) | `#C8102E`, hover `#8F0B22` | the one action that builds your document | Build My Resume, Generate my resume, Build my elevated resume |
 | **Outline** (blue border, white fill) | cobalt border | secondary or neutral | Cancel, Skip This Job, Compare a Different Job, Make this my default |
 | **Delete** (outline, red text) | `#B93030` | permanent or destructive | Permanently delete everything, the Remove and Delete buttons on cards |

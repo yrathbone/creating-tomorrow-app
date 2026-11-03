@@ -1,8 +1,8 @@
 /* Creating Tomorrow homepage, new look ("v7"). Loaded only by index.html, after shared style.css, home-v5.css and chrome-v6.css.
    Everything is scoped to body.home-v7 or an h7- class, so no other page (and not the not-found page, which still uses home-v5.css) is affected.
 
-   What this look is: Inter type, a darker royal blue (#003395) and an amber gold (#ffb000), a white page, two hero buttons (Free Tools opens the
-   Guide popup, Learning opens the article popup), short phrases, and an image box on every guide and tool card.
+   What this look is: Inter type, a darker royal blue (#003395) and an amber gold (#ffb000), a white page, two hero buttons (Career Tools opens the
+   Guide popup, Learn opens the article popup), short phrases, and an image box on every guide and tool card.
    The royal blue and amber gold apply to the homepage only (its header and footer included). The inner pages keep their current blue. */
 
 @font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
