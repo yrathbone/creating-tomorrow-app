@@ -52,7 +52,7 @@ test("one name for signing in: the page, its title, its button and the register 
   const login = read("career/login.html");
   assert.match(login, /<title>Sign In — Creating Tomorrow<\/title>/);
   assert.match(login, /<h1>Sign in<\/h1>/);
-  assert.match(login, /id="login-btn">Sign In<\/button>/);
+  assert.match(login, /id="login-btn">Sign in<\/button>/);
   assert.match(login, /Back to sign in<\/button>/);
   assert.match(read("career/register.html"), /<a href="login\.html">sign in<\/a>/);
   assert.match(read("career/register.html"), /<title>Create an account — Creating Tomorrow<\/title>/);

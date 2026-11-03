@@ -1,6 +1,6 @@
 // Career Profile status strip (Version 4.1): name, contact line, a six-step "career foundation" bar
 // and a one-line evidence summary, all derived from data the dashboard has already loaded, plus the
-// Edit Profile toggle for the resume-header form. Read-only apart from that form's own save (in
+// Edit profile toggle for the resume-header form. Read-only apart from that form's own save (in
 // profileBasics.js): it calls no API itself. It refreshes whenever the tiles refresh
 // (updateDashboardSummary) or the resume header is shown (renderProfileBasicsForm), both defined
 // in earlier scripts.
@@ -70,7 +70,7 @@ function renderProfileStatus() {
   });
 }
 
-// Edit Profile: shows/hides the existing resume-header form (never permanently shown).
+// Edit profile: shows/hides the existing resume-header form (never permanently shown).
 function setProfileEditorOpen(open) {
   const form = document.getElementById("profile-basics-form");
   const btn = document.getElementById("edit-profile-btn");

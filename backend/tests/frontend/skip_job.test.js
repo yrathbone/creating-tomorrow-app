@@ -1,4 +1,4 @@
-// "Skip This Job": after a comparison the person can skip the job (it is kept under Skipped jobs and can be brought back), which
+// "Skip this job": after a comparison the person can skip the job (it is kept under Skipped jobs and can be brought back), which
 // takes them back to the empty Current Job Target. Static checks plus the pure helpers, run in a bare VM.
 const test = require("node:test");
 const assert = require("node:assert");
@@ -51,11 +51,11 @@ test("a skipped job is never offered as an unfinished resume or as the job to co
   assert.match(js, /s\.scan_type === "job_comparison" && !\(s\.result_data && s\.result_data\.skipped\)/, "Continue ignores skipped jobs");
 });
 
-test("the match screen has a Skip This Job button that is separate from Compare a Different Job, and it skips then goes back", () => {
+test("the match screen has a Skip this job button that is separate from Compare a different job, and it skips then goes back", () => {
   const html = read("login.html");
   const match = html.slice(html.indexOf('id="job-match-state"'), html.indexOf('id="job-questions-state"'));
-  assert.match(match, /id="job-match-new-btn"[^>]*>Compare a Different Job</);
-  assert.match(match, /id="job-skip-job-btn"[^>]*>Skip This Job</);
+  assert.match(match, /id="job-match-new-btn"[^>]*>Compare a different job</);
+  assert.match(match, /id="job-skip-job-btn"[^>]*>Skip this job</);
   assert.match(html, /id="job-skipped-note"/);
   const js = read("js", "jobMatch.js");
   const handler = js.slice(js.indexOf('getElementById("job-skip-job-btn").addEventListener'));

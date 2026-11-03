@@ -2,7 +2,7 @@
 // persisted server-side or in local storage (matches the rest of the site:
 // "we don't store your job description or resume after your session
 // ends"). The resume file is held as a File object in memory until the
-// person clicks "Prepare Me" - it's never uploaded anywhere until that one
+// person clicks "Prepare me" - it's never uploaded anywhere until that one
 // request.
 let resumeFile = null;
 

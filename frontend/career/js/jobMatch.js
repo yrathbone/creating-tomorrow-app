@@ -985,7 +985,7 @@ function resetJobTarget() {
 document.getElementById("job-start-over-btn").addEventListener("click", resetJobTarget);
 document.getElementById("job-match-new-btn").addEventListener("click", resetJobTarget);
 
-// "Skip This Job": mark the saved comparison as skipped (it stays in Your Activity > Skipped jobs and can be brought back), then go
+// "Skip this job": mark the saved comparison as skipped (it stays in Your Activity > Skipped jobs and can be brought back), then go
 // back to the empty Current Job Target, so it no longer shows up as "Continue" or as an unfinished resume.
 document.getElementById("job-skip-job-btn").addEventListener("click", async () => {
   const btn = document.getElementById("job-skip-job-btn");
@@ -1020,7 +1020,7 @@ document.getElementById("job-skip-job-btn").addEventListener("click", async () =
 
 // Restores the dashboard's "Current Job Target" to the most recent real
 // job comparison on page load, instead of always starting back at the
-// empty "+ Add a Job" state - the comparison itself was already saved to
+// empty "+ Add a job" state - the comparison itself was already saved to
 // scan history the moment it ran, so the dashboard should reflect that
 // rather than pretending it never happened. Reads allScanHistory, a
 // shared global populated by history.js's loadScanHistory() (loaded

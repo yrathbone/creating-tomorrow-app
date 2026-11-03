@@ -21,7 +21,7 @@ function focusGeneralResume(el) {
   if (el && typeof el.focus === "function") el.focus({ preventScroll: true });
 }
 
-// Say it by changing the text of the live region. It is emptied when a build starts (and on Build Again), so the same sentence is announced again after a later build.
+// Say it by changing the text of the live region. It is emptied when a build starts (and on Build again), so the same sentence is announced again after a later build.
 function announceGeneralResume(text) {
   if (generalResumeStatus) generalResumeStatus.textContent = text;
 }

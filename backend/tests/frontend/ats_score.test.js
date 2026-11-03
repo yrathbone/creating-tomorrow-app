@@ -21,7 +21,7 @@ test("jobMatch.js passes the build's ats_match to the grade and writes 'ATS-styl
   assert.match(js, /atsLine\.hidden = !\(ats && ats\.total\);/);
 });
 
-test("Build My Resume and the resume 'working' screens use the brand crimson, with readable contrast, and layouts are untouched", () => {
+test("Build my resume and the resume 'working' screens use the brand crimson, with readable contrast, and layouts are untouched", () => {
   const css = read("dashboard-v4.css");
   for (const id of ["job-loading-state", "job-build-loading-state", "general-resume-loading", "resume-loading-state"]) {
     assert.ok(css.includes(`body.dashboard-v4 #${id} .processing-dot { background: #c8102e; }`) || css.includes(`#${id} .processing-dot,`), id + " dots");
@@ -32,7 +32,7 @@ test("Build My Resume and the resume 'working' screens use the brand crimson, wi
   assert.ok(ratio("FFFFFF", "C8102E") >= 4.5, "white text on the crimson button");
   assert.ok(ratio("8F0B22", "FFFFFF") >= 7, "dark red wait text on white");
   // colours only: the new block sets no width, height, padding, margin, display or position
-  const start = css.indexOf("Build My Resume and the");
+  const start = css.indexOf("Build my resume and the");
   const block = css.slice(start, css.indexOf('/* "How your answers will read"', start));
   assert.ok(!/(?:^|[;{\s])(width|height|padding|margin|display|position)\s*:/m.test(block.replace(/outline-offset/g, "")), "no layout properties in the crimson block");
 });

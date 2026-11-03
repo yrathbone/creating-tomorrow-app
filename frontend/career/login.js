@@ -612,7 +612,7 @@ function updateDashboardSummary() {
     const li = document.createElement("a");
     li.className = "stat-card stat-linkedin";
     li.href = "../spotlight.html";
-    li.innerHTML = '<span class="stat-number">in</span><span class="stat-label">Refine My LinkedIn</span>';
+    li.innerHTML = '<span class="stat-number">in</span><span class="stat-label">Refine my LinkedIn</span>';
     activityRow.appendChild(li);
   }
 

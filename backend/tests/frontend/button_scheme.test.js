@@ -48,7 +48,7 @@ test("the homepage and 404 use the same green, and Guide Me / Get Started stay g
   assert.match(read("not-found.html"), /class="h5-btn h5-btn-green">Career Tools</);
   const home = read("index.html");
   assert.match(home, /class="h7-btn h7-btn-gold" data-learn-open>Learn/);
-  assert.match(home, /class="h7-btn h7-btn-gold">Get Started Today/);
+  assert.match(home, /class="h7-btn h7-btn-gold">Get started today/);
   const css = read("home-v5.css");
   assert.match(css, /\.h5-btn-green \{ background: #1f7a3f; color: #ffffff; \}/);
   assert.match(css, /\.h5-btn-green:hover \{ background: #16602f; \}/);
@@ -64,7 +64,7 @@ test("the two roles are defined once for every page, again for the free tools an
   const pages = read("pages-v4.css");
   assert.match(pages, /body\.pages-v4 \.btn-green \{ background: #1f7a3f;/);
   assert.match(pages, /body\.pages-v4 \.btn-crimson \{ background: #c8102e;/);
-  assert.ok(!/spotlight-page #review-btn/.test(pages) && !/spotlight-page #review-btn/.test(base), "no one-off colour rule is left for Review My Profile");
+  assert.ok(!/spotlight-page #review-btn/.test(pages) && !/spotlight-page #review-btn/.test(base), "no one-off colour rule is left for Review my profile");
   const dash = read("career", "dashboard-v4.css");
   assert.match(dash, /\.card \.btn-green,[\s\S]*?\{ background-image: none; background-color: #1f7a3f; color: #ffffff;/);
   assert.match(dash, /\.card \.btn-crimson,[\s\S]*?\{ background-image: none; background-color: #c8102e; color: #ffffff;/);

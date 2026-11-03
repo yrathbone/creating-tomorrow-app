@@ -87,7 +87,7 @@ test("the screen-reader-only class and the heading focus ring are in the dashboa
 });
 
 // ---- focus -----------------------------------------------------------------------------------------------------------------
-test("a keyboard press on Build a General Resume puts focus in the name field; a mouse tap, a touch tap or the next-step shortcut does not", async () => {
+test("a keyboard press on Build a general resume puts focus in the name field; a mouse tap, a touch tap or the next-step shortcut does not", async () => {
   const pressedFromKeyboard = { currentTarget: { matches: (selector) => selector === ":focus-visible" } };
   const notFromKeyboard = { detail: 1, currentTarget: { matches: () => false } }; // mouse or touch tap, or a script's click()
   const keyboard = world();
@@ -131,10 +131,10 @@ test("a missing name leaves focus exactly where it was and shows the message", a
   assert.match(w.els["general-resume-error"].textContent, /name and a contact line/);
 });
 
-test("later builds announce again: the region is emptied when a build starts and on Build Again", async () => {
+test("later builds announce again: the region is emptied when a build starts and on Build again", async () => {
   const w = world();
   await w.els["general-resume-build-btn"].fire("click");
-  await w.els["general-resume-again-btn"].fire("click"); // Build Again clears the typed name and contact line
+  await w.els["general-resume-again-btn"].fire("click"); // Build again clears the typed name and contact line
   w.els["general-resume-name"].value = "María José Peña-Núñez";
   w.els["general-resume-contact"].value = "Naperville, IL";
   await w.els["general-resume-build-btn"].fire("click");
@@ -142,7 +142,7 @@ test("later builds announce again: the region is emptied when a build starts and
   assert.strictEqual(w.builds(), 2);
 });
 
-test("Build Again and Cancel put focus back on the Build a General Resume button", async () => {
+test("Build again and Cancel put focus back on the Build a general resume button", async () => {
   const w = world();
   await w.els["general-resume-build-btn"].fire("click");
   w.log.focus.length = 0;

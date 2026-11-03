@@ -33,7 +33,7 @@ test("says nothing until everything has loaded (never advice from half-loaded da
   assert.strictEqual(load().chooseNextStep(null), null);
 });
 
-test("an empty profile is asked for a role first, and the button is the existing Upload My Resume", () => {
+test("an empty profile is asked for a role first, and the button is the existing Upload my resume", () => {
   const step = load().chooseNextStep(done({ roles: 0, skills: 0, education: 0, hasHeader: false, scans: [], resumes: [] }));
   assert.strictEqual(step.key, "add-role");
   assert.deepStrictEqual([...step.targets], ["#upload-resume-btn"]);

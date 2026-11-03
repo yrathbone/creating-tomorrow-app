@@ -137,7 +137,7 @@ test("the status strip summarizes evidence and the avatar initial from loaded da
   assert.strictEqual(sandbox.profileInitial(null), "");
 });
 
-test("the resume-header form is no longer permanently shown: it is hidden until Edit Profile, and the Job Target keeps both of its actions", () => {
+test("the resume-header form is no longer permanently shown: it is hidden until Edit profile, and the Job Target keeps both of its actions", () => {
   const html = read("career", "login.html");
   assert.match(html, /<form id="profile-basics-form"[^>]*\bhidden\b/);
   const form = html.indexOf('id="profile-basics-form"'), grid = html.indexOf('class="dashboard-grid"'), card = html.indexOf('<h2>My Career</h2>');

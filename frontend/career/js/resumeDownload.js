@@ -1,4 +1,4 @@
-// Shared pieces of the "Download Resume (.docx)" buttons (general resume, tailored resume, "Download again" on a saved
+// Shared pieces of the "Download resume (.docx)" buttons (general resume, tailored resume, "Download again" on a saved
 // resume): the file name, saving the file, and an inline message instead of a pop-up. Loaded before generalResume.js,
 // jobMatch.js and history.js.
 

@@ -175,7 +175,7 @@ test("building: progress card, then heading and 'Your tailored resume is ready.'
   assert.deepStrictEqual(focused(w), ["job-build-loading-state", "job-card-heading"]);
   assert.deepStrictEqual(w.log.status, ["", "Your tailored resume is ready."]);
   assert.deepStrictEqual(w.visible(), ["job-build-done-state"]);
-  await w.els["job-start-over-btn"].fire("click"); // Compare Another Job
+  await w.els["job-start-over-btn"].fire("click"); // Compare another job
   assert.deepStrictEqual(focused(w).slice(-1), ["job-target-add-btn"]);
   assert.deepStrictEqual(w.visible(), ["job-target-empty"]);
   w.els["job-build-name"].value = "María José Peña-Núñez";
@@ -242,7 +242,7 @@ test("I applied for this job: keyboard opens the form on its first field; Cancel
   assert.strictEqual(w.els["job-applied-msg"].hidden, false);
 });
 
-test("Skip This Job: success announces the note and focuses Add a Job; failure shows the alert and gives the button its focus back", async () => {
+test("Skip this job: success announces the note and focuses Add a Job; failure shows the alert and gives the button its focus back", async () => {
   const ok = world();
   ok.sandbox.__jobState.scanHistoryId = 77;
   ok.sandbox.__jobState.jobTitle = "Senior Operations Analyst";

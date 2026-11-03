@@ -96,7 +96,7 @@ test("both build screens offer a layout menu and 'Make this my default' before t
     const button = html.indexOf(`data-layout-default="${prefix}-build-layout"`);
     const build = html.indexOf(`id="${buildBtn}"`);
     assert.ok(select > 0 && button > 0 && build > 0, prefix);
-    assert.ok(select < build && button < build, `${prefix}: the menu comes before Build My Resume`);
+    assert.ok(select < build && button < build, `${prefix}: the menu comes before Build my resume`);
     assert.ok(html.includes(`data-layout-msg="${prefix}-build-layout-msg"`) && html.includes(`id="${prefix}-build-layout-msg"`), prefix);
     assert.match(html.slice(select - 60, select + 40), /data-resume-layout|resume-layout-field|select/);
   }

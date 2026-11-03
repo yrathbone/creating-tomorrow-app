@@ -1124,7 +1124,7 @@ above and through both new and existing modules:
    Resume Coverage specifically requires comparing `match_detail` against
    whichever `ResumeVersion.resume_data` is currently "current" — a
    second, smaller comparison pass, not the same calculation reused.
-7. **User selects Build My Resume.** → A new resume-generation service
+7. **User selects Build my resume.** → A new resume-generation service
    queries the verified evidence ranked against this specific
    `JobAnalysis`, calls the **existing** `resume_builder.py` (unchanged)
    with a `resume_data` payload assembled from real, verified rows only,
@@ -1305,7 +1305,7 @@ what this specific codebase actually needs first.
 - **Complexity:** Medium (smaller than Phase 5, reuses its output).
 
 ### Phase 7 — Evidence-based resume generation
-- **Objectives:** "Build My Resume" — query ranked verified evidence,
+- **Objectives:** "Build my resume" — query ranked verified evidence,
   call `resume_builder.py` (reused unchanged) with an assembled
   `resume_data` payload, attach per-bullet `evidence_ids`.
 - **Dependencies:** Phase 5 (needs a `JobAnalysis` to target).

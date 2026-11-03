@@ -4,11 +4,11 @@ One colour per job, so a visitor learns what a button does from its colour. Appr
 
 | Role | Colour | Used for | Examples |
 |---|---|---|---|
-| **Blue** (solid) | royal blue `#003395` (dashboard `--v4-blue`) | the everyday main action on a screen | Upload My Resume, + Add a Job, Continue, Save, Add Role, Download Resume |
-| **Gold** (solid, dark text) | `#FFB000` (the dashboard's own gold is `#FFBC00`) | start here, get going | Learn (hero button), Get Started Today, Build a General Resume, I applied for this job, Check the posting's keywords |
-| **Green** (solid) | `#1F7A3F`, hover `#16602F` | explore and compare | Career Tools (hero button, opens the Guide popup), Compare to My Career Profile, Explore These With Me, Scan for Missing Skills, Analyze My Resume, Review My Profile, Prepare Me |
-| **Crimson** (solid) | `#C8102E`, hover `#8F0B22` | the one action that builds your document | Build My Resume, Generate my resume, Build my elevated resume |
-| **Outline** (blue border, white fill) | cobalt border | secondary or neutral | Cancel, Skip This Job, Compare a Different Job, Make this my default |
+| **Blue** (solid) | royal blue `#003395` (dashboard `--v4-blue`) | the everyday main action on a screen | Upload my resume, + Add a job, Continue, Save, Add role, Download resume |
+| **Gold** (solid, dark text) | `#FFB000` (the dashboard's own gold is `#FFBC00`) | start here, get going | Learn (hero button), Get started today, Build a general resume, I applied for this job, Check the posting's keywords |
+| **Green** (solid) | `#1F7A3F`, hover `#16602F` | explore and compare | Career Tools (hero button, opens the Guide popup), Compare to my Career Profile, Explore these with me, Scan for missing skills, Analyze my resume, Review my profile, Prepare me |
+| **Crimson** (solid) | `#C8102E`, hover `#8F0B22` | the one action that builds your document | Build my resume, Generate my resume, Build my elevated resume |
+| **Outline** (blue border, white fill) | cobalt border | secondary or neutral | Cancel, Skip this job, Compare a different job, Make this my default |
 | **Delete** (outline, red text) | `#B93030` | permanent or destructive | Permanently delete everything, the Remove and Delete buttons on cards |
 
 Rules:
@@ -16,6 +16,7 @@ Rules:
 - Use at most one crimson button on a screen.
 - Text on every solid colour is white, except gold, which uses dark text. All pairs meet 4.5:1 contrast.
 - Crimson is also the colour of "Privacy & Terms" in the footer; that is a link, not a button.
+- Button labels are sentence case ("Build my resume", "Add a job"). Only the names of pages and tools keep their capitals: Career Tools, Learn, Right Fit, Elevate, Spotlight, Prepare, Beginning, Refine, plus proper names such as LinkedIn, Career Profile and ATS. Decided 2026-11-03.
 
 How it is built:
 - `.btn-green` and `.btn-crimson` are defined in `frontend/style.css` (every page), `frontend/pages-v4.css` (free tools) and `frontend/career/dashboard-v4.css` (signed-in dashboard). The homepage uses `.h5-btn-green` in `frontend/home-v5.css`.

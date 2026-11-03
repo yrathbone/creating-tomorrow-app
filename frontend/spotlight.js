@@ -72,7 +72,7 @@ function renderScreenshotThumbs() {
   });
 }
 
-// --- Paste Your Profile -----------------------------------------------------
+// --- Paste your profile -----------------------------------------------------
 const pasteEverythingToggle = document.getElementById("paste-everything-toggle");
 const pasteStructured = document.getElementById("paste-structured");
 const pasteEverythingWrap = document.getElementById("paste-everything-wrap");
@@ -91,7 +91,7 @@ pasteEverythingToggle.addEventListener("click", () => {
   document.getElementById(id).addEventListener("input", updateReviewButtonState);
 });
 
-// --- Upload Profile PDF ------------------------------------------------------
+// --- Upload profile PDF ------------------------------------------------------
 const pdfInput = document.getElementById("pdf-input");
 const pdfSelectedName = document.getElementById("pdf-selected-name");
 
