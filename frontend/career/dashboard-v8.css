@@ -111,3 +111,11 @@ body.chrome-v6.dashboard-v4 .next-step-btn-secondary[hidden] { display: none; }
 /* ---------- the Discover Your Fit card shows only "+ Add a job": Continue comparison lives in the next-step band ----------
    The card's own Continue button stays in the page (hidden) because the band's button presses it, so there is one reopen flow. */
 body.chrome-v6.dashboard-v4 #job-resume-last-btn { display: none !important; }
+
+/* ---------- one "Download my information" button that opens a choice (Word copy or data backup) ---------- */
+body.chrome-v6.dashboard-v4 .export-menu-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; max-width: 36rem; }
+body.chrome-v6.dashboard-v4 .export-menu-wrap > .btn-secondary { width: auto; min-width: 15.5rem; }
+body.chrome-v6.dashboard-v4 .export-menu { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; padding: 0.75rem; border: 1px solid var(--v4-line); border-radius: var(--v4-radius-sm); background: #ffffff; }
+body.chrome-v6.dashboard-v4 .export-menu[hidden] { display: none; }
+body.chrome-v6.dashboard-v4 .export-menu .btn-secondary { width: 100%; margin: 0; }
+body.chrome-v6.dashboard-v4 .export-menu-wrap .btn-secondary { min-height: 44px; }

@@ -723,9 +723,6 @@ function revealCareerProfileSections(scrollToId) {
   openSnapshotPanel(scrollToId === "skill-detail-list" ? "skills" : "roles", false);
 }
 
-document.getElementById("update-profile-btn").addEventListener("click", () => {
-  revealCareerProfileSections("career-profile-editor");
-});
 // One upload flow serves a resume and a LinkedIn export (the form shows the LinkedIn tip every time), so there is one hero button for it.
 function openImportFlow() {
   revealCareerProfileSections("career-profile-editor");

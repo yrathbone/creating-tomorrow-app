@@ -144,9 +144,6 @@
           <button type="button" id="upload-resume-btn" class="btn-primary">Upload my resume</button>
           <button type="button" id="general-resume-hero-btn" class="btn-secondary">Build a general resume</button>
         </div>
-        <p class="dashboard-hero-links">
-          <button type="button" id="update-profile-btn" class="hero-link">Update my Career Profile</button>
-        </p>
         <img class="dh-mascot" src="../mascot-welcome.png" alt="" width="245" height="291" />
       </div>
 
@@ -624,9 +621,12 @@
             </section>
           </div>
 
-        <div class="export-row">
-          <button type="button" id="export-readable-btn" class="btn-secondary">Download a readable copy (Word)</button>
-          <button type="button" id="export-profile-btn" class="btn-secondary">Download data backup (.json)</button>
+        <div class="export-row export-menu-wrap">
+          <button type="button" id="export-menu-btn" class="btn-secondary" aria-haspopup="true" aria-expanded="false" aria-controls="export-menu">Download my information</button>
+          <div id="export-menu" class="export-menu" role="group" aria-label="Choose a download" hidden>
+            <button type="button" id="export-readable-btn" class="btn-secondary">Download a readable copy (Word)</button>
+            <button type="button" id="export-profile-btn" class="btn-secondary">Download data backup (.json)</button>
+          </div>
         </div>
         <p class="hint export-hint">Readable Copy: Read, print, or share.</p>
         <div id="export-profile-error" class="error" hidden></div>
@@ -908,6 +908,7 @@
   <script src="js/applications.js"></script>
   <script src="js/generalResume.js"></script>
   <script src="js/nextStep.js"></script>
+  <script src="js/exportMenu.js"></script>
   <script src="js/deleteAccount.js"></script>
 </body>
 </html>

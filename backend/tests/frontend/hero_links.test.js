@@ -15,10 +15,11 @@ test("there is no separate Import from LinkedIn control, and no dangling handler
   assert.ok(!/>Import from LinkedIn</.test(html));
 });
 
-test("the hero keeps Upload my resume, Build a general resume and Update my Career Profile", () => {
+test("the hero is just Upload my resume and Build a general resume", () => {
   const hero = html.slice(html.indexOf('class="dashboard-hero"'), html.indexOf('class="dh-mascot"'));
-  for (const id of ["upload-resume-btn", "general-resume-hero-btn", "update-profile-btn"]) assert.ok(hero.includes('id="' + id + '"'), id);
-  assert.strictEqual((hero.match(/<button/g) || []).length, 3, "three controls in the hero");
+  for (const id of ["upload-resume-btn", "general-resume-hero-btn"]) assert.ok(hero.includes('id="' + id + '"'), id);
+  assert.strictEqual((hero.match(/<button/g) || []).length, 2, "two controls in the hero");
+  assert.ok(!hero.includes("update-profile-btn") && !loginJs.includes("update-profile-btn"), "the Update my Career Profile link and its handler are gone");
   assert.ok(!hero.includes("&middot;"), "no separator left over for a missing link");
 });
 
