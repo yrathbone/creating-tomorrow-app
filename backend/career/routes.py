@@ -1169,6 +1169,7 @@ async def job_build_resume(
             "claims_struck": result.get("claims_struck") or [],
             "claim_review": result.get("claim_review") or [],
             "verb_review": result.get("verb_review") or [],
+            "fact_verb_review": result.get("fact_verb_review") or [],
             "truth_notice": result.get("truth_notice") or {"count": 0, "message": ""},
         },
     }

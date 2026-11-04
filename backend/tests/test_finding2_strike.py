@@ -141,7 +141,7 @@ class SavedTruthReview(OwnershipTestCase):
         self.onboard(self.a)
         review = {"answer_conflicts": [{"fact": "f", "denied_question": "q", "shared": ["a", "b", "c"]}],
                   "skills_removed": ["Video Editing"], "claims_struck": [{"where": "summary", "text": "Works with subject matter experts."}],
-                  "claim_review": [], "verb_review": [],
+                  "claim_review": [], "verb_review": [], "fact_verb_review": [],
                   "truth_notice": {"count": 2, "message": "We left out 2 statements we couldn’t verify. Review your experience to make sure nothing important is missing."}}
 
         def fake_build(profile_text, job_description, confirmed_facts, name, contact, denials):

@@ -108,6 +108,36 @@ class C_TheCandidateNotice(unittest.TestCase):
         else:  # the saved live writer output loses only what the checks removed, and the count says so
             self.assertEqual(result["truth_notice"]["count"], len(result["claims_struck"]) + len(result["skills_removed"]))
 
+    def test_one_claim_is_counted_once(self):
+        sentence = {"where": "summary", "text": "Skilled in video editing for lesson videos.", "reason": "unsupported claim"}
+        # a removed skill that a struck sentence also names counts with that sentence
+        self.assertEqual(truth_notice([sentence], ["Video Editing"])["count"], 1)
+        # the same sentence struck in two places is one statement
+        self.assertEqual(truth_notice([sentence, dict(sentence, where="bullet")], [])["count"], 1)
+        # a skill named nowhere else, and a repeated skill, count once each
+        self.assertEqual(truth_notice([sentence], ["Articulate Storyline", "Articulate Storyline"])["count"], 2)
+
+    def test_through_the_pipeline_a_claim_in_both_places_is_one_statement(self):
+        built = copy.deepcopy(LIVE_BUILT)
+        built["summary"] = "Teacher with eleven years in science. Skilled in video editing for lesson videos."
+        built["skills"] = ["Media: Screencastify, Video Editing", "Teaching: Teaching, Curriculum Design"]
+        result, _ = run(DANIEL_PROFILE, POSTING, PLAN, built, LIVE_HISTORY, LIVE_FACTS, fail_edit=True)
+        self.assertTrue(any("video editing" in s["text"].lower() for s in result["claims_struck"]))
+        self.assertIn("Video Editing", result["skills_removed"])
+        self.assertEqual(result["truth_notice"]["count"], 1)
+
+    def test_verified_accomplishments_stay_intact(self):
+        result, _ = run(DANIEL_PROFILE, POSTING, PLAN, copy.deepcopy(LIVE_BUILT), LIVE_HISTORY, LIVE_FACTS, fail_edit=True)
+        text = prose(result["resume_data"])
+        for kept in ("designed a year-long project-based curriculum", "adopted and used by four other teachers", "mentored two student teachers",
+                     "collaborated with fellow science teachers"):
+            self.assertIn(kept, text)
+
+    def test_the_interview_step_upgrading_a_verb_is_reported_for_a_confirmed_fact(self):
+        result, _ = run(DANIEL_PROFILE, POSTING, PLAN, copy.deepcopy(LIVE_BUILT), LIVE_HISTORY, LIVE_FACTS, fail_edit=True)
+        flagged = [f["written"] + ">" + f["evidence_verb"] for f in result["fact_verb_review"]]
+        self.assertEqual(flagged, ["produced>recorded"], flagged)  # the live "Produced 60 short instructional videos" fact; the other four facts are fine
+
     def test_genuine_transferable_skills_stay_and_are_not_counted(self):
         plan = PLAN + [{"term": "Mentoring", "importance": "preferred", "kind": "skill", "support": "transferable", "evidence": "Mentored two student teachers."}]
         built = copy.deepcopy(LIVE_BUILT)
