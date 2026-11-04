@@ -368,7 +368,11 @@
 
           <div id="job-build-done-state" hidden>
             <p class="success">Your tailored resume is ready.</p>
-            <p id="job-truth-notice" class="hint" role="status" hidden></p>
+            <div id="job-truth-notice" class="hint" role="status" hidden>
+              <p id="job-truth-message" hidden></p>
+              <p id="job-truth-held-message" hidden></p>
+              <ul id="job-truth-held" hidden></ul>
+            </div>
             <label class="field resume-layout-field">
               <span>Resume layout</span>
               <select id="job-resume-template" data-resume-layout>

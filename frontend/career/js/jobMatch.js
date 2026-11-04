@@ -880,12 +880,33 @@ function renderRoleSelection(selection) {
 // "I applied for this job": the app can't know the candidate applied, so this is
 // their own one-click entry into the application tracker (applications.js).
 // One line when the truth checks left statements out of the resume; the wording and the count come from the server.
+// Lines held back for the candidate's confirmation are listed word for word, so nothing the candidate said is lost, and they are not
+// shown as verified.
 function renderTruthNotice(notice) {
   const el = document.getElementById("job-truth-notice");
   if (!el) return;
   const message = notice && notice.count > 0 && typeof notice.message === "string" ? notice.message : "";
-  el.textContent = message;
-  el.hidden = !message;
+  const held = notice && Array.isArray(notice.held) ? notice.held.filter((h) => h && typeof h.text === "string" && h.text) : [];
+  const heldMessage = held.length && typeof notice.held_message === "string" ? notice.held_message : "";
+  const show = (id, text) => {
+    const node = document.getElementById(id);
+    if (node) { node.textContent = text; node.hidden = !text; }
+  };
+  show("job-truth-message", message);
+  show("job-truth-held-message", heldMessage);
+  const list = document.getElementById("job-truth-held");
+  if (list) {
+    list.textContent = "";
+    if (heldMessage) {
+      for (const h of held) {
+        const li = document.createElement("li");
+        li.textContent = h.said ? h.text + " (you wrote: “" + h.said + "”)" : h.text;
+        list.appendChild(li);
+      }
+    }
+    list.hidden = !heldMessage;
+  }
+  el.hidden = !(message || heldMessage);
 }
 
 function resetAppliedBlock() {

@@ -141,10 +141,10 @@ class SavedTruthReview(OwnershipTestCase):
         self.onboard(self.a)
         review = {"answer_conflicts": [{"fact": "f", "denied_question": "q", "shared": ["a", "b", "c"]}],
                   "skills_removed": ["Video Editing"], "claims_struck": [{"where": "summary", "text": "Works with subject matter experts."}],
-                  "claim_review": [], "verb_review": [], "fact_verb_review": [],
+                  "claim_review": [], "verb_review": [], "fact_verb_review": [], "verbs_restored": [], "lines_held": [],
                   "truth_notice": {"count": 2, "message": "We left out 2 statements we couldn’t verify. Review your experience to make sure nothing important is missing."}}
 
-        def fake_build(profile_text, job_description, confirmed_facts, name, contact, denials):
+        def fake_build(profile_text, job_description, confirmed_facts, name, contact, denials, answers_text=""):
             return {"resume_data": copy.deepcopy(SEARS_GOOD), "role_selection": [], "term_report": [], "ats_match": None, **review}
 
         with mock.patch("career.routes.build_checked_resume", fake_build):

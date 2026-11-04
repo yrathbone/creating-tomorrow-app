@@ -68,13 +68,16 @@ class B_VerbsKeepTheirStrength(unittest.TestCase):
     def test_led_is_not_matched_inside_other_words(self):
         self.assertEqual(resume_quality.verb_upgrades(self.resume(bullets=["Led unit planning."]), "Kept the ledger and the leadership log."), [])
 
-    def test_the_pipeline_reports_it_for_review_and_does_not_rewrite_it(self):
+    def test_the_pipeline_restores_it_when_the_candidates_own_sentence_covers_it(self):
         built = copy.deepcopy(LIVE_BUILT)
         built["experience"][0]["bullets"].append("Produced 60 short lesson videos for remote learning.")
         facts = [{"id": "f", "category": "Video", "bullet_text": "Recorded 60 short lesson videos for remote learning."}]
         result, _ = run(DANIEL_PROFILE, POSTING, PLAN, built, LIVE_HISTORY, facts, fail_edit=True)
-        self.assertEqual(len(result["verb_review"]), 1)
-        self.assertIn("produced 60 short lesson videos", prose(result["resume_data"]))  # reported, not silently changed
+        self.assertIn("recorded 60 short lesson videos for remote learning", prose(result["resume_data"]))
+        self.assertNotIn("produced 60 short lesson videos", prose(result["resume_data"]))
+        self.assertEqual(len(result["verbs_restored"]), 1)
+        self.assertEqual(result["lines_held"], [])
+        self.assertEqual(result["verb_review"], [])
 
     def test_the_writer_prompts_say_so(self):
         from career import job_match
@@ -85,7 +88,7 @@ class B_VerbsKeepTheirStrength(unittest.TestCase):
 
 class C_TheCandidateNotice(unittest.TestCase):
     def test_wording_and_counts(self):
-        self.assertEqual(truth_notice([], []), {"count": 0, "message": ""})
+        self.assertEqual(truth_notice([], []), {"count": 0, "message": "", "held": [], "held_message": ""})
         self.assertEqual(truth_notice([{}], [])["message"], "We left out 1 statement we couldn’t verify. Review your experience to make sure nothing important is missing.")
         self.assertEqual(truth_notice([{}, {}], ["a"])["count"], 3)
         self.assertTrue(truth_notice([{}, {}], ["a"])["message"].startswith("We left out 3 statements we couldn’t verify."))

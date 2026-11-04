@@ -678,7 +678,7 @@ def strike_unsupported_claims(resume_data: dict, unsupported_terms: list[str], e
     return out, struck
 
 
-def truth_notice(struck: list, removed: list) -> dict:
+def truth_notice(struck: list, removed: list, held: list | None = None) -> dict:
     """The one line a candidate sees when statements were left out: how many, and what to do about it. The count is every sentence
     struck from the summary, headline or bullets plus every skill removed; nothing that was kept is counted. One claim is counted
     once: the same sentence struck in two places counts once, and a removed skill that a struck sentence also names counts with
@@ -691,13 +691,48 @@ def truth_notice(struck: list, removed: list) -> dict:
     struck_texts = [str((item or {}).get("text", "")) for item in unique.values()]
     skills_alone = [s for s in (removed or []) if not any(term_in_text(s, text) for text in struck_texts)]
     count = len(unique) + len(set(normalize(s) for s in skills_alone))
-    if not count:
-        return {"count": 0, "message": ""}
-    noun = "statement" if count == 1 else "statements"
-    return {"count": count, "message": f"We left out {count} {noun} we couldn’t verify. Review your experience to make sure nothing important is missing."}
+    held_lines, seen_held = [], set()
+    for h in held or []:  # the same line held in two places is one line
+        key = normalize(str(h.get("text", "")))
+        if key not in seen_held:
+            seen_held.add(key)
+            held_lines.append({"text": h.get("text", ""), "said": h.get("evidence_verb", "")})
+    notice = {"count": count, "message": "", "held": held_lines, "held_message": ""}
+    if count:
+        noun = "statement" if count == 1 else "statements"
+        notice["message"] = f"We left out {count} {noun} we couldn’t verify. Review your experience to make sure nothing important is missing."
+    if held_lines:
+        n = len(held_lines)
+        notice["held_message"] = (f"We held {n} {'line' if n == 1 else 'lines'} out of your résumé until you confirm {'it' if n == 1 else 'them'}. "
+                                  f"{'It uses' if n == 1 else 'They use'} stronger wording than you gave us, so {'it is' if n == 1 else 'they are'} not in your Word file yet.")
+    return notice
 
 
-def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, denials: list[dict] | None = None) -> dict:
+def _facts_as_resume(confirmed_facts: list) -> dict:
+    return {"summary": "", "experience": [{"title": "confirmed facts", "bullets": [str(f.get("bullet_text", "")) for f in confirmed_facts or []]}]}
+
+
+def check_verb_wording(result: dict, resume: dict, profile_text: str, confirmed_facts: list, answers_text: str = "") -> dict:
+    """Stronger-than-evidence verbs ("Produced" for "recorded", "Led" for "helped"). The candidate's own words are the evidence: the
+    profile they wrote and what they typed in the interview. A confirmed fact whose verb is already stronger than those words is
+    not evidence for the stronger verb (the interview step wrote it, the candidate did not). Each resume sentence is then
+    restored to the candidate's own meaning when one sentence of theirs unambiguously covers it, or held out of the resume
+    (and out of the Word file) until the candidate confirms it. Sets verb_review (what is still flagged: nothing, after this),
+    fact_verb_review, verbs_restored and lines_held on the result; returns the checked resume."""
+    own_words = profile_text + "\n" + answers_text
+    flagged_facts = resume_quality.verb_upgrades(_facts_as_resume(confirmed_facts), own_words)
+    flagged_texts = {f["text"] for f in flagged_facts}
+    trusted_facts = [str(f.get("bullet_text", "")) for f in confirmed_facts or [] if str(f.get("bullet_text", "")).strip() not in flagged_texts]
+    trusted = own_words + "\n" + "\n".join(trusted_facts)
+    resume, restored, held = resume_quality.resolve_verb_upgrades(resume, trusted)
+    result["fact_verb_review"] = flagged_facts
+    result["verbs_restored"] = restored
+    result["lines_held"] = held
+    result["verb_review"] = resume_quality.verb_upgrades(resume, trusted)
+    return resume
+
+
+def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, denials: list[dict] | None = None, answers_text: str = "") -> dict:
     denials = denials or []
     # A confirmed fact that says again what the candidate denied is NOT silently used, and the denial is not silently dropped:
     # the fact is held back and the conflict is reported so the candidate can clarify.
@@ -724,10 +759,9 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         result["quality"] = quality
         result["skills_removed"] = removed
         result["claims_struck"] = []
-        result["verb_review"] = resume_quality.verb_upgrades(resume, evidence_text)
-        # the interview step can itself upgrade a verb ("recorded" to "Produced"); a confirmed fact is compared with the profile the candidate wrote
-        result["fact_verb_review"] = resume_quality.verb_upgrades({"summary": "", "experience": [{"title": "confirmed facts", "bullets": [str(f.get("bullet_text", "")) for f in confirmed_facts or []]}]}, profile_text)
-        result["truth_notice"] = truth_notice([], removed)
+        resume = check_verb_wording(result, resume, profile_text, confirmed_facts, answers_text)
+        result["resume_data"] = resume
+        result["truth_notice"] = truth_notice([], removed, result["lines_held"])
         result["claim_review"] = []
         log_quality(quality)
         result["term_report"] = []
@@ -763,10 +797,8 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     result["claim_review"] = resume_quality.find_claim_issues(resume, unsupported, evidence_text)
     result["skills_removed"] = removed
     result["claims_struck"] = struck
-    result["verb_review"] = resume_quality.verb_upgrades(resume, evidence_text)
-    # the interview step can itself upgrade a verb ("recorded" to "Produced"); a confirmed fact is compared with the profile the candidate wrote
-    result["fact_verb_review"] = resume_quality.verb_upgrades({"summary": "", "experience": [{"title": "confirmed facts", "bullets": [str(f.get("bullet_text", "")) for f in confirmed_facts or []]}]}, profile_text)
-    result["truth_notice"] = truth_notice(struck, removed)
+    resume = check_verb_wording(result, resume, profile_text, confirmed_facts, answers_text)
+    result["truth_notice"] = truth_notice(struck, removed, result["lines_held"])
     if removed or struck or result["claim_review"] or conflicts:
         print(f"[career.truth] skills_removed={len(removed)} sentences_struck={len(struck)} unsupported_claims_left={len(result['claim_review'])} answer_conflicts={len(conflicts)}")
     result["quality"] = quality
