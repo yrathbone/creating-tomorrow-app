@@ -144,3 +144,33 @@ body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-footer-nav a,
 body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0 0.25rem; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links { display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.4rem; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-footer-nav { gap: 0 1.2rem; }
+
+/* ---------- public pages: readable sizes, breathing room, contrast and tap targets (visual audit VA-1 to VA-5, VA-7 to VA-9) ---------- */
+/* VA-1: homepage small print was 11 to 12 px; it is now 14 px (13 px for the quiet lines under the buttons) */
+body.chrome-v6:not(.dashboard-v4).home-v7 .h7-text, body.chrome-v6:not(.dashboard-v4).home-v7 .h7-link { font-size: 0.875rem; }
+body.chrome-v6:not(.dashboard-v4).home-v7 .h7-free, body.chrome-v6:not(.dashboard-v4).home-v7 .h7-trust { font-size: 0.8125rem; }
+body.chrome-v6:not(.dashboard-v4).home-v7 .h7-statement p { font-size: 0.875rem; }
+/* VA-2: a clear gap between a card's title, its description and its link */
+body.chrome-v6:not(.dashboard-v4).home-v7 .h7-title { margin-bottom: 0.5rem; }
+body.chrome-v6:not(.dashboard-v4).home-v7 .h7-tool .h7-title { margin-bottom: 0.5rem; }
+body.chrome-v6:not(.dashboard-v4).home-v7 .h7-guide .h7-text { margin-bottom: 0.75rem; }
+body.chrome-v6:not(.dashboard-v4).home-v7 .h7-guide .h7-link { padding-top: 0; }
+body.chrome-v6:not(.dashboard-v4).pages-v4 .hv-guide b, body.chrome-v6:not(.dashboard-v4).pages-v4 .hv-tool b, body.chrome-v6:not(.dashboard-v4).pages-v4 .mode-btn.hv-tool b { margin-bottom: 0.5rem; }
+body.chrome-v6:not(.dashboard-v4).pages-v4 span.hv-vdesc { margin-bottom: 0.75rem; }
+body.chrome-v6:not(.dashboard-v4).pages-v4 span.hv-vtype { font-size: 0.75rem; }
+/* VA-4: gold text on white was 2.2:1; the words are now ink with a gold underline */
+body.chrome-v6:not(.dashboard-v4) .ats-gold { color: #0b1f4d; text-decoration: underline; text-decoration-color: #ffb000; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+/* VA-5: the "Unclear" label was 11.5 px grey (3.1:1); it is now 12 px and 5.5:1 */
+body.chrome-v6:not(.dashboard-v4) .ats-compare-unclear .ats-compare-label { color: #596b85; font-size: 0.75rem; }
+body.chrome-v6:not(.dashboard-v4) .ats-compare-label { font-size: 0.75rem; }
+/* VA-7 and VA-8: header and article links are at least 44 px tall */
+body.chrome-v6:not(.dashboard-v4) .nav-logo { min-height: 44px; display: inline-flex; align-items: center; }
+body.chrome-v6:not(.dashboard-v4) .nav-links a { display: inline-flex; align-items: center; min-height: 44px; }
+body.chrome-v6:not(.dashboard-v4) .ats-back-link { display: inline-flex; align-items: center; min-height: 44px; margin-bottom: 12px; }
+body.chrome-v6:not(.dashboard-v4) .ats-next-link { display: flex; align-items: center; justify-content: center; min-height: 44px; }
+/* VA-9: every text field is at least 44 px tall (the phone field is now styled like the others in style.css), and the City and State row has room below it */
+body.chrome-v6:not(.dashboard-v4) .field input[type="text"], body.chrome-v6:not(.dashboard-v4) .field input[type="email"], body.chrome-v6:not(.dashboard-v4) .field input[type="tel"] { min-height: 44px; }
+body.chrome-v6:not(.dashboard-v4) .field-row { margin-bottom: 1.25rem; }
+body.chrome-v6:not(.dashboard-v4) .field-row .field { margin-bottom: 0; }
+/* VA-5 (same family): the small labels above the STAR boxes were 11.5 px */
+body.chrome-v6:not(.dashboard-v4) .ats-flow-secondary { font-size: 0.75rem; }
