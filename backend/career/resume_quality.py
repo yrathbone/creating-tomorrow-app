@@ -326,3 +326,56 @@ def find_claim_issues(resume: dict, unsupported_terms: list[str], evidence_text:
                 issues.append({"where": where, "problem": f"unsupported claim: \"{term}\" is not established by the candidate's evidence; remove it, or say only what the evidence says (do not swap in another unsupported claim)", "text": text})
                 break
     return issues
+
+
+# ---- verbs the writer must not upgrade ---------------------------------------------------------------------------------------
+# A stronger verb the candidate's own words never use, next to a weaker verb they DID use ("produced" when they said "recorded"),
+# changes what they did. Reported for review, never silently rewritten (a swap would often break the sentence).
+_STRONG_VERBS = {
+    "produced": ("produc",), "managed": ("manag",), "led": ("led", "lead"), "directed": ("direct",),
+    "oversaw": ("oversaw", "oversee", "oversight"), "owned": ("own",), "spearheaded": ("spearhead",),
+}
+_WEAK_STEMS = {
+    "produced": ("record", "film"),
+    "managed": ("assist", "help", "support", "contribut"),
+    "led": ("assist", "help", "support", "contribut"),
+    "directed": ("assist", "help", "support", "contribut"),
+    "oversaw": ("assist", "help", "support", "contribut"),
+    "owned": ("assist", "help", "support", "contribut"),
+    "spearheaded": ("assist", "help", "support", "contribut"),
+}
+_WORD = re.compile(r"[a-z][a-z'-]*")
+
+
+def verb_upgrades(resume_data: dict, evidence_text: str) -> list[dict]:
+    """Sentences that use a strong verb the evidence never uses while the evidence does use a weaker verb for the same kind of work."""
+    evidence_words = set(_WORD.findall(str(evidence_text or "").lower()))
+
+    def established(strong: str) -> bool:
+        stems = _STRONG_VERBS[strong]
+        return any((w == s) if s == "led" else w.startswith(s) for w in evidence_words for s in stems)
+
+    def weaker_used(strong: str) -> str:
+        for stem in _WEAK_STEMS[strong]:
+            for w in sorted(evidence_words):
+                if w.startswith(stem):
+                    return w
+        return ""
+
+    found: list[dict] = []
+
+    def check(text, where):
+        for sentence in [x for x in _SENTENCE_SPLIT.split(str(text or "").strip()) if x.strip()]:
+            words = set(_WORD.findall(sentence.lower()))
+            for strong in _STRONG_VERBS:
+                if strong in words and not established(strong):
+                    weak = weaker_used(strong)
+                    if weak:
+                        found.append({"where": where, "text": sentence.strip(), "written": strong, "evidence_verb": weak,
+                                      "problem": f"\"{strong}\" is stronger than the candidate's own wording (\"{weak}\"); use their verb or confirm it"})
+
+    check(resume_data.get("summary"), "summary")
+    for job in resume_data.get("experience") or []:
+        for bullet in job.get("bullets") or []:
+            check(bullet, f"bullet under \"{job.get('title', '')}\"")
+    return found

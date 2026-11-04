@@ -479,6 +479,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     renderRoleSelection(data.role_selection || []);
     renderTermReport(data.term_report || []);
     renderMatchGrade(data.term_report || [], data.ats_match || null);
+    renderTruthNotice(data.truth_notice || (data.resume_data && data.resume_data.truth_review && data.resume_data.truth_review.truth_notice));
 
     stopProcessingState(jobBuildLoadingState);
     jobBuildLoadingState.hidden = true;
@@ -878,6 +879,15 @@ function renderRoleSelection(selection) {
 
 // "I applied for this job": the app can't know the candidate applied, so this is
 // their own one-click entry into the application tracker (applications.js).
+// One line when the truth checks left statements out of the resume; the wording and the count come from the server.
+function renderTruthNotice(notice) {
+  const el = document.getElementById("job-truth-notice");
+  if (!el) return;
+  const message = notice && notice.count > 0 && typeof notice.message === "string" ? notice.message : "";
+  el.textContent = message;
+  el.hidden = !message;
+}
+
 function resetAppliedBlock() {
   document.getElementById("job-applied-form").hidden = true;
   document.getElementById("job-applied-msg").hidden = true;

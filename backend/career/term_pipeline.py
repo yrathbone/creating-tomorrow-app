@@ -144,7 +144,9 @@ def resume_text(resume_data: dict) -> str:
 def facts_text_for(confirmed_facts: list) -> str:
     if not confirmed_facts:
         return "(none confirmed)"
-    return "\n".join(f"- ({f.get('category', '')}) {f.get('bullet_text', '')}" for f in confirmed_facts)
+    # Only what the candidate confirmed. The interview's topic label ("Video Production") is a heading for the question, never evidence, so
+    # it is not part of the text the planner and the checks read.
+    return "\n".join(f"- {f.get('bullet_text', '')}" for f in confirmed_facts)
 
 
 def _require_term_shape(data: dict) -> dict:
@@ -676,6 +678,16 @@ def strike_unsupported_claims(resume_data: dict, unsupported_terms: list[str], e
     return out, struck
 
 
+def truth_notice(struck: list, removed: list) -> dict:
+    """The one line a candidate sees when statements were left out: how many, and what to do about it. The count is every sentence
+    struck from the summary, headline or bullets plus every skill removed; nothing that was kept is counted."""
+    count = len(struck or []) + len(removed or [])
+    if not count:
+        return {"count": 0, "message": ""}
+    noun = "statement" if count == 1 else "statements"
+    return {"count": count, "message": f"We left out {count} {noun} we couldn’t verify. Review your experience to make sure nothing important is missing."}
+
+
 def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, denials: list[dict] | None = None) -> dict:
     denials = denials or []
     # A confirmed fact that says again what the candidate denied is NOT silently used, and the denial is not silently dropped:
@@ -703,6 +715,8 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         result["quality"] = quality
         result["skills_removed"] = removed
         result["claims_struck"] = []
+        result["verb_review"] = resume_quality.verb_upgrades(resume, evidence_text)
+        result["truth_notice"] = truth_notice([], removed)
         result["claim_review"] = []
         log_quality(quality)
         result["term_report"] = []
@@ -738,6 +752,8 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     result["claim_review"] = resume_quality.find_claim_issues(resume, unsupported, evidence_text)
     result["skills_removed"] = removed
     result["claims_struck"] = struck
+    result["verb_review"] = resume_quality.verb_upgrades(resume, evidence_text)
+    result["truth_notice"] = truth_notice(struck, removed)
     if removed or struck or result["claim_review"] or conflicts:
         print(f"[career.truth] skills_removed={len(removed)} sentences_struck={len(struck)} unsupported_claims_left={len(result['claim_review'])} answer_conflicts={len(conflicts)}")
     result["quality"] = quality

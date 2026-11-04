@@ -1168,6 +1168,8 @@ async def job_build_resume(
             "skills_removed": result.get("skills_removed") or [],
             "claims_struck": result.get("claims_struck") or [],
             "claim_review": result.get("claim_review") or [],
+            "verb_review": result.get("verb_review") or [],
+            "truth_notice": result.get("truth_notice") or {"count": 0, "message": ""},
         },
     }
     version = ResumeVersion(
