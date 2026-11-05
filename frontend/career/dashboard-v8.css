@@ -125,3 +125,15 @@ body.chrome-v6.dashboard-v4 .export-menu .btn-secondary:hover, body.chrome-v6.da
   body.chrome-v6.dashboard-v4 .export-menu .btn-secondary { transition: transform 0.18s ease, box-shadow 0.18s ease; }
   body.chrome-v6.dashboard-v4 .export-menu .btn-secondary:hover, body.chrome-v6.dashboard-v4 .export-menu .btn-secondary:focus-visible { transform: translateY(-2px); }
 }
+
+/* ---------- signed-in dashboard: 16px fields and 44px tap targets (the public pages got these first) ---------- */
+body.chrome-v6.dashboard-v4 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]) { font-size: 1rem; }
+body.chrome-v6.dashboard-v4 textarea { font-size: 1rem; }
+body.chrome-v6.dashboard-v4 select { font-size: 1rem; }
+body.chrome-v6.dashboard-v4 .nav-links a { display: inline-flex; align-items: center; min-height: 44px; }
+body.chrome-v6.dashboard-v4 .nav-logo { display: inline-flex; align-items: center; min-height: 44px; }
+/* !important here only: older, more specific rules set 40px minimums on individual buttons (Add a job, Edit profile, Delete account, feedback) */
+body.chrome-v6.dashboard-v4 main button:not(.stat-card):not(.link-button) { min-height: 44px !important; }
+body.chrome-v6.dashboard-v4 main a.btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px !important; }
+/* the five count tiles share the row equally: every tile after the first carried a stray 8px left margin, so the first looked wider */
+body.chrome-v6.dashboard-v4 .snapshot-card .stat-row .stat-card { margin: 0; }

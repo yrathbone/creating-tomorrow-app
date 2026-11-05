@@ -174,3 +174,8 @@ body.chrome-v6:not(.dashboard-v4) .field-row { margin-bottom: 1.25rem; }
 body.chrome-v6:not(.dashboard-v4) .field-row .field { margin-bottom: 0; }
 /* VA-5 (same family): the small labels above the STAR boxes were 11.5 px */
 body.chrome-v6:not(.dashboard-v4) .ats-flow-secondary { font-size: 0.75rem; }
+
+/* ---------- form fields: 16px, so a phone browser does not zoom the page when a field is focused (they were 15.2px) ---------- */
+body.chrome-v6:not(.dashboard-v4) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]) { font-size: 1rem; }
+body.chrome-v6:not(.dashboard-v4) textarea { font-size: 1rem; }
+body.chrome-v6:not(.dashboard-v4) select { font-size: 1rem; }
