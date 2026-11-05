@@ -137,3 +137,8 @@ body.chrome-v6.dashboard-v4 main button:not(.stat-card):not(.link-button) { min-
 body.chrome-v6.dashboard-v4 main a.btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px !important; }
 /* the five count tiles share the row equally: every tile after the first carried a stray 8px left margin, so the first looked wider */
 body.chrome-v6.dashboard-v4 .snapshot-card .stat-row .stat-card { margin: 0; }
+/* the list of key terms the profile already backs: a plain disclosure with a comfortable tap target */
+body.chrome-v6.dashboard-v4 .keyword-covered { margin: 0.75rem 0 1rem; padding: 0.25rem 0.75rem; border: 1px solid var(--v4-line); border-radius: var(--v4-radius-sm); background: transparent; }
+body.chrome-v6.dashboard-v4 .keyword-covered > summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; font-weight: 600; }
+body.chrome-v6.dashboard-v4 .keyword-covered ul { margin: 0.25rem 0 0.5rem; padding-left: 1.1rem; }
+body.chrome-v6.dashboard-v4 .keyword-covered li { margin: 0.35rem 0; }

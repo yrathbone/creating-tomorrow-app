@@ -14,7 +14,7 @@ const read = (...p) => fs.readFileSync(path.join(CAREER, ...p), "utf8");
 const PANELS = ["job-target-empty", "job-input-state", "job-loading-state", "job-match-state", "job-questions-state", "job-build-form-state",
   "job-keywords-state", "job-build-loading-state", "job-build-done-state"];
 
-function world({ failing = [], keywordTerms = [{ term: "SQL" }] } = {}) {
+function world({ failing = [], keywordTerms = [{ term: "SQL" }], covered = {} } = {}) {
   const log = { focus: [], status: [], alerts: [], saved: [], fetches: [] };
   const els = {};
   const make = (id) => {
@@ -63,7 +63,7 @@ function world({ failing = [], keywordTerms = [{ term: "SQL" }] } = {}) {
       if (/job-compare$/.test(url)) return reply("compare", { match_report: { match_level: "Average", match_rationale: "r", strengths: [], required_qualification_gaps: [] },
         categories: [], questions: [{ id: "q1", category: "c", question: "Did you?", type: "yes_no" }], job_title: "Senior Operations Analyst", scan_history_id: 77, job_fit: null });
       if (/job-discover$/.test(url)) return reply("discover", { stage: "confirm", discovered_facts: [] });
-      if (/job-keyword-check$/.test(url)) return reply("keywords", { terms: keywordTerms, already_covered: 0 });
+      if (/job-keyword-check$/.test(url)) return reply("keywords", { terms: keywordTerms, already_covered: 0, ...covered });
       if (/job-build-resume$/.test(url)) return reply("build", { resume_data: { name: "María José Peña-Núñez" }, role_selection: [], term_report: [], ats_match: null, resume_version_id: 5 });
       if (/scan-history\/\d+\/skip$/.test(url)) return reply("skip", {});
       return reply("other", {});
@@ -339,3 +339,20 @@ test("the Continue button says Continue comparison; the job is named for screen 
   assert.strictEqual(btn.title, "Instructional Designer at Brightpath");
   assert.strictEqual(btn.hidden, false);
 });
+
+test("keyword check: terms the profile already backs are listed with their evidence and are not asked about", async () => {
+  const covered = {
+    already_covered: 3,
+    covered_exact: [{ term: "Agile", importance: "required" }],
+    covered_related: [{ term: "Client implementation", importance: "required", evidence: "Managed client connectivity projects" }],
+  };
+  const w = world({ keywordTerms: [{ term: "Change management", importance: "required", support: "none" }], covered });
+  await w.els["job-keyword-check-btn"].fire("click");
+  assert.strictEqual(w.els["job-keywords-covered"].hidden, false);
+  assert.strictEqual(w.els["job-keywords-covered-summary"].textContent, "Already backed by your profile (2): see what we found");
+  assert.match(w.els["job-keywords-intro"].textContent, /^2 key terms are already backed by your profile .*Only 1 term needs your answer/);
+  const none = world({ keywordTerms: [{ term: "Change management" }], covered: { already_covered: 0 } });
+  await none.els["job-keyword-check-btn"].fire("click");
+  assert.strictEqual(none.els["job-keywords-covered"].hidden, true);
+});
+

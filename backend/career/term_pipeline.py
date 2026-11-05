@@ -308,17 +308,33 @@ def suggest_skill_keywords(skills: list[dict]) -> dict[int, str]:
 
 
 def keyword_check(profile_text: str, confirmed_facts: list, job_description: str) -> dict:
-    """The optional pre-build "keyword check": the posting's key terms that are
-    NOT literally in the profile, so the candidate can say which ones they
-    really have (and where it belongs) before the resume is built. Terms
-    already in the profile are only counted. "related" terms carry the evidence
-    the planner found; "none" terms have none. Nothing is saved here."""
+    """The optional pre-build "keyword check". The posting's key terms are split by what the candidate's own evidence already says,
+    so only real gaps become questions:
+
+      covered_exact    the term is in the profile or a confirmed fact (counted, never asked);
+      covered_related  the same activity is in the profile under other words; the planner named the evidence and the code kept it only
+                       because it had a reason. Listed with that evidence so the candidate can see why, never asked;
+      terms            the questions: terms with no evidence ("none") and terms where only a different activity is evidenced
+                       ("transferable"). Required first.
+
+    Context phrases are never worth a question. Nothing is saved here and nothing is promoted: "related" stays related, the build step
+    uses it exactly as before. "already_covered" is the number of terms that need no answer (exact plus related)."""
     terms = plan_terms(profile_text, facts_text_for(confirmed_facts), job_description)
     rank = {"required": 0, "preferred": 1, "mentioned": 2}
-    # Context phrases are never worth a question; only real skills are asked about.
-    needs = [t for t in terms if t["support"] != "literal" and t.get("kind") != "phrase"]
-    needs.sort(key=lambda t: (rank.get(t["importance"], 3), t["support"] != "related"))
-    return {"terms": needs, "already_covered": len(terms) - len(needs)}
+    skills = [t for t in terms if t.get("kind") != "phrase"]
+    exact = [t for t in skills if t["support"] == "literal"]
+    related = [t for t in skills if t["support"] == "related" and t.get("evidence")]
+    questions = [t for t in skills if t["support"] != "literal" and not (t["support"] == "related" and t.get("evidence"))]
+    questions.sort(key=lambda t: (rank.get(t["importance"], 3), t["support"] != TRANSFERABLE))
+    related.sort(key=lambda t: rank.get(t["importance"], 3))
+    exact.sort(key=lambda t: rank.get(t["importance"], 3))
+    phrases = [t for t in terms if t.get("kind") == "phrase"]
+    return {
+        "terms": questions,
+        "already_covered": len(exact) + len(related) + len(phrases),
+        "covered_exact": [{"term": t["term"], "importance": t["importance"]} for t in exact],
+        "covered_related": [{"term": t["term"], "importance": t["importance"], "evidence": t["evidence"]} for t in related],
+    }
 
 
 def _split_top_level(text: str) -> list[str]:

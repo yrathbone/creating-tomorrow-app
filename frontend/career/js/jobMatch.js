@@ -504,6 +504,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
 // this resume only, or skip. Nothing is saved until "Save my choices", and
 // nothing is assumed: "related" terms are only pre-selected as a suggestion.
 let keywordTerms = [];
+let keywordCovered = { exact: [], related: [], count: 0 };
 
 document.getElementById("job-keyword-check-btn").addEventListener("click", async () => {
   const errorEl = document.getElementById("job-build-error");
@@ -529,12 +530,13 @@ document.getElementById("job-keyword-check-btn").addEventListener("click", async
     }
     const data = await res.json();
     keywordTerms = data.terms || [];
+    keywordCovered = { exact: data.covered_exact || [], related: data.covered_related || [], count: data.already_covered || 0 };
 
     stopProcessingState(jobLoadingState);
     jobLoadingState.hidden = true;
     if (keywordTerms.length === 0) {
       showJobBuildForm();
-      showKeywordNote("Every key term in the posting is already backed by your profile. Nothing to add.");
+      showKeywordNote("Every key term in the posting is already backed by your profile" + (data.already_covered ? " (" + data.already_covered + ")" : "") + ". Nothing to add.");
       focusJob(jobHeading);
       return;
     }
@@ -600,10 +602,39 @@ function showKeywordNote(text) {
   announceJob(text); // the note is plain text that appears and disappears, so it is also said through the status region
 }
 
+// The terms the profile already backs are listed (collapsed) with the evidence found, and are never asked about.
+function renderCoveredTerms() {
+  const details = document.getElementById("job-keywords-covered");
+  const list = document.getElementById("job-keywords-covered-list");
+  list.textContent = "";
+  const total = keywordCovered.exact.length + keywordCovered.related.length;
+  details.hidden = total === 0;
+  if (!total) return;
+  document.getElementById("job-keywords-covered-summary").textContent =
+    "Already backed by your profile (" + total + "): see what we found";
+  const add = (item, why) => {
+    const li = document.createElement("li");
+    const name = document.createElement("strong");
+    name.textContent = item.term + (item.importance && item.importance !== "mentioned" ? " (" + item.importance + ")" : "");
+    li.appendChild(name);
+    const note = document.createElement("span");
+    note.className = "hint";
+    note.textContent = " — " + why;
+    li.appendChild(note);
+    list.appendChild(li);
+  };
+  keywordCovered.related.forEach((t) => add(t, "Your profile shows: " + t.evidence));
+  keywordCovered.exact.forEach((t) => add(t, "this wording is in your profile"));
+}
+
 function renderKeywordCards(alreadyCovered) {
+  const asked = keywordTerms.length;
+  const listed = keywordCovered.exact.length + keywordCovered.related.length; // the number the list below shows
   document.getElementById("job-keywords-intro").textContent =
-    alreadyCovered + " other key terms are already backed by your profile. For each term below, tell me honestly whether it’s true for you. " +
+    (listed || alreadyCovered) + " key terms are already backed by your profile (listed below, nothing to answer). " +
+    "Only " + asked + " " + (asked === 1 ? "term needs" : "terms need") + " your answer: tell me honestly whether each is true for you. " +
     "Anything you skip stays off your resume.";
+  renderCoveredTerms();
   const container = document.getElementById("job-keywords-list");
   container.textContent = "";
   document.getElementById("job-keywords-error").hidden = true;

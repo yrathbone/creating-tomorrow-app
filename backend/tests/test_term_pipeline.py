@@ -228,8 +228,11 @@ class KeywordCheck(unittest.TestCase):
         )
         with mock.patch.object(job_match, "_call_with_retry", return_value=answer):
             out = term_pipeline.keyword_check(PROFILE, [], POSTING)
-        self.assertEqual([t["term"] for t in out["terms"]], ["Technical expertise", "Sales cycle", "Pricing strategies"])
-        self.assertEqual(out["already_covered"], 1)
+        # "Technical expertise" is related WITH evidence, so it is covered (listed with that evidence), not asked
+        self.assertEqual([t["term"] for t in out["terms"]], ["Sales cycle", "Pricing strategies"])
+        self.assertEqual(out["already_covered"], 2)
+        self.assertEqual([t["term"] for t in out["covered_exact"]], ["Fintech"])
+        self.assertEqual([(t["term"], t["evidence"]) for t in out["covered_related"]], [("Technical expertise", "technical advisor at BofA")])
 
     def test_a_term_confirmed_as_a_fact_counts_as_covered(self):
         facts = [{"category": "Sales cycle", "bullet_text": "Owned the sales cycle end to end."}]
