@@ -55,7 +55,7 @@
       </form>
       <p class="login-help"><button type="button" id="forgot-open-btn" class="link-button">Forgot your password?</button> <span aria-hidden="true">·</span> <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20sign-in%20help">Trouble signing in? Email us</a></p>
       <p class="hint">Career Profile is in <strong>beta testing</strong> and is <strong>by invitation only</strong>. If you were invited, sign in with the email address and temporary password from your invitation; you will choose your own password the first time. Want an invitation? <a href="register.html">Find out how</a>.</p>
-      <div id="login-error" class="error" hidden></div>
+      <div id="login-error" class="error" role="alert" hidden></div>
     </section>
 
     <section class="card" id="step-forgot" hidden>
@@ -105,7 +105,7 @@
         </label>
         <button type="submit" id="newpassword-btn">Save password and continue</button>
       </form>
-      <div id="newpassword-error" class="error" hidden></div>
+      <div id="newpassword-error" class="error" role="alert" hidden></div>
     </section>
 
     <section class="card" id="step-consent" hidden>
@@ -131,7 +131,7 @@
         <button type="button" id="consent-btn">I understand — create my Career Profile</button>
         <a href="../index.html" class="btn-secondary">Not now</a>
       </div>
-      <div id="consent-error" class="error" hidden></div>
+      <div id="consent-error" class="error" role="alert" hidden></div>
       <p class="hint" style="margin-top:1.5rem;"><a href="../privacy.html">Privacy</a> <span class="h5-amp">&amp;</span> <a href="../terms.html">Terms</a> · You can delete your data and account yourself at any time, from Your Data on your dashboard</p>
     </section>
 
@@ -549,7 +549,7 @@
         <div id="skill-tidy-panel" hidden>
           <p class="hint" id="skill-tidy-intro"></p>
           <div id="skill-tidy-list"></div>
-          <div id="skill-tidy-error" class="error" hidden></div>
+          <div id="skill-tidy-error" class="error" role="alert" hidden></div>
           <button type="button" id="skill-tidy-apply-btn">Save the ones I’ve ticked</button>
           <button type="button" id="skill-tidy-cancel-btn" class="btn-secondary">Close</button>
         </div>
@@ -593,7 +593,7 @@
         <div id="skill-scan-questions" hidden>
           <p id="skill-scan-summary"></p>
           <div id="skill-scan-questions-list"></div>
-          <div id="skill-scan-questions-error" class="error" hidden></div>
+          <div id="skill-scan-questions-error" class="error" role="alert" hidden></div>
           <button type="button" id="skill-scan-questions-submit-btn">Continue</button>
           <button type="button" id="skill-scan-questions-finish-btn" class="btn-secondary">I’m done answering questions</button>
         </div>
@@ -611,7 +611,7 @@
           <div id="skill-scan-facts-list"></div>
           <button type="button" id="skill-scan-save-btn">Save to my Career Profile</button>
           <button type="button" id="skill-scan-cancel-btn" class="btn-secondary">Cancel</button>
-          <div id="skill-scan-save-error" class="error" hidden></div>
+          <div id="skill-scan-save-error" class="error" role="alert" hidden></div>
         </div>
             </section>
 
@@ -631,7 +631,7 @@
                   <option value="Elementary proficiency"></option>
                 </datalist>
                 <button type="submit" id="language-submit-btn">Add language</button>
-                <div id="language-error" class="error" hidden></div>
+                <div id="language-error" class="error" role="alert" hidden></div>
               </form>
               <div id="language-detail-list"></div>
             </section>
@@ -642,7 +642,7 @@
           <button type="button" id="export-profile-btn" class="btn-secondary">Download data backup (.json)</button>
         </div>
         <p class="hint export-hint">Readable Copy: Read, print, or share.</p>
-        <div id="export-profile-error" class="error" hidden></div>
+        <div id="export-profile-error" class="error" role="alert" hidden></div>
         </div>
 
 
@@ -674,7 +674,7 @@
                 <label class="field"><span>Company</span><input type="text" id="application-company" /></label>
                 <label class="field"><span>Date applied</span><input type="date" id="application-date" /></label>
                 <button type="submit">Add to my tracker</button>
-                <div id="application-form-error" class="error" hidden></div>
+                <div id="application-form-error" class="error" role="alert" hidden></div>
               </form>
               <div id="application-view-toggle" class="app-view-toggle" role="group" aria-label="How to show your applications" hidden>
                 <button type="button" id="application-view-list" class="btn-secondary" aria-pressed="true">List</button>
@@ -745,7 +745,7 @@
           <label class="field"><span>Description (optional)</span><textarea id="exp-description" rows="4"></textarea></label>
           <button type="submit" id="exp-submit-btn">Add role</button>
         </form>
-        <div id="exp-error" class="error" hidden></div>
+        <div id="exp-error" class="error" role="alert" hidden></div>
 
         <h3>Add education</h3>
         <form id="education-form">
@@ -755,7 +755,7 @@
           <label class="field"><span>Graduation date (optional)</span><input type="text" id="edu-graduation" placeholder="e.g. 05/19" /></label>
           <button type="submit" id="edu-submit-btn">Add education</button>
         </form>
-        <div id="edu-error" class="error" hidden></div>
+        <div id="edu-error" class="error" role="alert" hidden></div>
 
         <h3>Add a certification</h3>
         <form id="certification-form">
@@ -764,7 +764,7 @@
           <label class="field"><span>Date (optional)</span><input type="text" id="cert-date" placeholder="e.g. 03/22" /></label>
           <button type="submit" id="cert-submit-btn">Add certification</button>
         </form>
-        <div id="cert-error" class="error" hidden></div>
+        <div id="cert-error" class="error" role="alert" hidden></div>
 
         <h3>Add a skill</h3>
         <form id="skill-form">
@@ -776,7 +776,7 @@
           </label>
           <button type="submit" id="skill-submit-btn">Add skill</button>
         </form>
-        <div id="skill-error" class="error" hidden></div>
+        <div id="skill-error" class="error" role="alert" hidden></div>
       </div>
 
       <div id="resume-entry-section" hidden>
@@ -801,7 +801,7 @@
             <p class="hint" id="resume-linkedin-tip"><strong>Using LinkedIn?</strong> On your own LinkedIn profile choose <strong>More</strong>, then <strong>Save to PDF</strong>, and upload that file here (or paste your text). Only what’s new to your Career Profile is added; anything you already have is shown for you to confirm, never duplicated. To also see how well your LinkedIn reads, use <a href="../spotlight.html">the LinkedIn review</a>.</p>
             <button type="submit" id="resume-upload-btn" class="btn-green">Analyze my resume</button>
           </form>
-          <div id="resume-upload-error" class="error" hidden></div>
+          <div id="resume-upload-error" class="error" role="alert" hidden></div>
         </div>
 
         <div id="resume-loading-state" class="processing-card" hidden aria-live="polite">
@@ -833,7 +833,7 @@
         <div id="resume-questions-state" hidden>
           <p id="resume-analysis-summary"></p>
           <div id="resume-questions-list"></div>
-          <div id="resume-questions-error" class="error" hidden></div>
+          <div id="resume-questions-error" class="error" role="alert" hidden></div>
           <button type="button" id="resume-questions-submit-btn">Continue</button>
           <button type="button" id="resume-questions-finish-btn" class="btn-secondary">I’m done answering questions</button>
         </div>
@@ -867,7 +867,7 @@
           </div>
 
           <button type="button" id="resume-save-btn">Save to my Career Profile</button>
-          <div id="resume-save-error" class="error" hidden></div>
+          <div id="resume-save-error" class="error" role="alert" hidden></div>
         </div>
 
         <div id="resume-save-summary" hidden>
