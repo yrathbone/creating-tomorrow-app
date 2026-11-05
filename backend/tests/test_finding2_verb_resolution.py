@@ -120,6 +120,7 @@ class D_ThroughThePipeline(unittest.TestCase):
         self.assertEqual(notice["held"][0]["text"], "Oversaw the science department budget.")
         self.assertIn("We held 1 line out of your résumé until you confirm it.", notice["held_message"])
         self.assertIn("not in your Word file yet", notice["held_message"])
+        self.assertIn("tell us more about what you did in the interview, then rebuild your résumé", notice["held_message"])
 
     def test_held_lines_are_counted_apart_from_left_out_statements_and_once_each(self):
         sentence = {"where": "summary", "text": "Skilled in video editing.", "reason": "unsupported claim"}
@@ -130,6 +131,8 @@ class D_ThroughThePipeline(unittest.TestCase):
         self.assertIn("We held 1 line", notice["held_message"])
         self.assertEqual(truth_notice([], [], [{"text": "a", "evidence_verb": ""}, {"text": "b", "evidence_verb": ""}])["held_message"][:16], "We held 2 lines ")
         self.assertEqual(truth_notice([], [], [])["held_message"], "")
+        self.assertTrue(truth_notice([], [], [], [{}])["restored_message"].startswith("We put 1 line back to the wording you gave us"))
+        self.assertEqual(truth_notice([], [], [], [])["restored_message"], "")
 
     def test_transferable_skills_and_the_left_out_count_are_unaffected(self):
         plan = PLAN + [{"term": "Mentoring", "importance": "preferred", "kind": "skill", "support": "transferable", "evidence": "Mentored two student teachers."}]

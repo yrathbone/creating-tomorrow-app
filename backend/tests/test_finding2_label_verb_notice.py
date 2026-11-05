@@ -88,7 +88,7 @@ class B_VerbsKeepTheirStrength(unittest.TestCase):
 
 class C_TheCandidateNotice(unittest.TestCase):
     def test_wording_and_counts(self):
-        self.assertEqual(truth_notice([], []), {"count": 0, "message": "", "held": [], "held_message": ""})
+        self.assertEqual(truth_notice([], []), {"count": 0, "message": "", "held": [], "held_message": "", "restored_message": ""})
         self.assertEqual(truth_notice([{}], [])["message"], "We left out 1 statement we couldn’t verify. Review your experience to make sure nothing important is missing.")
         self.assertEqual(truth_notice([{}, {}], ["a"])["count"], 3)
         self.assertTrue(truth_notice([{}, {}], ["a"])["message"].startswith("We left out 3 statements we couldn’t verify."))

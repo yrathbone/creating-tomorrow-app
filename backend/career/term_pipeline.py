@@ -678,7 +678,7 @@ def strike_unsupported_claims(resume_data: dict, unsupported_terms: list[str], e
     return out, struck
 
 
-def truth_notice(struck: list, removed: list, held: list | None = None) -> dict:
+def truth_notice(struck: list, removed: list, held: list | None = None, restored: list | None = None) -> dict:
     """The one line a candidate sees when statements were left out: how many, and what to do about it. The count is every sentence
     struck from the summary, headline or bullets plus every skill removed; nothing that was kept is counted. One claim is counted
     once: the same sentence struck in two places counts once, and a removed skill that a struck sentence also names counts with
@@ -697,14 +697,18 @@ def truth_notice(struck: list, removed: list, held: list | None = None) -> dict:
         if key not in seen_held:
             seen_held.add(key)
             held_lines.append({"text": h.get("text", ""), "said": h.get("evidence_verb", "")})
-    notice = {"count": count, "message": "", "held": held_lines, "held_message": ""}
+    notice = {"count": count, "message": "", "held": held_lines, "held_message": "", "restored_message": ""}
     if count:
         noun = "statement" if count == 1 else "statements"
         notice["message"] = f"We left out {count} {noun} we couldn’t verify. Review your experience to make sure nothing important is missing."
     if held_lines:
         n = len(held_lines)
         notice["held_message"] = (f"We held {n} {'line' if n == 1 else 'lines'} out of your résumé until you confirm {'it' if n == 1 else 'them'}. "
-                                  f"{'It uses' if n == 1 else 'They use'} stronger wording than you gave us, so {'it is' if n == 1 else 'they are'} not in your Word file yet.")
+                                  f"{'It uses' if n == 1 else 'They use'} stronger wording than you gave us, so {'it is' if n == 1 else 'they are'} not in your Word file yet. "
+                                  f"To include {'it' if n == 1 else 'them'}, tell us more about what you did in the interview, then rebuild your résumé.")
+    if restored:
+        r = len(restored)
+        notice["restored_message"] = (f"We put {r} {'line' if r == 1 else 'lines'} back to the wording you gave us, because our draft used a stronger word than you did.")
     return notice
 
 
@@ -761,7 +765,7 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         result["claims_struck"] = []
         resume = check_verb_wording(result, resume, profile_text, confirmed_facts, answers_text)
         result["resume_data"] = resume
-        result["truth_notice"] = truth_notice([], removed, result["lines_held"])
+        result["truth_notice"] = truth_notice([], removed, result["lines_held"], result["verbs_restored"])
         result["claim_review"] = []
         log_quality(quality)
         result["term_report"] = []
@@ -798,7 +802,7 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     result["skills_removed"] = removed
     result["claims_struck"] = struck
     resume = check_verb_wording(result, resume, profile_text, confirmed_facts, answers_text)
-    result["truth_notice"] = truth_notice(struck, removed, result["lines_held"])
+    result["truth_notice"] = truth_notice(struck, removed, result["lines_held"], result["verbs_restored"])
     if removed or struck or result["claim_review"] or conflicts:
         print(f"[career.truth] skills_removed={len(removed)} sentences_struck={len(struck)} unsupported_claims_left={len(result['claim_review'])} answer_conflicts={len(conflicts)}")
     result["quality"] = quality

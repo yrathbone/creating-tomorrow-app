@@ -14,7 +14,7 @@ function renderer() {
   const end = source.indexOf("function resetAppliedBlock()");
   assert.ok(start > 0 && end > start, "renderTruthNotice is defined");
   const make = () => ({ textContent: "", hidden: true, children: [], appendChild(c) { this.children.push(c); } });
-  const nodes = { "job-truth-notice": make(), "job-truth-message": make(), "job-truth-held-message": make(), "job-truth-held": make() };
+  const nodes = { "job-truth-notice": make(), "job-truth-message": make(), "job-truth-held-message": make(), "job-truth-restored-message": make(), "job-truth-held": make() };
   const sandbox = {
     document: {
       getElementById: (id) => nodes[id] || null,
@@ -31,7 +31,7 @@ function renderer() {
 test("the finished-resume state has a polite status region for the notice, hidden until needed", () => {
   const done = html.slice(html.indexOf('id="job-build-done-state"'));
   assert.match(done, /<div id="job-truth-notice" class="hint" role="status" hidden>/);
-  for (const id of ["job-truth-message", "job-truth-held-message", "job-truth-held"]) assert.ok(done.includes(`id="${id}"`), id);
+  for (const id of ["job-truth-message", "job-truth-held-message", "job-truth-restored-message", "job-truth-held"]) assert.ok(done.includes(`id="${id}"`), id);
   assert.ok(done.indexOf('id="job-truth-notice"') < done.indexOf('id="job-resume-template"'), "it sits at the top of the finished state");
 });
 
@@ -70,4 +70,14 @@ test("held lines are listed word for word, with what the candidate wrote, and ar
 
 test("a build shows the notice from the response", () => {
   assert.match(source, /renderTruthNotice\(data\.truth_notice \|\|/);
+});
+
+test("a restored verb is told to the candidate on its own, and a later build clears it", () => {
+  const { nodes, render } = renderer();
+  const restored = "We put 1 line back to the wording you gave us, because our draft used a stronger word than you did.";
+  render({ count: 0, message: "", held: [], held_message: "", restored_message: restored });
+  assert.strictEqual(nodes["job-truth-restored-message"].textContent, restored);
+  assert.strictEqual(nodes["job-truth-notice"].hidden, false);
+  render({ count: 0, message: "", held: [], held_message: "", restored_message: "" });
+  assert.strictEqual(nodes["job-truth-notice"].hidden, true);
 });

@@ -1173,7 +1173,7 @@ async def job_build_resume(
             "fact_verb_review": result.get("fact_verb_review") or [],
             "verbs_restored": result.get("verbs_restored") or [],
             "lines_held": result.get("lines_held") or [],
-            "truth_notice": result.get("truth_notice") or {"count": 0, "message": "", "held": [], "held_message": ""},
+            "truth_notice": result.get("truth_notice") or {"count": 0, "message": "", "held": [], "held_message": "", "restored_message": ""},
         },
     }
     version = ResumeVersion(

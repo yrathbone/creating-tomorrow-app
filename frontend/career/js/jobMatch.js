@@ -894,6 +894,8 @@ function renderTruthNotice(notice) {
   };
   show("job-truth-message", message);
   show("job-truth-held-message", heldMessage);
+  const restoredMessage = notice && typeof notice.restored_message === "string" ? notice.restored_message : "";
+  show("job-truth-restored-message", restoredMessage);
   const list = document.getElementById("job-truth-held");
   if (list) {
     list.textContent = "";
@@ -906,7 +908,7 @@ function renderTruthNotice(notice) {
     }
     list.hidden = !heldMessage;
   }
-  el.hidden = !(message || heldMessage);
+  el.hidden = !(message || heldMessage || restoredMessage);
 }
 
 function resetAppliedBlock() {
