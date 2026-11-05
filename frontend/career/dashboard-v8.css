@@ -119,3 +119,9 @@ body.chrome-v6.dashboard-v4 .export-menu { display: flex; flex-direction: column
 body.chrome-v6.dashboard-v4 .export-menu[hidden] { display: none; }
 body.chrome-v6.dashboard-v4 .export-menu .btn-secondary { width: 100%; margin: 0; }
 body.chrome-v6.dashboard-v4 .export-menu-wrap .btn-secondary { min-height: 44px; }
+/* The two choices answer to hover and keyboard focus the way the homepage tool cards do: a soft shadow, and a small lift only for people who have not asked for less motion. They open and choose on click, tap or Enter, never on hover alone. */
+body.chrome-v6.dashboard-v4 .export-menu .btn-secondary:hover, body.chrome-v6.dashboard-v4 .export-menu .btn-secondary:focus-visible { box-shadow: 0 10px 20px rgba(0, 51, 149, 0.18); cursor: pointer; }
+@media (prefers-reduced-motion: no-preference) {
+  body.chrome-v6.dashboard-v4 .export-menu .btn-secondary { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+  body.chrome-v6.dashboard-v4 .export-menu .btn-secondary:hover, body.chrome-v6.dashboard-v4 .export-menu .btn-secondary:focus-visible { transform: translateY(-2px); }
+}

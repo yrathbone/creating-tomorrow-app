@@ -117,3 +117,13 @@ test("the choice buttons line up (no inherited side margin) and every control is
   assert.match(css, /\.export-menu-wrap \.btn-secondary \{ min-height: 44px; \}/);
   assert.match(css, /\.export-menu\[hidden\] \{ display: none; \}/);
 });
+
+test("the two download choices highlight on hover and keyboard focus like the homepage cards, and the lift respects reduced motion", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "..", "..", "frontend", "career", "dashboard-v8.css"), "utf8");
+  assert.match(css, /\.export-menu \.btn-secondary:hover, body\.chrome-v6\.dashboard-v4 \.export-menu \.btn-secondary:focus-visible \{ box-shadow: 0 10px 20px rgba\(0, 51, 149, 0\.18\)/);
+  const motion = css.slice(css.indexOf("@media (prefers-reduced-motion: no-preference)", css.indexOf(".export-menu .btn-secondary:hover")));
+  assert.match(motion.slice(0, 500), /translateY\(-2px\)/);
+  assert.ok(!/\.export-menu[^{]*:hover[^{]*\{[^}]*translateY/.test(css.replace(/@media[\s\S]*?\n\}/g, "")), "the lift is only inside the reduced-motion guard");
+  const js = fs.readFileSync(path.join(__dirname, "..", "..", "..", "frontend", "career", "js", "exportMenu.js"), "utf8");
+  assert.ok(!/mouseenter|mouseover|:hover/.test(js), "the choice never opens on hover alone");
+});
