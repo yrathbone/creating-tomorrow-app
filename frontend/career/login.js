@@ -3,11 +3,24 @@
 // `new Error(...)` stringified it as "[object Object]" everywhere in this
 // feature. This normalizes any shape (string, validation-error array,
 // single object, or nothing) into an actual readable message.
+// A validation entry becomes a plain sentence about the field ("Description is too long. Please keep it under 20,000 characters."),
+// never the server's own wording ("body.description: String should have at most 20000 characters").
+function friendlyValidationMessage(d) {
+  const loc = Array.isArray(d.loc) ? d.loc.filter((part) => part !== "body" && typeof part === "string") : [];
+  const raw = (loc[loc.length - 1] || "").replace(/_/g, " ");
+  const label = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : "This field";
+  const ctx = d.ctx || {};
+  if (d.type === "string_too_long" && ctx.max_length) return `${label} is too long. Please keep it under ${Number(ctx.max_length).toLocaleString("en-US")} characters.`;
+  if (d.type === "string_too_short" && ctx.min_length) return `${label} is too short. Please write at least ${ctx.min_length} characters.`;
+  if (d.type === "missing") return `${label} is required.`;
+  return `${label}: please check what you entered.`;
+}
+
 function formatErrorDetail(detail, fallback) {
   if (!detail) return fallback;
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) {
-    return detail.map((d) => (d && d.msg) ? `${(d.loc || []).join(".")}: ${d.msg}` : JSON.stringify(d)).join("; ");
+    return detail.map((d) => (d && d.msg) ? friendlyValidationMessage(d) : JSON.stringify(d)).join(" ");
   }
   if (typeof detail === "object") return detail.msg || JSON.stringify(detail);
   return String(detail);

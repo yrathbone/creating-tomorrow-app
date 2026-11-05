@@ -372,6 +372,7 @@ h2 {
 .field input[type="file"],
 .field input[type="text"],
 .field input[type="email"],
+.field input[type="tel"],
 .field input[type="password"],
 .field textarea {
   width: 100%;
