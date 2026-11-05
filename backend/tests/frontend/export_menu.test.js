@@ -11,7 +11,13 @@ const html = read("career", "login.html");
 const source = read("career", "js", "exportMenu.js");
 
 test("the dashboard has one Download my information button, with the two downloads inside a hidden choice", () => {
-  assert.match(html, /<button type="button" id="export-menu-btn" class="btn-secondary" aria-haspopup="true" aria-expanded="false" aria-controls="export-menu">Download my information<\/button>/);
+  assert.match(html, /<button type="button" id="export-menu-btn" class="btn-secondary" aria-expanded="false" aria-controls="export-menu">Download my information<\/button>/);
+  // a disclosure button: aria-haspopup would announce a "menu", but the choice is a plain group of buttons (no role="menu"/menuitem, no arrow keys)
+  assert.ok(!/id="export-menu-btn"[^>]*aria-haspopup/.test(html), "no aria-haspopup on the download button");
+  assert.ok(!/role="menu"|role="menuitem"/.test(html.slice(html.indexOf('id="export-menu"'), html.indexOf('id="export-profile-error"'))));
+  // real buttons, so Enter and Space work natively and Tab reaches them in order
+  assert.match(html, /<button type="button" id="export-readable-btn"/);
+  assert.match(html, /<button type="button" id="export-profile-btn"/);
   const menu = html.match(/<div id="export-menu"[^>]*>[\s\S]*?<\/div>/)[0];
   assert.match(menu, /\bhidden\b/);
   assert.match(menu, /role="group" aria-label="Choose a download"/);
