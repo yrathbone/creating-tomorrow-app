@@ -94,7 +94,8 @@ B) If enough has been gathered - most "yes" answers have a matching detail follo
    - A "no" or "skip" answer produces nothing.
    - A bare "yes" with no detail answer produces nothing on its own - only write a fact once there's enough specific detail to state honestly (skip anything still too vague to turn into a truthful bullet).
    - Never promote participation into ownership. If the candidate's answer suggests they supported, assisted with, or partnered on something, write it that way - do not write "led" or "owned" unless they said that.
-   - Write each fact's bullet_text the way a polished, senior resume bullet would read (strong accurate verb, no invented metrics or scope), but do not editorialize beyond what was said.
+   - Write each fact's bullet_text the way a polished, senior resume bullet would read (an accurate verb, no invented metrics or scope), but do not editorialize beyond what was said.
+   - Keep the strength and meaning of the candidate's own verb. Do not upgrade "recorded" to "produced", "assisted" or "helped" to "managed" or "led", "supported" to "owned", or "attended" to "organized". If they said they recorded videos, write "recorded"; use the stronger verb only when they used it.
    - Category should be one of the interview's categories, or a close variant if genuinely new ground came up in a detail answer.
    - If force_finish is true and nothing usable was actually confirmed, discovered_facts may be an empty list - that's fine and honest.
 

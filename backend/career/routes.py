@@ -33,7 +33,7 @@ from career.ingestion import IngestionError, discover, ElevateError, start_resum
 from career.job_match import JobMatchError, build_general_resume, compare_to_job
 from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
-from career.resume_quality import denials_from_history, drop_unsourced_bullets
+from career.resume_quality import candidate_answers_text, denials_from_history, drop_unsourced_bullets
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
@@ -1147,6 +1147,7 @@ async def job_build_resume(
         result = await run_in_threadpool(
             build_checked_resume, profile_text, job_description, req.confirmed_facts, req.name.strip(), req.contact.strip(),
             denials_from_history(req.qa_history),  # the candidate's explicit No answers reach the planner and the writer
+            candidate_answers_text(req.qa_history),  # what the candidate typed is their own wording, used to check verbs
         )
     except JobMatchError as e:
         raise ai_failure(e)
@@ -1168,6 +1169,11 @@ async def job_build_resume(
             "skills_removed": result.get("skills_removed") or [],
             "claims_struck": result.get("claims_struck") or [],
             "claim_review": result.get("claim_review") or [],
+            "verb_review": result.get("verb_review") or [],
+            "fact_verb_review": result.get("fact_verb_review") or [],
+            "verbs_restored": result.get("verbs_restored") or [],
+            "lines_held": result.get("lines_held") or [],
+            "truth_notice": result.get("truth_notice") or {"count": 0, "message": "", "held": [], "held_message": "", "restored_message": ""},
         },
     }
     version = ResumeVersion(

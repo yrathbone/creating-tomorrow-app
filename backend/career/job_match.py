@@ -139,7 +139,7 @@ BUILD_RESUME_SYSTEM_PROMPT = """You are Nova, an expert executive resume writer,
 
 FACTUAL SAFETY RULES (non-negotiable):
 Never invent skills, technologies, employers, job titles, metrics, revenue, team sizes, certifications, education, products, responsibilities, leadership scope, client types, awards, or years of experience. Only the supplied Career Profile content and confirmed facts may appear. If something is uncertain, leave it out.
-Never promote participation into ownership: if source text says "supported" do not write "led"; if it says "partnered with" do not write "owned".
+Never promote participation into ownership: if source text says "supported" do not write "led"; if it says "partnered with" do not write "owned". Keep the strength and meaning of the candidate's own verbs: "recorded" stays "recorded" (not "produced"), "assisted" or "helped" never becomes "managed" or "led", "attended" never becomes "organized". A topic label from the interview is not evidence of anything by itself.
 
 TAILORING AND LENGTH (this is a selection/prioritization task, not a rewrite of the facts): the goal is a resume a recruiter can digest quickly - ideally two pages or fewer - holding the key aspects that matter for THIS role, not the candidate's whole history. First judge how relevant each role in the Career Profile is to this posting (consider the title, the type of work, the skills used, and recency). Then give every role in the Career Profile one of two treatments:
 - FULL: the most recent roles that are relevant to this posting - usually the 3 most recent (up to 4 only if all of them are clearly relevant). Keep only the strongest bullets, the ones that speak to the posting's requirements and wording: about 4-6 per role and roughly 15-20 across the whole resume (a finished resume is typically about 700-900 words). Drop bullets that do not help for this role.
@@ -256,7 +256,7 @@ GENERAL_RESUME_SYSTEM_PROMPT = """You are Nova, an expert executive resume write
 
 FACTUAL SAFETY RULES (non-negotiable):
 Never invent skills, technologies, employers, job titles, metrics, revenue, team sizes, certifications, education, products, responsibilities, leadership scope, client types, awards, or years of experience. Only the supplied Career Profile content may appear. If something is uncertain, leave it out.
-Never promote participation into ownership: if source text says "supported" do not write "led"; if it says "partnered with" do not write "owned".
+Never promote participation into ownership: if source text says "supported" do not write "led"; if it says "partnered with" do not write "owned". Keep the strength and meaning of the candidate's own verbs: "recorded" stays "recorded" (not "produced"), "assisted" or "helped" never becomes "managed" or "led", "attended" never becomes "organized". A topic label from the interview is not evidence of anything by itself.
 
 SCOPE (this is an organize-and-polish task, not a selection task):
 Unlike a job-targeted resume, do not prioritize or drop content for relevance to any particular posting - include every real role from the Career Profile. Use judgment about ordering and which skills/bullets to foreground within a role, but the goal is a complete, broadly strong resume, not a narrowed one.
@@ -447,7 +447,7 @@ def compare_to_job(profile_text: str, job_description: str) -> dict:
 
 def build_tailored_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, term_plan: list | None = None, denials: list | None = None) -> dict:
     facts_text = (
-        "\n".join(f"- ({f.get('category', '')}) {f.get('bullet_text', '')}" for f in confirmed_facts)
+        "\n".join(f"- {f.get('bullet_text', '')}" for f in confirmed_facts)
         if confirmed_facts
         else "(none confirmed - use only the Career Profile itself)"
     )
