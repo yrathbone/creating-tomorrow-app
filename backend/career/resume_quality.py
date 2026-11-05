@@ -326,3 +326,161 @@ def find_claim_issues(resume: dict, unsupported_terms: list[str], evidence_text:
                 issues.append({"where": where, "problem": f"unsupported claim: \"{term}\" is not established by the candidate's evidence; remove it, or say only what the evidence says (do not swap in another unsupported claim)", "text": text})
                 break
     return issues
+
+
+# ---- verbs the writer must not upgrade ---------------------------------------------------------------------------------------
+# A stronger verb the candidate's own words never use, next to a weaker verb they DID use ("produced" when they said "recorded"),
+# changes what they did. Reported for review, never silently rewritten (a swap would often break the sentence).
+_STRONG_VERBS = {
+    "produced": ("produc",), "managed": ("manag",), "led": ("led", "lead"), "directed": ("direct",),
+    "oversaw": ("oversaw", "oversee", "oversight"), "owned": ("own",), "spearheaded": ("spearhead",),
+}
+_WEAK_STEMS = {
+    "produced": ("record", "film"),
+    "managed": ("assist", "help", "support", "contribut"),
+    "led": ("assist", "help", "support", "contribut"),
+    "directed": ("assist", "help", "support", "contribut"),
+    "oversaw": ("assist", "help", "support", "contribut"),
+    "owned": ("assist", "help", "support", "contribut"),
+    "spearheaded": ("assist", "help", "support", "contribut"),
+}
+_WORD = re.compile(r"[a-z][a-z'-]*")
+
+
+def verb_upgrades(resume_data: dict, evidence_text: str) -> list[dict]:
+    """Sentences that use a strong verb the evidence never uses while the evidence does use a weaker verb for the same kind of work."""
+    evidence_words = set(_WORD.findall(str(evidence_text or "").lower()))
+
+    def established(strong: str) -> bool:
+        stems = _STRONG_VERBS[strong]
+        return any((w == s) if s == "led" else w.startswith(s) for w in evidence_words for s in stems)
+
+    def weaker_used(strong: str) -> str:
+        for stem in _WEAK_STEMS[strong]:
+            for w in sorted(evidence_words):
+                if w.startswith(stem):
+                    return w
+        return ""
+
+    found: list[dict] = []
+
+    def check(text, where):
+        for sentence in [x for x in _SENTENCE_SPLIT.split(str(text or "").strip()) if x.strip()]:
+            words = set(_WORD.findall(sentence.lower()))
+            for strong in _STRONG_VERBS:
+                if strong in words and not established(strong):
+                    weak = weaker_used(strong)
+                    if weak:
+                        found.append({"where": where, "text": sentence.strip(), "written": strong, "evidence_verb": weak,
+                                      "problem": f"\"{strong}\" is stronger than the candidate's own wording (\"{weak}\"); use their verb or confirm it"})
+
+    check(resume_data.get("summary"), "summary")
+    for job in resume_data.get("experience") or []:
+        for bullet in job.get("bullets") or []:
+            check(bullet, f"bullet under \"{job.get('title', '')}\"")
+    return found
+
+
+# ---- restoring or holding an upgraded verb ------------------------------------------------------------------------------------
+# One verb can stand in for another only when both read the same way in the sentence ("Produced 60 videos" / "Recorded 60 videos").
+_INTERCHANGEABLE = {("produced", "recorded"), ("produced", "filmed")}
+_HELD_SENTENCE_MAX_WORDS = 25
+
+
+def candidate_answers_text(qa_history) -> str:
+    """What the candidate typed in the interview (detail answers). Yes/no answers and skips say nothing about wording, and the
+    questions are the tool's, not the candidate's."""
+    out = []
+    for entry in qa_history or []:
+        if isinstance(entry, dict) and str(entry.get("type", "yes_no")) == "detail":
+            answer = str(entry.get("answer", "") or "").strip()
+            if answer and answer.lower() != "skip":
+                out.append(answer)
+    return "\n".join(out)
+
+
+def _evidence_sentences(text: str) -> list[str]:
+    sentences = []
+    for line in str(text or "").split("\n"):
+        line = re.sub(r"^\s*[-*\u2022]\s*", "", line).strip()
+        sentences += [s.strip() for s in _SENTENCE_SPLIT.split(line) if s.strip()]
+    return sentences
+
+
+def _same_case(word: str, model: str) -> str:
+    return word.capitalize() if model[:1].isupper() else word
+
+
+def resolve_verb_upgrades(resume_data: dict, trusted_evidence: str) -> tuple[dict, list[dict], list[dict]]:
+    """For each sentence that uses a stronger verb than the evidence does (verb_upgrades):
+      - RESTORE it when ONE evidence sentence unambiguously describes the same activity (it has the weaker verb, every number of
+        the line, and at least two of its other words): the verb is swapped when the two read the same way, otherwise the line is
+        replaced by the candidate's own short sentence. Nothing else about the line is guessed.
+      - HOLD it out of the résumé when no single such evidence sentence exists, so unverified wording is never presented as
+        verified. A held line is kept in the returned list (word for word) so the candidate can confirm or correct it.
+    Returns (resume, restored, held). Stronger wording the evidence supports is never touched."""
+    evidence = _evidence_sentences(trusted_evidence)
+    restored: list[dict] = []
+    held: list[dict] = []
+
+    def matches(sentence: str, strong: str) -> list[str]:
+        numbers = {n[0] for n in _numbers(sentence)}
+        own_roots = {r[:4] for r in distinct_roots(sentence) - distinct_roots(strong)}  # four letters, so plan / planning / planned agree
+        found = []
+        for candidate in evidence:
+            words = _WORD.findall(candidate.lower())
+            if not any(w.startswith(stem) for w in words for stem in _WEAK_STEMS[strong]):
+                continue
+            if not numbers <= {n[0] for n in _numbers(candidate)}:
+                continue
+            if len(own_roots & {r[:4] for r in distinct_roots(candidate)}) < 2:
+                continue
+            if candidate not in found:
+                found.append(candidate)
+        return found
+
+    def fix(sentence: str, where: str) -> str:
+        current = sentence
+        for _ in range(3):
+            flags = verb_upgrades({"summary": current, "experience": []}, trusted_evidence)
+            if not flags:
+                return current
+            strong = flags[0]["written"]
+            found = matches(current, strong)
+
+            def weak_in(sentence: str) -> str:
+                return next((w for w in _WORD.findall(sentence.lower()) if any(w.startswith(x) for x in _WEAK_STEMS[strong])), "")
+
+            same_shape = next((weak_in(f) for f in found if (strong, weak_in(f)) in _INTERCHANGEABLE), "")
+            if same_shape:  # the evidence has the weaker verb on the same activity: only the one word changes
+                changed = re.sub(rf"\b{strong}\b", lambda m: _same_case(same_shape, m.group(0)), current, count=1, flags=re.I)
+                basis = f"\"{strong}\" restored to the candidate's own \"{same_shape}\""
+            elif len(found) == 1 and _words(found[0]) <= _HELD_SENTENCE_MAX_WORDS and weak_in(" ".join(_WORD.findall(found[0].lower())[:1])):
+                changed = found[0].rstrip(" .") + "."
+                basis = "replaced by the candidate's own sentence"
+            else:
+                held.append({"where": where, "text": sentence.strip(), "written": strong, "evidence_verb": flags[0]["evidence_verb"],
+                             "problem": "no single sentence in the candidate's own words describes this activity safely; held for confirmation"})
+                return ""
+            restored.append({"where": where, "before": current.strip(), "after": changed.strip(), "basis": basis})
+            current = changed
+        held.append({"where": where, "text": sentence.strip(), "written": "", "evidence_verb": "", "problem": "could not be restored safely; held for confirmation"})
+        return ""
+
+    def keep(text: str, where: str) -> str:
+        sentences = [x for x in _SENTENCE_SPLIT.split(str(text or "").strip()) if x.strip()]
+        return " ".join(s for s in (fix(x.strip(), where) for x in sentences) if s)
+
+    out = dict(resume_data)
+    if out.get("summary"):
+        out["summary"] = keep(out["summary"], "summary")
+    experience = []
+    for job in out.get("experience") or []:
+        bullets = []
+        for bullet in job.get("bullets") or []:
+            text = keep(str(bullet), f"bullet under \"{job.get('title', '')}\"")
+            if text:
+                bullets.append(text)
+        experience.append({**job, "bullets": bullets})
+    out["experience"] = experience
+    return out, restored, held
