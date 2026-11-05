@@ -30,7 +30,7 @@ import os
 
 import anthropic
 
-from llm_utils import describe_provider_error, log_usage
+from llm_utils import describe_provider_error, log_usage, with_untrusted_rule
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
@@ -137,7 +137,7 @@ def restructure_resume(resume_text: str) -> dict:
             response = client.messages.create(
                 model=MODEL,
                 max_tokens=MAX_TOKENS,
-                system=SYSTEM_PROMPT,
+                system=with_untrusted_rule(SYSTEM_PROMPT),
                 tools=[RESTRUCTURE_TOOL],
                 tool_choice={"type": "tool", "name": "submit_resume_structure"},
                 messages=[{"role": "user", "content": prompt_for_this_attempt}],

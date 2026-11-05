@@ -30,7 +30,7 @@ import os
 import anthropic
 
 from elevate import discover, ElevateError  # noqa: F401 - re-exported for career/routes.py
-from llm_utils import describe_provider_error, log_usage
+from llm_utils import describe_provider_error, log_usage, with_untrusted_rule
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 MAX_TOKENS = 16000
@@ -226,7 +226,7 @@ def start_resume_review(resume_text: str, pdf_document_b64: str | None = None) -
             response = client.messages.create(
                 model=MODEL,
                 max_tokens=MAX_TOKENS,
-                system=RESTRUCTURE_SYSTEM_PROMPT,
+                system=with_untrusted_rule(RESTRUCTURE_SYSTEM_PROMPT),
                 tools=[RESTRUCTURE_TOOL],
                 tool_choice={"type": "tool", "name": "submit_resume_review"},
                 messages=[{"role": "user", "content": content}],

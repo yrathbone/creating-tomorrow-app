@@ -32,7 +32,7 @@ import os
 
 import anthropic
 
-from llm_utils import describe_provider_error, log_usage
+from llm_utils import describe_provider_error, log_usage, with_untrusted_rule
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 
@@ -272,7 +272,7 @@ def review_profile(images: list, pasted_text: str, pdf_text: str, resume_text: s
             response = client.messages.create(
                 model=MODEL,
                 max_tokens=MAX_TOKENS,
-                system=SYSTEM_PROMPT,
+                system=with_untrusted_rule(SYSTEM_PROMPT),
                 tools=[REVIEW_TOOL],
                 tool_choice={"type": "tool", "name": "submit_review"},
                 messages=[{"role": "user", "content": attempt_content}],

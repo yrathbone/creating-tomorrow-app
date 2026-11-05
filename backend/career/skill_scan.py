@@ -25,7 +25,7 @@ import os
 
 import anthropic
 
-from llm_utils import describe_provider_error, log_usage
+from llm_utils import describe_provider_error, log_usage, with_untrusted_rule
 
 MODEL = os.environ.get("CT_MODEL", "claude-sonnet-5")
 MAX_TOKENS = 16000
@@ -120,7 +120,7 @@ def start_skill_scan(profile_text: str) -> dict:
             response = client.messages.create(
                 model=MODEL,
                 max_tokens=MAX_TOKENS,
-                system=SCAN_SYSTEM_PROMPT,
+                system=with_untrusted_rule(SCAN_SYSTEM_PROMPT),
                 tools=[SCAN_TOOL],
                 tool_choice={"type": "tool", "name": "submit_skill_scan"},
                 messages=[{"role": "user", "content": prompt_for_this_attempt}],
