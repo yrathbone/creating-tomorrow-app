@@ -109,6 +109,35 @@ body.chrome-v6.home-v5:not(.dashboard-v4) .h5-notfound.h5-band-pale { background
 /* the About page's "Why I built this" note: pale gold instead of grey, so the white page has no grey fill left */
 body.chrome-v6.pages-v4:not(.dashboard-v4) .about-note { background: #fff5dd; }
 
+/* ---------- one standard size scale on every inner page (consistency scan S-01, S-02, S-03, S-06) ----------
+   Page titles were three sizes (48, 36 and 33px), section headings four (19 to 33px) and body text five (14 to 17px). Now: one page title
+   (40px on a desktop, easing down to 28px on a phone), one section heading (24px) and one body size (16px). The homepage keeps its own hero size, and
+   the signed-in dashboard keeps its own type. No colours or font families are added here. */
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) { --c6-title: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem); --c6-section: 1.5rem; --c6-body: 1rem; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .page-header h1,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .pv-head h1,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .doc-hero h1,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .about-hero h1,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .ats-header h1,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .h5-notfound h1 { font-size: var(--c6-title); line-height: 1.15; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .doc-main h2,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .pv-band h2,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .pv-band .hv-h2,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .ats-body h2,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .ats-takeaway h2,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .final-cta-text h2 { font-size: var(--c6-section); line-height: 1.25; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .doc-main,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) .about-section p { font-size: var(--c6-body); }
+
+/* a compact header on a tablet and a phone (768px and below): less padding, a smaller logo and wordmark, closer links, so the page starts higher (it was 136px at 768 and 172px at 375) */
+@media (max-width: 768px) {
+  body.chrome-v6:not(.dashboard-v4) .site-nav { padding: 0.5rem 1rem; gap: 0.25rem 0.75rem; }
+  body.chrome-v6:not(.dashboard-v4) .site-nav .nav-logo img { height: 32px; }
+  body.chrome-v6:not(.dashboard-v4) .site-nav .nav-wordmark { font-size: 1.1rem; }
+  body.chrome-v6:not(.dashboard-v4) .nav-links { gap: 0 0.5rem; }
+  body.chrome-v6:not(.dashboard-v4) .nav-links a { font-size: 0.85rem; }
+}
+
 /* ---------- one type scale on the public pages, the same as the homepage ----------
    Page titles, section headings, card titles and links are bold or medium royal blue; the line under a title, the lead text and the card
    descriptions are the dark navy (never the pale gray); gray stays for small print, hints and legal text. */
