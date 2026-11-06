@@ -90,11 +90,13 @@ class StrikeUnsupportedClaims(unittest.TestCase):
         self.assertNotIn("editing software", prose(result["resume_data"]))
         self.assertEqual(len(result["claims_struck"]), 1)
 
-    def test_known_limit_a_paraphrase_that_shares_too_few_words_is_not_caught(self):
+    def test_a_paraphrase_that_shares_too_few_words_is_put_back_to_the_candidates_own_words(self):
+        # Before the provenance check this was a documented false negative (docs/TRUTHFULNESS.md): the new facts shared too few words with the denied term.
         sneaky = copy.deepcopy(DANIEL_AFTER_EDIT)
         sneaky["experience"][0]["bullets"][3] = "Polished each lesson recording before sharing it with students."
         result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, sneaky, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
-        self.assertIn("polished each lesson recording", prose(result["resume_data"]))  # a documented false negative (docs/TRUTHFULNESS.md)
+        self.assertNotIn("polished each lesson recording", prose(result["resume_data"]))
+        self.assertTrue(result["provenance"]["restored"] or result["provenance"]["held"])  # reported to the candidate, not silent
 
     def test_sears_invented_banking_duties_are_struck_even_when_paraphrased_and_the_edit_pass_is_down(self):
         result, _ = run(SEARS_PROFILE, SEARS_POSTING, SEARS_PLAN, SEARS_BAD, fail_edit=True)
@@ -207,11 +209,13 @@ class StrikeInventedFigures(unittest.TestCase):
         result2, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, split, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
         self.assertEqual(result2["resume_data"]["experience"][0]["bullets"][3], "Recorded 60 short lesson videos.")  # separate sentences: the true one stays
 
-    def test_an_invented_name_is_flagged_but_not_struck(self):
+    def test_an_invented_name_is_flagged_and_the_bullet_is_put_back_to_the_candidates_words(self):
+        # Before the provenance check names were only flagged for the edit pass; a bullet that adds new facts is now never kept as written.
         bad = self.invented("Recorded 60 short lesson videos and tracked results in Tableau.")
         result, _ = run(DANIEL_PROFILE, "posting", DANIEL_PLAN, bad, DANIEL_HISTORY, [DANIEL_FACT], fail_edit=True)
-        self.assertIn("Tableau", prose(result["resume_data"]).title())  # documented: names are flagged for the edit pass, not struck
-        self.assertEqual(result["claims_struck"], [])
+        self.assertNotIn("Tableau", prose(result["resume_data"]).title())
+        self.assertEqual(result["claims_struck"], [])  # the strike step is unchanged: the provenance check did the work
+        self.assertTrue(any("Tableau" in r.get("before", r.get("text", "")) for r in result["provenance"]["restored"] + result["provenance"]["held"]))
 
     def test_an_invented_figure_in_the_summary_or_headline_is_struck_too(self):
         resume = copy.deepcopy(DANIEL_AFTER_EDIT)

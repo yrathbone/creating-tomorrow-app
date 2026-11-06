@@ -233,6 +233,122 @@ PROFILE_BULLETS = {
 }
 
 
+class G_NewFactualAssertionsAreNeverKeptAsWritten(unittest.TestCase):
+    """Review concern 1: an invented bullet that overlaps neither another role nor the posting used to be kept and only noted."""
+    INVENTED = ["Organized quarterly safety audits for the Naperville store", "Maintained the store's inventory database",
+                "Negotiated supplier discounts with regional vendors"]
+
+    def shift_lead(self, bullet):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["experience"][0]["bullets"] = [bullet]
+        return audit(resume)
+
+    def test_invented_bullets_with_no_overlap_are_held_out(self):
+        for bullet in self.INVENTED:
+            out, report = self.shift_lead(bullet)
+            self.assertEqual(bullets(out, "Shift Lead"), [], bullet)
+            self.assertEqual([h["text"] for h in report["held"] if h["where"].endswith('"Shift Lead"')], [bullet])
+            self.assertIn("adds new facts your Shift Lead entry does not state", report["held"][0]["problem"])
+
+    def test_a_harmless_paraphrase_is_kept_and_listed_as_not_verified(self):
+        out, report = self.shift_lead("Assisted new hires with the POS system and store procedures")
+        self.assertEqual(bullets(out, "Shift Lead"), ["Assisted new hires with the POS system and store procedures"])
+        self.assertEqual(report["notes"][0]["words"], ["Assisted"])
+        notice = provenance.notice_text(report)
+        self.assertTrue(any(i["change"] == "kept, not verified" and "Assisted" in i["why"] for i in notice["items"]))
+        self.assertIn("not verified", notice["message"])
+
+    def test_a_reordering_with_no_new_words_is_kept_without_a_note(self):
+        out, report = self.shift_lead("Kept the daily cash count accurate when opening and closing the store")
+        self.assertEqual(len(bullets(out, "Shift Lead")), 1)
+        self.assertEqual(report["notes"], [])
+
+    def test_a_bullet_that_merges_several_of_his_sentences_is_put_back_to_all_of_them(self):
+        merged = "Scheduled 6 associates each week, trained new hires on the POS system and kept the daily cash count accurate, coordinating calendars"
+        out, report = self.shift_lead(merged)
+        self.assertEqual(bullets(out, "Shift Lead"), ["Opened and closed the store and kept the daily cash count accurate", "Scheduled 6 associates each week",
+                                                    "Trained new hires on the POS system and store procedures"])
+        self.assertEqual(len([r for r in report["restored"] if r["where"].endswith('"Shift Lead"')]), 1)  # nothing true was lost: every sentence it drew on is back, in his words
+
+    def test_every_notice_item_says_what_happened_and_never_calls_anything_verified(self):
+        _, report = audit()
+        notice = provenance.notice_text(report)
+        self.assertNotIn("verified:", notice["message"])
+        for item in notice["items"]:
+            self.assertIn(item["change"].split(":")[0].split(" (")[0], ("now reads", "left out", "removed from your skills", "kept, not checked", "kept, not verified"))
+
+
+class H_UnmatchedRolesAreNamedNotDeleted(unittest.TestCase):
+    """Review concern 2."""
+    def with_unmatched(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["experience"].append({"title": "Store Director", "subtitle": "Hearthside Home Goods Co. — 2022 – Present", "bullets": ["Led a team of 40 across three stores"]})
+        return audit(resume)
+
+    def test_the_role_and_its_bullets_are_kept_and_named_as_unverified(self):
+        out, report = self.with_unmatched()
+        self.assertEqual(bullets(out, "Store Director"), ["Led a team of 40 across three stores"])  # nothing true is deleted
+        self.assertEqual([(r["title"], r["nearest"]) for r in report["unverified_roles"]], [("Store Director", "Shift Lead at Hearthside Home Goods")])
+
+    def test_the_notice_says_it_was_not_checked_and_offers_the_nearest_saved_role(self):
+        _, report = self.with_unmatched()
+        notice = provenance.notice_text(report)
+        item = next(i for i in notice["items"] if i["change"] == "kept, not checked")
+        self.assertIn("Store Director", item["text"])
+        self.assertIn("did you mean Shift Lead at Hearthside Home Goods?", item["why"])
+        self.assertIn("1 role could not be matched to your saved profile", notice["message"])
+        self.assertIn("kept but not checked", notice["message"])
+
+    def test_matched_roles_are_not_reported(self):
+        _, report = audit()
+        self.assertEqual(report["unverified_roles"], [])
+
+    def test_the_unverified_role_survives_the_build_and_is_in_the_saved_report(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["experience"].append({"title": "Store Director", "subtitle": "Elsewhere Inc — 2022", "bullets": ["Ran the store"]})
+        with mock.patch.object(job_match, "_call_with_retry", lambda name, *a, **k: {"terms": copy.deepcopy(PLAN)} if name == "career_term_plan" else {"resume_data": copy.deepcopy(resume)}):
+            result = term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Marcus Bell", "Naperville, IL | m@example.com")
+        self.assertEqual([r["title"] for r in result["provenance"]["unverified_roles"]], ["Store Director"])
+        self.assertIn("Ran the store", result["resume_data"]["experience"][-1]["bullets"])
+
+
+class I_TransferableSkillsOnlyWhenTheirWordsAppearTogether(unittest.TestCase):
+    """PR-2c: "Scheduling Calls" (scheduling staff plus a call-centre job) must not print as a skill; genuine transferable labels stay."""
+    def plan(self, *extra):
+        return PLAN + list(extra)
+
+    def test_a_recombination_of_words_that_never_appear_together_is_removed(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"] = ["Operations & Tools: POS Systems, Scheduling, Scheduling Calls"]
+        out, report = audit(resume, terms=self.plan({"term": "scheduling calls", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "x"}))
+        self.assertEqual(out["skills"], ["Operations & Tools: POS Systems, Scheduling"])
+        self.assertEqual(report["skills_removed"], ["Scheduling Calls"])
+        self.assertIn("never appear together", report["skills_detail"][0]["why"])
+
+    def test_a_transferable_label_whose_words_do_appear_together_stays(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"] = ["Team: New Hire Training"]
+        out, report = audit(resume, terms=self.plan({"term": "new hire training", "kind": "skill", "importance": "mentioned", "support": "transferable", "evidence": "x"}))
+        self.assertEqual(out["skills"], ["Team: New Hire Training"])
+        self.assertEqual(report["skills_removed"], [])
+
+    def test_a_genuine_transferable_label_with_a_word_the_history_never_uses_stays(self):
+        profile = "EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n"
+        resume = {"summary": "", "skills": ["Customer Service: Customer Service, Cash Handling"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers."]}]}
+        terms = [{"term": "customer service", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "assisted customers"},
+                 {"term": "cash handling", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "handled cash payments"}]
+        out, report = provenance.audit_and_repair(resume, profile, "Bank Teller. Help customers and handle cash accurately.", "", "Bank Teller", terms)
+        self.assertEqual(out["skills"], ["Customer Service: Customer Service, Cash Handling"])
+        self.assertEqual(report["skills_removed"], [])
+
+    def test_a_skill_the_plan_backs_is_never_removed_by_this_rule(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"] = ["Operations & Tools: Scheduling Calls"]
+        out, _ = audit(resume, terms=self.plan({"term": "scheduling calls", "kind": "skill", "importance": "required", "support": "related", "evidence": "Scheduled 6 associates each week"}))
+        self.assertEqual(out["skills"], ["Operations & Tools: Scheduling Calls"])
+
+
 class E_ThroughTheBuild(unittest.TestCase):
     def build(self, terms=PLAN):
         def fake(name, system, user, tool, extract=None):
