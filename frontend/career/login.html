@@ -336,8 +336,15 @@
           </div>
 
           <div id="job-keywords-state" hidden>
-            <h4>Keywords from the posting that aren’t in your profile yet</h4>
+            <h4>The posting’s keywords compared with your profile</h4>
             <p class="hint" id="job-keywords-intro"></p>
+            <ul id="job-keywords-tiles" class="evidence-tiles" aria-label="Summary of the keywords"></ul>
+            <div class="evidence-legend" aria-label="What the labels mean">
+              <span class="evidence-chip evidence-chip-backed"><span aria-hidden="true">✓</span> Backed</span>
+              <span class="evidence-chip evidence-chip-other"><span aria-hidden="true">≈</span> Other words</span>
+              <span class="evidence-chip evidence-chip-question"><span aria-hidden="true">?</span> One question</span>
+              <span class="evidence-chip evidence-chip-none"><span aria-hidden="true">–</span> Not evidenced</span>
+            </div>
             <details id="job-keywords-covered" class="keyword-covered" hidden>
               <summary id="job-keywords-covered-summary"></summary>
               <p class="hint" id="job-keywords-covered-note">These need no answer. “Your profile shows” is the evidence we found; we use the posting’s wording only where your profile says the same thing.</p>
@@ -926,6 +933,7 @@
   <script src="js/languages.js"></script>
   <script src="js/dashboardVisuals.js"></script>
   <script src="js/resumeReview.js"></script>
+  <script src="js/evidenceView.js"></script>
   <script src="js/jobMatch.js"></script>
   <script src="js/skillScan.js"></script>
   <script src="js/skillTidy.js"></script>

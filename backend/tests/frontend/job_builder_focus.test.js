@@ -47,7 +47,7 @@ function world({ failing = [], keywordTerms = [{ term: "SQL" }], covered = {}, s
     window: { confirm: () => true },
     document: {
       getElementById: getEl,
-      createElement: () => make("created"), querySelector: () => null, querySelectorAll: () => [],
+      createElement: () => make("created"), createTextNode: () => make("text"), querySelector: () => null, querySelectorAll: () => [],
       body: { appendChild() {} },
     },
     URL: { createObjectURL: () => "blob:x", revokeObjectURL() {} },
@@ -72,7 +72,7 @@ function world({ failing = [], keywordTerms = [{ term: "SQL" }], covered = {}, s
     },
   };
   vm.createContext(sandbox);
-  vm.runInContext(read("js", "resumeDownload.js") + "\n" + read("js", "jobMatch.js") + "\nthis.__jobState = jobState; this.__setQuestions = (q) => { currentJobQuestions = q; };", sandbox);
+  vm.runInContext(read("js", "resumeDownload.js") + "\n" + read("js", "evidenceView.js") + "\n" + read("js", "jobMatch.js") + "\nthis.__jobState = jobState; this.__setQuestions = (q) => { currentJobQuestions = q; };", sandbox);
   const visible = () => PANELS.filter((id) => !els[id].hidden);
   return { els, log, sandbox, getEl, visible, builds: () => log.fetches.filter((u) => /job-build-resume/.test(u)).length };
 }

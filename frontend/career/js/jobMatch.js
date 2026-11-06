@@ -613,22 +613,24 @@ function renderCoveredTerms() {
   if (!total) return;
   document.getElementById("job-keywords-covered-summary").textContent =
     "Already backed by your profile (" + total + "): see what we found";
-  const add = (item, why) => {
+  const add = (item, why, chip) => {
     const li = document.createElement("li");
     const name = document.createElement("strong");
     name.textContent = item.term + (item.importance && item.importance !== "mentioned" ? " (" + item.importance + ")" : "");
     li.appendChild(name);
+    li.appendChild(document.createTextNode(" "));
+    li.appendChild(evidenceChip(chip));
     const note = document.createElement("span");
     note.className = "hint";
     note.textContent = " — " + why;
     li.appendChild(note);
     list.appendChild(li);
   };
-  keywordCovered.related.forEach((t) => add(t, "Your profile shows: " + t.evidence));
-  keywordCovered.exact.forEach((t) => add(t, "this wording is in your profile"));
+  keywordCovered.related.forEach((t) => add(t, "Your profile shows: " + t.evidence, "other"));
+  keywordCovered.exact.forEach((t) => add(t, "this wording is in your profile", "backed"));
   keywordCovered.alternatives.forEach((g) => {
     add({ term: g.terms.join(" or "), importance: g.importance },
-      "the posting accepts any one of these; met through " + g.met_by + (g.evidence ? " (" + g.evidence + ")" : ""));
+      "the posting accepts any one of these; met through " + g.met_by + (g.evidence ? " (" + g.evidence + ")" : ""), "backed");
   });
 }
 
@@ -640,9 +642,32 @@ function renderKeywordCards(alreadyCovered) {
     "Only " + asked + " " + (asked === 1 ? "term needs" : "terms need") + " your answer: tell me honestly whether each is true for you. " +
     "Anything you skip stays off your resume.";
   renderCoveredTerms();
+  const groups = groupEvidence({ terms: keywordTerms, covered_exact: keywordCovered.exact, covered_related: keywordCovered.related, alternatives_met: keywordCovered.alternatives });
+  renderEvidenceTiles(document.getElementById("job-keywords-tiles"), groups.tiles);
   const container = document.getElementById("job-keywords-list");
   container.textContent = "";
   document.getElementById("job-keywords-error").hidden = true;
+
+  // Two groups of cards under their own headings; each card keeps its place in keywordTerms (data-index), so "Save my choices" is unchanged.
+  const section = (heading, note, items) => {
+    const box = document.createElement("div");
+    box.className = "evidence-group";
+    if (items.length) {
+      const h = document.createElement("h5");
+      h.className = "evidence-group-heading";
+      h.textContent = heading + " (" + items.length + ")";
+      box.appendChild(h);
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = note;
+      box.appendChild(p);
+      container.appendChild(box);
+    }
+    return box;
+  };
+  const questionBox = section("One question each", "Your profile is close, or the posting accepts several options, but it does not say exactly what you did. Skip is fine: skipping is never treated as “no”.", groups.questions);
+  const gapBox = section("Not evidenced yet", "Nothing in your profile says this. If it is true, tell us; otherwise it stays off your resume.", groups.notEvidenced);
+  const chipKind = new Map(groups.questions.map((g) => [g.index, "question"]).concat(groups.notEvidenced.map((g) => [g.index, "none"])));
 
   keywordTerms.forEach((t, i) => {
     const card = document.createElement("div");
@@ -652,6 +677,8 @@ function renderKeywordCards(alreadyCovered) {
     const title = document.createElement("p");
     title.textContent = t.term + (t.importance && t.importance !== "mentioned" ? " (" + t.importance + ")" : "");
     title.style.fontWeight = "600";
+    title.appendChild(document.createTextNode(" "));
+    title.appendChild(evidenceChip(chipKind.get(i)));
     card.appendChild(title);
 
     const why = document.createElement("p");
@@ -743,7 +770,7 @@ function renderKeywordCards(alreadyCovered) {
     select.addEventListener("change", sync);
     sync();
 
-    container.appendChild(card);
+    (chipKind.get(i) === "question" ? questionBox : gapBox).appendChild(card);
   });
 }
 
