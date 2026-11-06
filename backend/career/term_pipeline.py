@@ -21,6 +21,8 @@ from career import job_match, resume_quality
 from career.job_match import JobMatchError
 
 MAX_TERMS = 60  # long postings have 40+ distinct terms (one real posting filled 45 of 45); scanners such as Jobscan count them all
+_HEDGED_EVIDENCE = re.compile(
+    r"\b(however|has not|have not|hasn't|haven't|does not|doesn't|not held|no direct|no formal|different|adjacent|rather than|not the same)\b", re.I)
 MAX_TERM_WORDS = 5  # longer "terms" are sentence fragments, not keywords
 SUPPORTED = ("literal", "related")
 TRANSFERABLE = "transferable"  # a real, different activity behind a skill the posting values; never claims the posting's own specialised wording
@@ -215,6 +217,8 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str, denials
             support = "related"
         if support in ("related", TRANSFERABLE) and not evidence:
             support = "none"  # "related" or "transferable" without a stated reason is not evidence
+        if support == "related" and _HEDGED_EVIDENCE.search(evidence):
+            support = TRANSFERABLE  # the model's own note says it is a different or adjacent activity: that is "transferable", never "same activity"
         if support not in ("literal", "related", TRANSFERABLE):
             support = "none"
 
@@ -321,6 +325,23 @@ def suggest_skill_keywords(skills: list[dict]) -> dict[int, str]:
     return out
 
 
+def _merge_contained_questions(questions: list[dict], rank: dict) -> list[dict]:
+    """One card, not two, for "SaaS" and "SaaS experience": a plain question whose words are all inside another plain question is
+    dropped, and the longer one keeps the stronger importance. Group questions and differently-worded terms are untouched."""
+    plain = [q for q in questions if not q.get("alternatives")]
+    words = {id(q): set(normalize(q["term"]).split()) for q in plain}
+    dropped: set[int] = set()
+    for small in plain:
+        for big in plain:
+            if small is big or id(big) in dropped or not words[id(small)] < words[id(big)]:
+                continue
+            if rank.get(small["importance"], 3) < rank.get(big["importance"], 3):
+                big["importance"] = small["importance"]
+            dropped.add(id(small))
+            break
+    return [q for q in questions if id(q) not in dropped]
+
+
 def keyword_check(profile_text: str, confirmed_facts: list, job_description: str) -> dict:
     """The optional pre-build "keyword check". The posting's key terms are split by what the candidate's own evidence already says,
     so only real gaps become questions:
@@ -367,6 +388,7 @@ def keyword_check(profile_text: str, confirmed_facts: list, job_description: str
             "evidence": near["evidence"] if near else "", "alternatives": names,
             "accepts_equivalent_experience": entry["accepts_equivalent_experience"],
         })
+    questions = _merge_contained_questions(questions, rank)
     questions.sort(key=lambda t: (rank.get(t["importance"], 3), t["support"] != TRANSFERABLE))
     return {
         "terms": questions,

@@ -334,6 +334,9 @@ def find_claim_issues(resume: dict, unsupported_terms: list[str], evidence_text:
 _STRONG_VERBS = {
     "produced": ("produc",), "managed": ("manag",), "led": ("led", "lead"), "directed": ("direct",),
     "oversaw": ("oversaw", "oversee", "oversight"), "owned": ("own",), "spearheaded": ("spearhead",),
+    # responsibility and relationship verbs: doing the work, or supervising / guiding / mentoring people, is more than helping or working beside them
+    "performed": ("perform",), "executed": ("execut",), "supervised": ("supervis",), "guided": ("guid",), "mentored": ("mentor",),
+    "coordinated": ("coordinat",), "administered": ("administ",),
 }
 _WEAK_STEMS = {
     "produced": ("record", "film"),
@@ -343,6 +346,13 @@ _WEAK_STEMS = {
     "oversaw": ("assist", "help", "support", "contribut"),
     "owned": ("assist", "help", "support", "contribut"),
     "spearheaded": ("assist", "help", "support", "contribut"),
+    "performed": ("assist", "help", "support", "contribut", "observ", "shadow", "particip"),
+    "executed": ("assist", "help", "support", "contribut", "observ", "shadow", "particip"),
+    "administered": ("assist", "help", "support", "contribut"),
+    "coordinated": ("assist", "help", "support", "contribut"),
+    "supervised": ("assist", "help", "support", "contribut", "coordinat", "collaborat", "alongside"),
+    "guided": ("assist", "help", "support", "contribut", "coordinat", "collaborat", "alongside"),
+    "mentored": ("assist", "help", "support", "contribut", "coordinat", "collaborat", "alongside"),
 }
 _WORD = re.compile(r"[a-z][a-z'-]*")
 
@@ -363,13 +373,31 @@ def verb_upgrades(resume_data: dict, evidence_text: str) -> list[dict]:
         return ""
 
     found: list[dict] = []
+    evidence_sentences = _evidence_sentences(evidence_text)
+
+    def weaker_for_activity(sentence: str, strong: str) -> str:
+        """The strong verb IS used somewhere in the evidence, but the evidence sentences about THIS activity (they share its numbers and at
+        least two of its words) only use a weaker verb: "Managed file testing" when the candidate "assisted with file testing" and managed
+        something else. Returns that weaker verb, or "" when the activity is not clearly described or the strong verb is used for it."""
+        numbers = {n[0] for n in _numbers(sentence)}
+        own_roots = {r[:4] for r in distinct_roots(sentence) - distinct_roots(strong)}
+        about, weak = [], ""
+        for candidate in evidence_sentences:
+            cand_words = _WORD.findall(candidate.lower())
+            if not numbers <= {n[0] for n in _numbers(candidate)} or len(own_roots & {r[:4] for r in distinct_roots(candidate)}) < 2:
+                continue
+            about.append(candidate)
+            if any((w == s) if s == "led" else w.startswith(s) for w in cand_words for s in _STRONG_VERBS[strong]):
+                return ""  # the evidence uses the strong verb for this very activity
+            weak = weak or next((w for w in cand_words if any(w.startswith(x) for x in _WEAK_STEMS[strong])), "")
+        return weak if about else ""
 
     def check(text, where):
         for sentence in [x for x in _SENTENCE_SPLIT.split(str(text or "").strip()) if x.strip()]:
             words = set(_WORD.findall(sentence.lower()))
             for strong in _STRONG_VERBS:
-                if strong in words and not established(strong):
-                    weak = weaker_used(strong)
+                if strong in words:
+                    weak = weaker_used(strong) if not established(strong) else weaker_for_activity(sentence, strong)
                     if weak:
                         found.append({"where": where, "text": sentence.strip(), "written": strong, "evidence_verb": weak,
                                       "problem": f"\"{strong}\" is stronger than the candidate's own wording (\"{weak}\"); use their verb or confirm it"})
