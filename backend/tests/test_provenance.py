@@ -817,5 +817,67 @@ class F_SavedWithTheResume(OwnershipTestCase):
             self.assertEqual(s.query(ResumeVersion).count(), 1)
 
 
+class O_TransferableExperienceStatedInTheSavedHistory(unittest.TestCase):
+    """Guard 3 follow-up. The candidate's saved history itself states the experience ("provided customer service", "trained new hires"). Nothing here
+    relies on a confirmed fact (facts is empty) or on a plan term backing the label (the plan is empty or tracks other terms). The history alone is the
+    evidence, and the posting names the same phrases, so the posting-wording rule and Guard 3 are both live."""
+    PROFILE = ("EXPERIENCE:\n- Cashier at Sears (2019 \u2013 2024)\n  * Provided customer service at the front counter.\n  * Handled cash payments.\n"
+               "  * Trained new hires on the register.\n  * Resolved billing questions for customers.\n")
+    POSTING = ("Bank Teller. Provide customer service. Handle cash accurately. Train new hires. Use core tools and technical support systems. "
+               "Own customer success outcomes. Perform data analysis.")
+    BULLETS = ["Provided customer service at the front counter.", "Handled cash payments.", "Trained new hires on the register."]
+
+    def run_audit(self, skills, plan=()):
+        resume = {"summary": "", "headline": "", "skills": skills, "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears \u2014 2019 \u2013 2024", "bullets": list(self.BULLETS)}]}
+        return provenance.audit_and_repair(resume, self.PROFILE, self.POSTING, "", "Bank Teller", [dict(t) for t in plan])
+
+    def test_experience_the_history_states_keeps_its_label_and_items_with_no_fact_and_no_plan_term(self):
+        out, report = self.run_audit(["Customer Service: Training New Hires, Cash Handling"])
+        self.assertEqual(out["skills"], ["Customer Service: Training New Hires, Cash Handling"])  # the label survives on the history alone
+        self.assertEqual(report["labels"], [])
+        self.assertEqual(report["skills_removed"], [])
+        self.assertEqual(report["restored"], [])
+        self.assertEqual(report["held"], [])
+
+    def test_the_candidates_original_experience_is_preserved_exactly(self):
+        out, _ = self.run_audit(["Customer Service: Cash Handling", "Tools: Problem Resolution"])
+        self.assertEqual(bullets(out, "Cashier"), self.BULLETS)
+        self.assertEqual(out["experience"][0]["subtitle"], "Sears \u2014 2019 \u2013 2024")
+
+    def test_transferable_experience_stays_represented_when_the_plan_marks_it_transferable(self):
+        plan = [{"term": "onboarding", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "Trained new hires on the register."}]
+        out, report = self.run_audit(["Customer Service: Training New Hires"], plan)
+        self.assertEqual(out["skills"], ["Customer Service: Training New Hires"])
+        self.assertEqual(report["skills_removed"], [])
+        self.assertEqual(report["labels"], [])
+
+    def test_unsupported_qualifications_are_not_introduced_next_to_the_genuine_ones(self):
+        skills = ["Customer Service: Training New Hires, Customer Success, Data Analysis, Technical Support",
+                  "Customer Success: Cash Handling", "Data Analysis: Cash Handling"]
+        out, report = self.run_audit(skills)
+        text = " | ".join(out["skills"])
+        self.assertIn("Customer Service: Training New Hires", text)  # genuine label and item stay
+        for fabricated in ("Customer Success", "Data Analysis", "Technical Support"):
+            self.assertNotIn(fabricated, text, fabricated)
+        self.assertEqual(sorted(report["skills_removed"]), ["Customer Success", "Data Analysis", "Technical Support"])
+        self.assertEqual(sorted(l["text"] for l in report["labels"]), ["Customer Success", "Data Analysis"])  # the two unsupported group labels
+        self.assertEqual(bullets(out, "Cashier"), self.BULLETS)  # no bullet gained or lost words
+
+    def test_the_heading_exception_does_not_remove_supported_skills_and_guard_3_does_not_touch_stated_experience(self):
+        # "Core Tools" and "Technical Support" are named by the posting (guard 3): the HEADINGS are decided strictly, the stated skills beneath stay.
+        for label in ("Core Tools", "Technical Tools", "Tools", "Operations & Tools", "Customer Service"):
+            out, _ = self.run_audit([f"{label}: Training New Hires, Cash Handling, Problem Resolution"])
+            joined = " | ".join(out["skills"])
+            for item in ("Training New Hires", "Cash Handling", "Problem Resolution"):
+                self.assertIn(item, joined, f"{item} lost under {label!r}")
+        out, report = self.run_audit(["Core Tools: Training New Hires, Cash Handling"])
+        self.assertEqual(out["skills"], ["Training New Hires, Cash Handling"])  # guard 3: the posting says "core tools", the history never does
+        self.assertEqual([l["text"] for l in report["labels"]], ["Core Tools"])
+        out2, report2 = self.run_audit(["Team: Training New Hires, Cash Handling"])
+        self.assertEqual(out2["skills"], ["Team: Training New Hires, Cash Handling"])  # a plain heading is still kept
+        self.assertEqual(report2["labels"], [])
+
+
 if __name__ == "__main__":
     unittest.main()
