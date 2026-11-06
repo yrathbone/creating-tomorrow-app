@@ -16,7 +16,7 @@ from tests.test_ownership import OwnershipTestCase
 ROUTES = {
     # route: (function in career.routes that calls the AI, extra JSON fields the route needs)
     "/job-compare": ("compare_to_job", {}),
-    "/job-keyword-check": ("keyword_check", {}),
+    "/job-keyword-check": ("keyword_check_with_plan", {}),
     "/job-build-resume": ("build_checked_resume", {"name": "N", "contact": "c@example.com"}),
 }
 

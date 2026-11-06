@@ -522,7 +522,7 @@ document.getElementById("job-keyword-check-btn").addEventListener("click", async
     const res = await authedFetch("/api/career/job-keyword-check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ job_description: jobState.jobDescription, confirmed_facts: jobState.discoveredFacts }),
+      body: JSON.stringify({ job_description: jobState.jobDescription, confirmed_facts: jobState.discoveredFacts, scan_history_id: jobState.scanHistoryId }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -829,7 +829,8 @@ function prefillSkillFromTerm(term) {
 // (required ones first), plus any that are supported but could not be placed.
 function renderTermReport(report) {
   // Context wording the builder chose not to use is neutral: not a problem, not counted.
-  report = report.filter((r) => r.status !== "wording_unused");
+  // (and an unmet member of an alternatives group that another member already meets: the posting accepts any one)
+  report = report.filter((r) => r.status !== "wording_unused" && r.status !== "alternative_met");
   const block = document.getElementById("job-term-report-block");
   const summary = document.getElementById("job-term-summary");
   const missingList = document.getElementById("job-term-missing-list");
@@ -898,7 +899,7 @@ function computeMatchGrade(report) {
   let got = 0;
   let total = 0;
   for (const r of report) {
-    if (r.status === "wording_unused") continue;
+    if (r.status === "wording_unused" || r.status === "alternative_met") continue;
     const w = weight[r.importance] ?? 1;
     total += w;
     if (r.status === "on_resume") got += w;

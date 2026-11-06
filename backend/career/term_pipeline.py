@@ -197,11 +197,26 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str, denials
         PLAN_TOOL,
         extract=lambda r: _require_term_shape(job_match._extract_tool_input(r, "submit_term_plan", ("terms",))),
     )
+    return guard_terms(data.get("terms") or [], profile_text, facts_text, job_description, denials)
 
+
+def reguard_saved_terms(saved: list[dict], profile_text: str, facts_text: str, job_description: str, denials: list[dict] | None = None) -> list[dict]:
+    """Re-checks a plan saved by the keyword step against the evidence as it is NOW (no AI call): every code guard runs again, so a term
+    the candidate has since confirmed becomes literal, a new denial removes support, and a literal term that is no longer in the evidence
+    is never carried as supported. The model's judgement is reused only for "related"/"transferable" notes, which still need their reason."""
+    pool = profile_text + "\n" + facts_text
+    raws = [{**t, "support": "none" if t.get("support") == "literal" and not term_in_text(t.get("term", ""), pool) else t.get("support", "none")}
+            for t in saved if isinstance(t, dict)]
+    return guard_terms(raws, profile_text, facts_text, job_description, denials)
+
+
+def guard_terms(raw_terms: list[dict], profile_text: str, facts_text: str, job_description: str, denials: list[dict] | None = None) -> list[dict]:
+    """Turns the planner's raw terms into the guarded plan: the code decides literal support, drops unevidenced or hedged "related", applies
+    the candidate's explicit No answers and the posting-title rule, and keeps only real alternatives groups."""
     evidence_pool = profile_text + "\n" + facts_text
     terms: list[dict] = []
     seen: set[str] = set()
-    for raw in (data.get("terms") or [])[:MAX_TERMS]:
+    for raw in raw_terms[:MAX_TERMS]:
         term = (raw.get("term") or "").strip()
         key = normalize(term)
         if not term or key in seen or len(key.split()) > MAX_TERM_WORDS:
@@ -354,7 +369,17 @@ def keyword_check(profile_text: str, confirmed_facts: list, job_description: str
 
     Context phrases are never worth a question. Nothing is saved here and nothing is promoted: "related" stays related, the build step
     uses it exactly as before. "already_covered" is the number of terms that need no answer (exact plus related)."""
+    return keyword_check_with_plan(profile_text, confirmed_facts, job_description)[0]
+
+
+def keyword_check_with_plan(profile_text: str, confirmed_facts: list, job_description: str) -> tuple[dict, list[dict]]:
+    """keyword_check, plus the guarded plan it was made from, so the route can keep the plan with the job comparison and the build can reuse
+    it instead of asking the AI the same question again."""
     terms = plan_terms(profile_text, facts_text_for(confirmed_facts), job_description)
+    return _split_plan(terms), terms
+
+
+def _split_plan(terms: list[dict]) -> dict:
     rank = {"required": 0, "preferred": 1, "mentioned": 2}
     skills = [t for t in terms if t.get("kind") != "phrase"]
     exact = [t for t in skills if t["support"] == "literal"]
@@ -814,7 +839,7 @@ def check_verb_wording(result: dict, resume: dict, profile_text: str, confirmed_
     return resume
 
 
-def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, denials: list[dict] | None = None, answers_text: str = "") -> dict:
+def build_checked_resume(profile_text: str, job_description: str, confirmed_facts: list, name: str, contact: str, denials: list[dict] | None = None, answers_text: str = "", saved_terms: list[dict] | None = None) -> dict:
     denials = denials or []
     # A confirmed fact that says again what the candidate denied is NOT silently used, and the denial is not silently dropped:
     # the fact is held back and the conflict is reported so the candidate can clarify.
@@ -824,7 +849,12 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     facts_text = facts_text_for(confirmed_facts)
 
     try:
-        terms = plan_terms(profile_text, facts_text, job_description, denials)
+        if saved_terms:
+            # the keyword step already asked the AI; its plan is re-checked against today's evidence and denials, with no second call
+            terms = reguard_saved_terms(saved_terms, profile_text, facts_text, job_description, denials)
+            print(f"[career.terms] reused the keyword-step plan ({len(terms)} terms); no planning call")
+        else:
+            terms = plan_terms(profile_text, facts_text, job_description, denials)
     except JobMatchError:
         print("[career.terms] planning failed; building without a term plan")
         terms = None  # fall back to the plain one-call build, no report
@@ -888,9 +918,12 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     result["resume_data"] = resume
     result["ats_match"] = ats_style_score(resume, terms)
     log_term_summary(terms, result["ats_match"])
+    met_groups = {t["alternatives_group"] for t in terms if t.get("alternatives_group") and t["support"] in SUPPORTED}
     result["term_report"] = [
         {"term": t["term"], "kind": t.get("kind", "skill"), "importance": t["importance"], "support": t["support"],
-         "evidence": t["evidence"], "status": _status(t)}
+         "evidence": t["evidence"],
+         # the posting accepts any ONE of a group: an unmet member of a group another member already meets is not a gap
+         "status": "alternative_met" if t.get("alternatives_group") in met_groups and t["support"] not in SUPPORTED else _status(t)}
         for t in terms
     ]
     return result

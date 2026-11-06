@@ -453,7 +453,7 @@ class RouteCarriesTheAnswers(OwnershipTestCase):
         self.onboard(self.a)
         captured = {}
 
-        def fake_build(profile_text, job_description, confirmed_facts, name, contact, denials, answers_text=""):
+        def fake_build(profile_text, job_description, confirmed_facts, name, contact, denials, answers_text="", saved_terms=None):
             captured["denials"] = denials
             return {"resume_data": copy.deepcopy(SEARS_GOOD), "role_selection": [], "term_report": [], "ats_match": None,
                     "answer_conflicts": [], "claim_review": [], "skills_removed": []}

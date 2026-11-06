@@ -15,7 +15,7 @@ const PANELS = ["job-target-empty", "job-input-state", "job-loading-state", "job
   "job-keywords-state", "job-build-loading-state", "job-build-done-state"];
 
 function world({ failing = [], keywordTerms = [{ term: "SQL" }], covered = {} } = {}) {
-  const log = { focus: [], status: [], alerts: [], saved: [], fetches: [] };
+  const log = { focus: [], status: [], alerts: [], saved: [], fetches: [], bodies: {} };
   const els = {};
   const make = (id) => {
     const handlers = {};
@@ -58,8 +58,9 @@ function world({ failing = [], keywordTerms = [{ term: "SQL" }], covered = {} } 
     loadScanHistory: async () => {}, loadResumeVersions: async () => {}, loadSkills: async () => {}, revealCareerProfileSections() {},
     allScanHistory: [],
     formatErrorDetail: (detail, fallback) => (typeof detail === "string" && detail ? detail : fallback),
-    authedFetch: async (url) => {
+    authedFetch: async (url, init) => {
       log.fetches.push(url);
+      if (init && init.body) log.bodies[url] = init.body;
       if (/job-compare$/.test(url)) return reply("compare", { match_report: { match_level: "Average", match_rationale: "r", strengths: [], required_qualification_gaps: [] },
         categories: [], questions: [{ id: "q1", category: "c", question: "Did you?", type: "yes_no" }], job_title: "Senior Operations Analyst", scan_history_id: 77, job_fit: null });
       if (/job-discover$/.test(url)) return reply("discover", { stage: "confirm", discovered_facts: [] });
@@ -354,6 +355,13 @@ test("keyword check: terms the profile already backs are listed with their evide
   const none = world({ keywordTerms: [{ term: "Change management" }], covered: { already_covered: 0 } });
   await none.els["job-keyword-check-btn"].fire("click");
   assert.strictEqual(none.els["job-keywords-covered"].hidden, true);
+});
+
+test("keyword check: the request names the job comparison so the plan is kept with it and reused by the build", async () => {
+  const w = world();
+  await w.els["job-keyword-check-btn"].fire("click");
+  const body = JSON.parse(w.log.bodies["/api/career/job-keyword-check"]);
+  assert.ok("scan_history_id" in body, "the keyword check sends the job comparison id");
 });
 
 test("keyword check: an alternatives group is one question card and a met group is listed, not asked", async () => {

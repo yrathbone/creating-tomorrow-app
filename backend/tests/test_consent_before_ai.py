@@ -21,7 +21,7 @@ AI_ROUTES = {
     "/resume-start": ({"files": FILE}, "start_resume_review"),
     "/resume-discover": ({"json": {"resume_data": {"roles": []}}}, "discover"),
     "/job-compare": ({"json": {"job_description": JOB_TEXT}}, "compare_to_job"),
-    "/job-keyword-check": ({"json": {"job_description": JOB_TEXT}}, "keyword_check"),
+    "/job-keyword-check": ({"json": {"job_description": JOB_TEXT}}, "keyword_check_with_plan"),
     "/job-discover": ({"json": {"resume_data": {"roles": []}}}, "discover"),
     "/job-build-resume": ({"json": {"job_description": JOB_TEXT, "name": "N", "contact": "c@example.com"}}, "build_checked_resume"),
     "/build-general-resume": ({"json": {"name": "N", "contact": "c@example.com"}}, "build_general_resume"),

@@ -15,6 +15,7 @@ CareerProfile row are both set together, only by an explicit POST to
 CareerProfile row yet for a child row to attach to.
 """
 import base64
+import hashlib
 import logging
 import re
 from contextlib import contextmanager
@@ -34,7 +35,7 @@ from career.job_match import JobMatchError, build_general_resume, compare_to_job
 from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
 from career.resume_quality import candidate_answers_text, denials_from_history, drop_unsourced_bullets
-from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check, suggest_skill_keywords, tidy_candidates
+from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check_with_plan, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
 from extractor import extract_text_async
@@ -1042,6 +1043,20 @@ async def job_fit(
 class JobKeywordCheckRequest(BaseModel):
     job_description: str
     confirmed_facts: BoundedDictList = []
+    scan_history_id: int | None = None  # when given, the plan is kept with that job comparison so the build can reuse it
+
+
+def _plan_fingerprint(db: Session, profile: CareerProfile, job_description: str) -> str:
+    """What a saved term plan depends on: the posting, and the roles, education and certificates its evidence notes point at. Skills are left
+    out on purpose (the keyword step itself saves skills, and the literal check is repeated against them), as are confirmed facts."""
+    parts = [job_description.strip()]
+    for e in db.query(Experience).filter_by(career_profile_id=profile.id).order_by(Experience.id).all():
+        parts.append("|".join(str(x or "") for x in (e.id, e.title, e.organization, e.start_date, e.end_date, e.description)))
+    for ed in db.query(Education).filter_by(career_profile_id=profile.id).order_by(Education.id).all():
+        parts.append("|".join(str(x or "") for x in (ed.id, ed.institution, ed.degree, ed.field_of_study, ed.graduation_date)))
+    for c in db.query(Certification).filter_by(career_profile_id=profile.id).order_by(Certification.id).all():
+        parts.append("|".join(str(x or "") for x in (c.id, c.name, c.issuer, c.date)))
+    return hashlib.sha256(chr(10).join(parts).encode("utf-8")).hexdigest()
 
 
 @router.post("/job-keyword-check", dependencies=AI_ROUTE_GUARDS)
@@ -1056,15 +1071,24 @@ async def job_keyword_check(
     job_description = _checked_job_description(req.job_description)
 
     profile = get_career_profile_or_404(db, current_user)
+    scan = _validate_scan_history_id(db, profile, req.scan_history_id)
     profile_text = _build_profile_text(db, profile)
+    fingerprint = _plan_fingerprint(db, profile, job_description) if scan is not None else ""
 
     release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
-        return await run_in_threadpool(keyword_check, profile_text, req.confirmed_facts, job_description)
+        response, terms = await run_in_threadpool(keyword_check_with_plan, profile_text, req.confirmed_facts, job_description)
     except JobMatchError as e:
         raise ai_failure(e)
     except Exception as e:
         raise internal_error(e)
+
+    if scan is not None:
+        # Kept with the job comparison (no new table): the build re-checks this plan against the evidence as it is then, so it asks the AI once, not twice.
+        scan.result_data = {**scan.result_data, "term_plan": {"fingerprint": fingerprint, "terms": terms}}
+        db.add(scan)
+        db.commit()
+    return response
 
 
 class JobDiscoverRequest(BaseModel):
@@ -1142,12 +1166,18 @@ async def job_build_resume(
         db.add(scan)
         db.commit()
 
+    saved_terms = None
+    saved = (scan.result_data or {}).get("term_plan") if scan is not None else None
+    if isinstance(saved, dict) and isinstance(saved.get("terms"), list) and saved.get("fingerprint") == _plan_fingerprint(db, profile, job_description):
+        saved_terms = saved["terms"]  # same posting, same roles: the keyword step's plan is reused (and re-checked) instead of asked again
+
     release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(
             build_checked_resume, profile_text, job_description, req.confirmed_facts, req.name.strip(), req.contact.strip(),
             denials_from_history(req.qa_history),  # the candidate's explicit No answers reach the planner and the writer
             candidate_answers_text(req.qa_history),  # what the candidate typed is their own wording, used to check verbs
+            saved_terms,
         )
     except JobMatchError as e:
         raise ai_failure(e)
