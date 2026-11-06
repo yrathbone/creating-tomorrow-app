@@ -199,7 +199,8 @@ def audit_and_repair(resume: dict, profile_text: str, posting_text: str, facts_t
             def is_term(t: str, item: str = item) -> bool:
                 return term_in_text(t, item) or rq.distinct_roots(t) == rq.distinct_roots(item)
 
-            backed = any(is_term(t) for t in backed_terms)
+            # backed means the skill IS a backed term; an item that merely contains one and adds a word ('Scheduling Calls') is checked on its own
+            backed = any(rq.distinct_roots(t) == rq.distinct_roots(item) for t in backed_terms)
             why = ""
             if not backed:
                 if any(is_term(t) for t in none_terms):

@@ -348,6 +348,16 @@ class I_TransferableSkillsOnlyWhenTheirWordsAppearTogether(unittest.TestCase):
         out, _ = audit(resume, terms=self.plan({"term": "scheduling calls", "kind": "skill", "importance": "required", "support": "related", "evidence": "Scheduled 6 associates each week"}))
         self.assertEqual(out["skills"], ["Operations & Tools: Scheduling Calls"])
 
+    def test_a_skill_that_only_contains_a_backed_term_is_still_checked_on_its_own(self):
+        # "scheduling" is backed (literal) in PLAN's history; "Scheduling Calls" adds a word and must not ride on it
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"] = ["Operations & Tools: Scheduling, Scheduling Calls"]
+        terms = self.plan({"term": "scheduling", "kind": "skill", "importance": "mentioned", "support": "literal", "evidence": "Skills list"},
+                          {"term": "scheduling calls", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "x"})
+        out, report = audit(resume, terms=terms)
+        self.assertEqual(out["skills"], ["Operations & Tools: Scheduling"])
+        self.assertEqual(report["skills_removed"], ["Scheduling Calls"])
+
 
 class E_ThroughTheBuild(unittest.TestCase):
     def build(self, terms=PLAN):
