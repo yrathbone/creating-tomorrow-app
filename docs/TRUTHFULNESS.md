@@ -77,6 +77,14 @@ screen recording is not video editing, mentoring a colleague is not working with
   group label; a phrase or label joining several ideas ("A & B") keeps its supported parts. An unsupported phrase or label is left out and
   reported in the notice (once per distinct label, with every place it was left out); an unsupported group label never removes the supported
   skills under it (the line prints without the label); an empty headline is accepted. A confirmed fact that states the label keeps it eligible.
+  **Organising headings:** a Skills group label part that is only a generic category word is kept even when the posting uses the word and the
+  history does not ("Tools", "Operations & Tools", "Team", "Platforms & Systems"). It must pass four guards: (1) every content word is on the closed
+  allowlist (tools, operations, team, platforms, systems, technical, technology, applications, software, core, key, additional, other, general,
+  environments; nothing is added automatically and an unknown word never qualifies); (2) it does not equal, contain or sit inside any plan term at
+  any support level; (3) a label of two or more words does not appear as a phrase in the posting text (so an untracked "Technical Support" is still
+  checked); (4) it is not made only of the posting's job-title words. Matching is on whole words with capitalisation and punctuation normalised.
+  Anything else, such as "Customer Service" or "Customer Success", keeps the full evidence decision. This exception applies to Skills group labels
+  only, never to headline phrases, summaries, skill items or bullets.
   The summary is deliberately NOT filtered this way yet (a separate design and false-positive review is pending).
 - **Limits:** a paraphrase with at most one new word is kept (not verified); a single new fact worded with only words from the candidate's own
   history is not seen; the checks compare words, not meaning.

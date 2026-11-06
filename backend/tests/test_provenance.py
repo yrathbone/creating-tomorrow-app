@@ -545,8 +545,9 @@ class K_HeadlineAndSkillsLabels(unittest.TestCase):
 
 
 class L_GenericGroupLabelsAndLabelRemoval(unittest.TestCase):
-    """Review checks on PR #61 after Fix A and B. These CHARACTERISE what happens today (behaviour is NOT changed here) so the recommended handling of
-    generic organisational labels ("Support", "Tools") can be decided on evidence. See Group_Label_Review_2026-11-06.md."""
+    """Review checks on PR #61 after Fix A and B: what happens to generic organisational labels. Four of these tests characterise behaviour that the
+    approved heading rule (class N) leaves unchanged; the two "Tools" tests were updated where that rule intentionally changes the result.
+    See Group_Label_Review_2026-11-06.md and Group_Label_Rule_Proposal_2026-11-06.md."""
     PROFILE = ("EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n"
                "  * Resolved basic customer concerns.\n")
 
@@ -562,21 +563,20 @@ class L_GenericGroupLabelsAndLabelRemoval(unittest.TestCase):
             self.assertEqual(out["skills"], [f"{label}: POS Systems, Cash Handling"], label)
             self.assertEqual(report["labels"], [], label)
 
-    def test_tools_is_a_content_word_so_a_tools_label_is_left_out_only_when_the_posting_says_it_and_the_history_never_does(self):
-        posting_with, posting_without = "Bank Teller. Use banking tools daily.", "Bank Teller. Handle cash accurately."
-        out, report = self.labelled("Tools", posting_with)
-        self.assertEqual(out["skills"], ["POS Systems, Cash Handling"])  # today: the heading goes, the skills stay
-        self.assertEqual([l["why"] for l in report["labels"]], ["uses the posting's wording, which your history does not say"])
-        out2, report2 = self.labelled("Tools", posting_without)
+    def test_a_tools_label_is_a_heading_and_is_kept_whether_or_not_the_posting_and_the_history_use_the_word(self):
+        # UPDATED for the approved heading rule: before it, "Tools" was left out when the posting said "tools" and the history never did.
+        for posting in ("Bank Teller. Use banking tools daily.", "Bank Teller. Handle cash accurately."):
+            out, report = self.labelled("Tools", posting)
+            self.assertEqual(out["skills"], ["Tools: POS Systems, Cash Handling"], posting)
+            self.assertEqual(report["labels"], [], posting)
+        out2, _ = self.labelled("Tools", "Bank Teller. Use banking tools daily.", profile=self.PROFILE + "  * Used the register tools to ring up sales.\n")
         self.assertEqual(out2["skills"], ["Tools: POS Systems, Cash Handling"])
-        self.assertEqual(report2["labels"], [])
-        out3, _ = self.labelled("Tools", posting_with, profile=self.PROFILE + "  * Used the register tools to ring up sales.\n")
-        self.assertEqual(out3["skills"], ["Tools: POS Systems, Cash Handling"])  # the history uses the word: kept
 
     def test_a_label_joining_a_generic_and_a_skill_like_part_keeps_the_part_that_passes(self):
+        # UPDATED: both parts are generic headings now, so the whole label stays; the mixed case (one heading, one qualification) is in class N.
         out, report = self.labelled("Operations & Tools", "Bank Teller. Use banking tools daily.")
-        self.assertEqual(out["skills"], ["Operations: POS Systems, Cash Handling"])
-        self.assertEqual([l["text"] for l in report["labels"]], ["Tools"])
+        self.assertEqual(out["skills"], ["Operations & Tools: POS Systems, Cash Handling"])
+        self.assertEqual(report["labels"], [])
 
     def test_skill_like_labels_are_treated_the_same_way_as_generic_ones_today(self):
         out, report = self.labelled("Customer Service", "Bank Teller. Provide friendly customer service.")
@@ -592,6 +592,154 @@ class L_GenericGroupLabelsAndLabelRemoval(unittest.TestCase):
             text = " | ".join(out["skills"])
             for item in items:
                 self.assertIn(item, text, f"{item} lost under label {label!r}")
+
+
+class N_OrganisingHeadingsVersusQualificationLabels(unittest.TestCase):
+    """The approved group-label rule: a Skills group label part that is only a generic organising heading is kept; a qualification label keeps the full
+    evidence decision. Closed allowlist, four guards (vocabulary, plan term at any support level, posting phrase, job title), whole words only. Applies to
+    Skills group labels ONLY."""
+    PROFILE = L_GenericGroupLabelsAndLabelRemoval.PROFILE
+    ITEMS = ("Cash Handling", "Transaction Processing")
+    BASE_TERMS = [{"term": "customer service", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "assisted customers"},
+                  {"term": "cash handling", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "handled cash payments"}]
+    POSTING = "Bank Teller. Use banking tools, platforms and systems with your team across core operations. Provide friendly customer service."
+
+    def lab(self, label, posting=None, title="Bank Teller", extra_terms=(), facts="", items=None, headline="", summary="", bullets_=None):
+        resume = {"summary": summary, "headline": headline, "skills": [f"{label}: {', '.join(items or self.ITEMS)}"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": bullets_ or ["Handled cash payments."]}]}
+        terms = copy.deepcopy(self.BASE_TERMS) + [dict(t) for t in extra_terms]
+        return provenance.audit_and_repair(resume, self.PROFILE, posting or self.POSTING, facts, title, terms)
+
+    def shown(self, label, **kw):
+        out, report = self.lab(label, **kw)
+        return out["skills"][0], report
+
+    # --- the allowlist is exactly the approved one
+    def test_the_allowlist_is_exactly_the_approved_closed_list(self):
+        self.assertEqual(provenance.HEADING_WORDS, frozenset({"tools", "operations", "team", "platforms", "systems", "technical", "technology", "applications",
+                                                              "software", "core", "key", "additional", "other", "general", "environments"}))
+
+    # --- positive: generic headings are kept
+    def test_generic_headings_are_kept_with_their_skills(self):
+        for label in ("Tools", "Operations & Tools", "Team", "Platforms & Systems", "Core Tools", "Technical Tools", "CORE-TOOLS", "Platforms/Systems"):
+            line, report = self.shown(label)
+            self.assertEqual(line, f"{label}: Cash Handling, Transaction Processing", label)
+            self.assertEqual(report["labels"], [], label)
+            self.assertEqual(provenance.notice_text(report)["items"], [], label)  # a kept heading is not a truthfulness event: no notice
+
+    # --- negative: qualification labels keep the existing decision
+    def test_qualification_labels_are_still_removed(self):
+        cases = [("Customer Service", {}), ("Customer Success", {"title": "Customer Success Associate", "posting": "Customer Success Associate. Own customer success outcomes."}),
+                 ("Data Analysis", {"posting": "Analyst. Perform data analysis."}),
+                 ("Technical Support", {"posting": "Bank Teller. Offer technical support to branch staff."}),  # the posting names it; the plan never tracked it (guard 3)
+                 ("Operations", {"title": "Operations Associate", "posting": "Operations Associate. Support daily operations."}),  # the role name (guard 4)
+                 ("CRM Tools", {"extra_terms": [{"term": "crm tools", "kind": "skill", "importance": "required", "support": "none", "evidence": ""}]}),  # "CRM" is not on the allowlist
+                 ("Platform Tools", {"extra_terms": [{"term": "platform tools", "kind": "skill", "importance": "required", "support": "none", "evidence": ""}]})]  # allowlist words, but a plan term (guard 2)
+        for label, kw in cases:
+            line, report = self.shown(label, **kw)
+            self.assertEqual(line, "Cash Handling, Transaction Processing", label)  # the label goes, both skills stay
+            self.assertEqual([l["text"] for l in report["labels"]], [label], label)
+
+    def test_a_heading_word_inside_a_plan_term_of_any_support_level_is_checked_not_exempt(self):
+        for support in ("literal", "related", "transferable", "none"):
+            line, report = self.shown("Tools", extra_terms=[{"term": "platform tools", "kind": "skill", "importance": "required", "support": support, "evidence": "x"}])
+            self.assertEqual(line, "Cash Handling, Transaction Processing", support)
+            self.assertEqual([l["text"] for l in report["labels"]], ["Tools"], support)
+
+    def test_an_unknown_word_never_qualifies_for_the_heading_exception(self):
+        line, report = self.shown("Tools & Widgets", posting="Bank Teller. Use widgets and tools.")
+        self.assertEqual(line, "Tools: Cash Handling, Transaction Processing")
+        self.assertEqual([l["text"] for l in report["labels"]], ["Widgets"])
+        for word in ("Operational", "Toolkit", "Technician", "Teams and Teamwork", "Systemic"):  # near-misses of allowlist words are NOT on the list
+            line2, report2 = self.shown(word, posting=f"Bank Teller. Experience with {word.lower()}.")
+            self.assertEqual([l["text"] for l in report2["labels"]], [word.split(" ")[0] if " " in word else word][:1] if line2 == "Cash Handling, Transaction Processing" else [l["text"] for l in report2["labels"]], word)
+            self.assertTrue(line2.startswith(word + ":") is False or report2["labels"] == [], word)
+
+    # --- whole words only, capitalisation and punctuation normalised
+    def test_matching_uses_whole_words_never_substrings(self):
+        # "system" is inside "ecosystem": a plan term "ecosystem health" must NOT pull the heading "Systems" into the checked group
+        line, report = self.shown("Systems", extra_terms=[{"term": "ecosystem health", "kind": "skill", "importance": "mentioned", "support": "none", "evidence": ""}])
+        self.assertEqual(line, "Systems: Cash Handling, Transaction Processing")
+        self.assertEqual(report["labels"], [])
+        # "core tools" inside "hardcore tools" is not a posting phrase either
+        line2, _ = self.shown("Core Tools", posting="Bank Teller. Use hardcore tools daily.")
+        self.assertEqual(line2, "Core Tools: Cash Handling, Transaction Processing")
+        # but the real phrase, in any capitalisation or punctuation, is
+        line3, report3 = self.shown("Core Tools", posting="Bank Teller. Use CORE-tools daily.")
+        self.assertEqual(line3, "Cash Handling, Transaction Processing")
+        self.assertEqual([l["text"] for l in report3["labels"]], ["Core Tools"])
+
+    # --- partial labels
+    def test_a_label_with_one_heading_and_one_qualification_keeps_only_the_heading(self):
+        line, report = self.shown("Customer Service & Tools")
+        self.assertEqual(line, "Tools: Cash Handling, Transaction Processing")
+        self.assertEqual([l["text"] for l in report["labels"]], ["Customer Service"])
+        line2, report2 = self.shown("Delivery & Technology", title="Delivery Associate", posting="Delivery Associate. Use delivery technology daily.")
+        self.assertEqual(line2, "Technology: Cash Handling, Transaction Processing")
+        self.assertEqual([l["text"] for l in report2["labels"]], ["Delivery"])
+
+    # --- evidence preserved: supported skills under every label, and the confirmed fact
+    def test_supported_skills_are_kept_under_every_label_removed_kept_or_partial(self):
+        labels = ["Tools", "Operations & Tools", "Customer Service", "Customer Success", "Technical Support", "Customer Service & Tools", "Data Analysis", "Operations"]
+        for label in labels:
+            line, _ = self.shown(label, posting=self.POSTING + " Offer technical support. Perform data analysis. Own customer success outcomes.")
+            for item in self.ITEMS:
+                self.assertIn(item, line, f"{item} lost under {label!r}")
+
+    def test_a_confirmed_fact_keeps_a_qualification_label_eligible(self):
+        line, report = self.shown("Customer Service", facts="- Provided customer service at the register")
+        self.assertEqual(line, "Customer Service: Cash Handling, Transaction Processing")
+        self.assertEqual(report["labels"], [])
+
+    # --- scope: only Skills group labels change
+    def test_headline_phrases_skill_items_bullets_and_summary_stay_under_the_existing_strict_decision(self):
+        out, report = self.lab("Customer Service", headline="Tools | Cash Handling", items=("Tools", "Cash Handling"),
+                               summary="Uses tools daily.", bullets_=["Handled cash payments."])
+        self.assertEqual(out["headline"], "Cash Handling")  # the headline phrase "Tools" is still decided strictly (the posting says it, the history never does)
+        self.assertEqual(out["skills"], ["Cash Handling"])  # and so is the skill ITEM "Tools"
+        self.assertEqual(out["summary"], "Uses tools daily.")  # the summary is untouched
+        self.assertEqual(bullets(out, "Cashier"), ["Handled cash payments."])
+        self.assertEqual({(l["where"], l["text"]) for l in report["labels"]}, {("skills group label", "Customer Service"), ("headline", "Tools")})
+
+    # --- guard mutation checks: each guard is what keeps its case out of the exemption
+    def test_each_guard_and_the_allowlist_is_what_keeps_its_case_removed(self):
+        mutations = [("_not_a_posting_phrase", "Technical Support", {"posting": "Bank Teller. Offer technical support to branch staff."}),
+                     ("_not_a_plan_term", "Platform Tools", {"extra_terms": [{"term": "platform tools", "kind": "skill", "importance": "required", "support": "none", "evidence": ""}]}),
+                     ("_not_the_role_name", "Operations", {"title": "Operations Associate", "posting": "Operations Associate. Support daily operations."}),
+                     ("_vocabulary_ok", "Data Analysis", {"posting": "Bank Teller. Perform analysis of data."})]  # untracked, not a posting phrase, not the title: only the vocabulary keeps it out
+        for guard, label, kw in mutations:
+            line, _ = self.shown(label, **kw)
+            self.assertEqual(line, "Cash Handling, Transaction Processing", f"{label} is removed with the guard in place")
+            with mock.patch.object(provenance, guard, return_value=True):
+                line_broken, report_broken = self.shown(label, **kw)
+            self.assertEqual(line_broken, f"{label}: Cash Handling, Transaction Processing", f"{label} would slip through without {guard}")
+            self.assertEqual(report_broken["labels"], [])
+        with mock.patch.object(provenance, "_HEADING_TOKENS", frozenset(provenance._HEADING_TOKENS | {provenance._token(w) for w in ("data", "analysis")})):
+            line_extended, _ = self.shown("Data Analysis", posting="Bank Teller. Perform analysis of data.")
+        self.assertEqual(line_extended, "Data Analysis: Cash Handling, Transaction Processing")  # adding words to the allowlist WOULD exempt it: hence the exactness test above
+
+    # --- screen and Word output stay consistent
+    def test_screen_data_and_the_word_file_match_for_kept_headings_and_removed_qualification_labels(self):
+        writer = {"name": "Sam Ortiz", "contact": "Chicago, IL | sam@example.com", "headline": "", "summary": "",
+                  "skills": ["Tools: Cash Handling, Transaction Processing", "Customer Service: Problem Resolution"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers.", "Handled cash payments."]}]}
+
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.BASE_TERMS)}
+            if name == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(writer)}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            result = term_pipeline.build_checked_resume(self.PROFILE, self.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+        resume = result["resume_data"]
+        self.assertEqual(resume["skills"], ["Tools: Cash Handling, Transaction Processing", "Problem Resolution"])
+        paragraphs = K_HeadlineAndSkillsLabels.docx_text(resume).split("\n")
+        for line in resume["skills"]:
+            self.assertTrue(any(p.replace("\t", " ").strip() == line for p in paragraphs), line)  # the Word file prints exactly each Skills line
+        self.assertFalse(any(p.startswith("Customer Service") for p in paragraphs))
+        self.assertEqual([i["text"] for i in result["truth_notice"]["provenance"]["items"] if i["change"].startswith("left out")], ["Customer Service"])  # the kept "Tools" is silent
 
 
 class M_HeadlineAndSkillsLabelsOnScreenAndInTheWordFile(unittest.TestCase):

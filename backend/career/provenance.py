@@ -106,6 +106,77 @@ def _words_for(text: str, wanted: set[str]) -> list[str]:
     return [w for w in re.findall(r"[A-Za-z][A-Za-z'\-]*", text) if stems(w) & wanted]
 
 
+# ---- organising headings: the closed allowlist (v1, approved) and the four guards that decide whether a Skills group label part is only a heading
+# A heading is a generic category word ("Tools", "Operations & Tools"); it asserts nothing, the skills under it carry the claims. A label that names a
+# skill or domain ("Customer Service", "Customer Success") is a qualification and keeps the full evidence decision. Applies to Skills group labels ONLY
+# (never headline phrases, summaries, skill items or bullets). The list is closed: an unknown word never qualifies, and nothing is added automatically.
+HEADING_WORDS = frozenset({
+    "tools", "operations", "team", "platforms", "systems", "technical", "technology", "applications", "software", "core", "key", "additional",
+    "other", "general", "environments",
+})
+_TOKEN = re.compile(r"[a-z0-9]+")
+
+
+def _token(word: str) -> str:
+    """One lower-case word with a plural ending removed ('tools' and 'tool' are the same word). Whole words only: no stems, no prefixes."""
+    if len(word) > 3 and word.endswith("ies"):
+        return word[:-3] + "y"
+    if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+        return word[:-1]
+    return word
+
+
+def _tokens(text: str) -> list[str]:
+    """Capitalisation and punctuation normalised ('Customer-Service' and 'customer service' agree), whole words in order."""
+    return [_token(w) for w in _TOKEN.findall((text or "").lower())]
+
+
+_HEADING_TOKENS = frozenset(_token(w) for w in HEADING_WORDS)
+
+
+def _content(tokens: list[str]) -> list[str]:
+    """The words that say something: filler words ('support', 'skills', 'and') are dropped, as everywhere else in this module."""
+    return [t for t in tokens if rq.distinct_roots(t)]
+
+
+def _has_phrase(haystack: list[str], needle: list[str]) -> bool:
+    """True when `needle` appears in `haystack` as a run of complete words in order (no substring matches)."""
+    n = len(needle)
+    return n > 0 and any(haystack[i:i + n] == needle for i in range(len(haystack) - n + 1))
+
+
+def _vocabulary_ok(content: list[str]) -> bool:
+    """Guard 1, closed vocabulary: at least one content word, and every content word is on the allowlist. An unknown word is never a heading."""
+    return bool(content) and all(t in _HEADING_TOKENS for t in content)
+
+
+def _not_a_plan_term(tokens: list[str], plan_terms: list[str]) -> bool:
+    """Guard 2, plan: the label does not equal, contain or sit inside any plan term, at ANY support level (literal, related, transferable, none)."""
+    for term in plan_terms:
+        t = _tokens(term)
+        if _has_phrase(t, tokens) or _has_phrase(tokens, t):
+            return False
+    return True
+
+
+def _not_a_posting_phrase(tokens: list[str], posting_tokens: list[str]) -> bool:
+    """Guard 3, posting, independent of the plan: a label of two or more words that the posting itself names as a phrase is a requirement. Every word
+    counts here, filler included, so "Technical Support" is caught even though "support" is filler elsewhere."""
+    return len(tokens) < 2 or not _has_phrase(posting_tokens, tokens)
+
+
+def _not_the_role_name(content: list[str], title_tokens: list[str]) -> bool:
+    """Guard 4, job title: a label made only of the posting's job-title words ("Operations" for an Operations Associate role) is a role claim."""
+    return not title_tokens or not set(content) <= set(_content(title_tokens))
+
+
+def _is_heading(part: str, plan_terms: list[str], posting_text: str, posting_title: str) -> bool:
+    tokens = _tokens(part)
+    content = _content(tokens)
+    return (_vocabulary_ok(content) and _not_a_plan_term(tokens, plan_terms)
+            and _not_a_posting_phrase(tokens, _tokens(posting_text)) and _not_the_role_name(content, _tokens(posting_title)))
+
+
 def audit_and_repair(resume: dict, profile_text: str, posting_text: str, facts_text: str = "", posting_title: str = "", terms: list[dict] | None = None) -> tuple[dict, dict]:
     """Returns (checked resume, report). report = {restored, held, skills_removed, skills_detail, notes, unverified_roles} with plain-language
     reasons; every list is empty when nothing needed to change. The input is not modified."""
@@ -216,7 +287,9 @@ def audit_and_repair(resume: dict, profile_text: str, posting_text: str, facts_t
         parts = [x.strip() for x in _PARTS.split(text) if x.strip()]
         kept, dropped = [], []
         for part in parts:
-            why = unsupported(part)
+            # a generic organising heading on a Skills group label is only a category; everything else gets the full evidence decision
+            heading = where == "skills group label" and _is_heading(part, [t["term"] for t in terms or []], posting_text, posting_title)
+            why = "" if heading else unsupported(part)
             (dropped if why else kept).append((part, why))
         for part, why in dropped:
             report["labels"].append({"where": where, "text": part, "why": why})
