@@ -151,3 +151,15 @@ body.chrome-v6.dashboard-v4 .keyword-covered li { margin: 0.35rem 0; }
   body.chrome-v6.dashboard-v4 .nav-links { gap: 0 0.5rem; }
   body.chrome-v6.dashboard-v4 .nav-links a { font-size: 0.85rem; }
 }
+
+/* editable suggestions on a finished tailored resume: the candidate's own sentence, an editable box, a before and after, and two plain buttons */
+body.chrome-v6.dashboard-v4 .suggestions { margin: 1rem 0; }
+body.chrome-v6.dashboard-v4 .suggestion-card { margin: 0.75rem 0; }
+body.chrome-v6.dashboard-v4 .suggestion-card textarea { width: 100%; min-height: 44px; }
+body.chrome-v6.dashboard-v4 .suggestion-preview > summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; font-weight: 600; }
+body.chrome-v6.dashboard-v4 .suggestion-compare { display: grid; grid-template-columns: 1fr; gap: 0.75rem; } /* stacked: the card is a narrow column even on a desktop */
+body.chrome-v6.dashboard-v4 .suggestion-compare > div { border: 1px solid var(--v4-line); border-radius: var(--v4-radius-sm); padding: 0.5rem 0.75rem; }
+body.chrome-v6.dashboard-v4 .suggestion-compare ul { margin: 0.25rem 0; padding-left: 1.1rem; }
+body.chrome-v6.dashboard-v4 .suggestion-compare-head { margin: 0; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.04em; }
+body.chrome-v6.dashboard-v4 .suggestion-new { border-bottom: 2px solid var(--c6-gold); }
+body.chrome-v6.dashboard-v4 .suggestion-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }

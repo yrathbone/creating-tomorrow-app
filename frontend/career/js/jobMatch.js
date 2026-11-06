@@ -479,6 +479,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     renderRoleSelection(data.role_selection || []);
     renderTermReport(data.term_report || []);
     renderMatchGrade(data.term_report || [], data.ats_match || null);
+    loadSuggestions();
     renderTruthNotice(data.truth_notice || (data.resume_data && data.resume_data.truth_review && data.resume_data.truth_review.truth_notice));
 
     stopProcessingState(jobBuildLoadingState);
@@ -883,6 +884,179 @@ function renderTermReport(report) {
   }
 }
 
+// Editable suggestions (no AI): the candidate's OWN saved sentence about a supported term that could not be placed, offered as a new bullet
+// under its role on this resume. They edit it, see the before and after, and add it to this resume only; nothing changes until they do, and
+// "Undo" puts the resume back as it was built. Their saved roles and skills are never touched.
+function suggestionsEls() {
+  return {
+    block: document.getElementById("job-suggestions-block"),
+    list: document.getElementById("job-suggestions-list"),
+    status: document.getElementById("job-suggestions-status"),
+    undo: document.getElementById("job-suggestions-undo-btn"),
+  };
+}
+
+function clearSuggestions() {
+  const els = suggestionsEls();
+  els.block.hidden = true;
+  els.list.textContent = "";
+  els.status.textContent = "";
+  els.undo.hidden = true;
+}
+
+async function loadSuggestions(message) {
+  clearSuggestions();
+  const id = jobState.resumeVersionId;
+  if (!id) return;
+  let data;
+  try {
+    const res = await authedFetch("/api/career/resume-versions/" + id + "/suggestions");
+    if (!res.ok) return; // suggestions are optional: a failure leaves the resume exactly as built
+    data = await res.json();
+  } catch (err) {
+    return;
+  }
+  renderSuggestions(data.suggestions || [], data.applied || [], message);
+}
+
+function renderSuggestions(items, applied, message) {
+  const els = suggestionsEls();
+  els.list.textContent = "";
+  els.undo.hidden = applied.length === 0;
+  els.block.hidden = items.length === 0 && applied.length === 0;
+  els.status.textContent = message || (applied.length ? applied.length + (applied.length === 1 ? " bullet was" : " bullets were") + " added from your suggestions." : "");
+  items.forEach((s) => els.list.appendChild(suggestionCard(s)));
+}
+
+function suggestionCard(s) {
+  const card = document.createElement("div");
+  card.className = "question-card suggestion-card";
+
+  const title = document.createElement("p");
+  title.style.fontWeight = "600";
+  title.textContent = s.term + (s.importance && s.importance !== "mentioned" ? " (" + s.importance + ")" : "");
+  card.appendChild(title);
+
+  const source = document.createElement("p");
+  source.className = "hint";
+  source.textContent = "From your " + s.role + (s.organization ? " role at " + s.organization : " role") + ": “" + s.source_sentence + "”";
+  card.appendChild(source);
+
+  const label = document.createElement("label");
+  label.className = "field";
+  label.innerHTML = "<span>Wording to add (you can edit it)</span>";
+  const text = document.createElement("textarea");
+  text.className = "suggestion-text";
+  text.rows = 2;
+  text.value = s.suggested_text;
+  label.appendChild(text);
+  card.appendChild(label);
+
+  const preview = document.createElement("details");
+  preview.open = true;
+  preview.className = "suggestion-preview";
+  const summary = document.createElement("summary");
+  summary.textContent = "Before and after, under " + s.role;
+  preview.appendChild(summary);
+  const grid = document.createElement("div");
+  grid.className = "suggestion-compare";
+  const column = (heading) => {
+    const box = document.createElement("div");
+    const h = document.createElement("p");
+    h.className = "suggestion-compare-head";
+    h.textContent = heading;
+    const ul = document.createElement("ul");
+    box.appendChild(h);
+    box.appendChild(ul);
+    grid.appendChild(box);
+    return ul;
+  };
+  const beforeList = column("Before");
+  const afterList = column("After (1 change)");
+  (s.before_bullets.length ? s.before_bullets : ["(no bullets under this role yet)"]).forEach((b) => {
+    beforeList.appendChild(Object.assign(document.createElement("li"), { textContent: b }));
+    afterList.appendChild(Object.assign(document.createElement("li"), { textContent: b }));
+  });
+  const added = document.createElement("li");
+  added.className = "suggestion-new";
+  added.textContent = text.value;
+  afterList.appendChild(added);
+  text.addEventListener("input", () => { added.textContent = text.value; });
+  preview.appendChild(grid);
+  card.appendChild(preview);
+
+  const error = document.createElement("p");
+  error.className = "error-message";
+  error.setAttribute("role", "alert");
+  error.hidden = true;
+  card.appendChild(error);
+
+  const actions = document.createElement("div");
+  actions.className = "suggestion-actions";
+  const add = document.createElement("button");
+  add.type = "button";
+  add.className = "btn-primary";
+  add.textContent = "Add to this resume";
+  const skip = document.createElement("button");
+  skip.type = "button";
+  skip.className = "btn-secondary";
+  skip.textContent = "Not for this resume";
+  actions.appendChild(add);
+  actions.appendChild(skip);
+  card.appendChild(actions);
+
+  skip.addEventListener("click", () => {
+    card.remove();
+    const els = suggestionsEls();
+    els.status.textContent = "Left “" + s.term + "” off. Nothing was changed.";
+    els.block.hidden = els.list.children.length === 0 && els.undo.hidden;
+  });
+  add.addEventListener("click", async () => {
+    error.hidden = true;
+    add.disabled = true;
+    try {
+      const res = await authedFetch("/api/career/resume-versions/" + jobState.resumeVersionId + "/suggestions/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ choices: [{ term: s.term, experience_index: s.experience_index, text: text.value.trim() }] }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(formatErrorDetail(err.detail, "Couldn’t add that wording (" + res.status + ")."));
+      }
+      const data = await res.json();
+      jobState.tailoredResumeData = data.resume_data;
+      renderTermReport(data.resume_data.term_report || []);
+      await loadSuggestions("Added “" + s.term + "” wording under " + s.role + ". Your saved roles and skills were not changed.");
+      announceJob("Added to this resume.");
+    } catch (err) {
+      error.textContent = err.message || "Couldn’t add that wording.";
+      error.hidden = false;
+      add.disabled = false;
+      focusJob(add);
+    }
+  });
+  return card;
+}
+
+document.getElementById("job-suggestions-undo-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("job-suggestions-undo-btn");
+  btn.disabled = true;
+  try {
+    const res = await authedFetch("/api/career/resume-versions/" + jobState.resumeVersionId + "/suggestions/undo", { method: "POST" });
+    if (!res.ok) throw new Error("Couldn’t undo that (" + res.status + ").");
+    const data = await res.json();
+    jobState.tailoredResumeData = data.resume_data;
+    renderTermReport(data.resume_data.term_report || []);
+    await loadSuggestions("Undone: your resume is back as it was built.");
+    announceJob("Undone.");
+  } catch (err) {
+    suggestionsEls().status.textContent = err.message || "Couldn’t undo that.";
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 // A rough letter grade for how much of the posting's key terms are on the
 // resume - deliberately a band, not a precise score. Required terms count
 // 3x, preferred 2x, others 1x. Terms the profile can't honestly support
@@ -1071,6 +1245,7 @@ function resetJobTarget() {
   document.getElementById("job-fit-after").hidden = true;
   renderRoleSelection([]);
   renderTermReport([]);
+  clearSuggestions();
   renderMatchGrade([]);
   showKeywordNote("");
   keywordTerms = [];

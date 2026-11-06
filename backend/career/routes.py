@@ -35,6 +35,7 @@ from career.job_match import JobMatchError, build_general_resume, compare_to_job
 from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
 from career.resume_quality import candidate_answers_text, denials_from_history, drop_unsourced_bullets
+from career import suggestions
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check_with_plan, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
@@ -1501,6 +1502,71 @@ async def delete_resume_version(
     db.delete(entry)
     db.commit()
     return {"deleted": True}
+
+
+# --- Editable suggestions for a finished tailored resume (no AI): the candidate's own saved sentence about a supported term that could not be
+# placed, offered as a new bullet under its role on THIS resume version. Nothing changes until they add it, and every change can be undone.
+
+class SuggestionChoice(BaseModel):
+    term: Short
+    experience_index: int
+    text: Short
+
+
+class ApplySuggestionsRequest(BaseModel):
+    choices: list[SuggestionChoice] = Field(default_factory=list, max_length=suggestions.MAX_APPLIED)
+
+
+@router.get("/resume-versions/{resume_version_id}/suggestions")
+async def resume_version_suggestions(
+    resume_version_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_resume_version_or_404(db, profile, resume_version_id)
+    experiences = [
+        {"title": e.title, "organization": e.organization, "description": e.description or ""}
+        for e in db.query(Experience).filter_by(career_profile_id=profile.id).order_by(Experience.id).all()
+    ]
+    data = entry.resume_data or {}
+    return {
+        "suggestions": suggestions.find_suggestions(data, data.get("term_report") or [], experiences),
+        "applied": data.get("applied_suggestions") or [],
+    }
+
+
+@router.post("/resume-versions/{resume_version_id}/suggestions/apply")
+async def apply_resume_version_suggestions(
+    resume_version_id: int,
+    req: ApplySuggestionsRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_resume_version_or_404(db, profile, resume_version_id)
+    try:
+        new_data = suggestions.apply_suggestions(entry.resume_data or {}, [c.model_dump() for c in req.choices], _build_profile_text(db, profile))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    entry.resume_data = new_data
+    db.add(entry)
+    db.commit()
+    return _resume_version_to_dict(entry)
+
+
+@router.post("/resume-versions/{resume_version_id}/suggestions/undo")
+async def undo_resume_version_suggestions(
+    resume_version_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
+):
+    profile = get_career_profile_or_404(db, current_user)
+    entry = _get_resume_version_or_404(db, profile, resume_version_id)
+    entry.resume_data = suggestions.undo_suggestions(entry.resume_data or {})
+    db.add(entry)
+    db.commit()
+    return _resume_version_to_dict(entry)
 
 
 @router.get("/resume-versions/{resume_version_id}/download")

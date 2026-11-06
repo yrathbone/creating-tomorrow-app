@@ -14,7 +14,7 @@ const read = (...p) => fs.readFileSync(path.join(CAREER, ...p), "utf8");
 const PANELS = ["job-target-empty", "job-input-state", "job-loading-state", "job-match-state", "job-questions-state", "job-build-form-state",
   "job-keywords-state", "job-build-loading-state", "job-build-done-state"];
 
-function world({ failing = [], keywordTerms = [{ term: "SQL" }], covered = {} } = {}) {
+function world({ failing = [], keywordTerms = [{ term: "SQL" }], covered = {}, suggestions = { suggestions: [], applied: [] } } = {}) {
   const log = { focus: [], status: [], alerts: [], saved: [], fetches: [], bodies: {} };
   const els = {};
   const make = (id) => {
@@ -66,6 +66,7 @@ function world({ failing = [], keywordTerms = [{ term: "SQL" }], covered = {} } 
       if (/job-discover$/.test(url)) return reply("discover", { stage: "confirm", discovered_facts: [] });
       if (/job-keyword-check$/.test(url)) return reply("keywords", { terms: keywordTerms, already_covered: 0, ...covered });
       if (/job-build-resume$/.test(url)) return reply("build", { resume_data: { name: "María José Peña-Núñez" }, role_selection: [], term_report: [], ats_match: null, resume_version_id: 5 });
+      if (/resume-versions\/\d+\/suggestions$/.test(url)) return reply("suggestions", suggestions);
       if (/scan-history\/\d+\/skip$/.test(url)) return reply("skip", {});
       return reply("other", {});
     },
@@ -362,6 +363,32 @@ test("keyword check: the request names the job comparison so the plan is kept wi
   await w.els["job-keyword-check-btn"].fire("click");
   const body = JSON.parse(w.log.bodies["/api/career/job-keyword-check"]);
   assert.ok("scan_history_id" in body, "the keyword check sends the job comparison id");
+});
+
+test("suggestions: after a build the page asks (read-only) for suggestions for that saved resume and shows the block only when there are some", async () => {
+  const none = world();
+  await none.els["job-build-btn"].fire("click");
+  await new Promise((r) => setTimeout(r, 0)); // the suggestions load in the background after the resume is shown
+  assert.ok(none.log.fetches.includes("/api/career/resume-versions/5/suggestions"), "asked for the saved version's suggestions");
+  assert.strictEqual(none.els["job-suggestions-block"].hidden, true);
+  const some = world({ suggestions: { suggestions: [{ term: "Complaint resolution", importance: "required", experience_index: 0, role: "Shift Lead", organization: "Hearthside", source_sentence: "Handled complaints.", suggested_text: "Handled complaints.", before_bullets: ["Scheduled associates."] }], applied: [] } });
+  await some.els["job-build-btn"].fire("click");
+  await new Promise((r) => setTimeout(r, 0)); // the suggestions load in the background after the resume is shown
+  assert.strictEqual(some.els["job-suggestions-block"].hidden, false);
+  assert.ok(!some.log.fetches.some((u) => /suggestions\/apply$/.test(u)), "nothing is added until the candidate chooses it");
+  const applied = world({ suggestions: { suggestions: [], applied: [{ term: "x", experience_index: 0, text: "t" }] } });
+  await applied.els["job-build-btn"].fire("click");
+  await new Promise((r) => setTimeout(r, 0)); // the suggestions load in the background after the resume is shown
+  assert.strictEqual(applied.els["job-suggestions-undo-btn"].hidden, false);
+});
+
+test("suggestions: a failure to load them leaves the finished resume and the page exactly as they were", async () => {
+  const w = world({ failing: ["suggestions"] });
+  await w.els["job-build-btn"].fire("click");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.strictEqual(w.els["job-suggestions-block"].hidden, true);
+  assert.deepStrictEqual(w.log.alerts, []);
+  assert.deepStrictEqual(w.visible(), ["job-build-done-state"]);
 });
 
 test("keyword check: an alternatives group is one question card and a met group is listed, not asked", async () => {
