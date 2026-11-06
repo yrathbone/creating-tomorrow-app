@@ -172,6 +172,7 @@ body.chrome-v6.dashboard-v4 .evidence-tile span { display: block; font-size: 0.8
 body.chrome-v6.dashboard-v4 .evidence-legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.25rem 0 0.75rem; }
 body.chrome-v6.dashboard-v4 .evidence-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.05rem 0.6rem; border: 1.5px solid var(--c6-blue); border-radius: 999px; font-size: 0.8125rem; font-weight: 500; line-height: 1.5; color: var(--c6-blue); background: transparent; white-space: nowrap; vertical-align: middle; }
 body.chrome-v6.dashboard-v4 .evidence-chip-other { background: rgba(0, 51, 149, 0.08); }
+body.chrome-v6.dashboard-v4 .evidence-chip-profile { border-style: dashed; }
 body.chrome-v6.dashboard-v4 .evidence-chip-question { border: 2px solid var(--c6-gold); color: inherit; }
 body.chrome-v6.dashboard-v4 .evidence-chip-none { border-color: currentColor; color: var(--muted, inherit); }
 body.chrome-v6.dashboard-v4 .evidence-group { margin: 1rem 0; }

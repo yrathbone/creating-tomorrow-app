@@ -857,7 +857,9 @@ function prefillSkillFromTerm(term) {
 // (required ones first), plus any that are supported but could not be placed.
 function renderTermReport(report) {
   // Context wording the builder chose not to use is neutral: not a problem, not counted.
-  // (and an unmet member of an alternatives group that another member already meets: the posting accepts any one)
+  // An unmet member of an alternatives group that another member already meets is counted as "met through another accepted option"
+  // in the summary but is not a gap, so it is left out of the lists below and of the match grade.
+  const groups = groupReport(report);
   report = report.filter((r) => r.status !== "wording_unused" && r.status !== "alternative_met");
   const block = document.getElementById("job-term-report-block");
   const summary = document.getElementById("job-term-summary");
@@ -866,8 +868,12 @@ function renderTermReport(report) {
   const includedDetails = document.getElementById("job-term-included-details");
   missingList.textContent = "";
   includedList.textContent = "";
-  block.hidden = report.length === 0;
-  if (report.length === 0) return;
+  block.hidden = groups.total === 0;
+  renderEvidenceTiles(document.getElementById("job-term-tiles"), groups.tiles);
+  if (report.length === 0) {
+    summary.textContent = "";
+    return;
+  }
 
   const rank = { required: 0, preferred: 1, mentioned: 2 };
   const byRank = (a, b) => (rank[a.importance] ?? 3) - (rank[b.importance] ?? 3);
@@ -878,7 +884,7 @@ function renderTermReport(report) {
   const transferable = report.filter((r) => r.status === "transferable").sort(byRank);
 
   let text = onResume.length + " of " + report.length + " terms from the posting are on your resume.";
-  if (notInProfile.length) text += " " + notInProfile.length + " aren’t backed by your profile yet. If you have that experience, add it and rebuild.";
+  if (notInProfile.length) text += " " + notInProfile.length + (notInProfile.length === 1 ? " isn’t" : " aren’t") + " backed by your profile yet. If you have that experience, add it and rebuild.";
   if (transferable.length) text += " " + transferable.length + (transferable.length === 1 ? " more is" : " more are") + " related to experience you already have, so you may be able to build on " + (transferable.length === 1 ? "it" : "them") + ".";
   if (notPlaced.length) text += " " + notPlaced.length + (notPlaced.length === 1 ? " is" : " are") + " in your profile but couldn’t be placed, so add " + (notPlaced.length === 1 ? "it" : "them") + " by hand.";
   summary.textContent = text;
@@ -886,7 +892,9 @@ function renderTermReport(report) {
   for (const item of notPlaced.concat(notInProfile, transferable)) {
     const li = document.createElement("li");
     const label = item.term + (item.importance && item.importance !== "mentioned" ? " (" + item.importance + ")" : "");
-    li.textContent = label + (item.status === "not_placed" ? " — in your profile, but couldn’t be placed on the resume " : item.status === "transferable" ? " — your experience may be relevant" + (item.evidence ? ": " + item.evidence : "") : " ");
+    li.textContent = label + " ";
+    li.appendChild(evidenceChip(item.status === "not_placed" ? "profile" : item.status === "transferable" ? "question" : "none"));
+    li.appendChild(document.createTextNode(item.status === "not_placed" ? " — in your profile, but couldn’t be placed on the resume " : item.status === "transferable" ? " — your experience may be relevant" + (item.evidence ? ": " + item.evidence : "") : " "));
     if (item.status === "not_in_profile") {
       const btn = document.createElement("button");
       btn.type = "button";

@@ -6,6 +6,7 @@
 const EVIDENCE_CHIPS = {
   backed: { icon: "✓", word: "Backed", cls: "backed" },
   other: { icon: "≈", word: "Other words", cls: "other" },
+  profile: { icon: "＋", word: "In your profile", cls: "profile" },
   question: { icon: "?", word: "One question", cls: "question" },
   none: { icon: "–", word: "Not evidenced", cls: "none" },
 };
@@ -61,4 +62,29 @@ function renderEvidenceTiles(listEl, tiles) {
     li.appendChild(label);
     listEl.appendChild(li);
   });
+}
+
+// The same five groups for a finished resume, read from the build report (term_report). Every row lands in exactly one group, so the counts
+// always add up; context wording the builder chose not to use is left out, as before. "On your resume" is told apart by how it is backed: the
+// profile's own words (literal) or the same activity under other words (related). A different activity (transferable) is never "backed".
+function groupReport(report) {
+  const rows = (report || []).filter((r) => r.status !== "wording_unused");
+  const pick = (test) => rows.filter(test);
+  const groups = {
+    backed: pick((r) => r.status === "on_resume" && r.support === "literal"),
+    other: pick((r) => r.status === "on_resume" && r.support === "related"),
+    alternative: pick((r) => r.status === "alternative_met"),
+    profile: pick((r) => r.status === "not_placed"),
+    question: pick((r) => r.status === "transferable" || (r.status === "on_resume" && r.support === "transferable")),
+    none: pick((r) => r.status === "not_in_profile"),
+  };
+  const label = {
+    backed: "on your resume, in your profile’s own words",
+    other: "on your resume, backed through other words",
+    alternative: "met through another accepted option",
+    profile: "in your profile, not on this resume",
+    question: "relevant experience, one question",
+    none: "not evidenced yet",
+  };
+  return { total: rows.length, ...groups, tiles: Object.keys(groups).map((key) => ({ key, count: groups[key].length, label: label[key] })) };
 }

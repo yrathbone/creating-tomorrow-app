@@ -18,10 +18,10 @@ function load() {
   };
   const sandbox = { document: { createElement: el, createTextNode: (t) => ({ text: t }) } };
   vm.createContext(sandbox);
-  vm.runInContext(read("career", "js", "evidenceView.js") + "\nthis.api = { EVIDENCE_CHIPS, evidenceChip, groupEvidence, renderEvidenceTiles };", sandbox);
+  vm.runInContext(read("career", "js", "evidenceView.js") + "\nthis.api = { EVIDENCE_CHIPS, evidenceChip, groupEvidence, groupReport, renderEvidenceTiles };", sandbox);
   // plain objects from the VM have another realm's prototypes: copy them so deepStrictEqual compares values
   const plain = (value) => JSON.parse(JSON.stringify(value));
-  return { ...sandbox.api, groupEvidence: (data) => plain(sandbox.api.groupEvidence(data)) };
+  return { ...sandbox.api, groupEvidence: (data) => plain(sandbox.api.groupEvidence(data)), groupReport: (report) => plain(sandbox.api.groupReport(report)) };
 }
 
 const RESPONSE = {
@@ -71,7 +71,7 @@ test("every status chip is an icon plus a word, with the icon hidden from screen
     assert.ok(chip.children[0].textContent.length > 0, "an icon");
     assert.match(chip.children[1].text, /^ [A-Z][a-z]+/, "a word");
   }
-  assert.deepStrictEqual(Object.values(EVIDENCE_CHIPS).map((c) => c.word), ["Backed", "Other words", "One question", "Not evidenced"]);
+  assert.deepStrictEqual(Object.values(EVIDENCE_CHIPS).map((c) => c.word), ["Backed", "Other words", "In your profile", "One question", "Not evidenced"]);
 });
 
 test("the tiles list gets one item per count, each a number and a text label", () => {
@@ -106,4 +106,46 @@ test("the new styles use only the site's colours: no new hex values or font fami
   assert.match(block, /evidence-chip-question \{ border: 2px solid var\(--c6-gold\)/); // thicker, gold-edged
   assert.match(block, /evidence-chip-other \{ background: rgba/); // filled
   assert.match(block, /evidence-chip \{[^}]*font-size: 0\.8125rem/); // 13px, above the 12px floor
+});
+
+const REPORT = [
+  { term: "De-escalation", importance: "required", support: "literal", status: "on_resume" },
+  { term: "Complaint resolution", importance: "required", support: "related", evidence: "Handled complaints", status: "on_resume" },
+  { term: "Customer success", importance: "required", support: "transferable", evidence: "adjacent", status: "transferable" },
+  { term: "Customer-facing", importance: "preferred", support: "transferable", evidence: "x", status: "on_resume" },
+  { term: "POS training", importance: "preferred", support: "related", evidence: "Trained new hires", status: "not_placed" },
+  { term: "PMP", importance: "required", support: "none", evidence: "", status: "alternative_met" },
+  { term: "Ticketing software", importance: "required", support: "none", evidence: "", status: "not_in_profile" },
+  { term: "sales setting", importance: "mentioned", support: "literal", kind: "phrase", evidence: "", status: "wording_unused" },
+];
+
+test("the build report is grouped into six counts that add up, with context wording left out", () => {
+  const { groupReport } = load();
+  const g = groupReport(REPORT);
+  assert.strictEqual(g.total, 7);
+  assert.deepStrictEqual(g.tiles.map((t) => [t.key, t.count]), [["backed", 1], ["other", 1], ["alternative", 1], ["profile", 1], ["question", 2], ["none", 1]]);
+  assert.strictEqual(g.tiles.reduce((sum, t) => sum + t.count, 0), g.total);
+});
+
+test("a different activity is never counted as backed, even when its word happens to be on the resume", () => {
+  const { groupReport } = load();
+  const g = groupReport([{ term: "Customer-facing", support: "transferable", status: "on_resume" }]);
+  assert.deepStrictEqual(g.tiles.map((t) => t.count), [0, 0, 0, 0, 1, 0]);
+});
+
+test("an empty or missing report groups to zeros and never throws", () => {
+  const { groupReport } = load();
+  for (const report of [undefined, null, []]) assert.deepStrictEqual(groupReport(report).tiles.map((t) => t.count), [0, 0, 0, 0, 0, 0]);
+});
+
+test("the report block has the tiles and a five-chip legend with icon and word, and the report code uses the grouping and the chips", () => {
+  const html = read("career", "login.html");
+  const block = html.slice(html.indexOf('id="job-term-report-block"'), html.indexOf('id="job-term-missing-list"'));
+  assert.ok(block.includes('id="job-term-tiles"'));
+  for (const word of ["Backed", "Other words", "In your profile", "One question", "Not evidenced"]) assert.ok(block.includes("</span> " + word + "</span>"), word);
+  const js = read("career", "js", "jobMatch.js");
+  const fn = js.slice(js.indexOf("function renderTermReport"), js.indexOf("// Editable suggestions"));
+  for (const needle of ["groupReport(", "renderEvidenceTiles(", "evidenceChip("]) assert.ok(fn.includes(needle), needle);
+  assert.match(fn, /status !== "alternative_met"/, "an unmet member of a met alternatives group stays out of the gap lists");
+  assert.ok(read("career", "dashboard-v8.css").includes(".evidence-chip-profile { border-style: dashed; }"), "the profile chip is dashed");
 });
