@@ -22,7 +22,8 @@ from career.job_match import JobMatchError
 
 MAX_TERMS = 60  # long postings have 40+ distinct terms (one real posting filled 45 of 45); scanners such as Jobscan count them all
 _HEDGED_EVIDENCE = re.compile(
-    r"\b(however|has not|have not|hasn't|haven't|does not|doesn't|not held|no direct|no formal|different|adjacent|rather than|not the same)\b", re.I)
+    r"\b(however|has not|have not|hasn't|haven't|does not|doesn't|not held|no direct|no formal|different|adjacent|rather than|not the same"
+    r"|(?:though|although|but|yet)\s+not|not\s+(?:specifically|exactly|directly|really|quite)|only\s+loosely|loosely)\b", re.I)
 MAX_TERM_WORDS = 5  # longer "terms" are sentence fragments, not keywords
 SUPPORTED = ("literal", "related")
 TRANSFERABLE = "transferable"  # a real, different activity behind a skill the posting values; never claims the posting's own specialised wording
@@ -263,6 +264,13 @@ def guard_terms(raw_terms: list[dict], profile_text: str, facts_text: str, job_d
         for t in terms:
             if t["support"] != "literal" and normalize(t["term"]) == normalize(title):
                 t["support"], t["evidence"] = "none", ""
+        # A term that is the heart of the title ("customer success" in "Customer Success Associate") is the role being applied for: unless the
+        # evidence literally says it, "related" is never enough to print it as the candidate's own skill. It stays a question.
+        title_words = set(normalize(title).split())
+        for t in terms:
+            words = set(normalize(t["term"]).split())
+            if t["support"] == "related" and len(words) >= 2 and words <= title_words:
+                t["support"] = TRANSFERABLE
     # An alternatives group needs at least two skill terms; a lone label is an ordinary requirement.
     sizes: dict[str, int] = {}
     for t in terms:
