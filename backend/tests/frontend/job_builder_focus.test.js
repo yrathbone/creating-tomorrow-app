@@ -356,3 +356,16 @@ test("keyword check: terms the profile already backs are listed with their evide
   assert.strictEqual(none.els["job-keywords-covered"].hidden, true);
 });
 
+test("keyword check: an alternatives group is one question card and a met group is listed, not asked", async () => {
+  const group = { term: "PMP or PRINCE2", importance: "required", support: "none", alternatives: ["PMP", "PRINCE2"], accepts_equivalent_experience: true };
+  const asked = world({ keywordTerms: [group], covered: { already_covered: 0 } });
+  await asked.els["job-keyword-check-btn"].fire("click");
+  assert.match(asked.els["job-keywords-intro"].textContent, /Only 1 term needs your answer/);
+  const met = world({
+    keywordTerms: [{ term: "Change management", importance: "required", support: "none" }],
+    covered: { already_covered: 1, covered_exact: [{ term: "PRINCE2", importance: "required" }], alternatives_met: [{ terms: ["PMP", "PRINCE2"], importance: "required", met_by: "PRINCE2", evidence: "" }] },
+  });
+  await met.els["job-keyword-check-btn"].fire("click");
+  assert.strictEqual(met.els["job-keywords-covered-summary"].textContent, "Already backed by your profile (1): see what we found");
+});
+

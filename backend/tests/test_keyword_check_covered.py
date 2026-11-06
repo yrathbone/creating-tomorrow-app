@@ -105,5 +105,56 @@ class B_NothingIsPromotedOrChanged(unittest.TestCase):
             self.assertIn(key, out)
 
 
+def group_term(name, support="none", evidence="", group="project-management-credential", equiv=True, importance="required"):
+    return {**term(name, importance, support, evidence), "alternatives_group": group, "accepts_equivalent_experience": equiv}
+
+
+class C_AlternativesAreOneRequirement(unittest.TestCase):
+    def test_a_group_with_no_evidence_is_one_question_naming_every_alternative(self):
+        out = check([group_term("PMP"), group_term("PRINCE2")])
+        self.assertEqual(len(out["terms"]), 1)
+        q = out["terms"][0]
+        self.assertEqual((q["term"], q["alternatives"], q["importance"], q["support"]), ("PMP or PRINCE2", ["PMP", "PRINCE2"], "required", "none"))
+        self.assertTrue(q["accepts_equivalent_experience"])
+        self.assertEqual(out["alternatives_met"], [])
+
+    def test_one_backed_member_meets_the_group_and_the_others_are_not_asked(self):
+        out = check([group_term("PMP"), group_term("PRINCE2", "related", "Managed client connectivity projects")])
+        self.assertEqual(out["terms"], [])
+        met = out["alternatives_met"][0]
+        self.assertEqual((met["terms"], met["met_by"], met["evidence"]), (["PMP", "PRINCE2"], "PRINCE2", "Managed client connectivity projects"))
+
+    def test_a_literal_member_meets_the_group_without_evidence_text(self):
+        out = check([group_term("PMP"), group_term("Risk Management", "literal")])
+        self.assertEqual(out["terms"], [])
+        self.assertEqual(out["alternatives_met"][0]["met_by"], "Risk Management")
+        self.assertEqual(out["alternatives_met"][0]["evidence"], "")
+
+    def test_a_group_is_never_called_met_without_a_member_that_has_evidence(self):
+        out = check([group_term("PMP"), group_term("PRINCE2", "related", "")])  # related with no evidence is downgraded to none
+        self.assertEqual(out["alternatives_met"], [])
+        self.assertEqual(len(out["terms"]), 1)
+
+    def test_a_transferable_member_keeps_the_group_question_marked_transferable(self):
+        out = check([group_term("PMP"), group_term("PRINCE2", "transferable", "Assisted with file testing")])
+        self.assertEqual((out["terms"][0]["support"], out["terms"][0]["evidence"]), ("transferable", "Assisted with file testing"))
+
+    def test_a_lone_label_is_an_ordinary_requirement(self):
+        out = check([group_term("PMP")])
+        self.assertEqual([t["term"] for t in out["terms"]], ["PMP"])
+        self.assertNotIn("alternatives", out["terms"][0])
+
+    def test_the_build_plan_is_unchanged_so_nothing_is_promoted(self):
+        with mock.patch.object(job_match, "_call_with_retry", return_value={"terms": [group_term("PMP"), group_term("PRINCE2", "related", "Managed client connectivity projects")]}):
+            terms = term_pipeline.plan_terms(PROFILE, "(none confirmed)", "posting text")
+        self.assertEqual({t["term"]: t["support"] for t in terms}, {"PMP": "none", "PRINCE2": "related"})
+
+    def test_the_planner_asks_for_the_group_fields_and_says_grouping_never_changes_evidence(self):
+        props = term_pipeline.PLAN_TOOL["input_schema"]["properties"]["terms"]["items"]["properties"]
+        self.assertIn("alternatives_group", props)
+        self.assertIn("accepts_equivalent_experience", props)
+        self.assertIn("Grouping never changes the evidence judgement", term_pipeline.PLAN_SYSTEM_PROMPT)
+
+
 if __name__ == "__main__":
     unittest.main()

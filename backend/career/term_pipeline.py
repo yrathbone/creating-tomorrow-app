@@ -29,6 +29,8 @@ PLAN_SYSTEM_PROMPT = """You are Nova, a careful resume strategist. You are given
 
 1. List the key skill, keyword, tool, domain and requirement phrases the posting uses, in the posting's OWN exact wording. Read requirements, responsibilities, the overview, preferred qualifications, and any skill tags or keyword run-ins (several short tags run together with no spaces, for example "clear communicationstakeholder managementproblem-solving" - split them into separate terms). Include domain and industry terms (for example fintech, financial technology, financial services, banking) and tools or technologies. Every term must be a SHORT keyword phrase a recruiter would search for: a skill, tool, technology, domain or requirement written as a noun phrase of at most 4 words (for example "proposal development," "technical expertise," "financial products," "pricing strategies," "client onboarding"). Do NOT list duties, sentences or sentence fragments (not "taking ownership of complex initiatives," not "translate complex technical concepts into clear business value," not "address technical objections"); if a duty contains a real skill, list just the short skill. Skip generic filler unless the posting states it as a requirement. At most 60 terms, most important first. Scanners also normalise wording into standard skill names, so when a duty or requirement sentence implies a recognised skill, ALSO list that standard skill name as its own term (for example "building strong relationships with customers" -> "relationship management"; "taking ownership of complex initiatives" -> "strategic initiatives"; "technical conversations with executives" -> "technical expertise"). Evidence is judged for these exactly like any other term, so an unsupported one is simply marked "none". Include the soft skills and competencies the posting names (for example "relationship management," "communication skills," "stakeholder management") as terms too; scanners count them. Judge importance from the posting's own language: "required" (must-have or a key requirement), "preferred" (nice-to-have), or "mentioned". Also give each term a kind: "skill" = a skill, tool, system, method or industry/domain a recruiter would list in a skills section (for example "proposal development," "ERP integrations," "fintech," "customer success"); "phrase" = context or duty wording that is not a skill by itself (for example "sales setting," "difficult customers," "business sense," "achieving targets and goals," "large, global, complex organizations," "complex projects and programs"). A recognised skill, competency, business process, methodology or domain is ALWAYS kind "skill", even when it sounds like a duty or a soft skill: for example "sales cycle," "sales process," "strategic initiatives," "relationship management," "stakeholder management," "technical expertise," "communication skills," "pipeline management," "account management," "forecasting." When unsure, choose "skill": a skill is placed on the resume (only if the candidate's evidence supports it), while a phrase is kept off the skills list. Do list the skill or domain inside the posting's own job title as a term (for example "customer success" for a Customer Success Manager role); the posting's title is a strong signal of what it wants.
 
+ALTERNATIVES: when the posting says any ONE of several qualifications will do (for example "PMP, PRINCE2 or equivalent project delivery experience", "AWS or Azure certification", "a degree or equivalent experience"), give those terms the SAME short alternatives_group label (lowercase, for example "project-management-credential") and list each alternative as its own term. Set accepts_equivalent_experience true only when the posting itself says equivalent experience is accepted. Leave both fields out for ordinary requirements; two separate requirements are NOT alternatives. Grouping never changes the evidence judgement: a credential is "literal" or "related" only when the profile actually shows it, and experience is never relabelled as holding a certification.
+
 2. For EACH term decide whether the candidate's evidence supports it:
 - "literal": the exact term (ignoring capitalization, plurals and hyphens) appears in the Career Profile or the confirmed facts.
 - "related": not literal, but the profile genuinely shows the SAME underlying activity, skill or domain under different wording. RELATED MEANS THE SAME ACTIVITY IN OTHER WORDS, never a similar-looking or lesser activity. Never relabel one kind of work as another: a lesson video is not an e-learning module, screen recording is not video editing, mentoring a colleague is not working with subject matter experts, classroom teaching is not corporate training, handling cash at a retail register is not bank-teller compliance work. When the evidence is only an adjacent or weaker activity, answer "transferable" or "none", never "related". Give the evidence. Examples: RFP responses support "proposal development"; being the technical advisor to treasury and IT teams supports "technical expertise"; training and coaching support "technical training"; demonstrating products and equipping sales teams supports "product education"; directing the "full sales lifecycle" or an end-to-end sales engagement supports "sales cycle" and "sales process"; account management, client onboarding, adoption and post-sales or renewal work supports "customer success". Domain labels count when the work substantively involves that domain: building, integrating or selling payments or banking technology (APIs, ERP/TMS bank connectivity, payment rails, real-time payments such as Zelle or FastPayments, embedded finance) supports "financial technology" and "fintech"; working at a bank supports "banking" and "financial services". Role titles are evidence too: a title containing Sales, Account, Client, Relationship or Consultant supports sales experience, customer-facing work and customer relationships.
@@ -70,6 +72,8 @@ PLAN_TOOL = {
                         "kind": {"type": "string", "enum": ["skill", "phrase"]},
                         "support": {"type": "string", "enum": ["literal", "related", "transferable", "none"]},
                         "evidence": {"type": "string", "description": "Role and phrase/activity that supports it; empty if none."},
+                        "alternatives_group": {"type": "string", "description": "Optional. The same short label on every term of a set where the posting accepts any ONE of them."},
+                        "accepts_equivalent_experience": {"type": "boolean", "description": "Optional. True only when the posting says equivalent experience is accepted for this set."},
                     },
                     "required": ["term", "importance", "support", "evidence"],
                 },
@@ -229,6 +233,8 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str, denials
             "support": support,
             "evidence": evidence,
             "denied": denial is not None,
+            "alternatives_group": normalize(str(raw.get("alternatives_group") or ""))[:40],
+            "accepts_equivalent_experience": raw.get("accepts_equivalent_experience") is True,
         })
     # The posting's own job title is where the candidate is APPLYING, not something they hold: unless the evidence literally says it,
     # a term equal to the title is never supported (it was marked "related" in the live Daniel rerun, and the writer then called him
@@ -238,6 +244,14 @@ def plan_terms(profile_text: str, facts_text: str, job_description: str, denials
         for t in terms:
             if t["support"] != "literal" and normalize(t["term"]) == normalize(title):
                 t["support"], t["evidence"] = "none", ""
+    # An alternatives group needs at least two skill terms; a lone label is an ordinary requirement.
+    sizes: dict[str, int] = {}
+    for t in terms:
+        if t["alternatives_group"] and t["kind"] != "phrase":
+            sizes[t["alternatives_group"]] = sizes.get(t["alternatives_group"], 0) + 1
+    for t in terms:
+        if sizes.get(t["alternatives_group"], 0) < 2 or t["kind"] == "phrase":
+            t["alternatives_group"], t["accepts_equivalent_experience"] = "", False
     return terms
 
 
@@ -329,11 +343,37 @@ def keyword_check(profile_text: str, confirmed_facts: list, job_description: str
     related.sort(key=lambda t: rank.get(t["importance"], 3))
     exact.sort(key=lambda t: rank.get(t["importance"], 3))
     phrases = [t for t in terms if t.get("kind") == "phrase"]
+
+    # Alternatives ("PMP, PRINCE2 or equivalent"): the posting accepts any ONE. When one member is already backed by the profile the others
+    # need no answer; when none is, the group is ONE question, not one per member. Nothing is promoted: a member is "met" only through its
+    # own evidence, so a credential is never claimed for experience.
+    groups: dict[str, list[dict]] = {}
+    for t in skills:
+        if t.get("alternatives_group"):
+            groups.setdefault(t["alternatives_group"], []).append(t)
+    alternatives = []
+    for members in groups.values():
+        names = [m["term"] for m in members]
+        best = min((m["importance"] for m in members), key=lambda i: rank.get(i, 3))
+        met = next((m for m in members if m in exact or m in related), None)
+        questions = [q for q in questions if q not in members]
+        entry = {"terms": names, "importance": best, "accepts_equivalent_experience": any(m.get("accepts_equivalent_experience") for m in members)}
+        if met is not None:
+            alternatives.append({**entry, "met_by": met["term"], "evidence": met["evidence"] if met["support"] == "related" else ""})
+            continue
+        near = next((m for m in members if m["support"] == TRANSFERABLE), None)
+        questions.append({
+            "term": " or ".join(names), "kind": "skill", "importance": best, "support": TRANSFERABLE if near else "none",
+            "evidence": near["evidence"] if near else "", "alternatives": names,
+            "accepts_equivalent_experience": entry["accepts_equivalent_experience"],
+        })
+    questions.sort(key=lambda t: (rank.get(t["importance"], 3), t["support"] != TRANSFERABLE))
     return {
         "terms": questions,
         "already_covered": len(exact) + len(related) + len(phrases),
         "covered_exact": [{"term": t["term"], "importance": t["importance"]} for t in exact],
         "covered_related": [{"term": t["term"], "importance": t["importance"], "evidence": t["evidence"]} for t in related],
+        "alternatives_met": alternatives,
     }
 
 

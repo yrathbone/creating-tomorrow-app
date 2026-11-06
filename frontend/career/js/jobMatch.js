@@ -504,7 +504,7 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
 // this resume only, or skip. Nothing is saved until "Save my choices", and
 // nothing is assumed: "related" terms are only pre-selected as a suggestion.
 let keywordTerms = [];
-let keywordCovered = { exact: [], related: [], count: 0 };
+let keywordCovered = { exact: [], related: [], alternatives: [], count: 0 };
 
 document.getElementById("job-keyword-check-btn").addEventListener("click", async () => {
   const errorEl = document.getElementById("job-build-error");
@@ -530,7 +530,7 @@ document.getElementById("job-keyword-check-btn").addEventListener("click", async
     }
     const data = await res.json();
     keywordTerms = data.terms || [];
-    keywordCovered = { exact: data.covered_exact || [], related: data.covered_related || [], count: data.already_covered || 0 };
+    keywordCovered = { exact: data.covered_exact || [], related: data.covered_related || [], alternatives: data.alternatives_met || [], count: data.already_covered || 0 };
 
     stopProcessingState(jobLoadingState);
     jobLoadingState.hidden = true;
@@ -625,6 +625,10 @@ function renderCoveredTerms() {
   };
   keywordCovered.related.forEach((t) => add(t, "Your profile shows: " + t.evidence));
   keywordCovered.exact.forEach((t) => add(t, "this wording is in your profile"));
+  keywordCovered.alternatives.forEach((g) => {
+    add({ term: g.terms.join(" or "), importance: g.importance },
+      "the posting accepts any one of these; met through " + g.met_by + (g.evidence ? " (" + g.evidence + ")" : ""));
+  });
 }
 
 function renderKeywordCards(alreadyCovered) {
@@ -656,6 +660,33 @@ function renderKeywordCards(alreadyCovered) {
       ? "Your profile suggests this: " + t.evidence
       : "Nothing in your profile mentions this yet.";
     card.appendChild(why);
+
+    if (t.alternatives) {
+      // The posting accepts any ONE of these: one question, and the candidate names the one that is actually true for them.
+      const note = document.createElement("p");
+      note.className = "hint";
+      note.style.fontWeight = "400";
+      note.textContent = "The posting accepts any one of these" + (t.accepts_equivalent_experience ? " (or equivalent experience)" : "") +
+        ". Only pick one you really hold; we never claim a certification you don’t have.";
+      card.appendChild(note);
+      const whichLabel = document.createElement("label");
+      whichLabel.className = "field";
+      whichLabel.innerHTML = "<span>Which one is true for you?</span>";
+      const which = document.createElement("select");
+      which.className = "keyword-which";
+      const choose = document.createElement("option");
+      choose.value = "";
+      choose.textContent = "Choose one";
+      which.appendChild(choose);
+      t.alternatives.forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        which.appendChild(opt);
+      });
+      whichLabel.appendChild(which);
+      card.appendChild(whichLabel);
+    }
 
     const select = document.createElement("select");
     select.className = "keyword-action";
@@ -737,17 +768,20 @@ document.getElementById("job-keywords-apply-btn").addEventListener("click", asyn
       const action = card.querySelector(".keyword-action").value;
       if (action === "skip") continue;
       const sentence = card.querySelector(".keyword-sentence").value.trim();
+      const whichEl = card.querySelector(".keyword-which");
+      const term = whichEl ? whichEl.value : t.term; // a group card saves only the alternative the candidate chose
+      if (!term) throw new Error(`Choose which one is true for you for "${t.term}", or set it to Skip.`);
 
       if (action === "skill") {
         const role = card.querySelector(".keyword-role").value;
         const res = await authedFetch("/api/career/skills", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: t.term, source_text: sentence || null, experience_id: role ? Number(role) : null }),
+          body: JSON.stringify({ name: term, source_text: sentence || null, experience_id: role ? Number(role) : null }),
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(formatErrorDetail(err.detail, `Couldn’t save "${t.term}" (${res.status})`));
+          throw new Error(formatErrorDetail(err.detail, `Couldn’t save "${term}" (${res.status})`));
         }
         savedSkills += 1;
         // Saved: flip the card to Skip so a retry after a later error can't save it twice.
@@ -756,8 +790,8 @@ document.getElementById("job-keywords-apply-btn").addEventListener("click", asyn
         actionSelect.dispatchEvent(new Event("change"));
       } else {
         jobState.discoveredFacts.push({
-          category: t.term,
-          bullet_text: sentence || "Has real hands-on experience with " + t.term + ".",
+          category: term,
+          bullet_text: sentence || "Has real hands-on experience with " + term + ".",
           source: "keyword_check",
         });
         resumeOnly += 1;
