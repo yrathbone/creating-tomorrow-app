@@ -1183,7 +1183,23 @@ function renderTruthNotice(notice) {
     }
     list.hidden = !heldMessage;
   }
-  el.hidden = !(message || heldMessage || restoredMessage);
+  // What the provenance check changed: lines put back to the candidate's own words for that role, or left out, and why.
+  const prov = notice && notice.provenance && notice.provenance.count > 0 ? notice.provenance : null;
+  const provMessage = prov && typeof prov.message === "string" ? prov.message : "";
+  show("job-truth-provenance-message", provMessage);
+  const provList = document.getElementById("job-truth-provenance");
+  if (provList) {
+    provList.textContent = "";
+    if (provMessage) {
+      for (const item of Array.isArray(prov.items) ? prov.items : []) {
+        const li = document.createElement("li");
+        li.textContent = "“" + item.text + "”: " + item.change + " (" + item.why + ")";
+        provList.appendChild(li);
+      }
+    }
+    provList.hidden = !provMessage;
+  }
+  el.hidden = !(message || heldMessage || restoredMessage || provMessage);
 }
 
 function resetAppliedBlock() {
