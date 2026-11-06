@@ -210,7 +210,8 @@ def audit_and_repair(resume: dict, profile_text: str, posting_text: str, facts_t
                 else:
                     words = stems(next((t for t in transferable_terms if is_term(t)), ""))
                     # a recombination only: every word is somewhere in the history, but never together. A label with a word the history never
-                    # uses ("Customer Service" for "assisted customers") is a genuine transferable skill and is left to the plan.
+                    # uses ("Customer Service" for "assisted customers") is not a recombination, so this rule leaves it alone; the posting-wording
+                    # rule above has already removed it when the posting names the label and no confirmed fact supports it.
                     if len(words) >= 2 and words <= whole and not any(words <= u for u in units):
                         why = "a transferable skill: its words never appear together in your history, so it is shown as relevant experience, not as a skill"
             if why:

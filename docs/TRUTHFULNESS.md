@@ -68,8 +68,11 @@ screen recording is not video editing, mentoring a colleague is not working with
   ("did you mean ..."), and listed in the saved truth review. Nothing true is deleted, and nothing in it is presented as verified.
 - **Summary:** a sentence that places the candidate in the posting's role name, or states a requirement the plan marks "none", is left out.
 - **Skills:** a "none" term, posting wording the history never states, or a transferable term whose words are each in the history but never
-  together ("Scheduling Calls") is removed unless the plan backs it. A transferable label with a word the history never uses ("Customer
-  Service" for "assisted customers") stays as a genuine transferable skill.
+  together ("Scheduling Calls") is removed unless the plan backs it. The recombination rule alone leaves a transferable label that has a
+  word the history never uses ("Customer Service" for "assisted customers") in place, but **the posting-wording rule removes it when the
+  posting names that label and no confirmed fact supports it**: "Customer Service" does not appear in Skills on the strength of "assisted
+  customers" alone. The candidate's real experience stays on the resume as their own bullet ("Assisted customers.") and stays in the report
+  as transferable experience with its evidence; a confirmed fact that states it puts the skill back. Relaxing this needs a separate review.
 - **Limits:** a paraphrase with at most one new word is kept (not verified); a single new fact worded with only words from the candidate's own
   history is not seen; the checks compare words, not meaning.
 

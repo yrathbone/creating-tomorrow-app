@@ -313,7 +313,8 @@ class H_UnmatchedRolesAreNamedNotDeleted(unittest.TestCase):
 
 
 class I_TransferableSkillsOnlyWhenTheirWordsAppearTogether(unittest.TestCase):
-    """PR-2c: "Scheduling Calls" (scheduling staff plus a call-centre job) must not print as a skill; genuine transferable labels stay."""
+    """PR-2c: "Scheduling Calls" (scheduling staff plus a call-centre job) must not print as a skill. The recombination rule leaves other transferable
+    labels alone; the posting-wording rule can still remove one the posting names (see class J)."""
     def plan(self, *extra):
         return PLAN + list(extra)
 
@@ -332,8 +333,10 @@ class I_TransferableSkillsOnlyWhenTheirWordsAppearTogether(unittest.TestCase):
         self.assertEqual(out["skills"], ["Team: New Hire Training"])
         self.assertEqual(report["skills_removed"], [])
 
-    def test_a_genuine_transferable_label_with_a_word_the_history_never_uses_stays(self):
-        profile = "EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n"
+    def test_the_recombination_rule_alone_leaves_a_label_with_a_word_the_history_never_uses_in_place(self):
+        # Only the recombination rule is under test here, so the posting does NOT name the label ("service" is absent from it). When the posting
+        # does name it and no confirmed fact supports it, the posting-wording rule removes it: class J.
+        profile ="EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n"
         resume = {"summary": "", "skills": ["Customer Service: Customer Service, Cash Handling"], "education": [], "certifications": [],
                   "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers."]}]}
         terms = [{"term": "customer service", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "assisted customers"},
@@ -357,6 +360,63 @@ class I_TransferableSkillsOnlyWhenTheirWordsAppearTogether(unittest.TestCase):
         out, report = audit(resume, terms=terms)
         self.assertEqual(out["skills"], ["Operations & Tools: Scheduling"])
         self.assertEqual(report["skills_removed"], ["Scheduling Calls"])
+
+
+class J_SearsCashierCustomerService(unittest.TestCase):
+    """The Sears cashier example (review of PR #61). The history says the candidate "assisted customers"; the posting asks for "Customer Service";
+    no confirmed fact says they did customer service. The label must not appear in Skills on that alone, and the real experience must stay
+    represented as transferable experience, never lost and never promoted to a verified skill."""
+    PROFILE = "EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n  * Resolved basic customer concerns.\n"
+    POSTING = "Bank Teller. Process deposits and payments accurately; handle cash; provide friendly customer service; resolve customer concerns."
+    TERMS = [{"term": "customer service", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "Cashier at Sears: assisted customers and resolved basic customer concerns"},
+             {"term": "cash handling", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "Cashier at Sears: handled cash payments"}]
+    WRITER = {"name": "Sam Ortiz", "contact": "Chicago, IL | sam@example.com", "headline": "", "summary": "",
+              "skills": ["Customer Service: Customer Service, Cash Handling"], "education": [], "certifications": [],
+              "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers.", "Handled cash payments."]}]}
+
+    def audit(self, facts=""):
+        return provenance.audit_and_repair(copy.deepcopy(self.WRITER), self.PROFILE, self.POSTING, facts, "Bank Teller", copy.deepcopy(self.TERMS))
+
+    def test_customer_service_is_not_printed_as_a_skill_on_assisted_customers_alone(self):
+        out, report = self.audit()
+        self.assertEqual(report["skills_removed"], ["Customer Service"])
+        self.assertEqual(out["skills"], ["Customer Service: Cash Handling"])
+        self.assertEqual(report["skills_detail"], [{"skill": "Customer Service", "why": "uses the posting's wording, which your history does not say"}])
+
+    def test_the_legitimate_customer_facing_experience_stays_as_his_own_bullet(self):
+        out, report = self.audit()
+        self.assertEqual(bullets(out, "Cashier"), ["Assisted customers.", "Handled cash payments."])
+        self.assertEqual(report["restored"] + report["held"], [])  # nothing about the experience itself was changed
+
+    def test_the_removal_is_reported_to_the_candidate_never_silent(self):
+        _, report = self.audit()
+        item = next(i for i in provenance.notice_text(report)["items"] if i["text"] == "Customer Service")
+        self.assertEqual((item["change"], item["why"]), ("removed from your skills", "uses the posting's wording, which your history does not say"))
+
+    def test_a_confirmed_fact_that_states_it_puts_the_skill_back(self):
+        out, report = self.audit(facts="- Provided customer service at the register")
+        self.assertEqual(out["skills"], ["Customer Service: Customer Service, Cash Handling"])
+        self.assertEqual(report["skills_removed"], [])
+
+    def test_through_the_build_it_is_off_the_skills_line_and_kept_as_transferable_experience(self):
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.TERMS)}
+            if name == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(self.WRITER)}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            result = term_pipeline.build_checked_resume(self.PROFILE, self.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+        resume = result["resume_data"]
+        skill_items = [i.strip().lower() for line in resume["skills"] for i in line.partition(":")[2].split(",")]
+        self.assertNotIn("customer service", skill_items)  # not in the verified Skills section
+        self.assertIn("cash handling", skill_items)
+        self.assertIn("Assisted customers.", bullets(resume, "Cashier"))  # the experience itself is still on the resume
+        entry = next(t for t in result["term_report"] if t["term"] == "customer service")
+        self.assertEqual(entry["support"], "transferable")  # still reported as transferable experience, with its evidence, never as verified
+        self.assertIn("assisted customers", entry["evidence"])
+        self.assertIn("Customer Service", result["truth_notice"]["provenance"]["skills_removed"])
 
 
 class E_ThroughTheBuild(unittest.TestCase):
