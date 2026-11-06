@@ -544,6 +544,73 @@ class K_HeadlineAndSkillsLabels(unittest.TestCase):
         self.assertEqual([i["change"] for i in notice["items"] if i["text"] == "Customer Service"], ["left out of your headline, skills group label and skills"])
 
 
+class L_GenericGroupLabelsAndLabelRemoval(unittest.TestCase):
+    """Review checks on PR #61 after Fix A and B. These CHARACTERISE what happens today (behaviour is NOT changed here) so the recommended handling of
+    generic organisational labels ("Support", "Tools") can be decided on evidence. See Group_Label_Review_2026-11-06.md."""
+    PROFILE = ("EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n"
+               "  * Resolved basic customer concerns.\n")
+
+    def labelled(self, label, posting, items=("POS Systems", "Cash Handling"), profile=None):
+        resume = {"summary": "", "headline": "", "skills": [f"{label}: {', '.join(items)}"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Handled cash payments."]}]}
+        return provenance.audit_and_repair(resume, profile or self.PROFILE, posting, "", "Bank Teller", [])
+
+    # --- what the comparison treats as filler: some generic words can never trigger the posting-wording rule, others can
+    def test_support_skills_and_experience_are_filler_and_never_change_a_label(self):
+        for label in ("Support", "Retail & Support", "Technical Support", "Core Skills", "Experience"):
+            out, report = self.labelled(label, "Bank Teller. Provide support, use your skills and experience, support customers.")
+            self.assertEqual(out["skills"], [f"{label}: POS Systems, Cash Handling"], label)
+            self.assertEqual(report["labels"], [], label)
+
+    def test_tools_is_a_content_word_so_a_tools_label_is_left_out_only_when_the_posting_says_it_and_the_history_never_does(self):
+        posting_with, posting_without = "Bank Teller. Use banking tools daily.", "Bank Teller. Handle cash accurately."
+        out, report = self.labelled("Tools", posting_with)
+        self.assertEqual(out["skills"], ["POS Systems, Cash Handling"])  # today: the heading goes, the skills stay
+        self.assertEqual([l["why"] for l in report["labels"]], ["uses the posting's wording, which your history does not say"])
+        out2, report2 = self.labelled("Tools", posting_without)
+        self.assertEqual(out2["skills"], ["Tools: POS Systems, Cash Handling"])
+        self.assertEqual(report2["labels"], [])
+        out3, _ = self.labelled("Tools", posting_with, profile=self.PROFILE + "  * Used the register tools to ring up sales.\n")
+        self.assertEqual(out3["skills"], ["Tools: POS Systems, Cash Handling"])  # the history uses the word: kept
+
+    def test_a_label_joining_a_generic_and_a_skill_like_part_keeps_the_part_that_passes(self):
+        out, report = self.labelled("Operations & Tools", "Bank Teller. Use banking tools daily.")
+        self.assertEqual(out["skills"], ["Operations: POS Systems, Cash Handling"])
+        self.assertEqual([l["text"] for l in report["labels"]], ["Tools"])
+
+    def test_skill_like_labels_are_treated_the_same_way_as_generic_ones_today(self):
+        out, report = self.labelled("Customer Service", "Bank Teller. Provide friendly customer service.")
+        self.assertEqual(out["skills"], ["POS Systems, Cash Handling"])
+        self.assertEqual([l["text"] for l in report["labels"]], ["Customer Service"])  # no distinction between a heading and a qualification yet
+
+    # --- check 3: a supported skill is never deleted only because its group label was removed
+    def test_supported_skills_are_never_deleted_because_their_label_was_removed(self):
+        items = ("Cash Handling", "Transaction Processing", "Problem Resolution")
+        posting = "Bank Teller. Provide friendly customer service; use banking tools; banking compliance; resolve customer concerns."
+        for label in ("Customer Service", "Tools", "Banking", "Customer Service & Banking", "Banking Tools & Compliance", "Cash Handling", "Support"):
+            out, _ = self.labelled(label, posting, items=items)
+            text = " | ".join(out["skills"])
+            for item in items:
+                self.assertIn(item, text, f"{item} lost under label {label!r}")
+
+
+class M_HeadlineAndSkillsLabelsOnScreenAndInTheWordFile(unittest.TestCase):
+    """Review check 4 on the Marcus fixture: the headline and each Skills line are the same words in the saved resume data (the screen) and in the
+    generated Word document, with the unsupported items left out of both."""
+    def test_marcus_headline_and_skills_lines_match_between_the_resume_data_and_the_word_file(self):
+        writer = {**copy.deepcopy(WRITER_OUTPUT), "headline": "Customer Service Professional | De-Escalation & Complaint Resolution | Customer Success Specialist"}
+        with mock.patch.object(job_match, "_call_with_retry", lambda name, *a, **k: {"terms": copy.deepcopy(PLAN)} if name == "career_term_plan" else {"resume_data": copy.deepcopy(writer)}):
+            result = term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Marcus Bell", "Naperville, IL | marcus.bell@example.com")
+        resume = result["resume_data"]
+        self.assertEqual(resume["headline"], "Customer Service Professional | De-Escalation & Complaint Resolution")  # the role-name phrase is gone
+        self.assertNotIn("Customer Success", " ".join(resume["skills"]))
+        paragraphs = K_HeadlineAndSkillsLabels.docx_text(resume).split("\n")
+        self.assertIn(resume["headline"], paragraphs)  # the Word file prints exactly the headline on screen
+        for line in resume["skills"]:
+            self.assertTrue(any(p.replace("\t", " ").strip() == line.strip() for p in paragraphs), line)  # and exactly each Skills line, label and items
+        self.assertNotIn("Customer Success", "\n".join(paragraphs))
+
+
 class E_ThroughTheBuild(unittest.TestCase):
     def build(self, terms=PLAN):
         def fake(name, system, user, tool, extract=None):
