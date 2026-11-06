@@ -326,7 +326,10 @@ class DanielReyes(unittest.TestCase):
 # ============================================================================================= Sears cashier to bank teller
 class SearsCashierToBankTeller(unittest.TestCase):
     def test_confirmed_cash_handling_and_customer_service_are_kept_and_highlighted(self):
-        result, _ = run(SEARS_PROFILE, SEARS_POSTING, SEARS_PLAN, SEARS_GOOD, edited=SEARS_GOOD)
+        # "Customer Service" is kept because the candidate CONFIRMED it (a confirmed fact states it); "assisted customers" alone does not support
+        # the label (see test_provenance.J_SearsCashierCustomerService and K_HeadlineAndLabels).
+        confirmed = [{"category": "Customer service", "bullet_text": "Provided friendly customer service to shoppers at the register.", "source": "interview"}]
+        result, _ = run(SEARS_PROFILE, SEARS_POSTING, SEARS_PLAN, SEARS_GOOD, facts=confirmed, edited=SEARS_GOOD)
         resume = result["resume_data"]
         skills = skills_text(resume)
         for kept in ("customer service", "cash handling", "transaction processing", "problem resolution"):
@@ -344,7 +347,8 @@ class SearsCashierToBankTeller(unittest.TestCase):
         skills, text = skills_text(resume), prose(resume)
         for gone in ("bank account servicing", "regulatory banking compliance", "cash drawer reconciliation", "managed customer bank accounts", "regulated banking", "financial compliance", "reconciled the cash drawer"):
             self.assertNotIn(gone, skills + " " + text, gone)
-        self.assertIn("customer service", skills)  # the genuine skills survive the cleanup
+        self.assertNotIn("customer service", skills)  # no confirmed fact: "assisted customers" alone does not make it a verified skill (neither item nor label)
+        self.assertIn("cash handling", skills)  # the genuine transferable skills the history states survive the cleanup
         self.assertIn("problem resolution", skills)
 
     def test_when_the_edit_pass_is_unavailable_the_unsupported_claims_are_still_reported(self):
@@ -352,7 +356,8 @@ class SearsCashierToBankTeller(unittest.TestCase):
         skills = skills_text(result["resume_data"])
         self.assertNotIn("bank account servicing", skills)
         self.assertNotIn("cash drawer reconciliation", skills)
-        self.assertIn("customer service", skills)
+        self.assertNotIn("customer service", skills)  # no confirmed fact: not a verified skill; the experience stays as the candidate's own bullet
+        self.assertIn("problem resolution", skills)
         struck = " ".join(i["text"].lower() for i in result["claims_struck"])
         self.assertIn("regulatory banking compliance", struck)  # the summary sentence naming it was struck by code and reported
         self.assertNotIn("regulatory banking compliance", prose(result["resume_data"]))
@@ -480,7 +485,7 @@ class TransferableIsShownAsRelevantNotAsAGap(unittest.TestCase):
     def test_a_transferable_term_is_reported_as_transferable_until_it_really_appears_on_the_resume(self):
         result, _ = run(SEARS_PROFILE, SEARS_POSTING, SEARS_PLAN, SEARS_GOOD, edited=SEARS_GOOD)
         status = {r["term"]: r["status"] for r in result["term_report"]}
-        self.assertEqual(status["customer service"], "on_resume")  # the candidate's own skill, present on the resume
+        self.assertEqual(status["customer service"], "transferable")  # no confirmed fact: shown as relevant experience, not claimed on the resume
         self.assertEqual(status["bank account servicing"], "not_in_profile")  # an honest gap
         plain = copy.deepcopy(SEARS_GOOD)
         plain["headline"], plain["summary"] = "Customer Service", "Retail professional."

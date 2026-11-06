@@ -24,6 +24,7 @@ from career import resume_quality as rq
 
 _ROLE_HEADER = re.compile(r"^-\s+(.+?)\s+at\s+(.+?)(?:\s+\(([^)]*)\))?\s*$")
 _SECTION = re.compile(r"^[A-Z][A-Z &()/\-]+(?:\s*\([^)]*\))?:\s*$")
+_PARTS = re.compile(r"\s*(?:&|/|,|\band\b)\s*", re.I)
 _POSITIONING = re.compile(r"\b(?:well|ideally|perfectly|uniquely)\s+suited\b|\b(?:strong|great|good|ideal)\s+(?:fit|candidate|match)\b|\bready\s+to\s+(?:join|contribute|step)\b|\bpassionate\s+about\b", re.I)
 
 
@@ -122,7 +123,7 @@ def audit_and_repair(resume: dict, profile_text: str, posting_text: str, facts_t
     # the places a set of words can appear together in the candidate's history: a saved sentence, a skill, a certificate, a school, a confirmed fact
     units = [stems(s) for r in roles for s in r["sentences"]] + [stems(x) for x in (general + "\n" + (facts_text or "")).splitlines() if x.strip()]
     posting = stems(posting_text)
-    report = {"restored": [], "held": [], "skills_removed": [], "skills_detail": [], "notes": [], "unverified_roles": []}
+    report = {"restored": [], "held": [], "skills_removed": [], "skills_detail": [], "labels": [], "notes": [], "unverified_roles": []}
     out = {**resume, "experience": [{**j, "bullets": list(j.get("bullets") or [])} for j in resume.get("experience") or []]}
 
     # ---- bullets: the same role only
@@ -187,61 +188,110 @@ def audit_and_repair(resume: dict, profile_text: str, posting_text: str, facts_t
     if len(keep_sentences) != len(sentences):
         out["summary"] = " ".join(keep_sentences)
 
-    # ---- skills: never a requirement the history does not establish, posting wording it never states, or a transferable skill whose words
-    #      never appear together in it ("Scheduling Calls" from scheduling staff and a call-centre job). A skill the plan backs stays.
+    # ---- the ONE evidence decision for a short label (a skill, a headline phrase, a skills group label). Never a requirement the history does not
+    #      establish, posting wording it never states, or a transferable term whose words never appear together in it ("Scheduling Calls" from
+    #      scheduling staff and a call-centre job). A label the plan backs (it IS a literal or related term) stays. Returns the reason, or "".
+    def unsupported(text: str) -> str:
+        def is_term(t: str) -> bool:
+            return term_in_text(t, text) or rq.distinct_roots(t) == rq.distinct_roots(text)
+
+        # backed means the label IS a backed term; one that merely contains a backed term and adds a word ('Scheduling Calls') is checked on its own
+        if any(rq.distinct_roots(t) == rq.distinct_roots(text) for t in backed_terms):
+            return ""
+        if any(is_term(t) for t in none_terms):
+            return "a requirement your history does not establish"
+        if (stems(text) - whole) & posting:
+            return "uses the posting's wording, which your history does not say"
+        words = stems(next((t for t in transferable_terms if is_term(t)), ""))
+        # a recombination only: every word is somewhere in the history, but never together. A label with a word the history never uses
+        # ("Customer Service" for "assisted customers") is not a recombination, so this rule leaves it alone; the posting-wording rule above
+        # has already removed it when the posting names the label and no confirmed fact supports it.
+        if len(words) >= 2 and words <= whole and not any(words <= u for u in units):
+            return "a transferable skill: its words never appear together in your history, so it is shown as relevant experience, not as a skill"
+        return ""
+
+    def screen(text: str, where: str) -> str:
+        """A headline phrase or a group label may join several ideas ("De-Escalation & Complaint Resolution"). Each part gets the decision; only the
+        unsupported parts go, the rest is kept. Returns the text to print ("" when nothing is left)."""
+        parts = [x.strip() for x in _PARTS.split(text) if x.strip()]
+        kept, dropped = [], []
+        for part in parts:
+            why = unsupported(part)
+            (dropped if why else kept).append((part, why))
+        for part, why in dropped:
+            report["labels"].append({"where": where, "text": part, "why": why})
+        return text if not dropped else " & ".join(p for p, _ in kept)
+
+    # ---- headline: every phrase between the bars gets the decision
+    headline = str(out.get("headline", "") or "")
+    if headline.strip():
+        phrases = [x.strip() for x in headline.split("|") if x.strip()]
+        shown = [screen(x, "headline") for x in phrases]
+        if shown != phrases:
+            out["headline"] = " | ".join(x for x in shown if x)
+
+    # ---- skills: each item, and each group label, gets the decision. Removing a label never removes the supported skills under it.
     new_lines = []
+    changed = False
     for line in out.get("skills") or []:
         label, sep, rest = line.partition(":")
         grouped = bool(sep) and len(label) <= 40
         items = [i.strip() for i in (rest if grouped else line).split(",") if i.strip()]
         kept = []
         for item in items:
-            def is_term(t: str, item: str = item) -> bool:
-                return term_in_text(t, item) or rq.distinct_roots(t) == rq.distinct_roots(item)
-
-            # backed means the skill IS a backed term; an item that merely contains one and adds a word ('Scheduling Calls') is checked on its own
-            backed = any(rq.distinct_roots(t) == rq.distinct_roots(item) for t in backed_terms)
-            why = ""
-            if not backed:
-                if any(is_term(t) for t in none_terms):
-                    why = "a requirement your history does not establish"
-                elif (stems(item) - whole) & posting:
-                    why = "uses the posting's wording, which your history does not say"
-                else:
-                    words = stems(next((t for t in transferable_terms if is_term(t)), ""))
-                    # a recombination only: every word is somewhere in the history, but never together. A label with a word the history never
-                    # uses ("Customer Service" for "assisted customers") is not a recombination, so this rule leaves it alone; the posting-wording
-                    # rule above has already removed it when the posting names the label and no confirmed fact supports it.
-                    if len(words) >= 2 and words <= whole and not any(words <= u for u in units):
-                        why = "a transferable skill: its words never appear together in your history, so it is shown as relevant experience, not as a skill"
+            why = unsupported(item)
             if why:
                 report["skills_removed"].append(item)
                 report["skills_detail"].append({"skill": item, "why": why})
+                changed = True
             else:
                 kept.append(item)
+        shown_label = screen(label.strip(), "skills group label") if grouped else ""
+        if grouped and shown_label != label.strip():
+            changed = True
         if kept:
-            new_lines.append(f"{label.strip()}: {', '.join(kept)}" if grouped else ", ".join(kept))
-    if report["skills_removed"]:
+            new_lines.append(f"{shown_label}: {', '.join(kept)}" if grouped and shown_label else ", ".join(kept))
+    if changed:
         out["skills"] = new_lines
     return out, report
 
 
+def _removed_labels(report: dict) -> list[dict]:
+    """Every label (a skill, a headline phrase, a group label) the check left out, ONCE per distinct label with every place it was left out."""
+    found: dict[frozenset, dict] = {}
+    detail = {d["skill"]: d["why"] for d in report.get("skills_detail") or []}
+    rows = ([(l["text"], l["where"], l["why"]) for l in report.get("labels") or []]
+            + [(s, "skills", detail.get(s, "not established by your own history")) for s in report.get("skills_removed") or []])
+    for text, where, why in rows:
+        key = frozenset(rq.distinct_roots(text)) or frozenset({text.lower()})
+        entry = found.setdefault(key, {"text": text, "why": why, "where": []})
+        if where not in entry["where"]:
+            entry["where"].append(where)
+    return list(found.values())
+
+
 def notice_text(report: dict) -> dict:
     """The plain message and the list a candidate sees, or empty strings when nothing needs saying. Everything listed is a change, a line kept
-    but not verified, or a role that could not be checked; none of it is ever presented as verified."""
-    restored, held, skills = report.get("restored") or [], report.get("held") or [], report.get("skills_removed") or []
+    but not verified, or a role that could not be checked; none of it is ever presented as verified. A label left out in several places (the
+    headline, a group label and the skills) is one item and one count."""
+    restored, held = report.get("restored") or [], report.get("held") or []
+    labels = _removed_labels(report)
     notes, roles = report.get("notes") or [], report.get("unverified_roles") or []
-    changes = len(restored) + len(held) + len(skills)
+    changes = len(restored) + len(held) + len(labels)
     if not (changes or notes or roles):
         return {"count": 0, "message": "", "items": []}
-    detail = {d["skill"]: d["why"] for d in report.get("skills_detail") or []}
+
+    def places(where: list[str]) -> str:
+        names = [{"headline": "headline", "skills group label": "skills group label", "skills": "skills"}.get(w, w) for w in where]
+        return " and ".join(names) if len(names) < 3 else ", ".join(names[:-1]) + " and " + names[-1]
+
     items = ([{"text": r["before"], "change": ("now reads: " + r["after"]) if r["after"] else "left out (already said elsewhere)", "why": r["basis"]} for r in restored]
              + [{"text": h["text"], "change": "left out", "why": h["problem"]} for h in held]
-             + [{"text": s, "change": "removed from your skills", "why": detail.get(s, "not established by your own history")} for s in skills]
-             + [{"text": r["title"] + (" — " + r["subtitle"] if r["subtitle"] else ""), "change": "kept, not checked",
+             + [{"text": l["text"], "change": "left out of your " + places(l["where"]), "why": l["why"]} for l in labels]
+             + [{"text": r["title"] + (" \u2014 " + r["subtitle"] if r["subtitle"] else ""), "change": "kept, not checked",
                  "why": "we could not match this role to your saved profile" + (f" (did you mean {r['nearest']}?)" if r["nearest"] else "") + ", so its lines are not verified"} for r in roles]
              + [{"text": n["text"], "change": "kept, not verified", "why": "wording that is not word for word in your entry (" + ", ".join(n["words"]) + ")"} for n in notes])
-    parts = ["We checked your résumé against what you wrote in each role."]
+    parts = ["We checked your r\u00e9sum\u00e9 against what you wrote in each role."]
     if changes:
         noun = "statement" if changes == 1 else "statements"
         parts.append(f"{changes} {noun} {'was' if changes == 1 else 'were'} not in your own words for that role, so we "

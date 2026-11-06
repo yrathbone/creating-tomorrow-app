@@ -105,7 +105,8 @@ class StrikeUnsupportedClaims(unittest.TestCase):
             self.assertNotIn(gone, text, gone)
         self.assertEqual(len(result["claims_struck"]), 3)
         self.assertEqual(result["claim_review"], [])
-        self.assertIn("customer service", skills_text(result["resume_data"]))  # the genuine transferable skills stay
+        self.assertNotIn("customer service", skills_text(result["resume_data"]))  # no confirmed fact: not a verified skill
+        self.assertIn("problem resolution", skills_text(result["resume_data"]))  # the genuine skill the history states stays, now without the unsupported group label
 
     def test_sears_genuine_wording_is_not_struck(self):
         result, _ = run(SEARS_PROFILE, SEARS_POSTING, SEARS_PLAN, copy.deepcopy(SEARS_GOOD), fail_edit=True)

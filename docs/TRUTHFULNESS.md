@@ -73,6 +73,11 @@ screen recording is not video editing, mentoring a colleague is not working with
   posting names that label and no confirmed fact supports it**: "Customer Service" does not appear in Skills on the strength of "assisted
   customers" alone. The candidate's real experience stays on the resume as their own bullet ("Assisted customers.") and stays in the report
   as transferable experience with its evidence; a confirmed fact that states it puts the skill back. Relaxing this needs a separate review.
+- **Headline and Skills group labels:** the same decision as for a Skills item is applied to each headline phrase (between the bars) and to each
+  group label; a phrase or label joining several ideas ("A & B") keeps its supported parts. An unsupported phrase or label is left out and
+  reported in the notice (once per distinct label, with every place it was left out); an unsupported group label never removes the supported
+  skills under it (the line prints without the label); an empty headline is accepted. A confirmed fact that states the label keeps it eligible.
+  The summary is deliberately NOT filtered this way yet (a separate design and false-positive review is pending).
 - **Limits:** a paraphrase with at most one new word is kept (not verified); a single new fact worded with only words from the candidate's own
   history is not seen; the checks compare words, not meaning.
 

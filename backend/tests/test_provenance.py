@@ -275,7 +275,8 @@ class G_NewFactualAssertionsAreNeverKeptAsWritten(unittest.TestCase):
         notice = provenance.notice_text(report)
         self.assertNotIn("verified:", notice["message"])
         for item in notice["items"]:
-            self.assertIn(item["change"].split(":")[0].split(" (")[0], ("now reads", "left out", "removed from your skills", "kept, not checked", "kept, not verified"))
+            head = item["change"].split(":")[0].split(" (")[0]
+            self.assertTrue(head in ("now reads", "left out", "kept, not checked", "kept, not verified") or head.startswith("left out of your "), head)
 
 
 class H_UnmatchedRolesAreNamedNotDeleted(unittest.TestCase):
@@ -380,8 +381,9 @@ class J_SearsCashierCustomerService(unittest.TestCase):
     def test_customer_service_is_not_printed_as_a_skill_on_assisted_customers_alone(self):
         out, report = self.audit()
         self.assertEqual(report["skills_removed"], ["Customer Service"])
-        self.assertEqual(out["skills"], ["Customer Service: Cash Handling"])
+        self.assertEqual(out["skills"], ["Cash Handling"])  # the group label is left out too; the supported skill under it stays
         self.assertEqual(report["skills_detail"], [{"skill": "Customer Service", "why": "uses the posting's wording, which your history does not say"}])
+        self.assertEqual(report["labels"], [{"where": "skills group label", "text": "Customer Service", "why": "uses the posting's wording, which your history does not say"}])
 
     def test_the_legitimate_customer_facing_experience_stays_as_his_own_bullet(self):
         out, report = self.audit()
@@ -390,8 +392,9 @@ class J_SearsCashierCustomerService(unittest.TestCase):
 
     def test_the_removal_is_reported_to_the_candidate_never_silent(self):
         _, report = self.audit()
-        item = next(i for i in provenance.notice_text(report)["items"] if i["text"] == "Customer Service")
-        self.assertEqual((item["change"], item["why"]), ("removed from your skills", "uses the posting's wording, which your history does not say"))
+        items = [i for i in provenance.notice_text(report)["items"] if i["text"] == "Customer Service"]
+        self.assertEqual(len(items), 1)  # left out of the group label AND the skills: one item, not two
+        self.assertEqual((items[0]["change"], items[0]["why"]), ("left out of your skills group label and skills", "uses the posting's wording, which your history does not say"))
 
     def test_a_confirmed_fact_that_states_it_puts_the_skill_back(self):
         out, report = self.audit(facts="- Provided customer service at the register")
@@ -409,7 +412,8 @@ class J_SearsCashierCustomerService(unittest.TestCase):
         with mock.patch.object(job_match, "_call_with_retry", fake):
             result = term_pipeline.build_checked_resume(self.PROFILE, self.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
         resume = result["resume_data"]
-        skill_items = [i.strip().lower() for line in resume["skills"] for i in line.partition(":")[2].split(",")]
+        skill_items = [i.strip().lower() for line in resume["skills"] for i in (line.partition(":")[2] if ":" in line else line).split(",")]
+        self.assertFalse(any(line.lower().startswith("customer service") for line in resume["skills"]), "no 'Customer Service' group label either")
         self.assertNotIn("customer service", skill_items)  # not in the verified Skills section
         self.assertIn("cash handling", skill_items)
         self.assertIn("Assisted customers.", bullets(resume, "Cashier"))  # the experience itself is still on the resume
@@ -417,6 +421,127 @@ class J_SearsCashierCustomerService(unittest.TestCase):
         self.assertEqual(entry["support"], "transferable")  # still reported as transferable experience, with its evidence, never as verified
         self.assertIn("assisted customers", entry["evidence"])
         self.assertIn("Customer Service", result["truth_notice"]["provenance"]["skills_removed"])
+
+
+class K_HeadlineAndSkillsLabels(unittest.TestCase):
+    """Fix A (headline) and Fix B (skills group labels): the existing Skills-item evidence decision, applied to every headline phrase and every group
+    label. Eight scenarios from the approved plan, with the Sears cashier and the Marcus live-run fixtures. Summary filtering is NOT broadened (Fix C is
+    deferred): the summary is deliberately outside the same-standard test below."""
+    S = J_SearsCashierCustomerService
+
+    def sears(self, headline="Customer Service | Cash Handling | Transaction Accuracy", skills=None, bullets_=None, facts=""):
+        resume = copy.deepcopy(self.S.WRITER)
+        resume["headline"] = headline
+        resume["skills"] = skills if skills is not None else ["Customer Service: Customer Service, Cash Handling"]
+        if bullets_ is not None:
+            resume["experience"][0]["bullets"] = bullets_
+        return provenance.audit_and_repair(resume, self.S.PROFILE, self.S.POSTING, facts, "Bank Teller", copy.deepcopy(self.S.TERMS))
+
+    # 1. Sears, no confirmed fact
+    def test_1_sears_headline_and_label_do_not_present_customer_service_without_a_confirmed_fact(self):
+        out, report = self.sears()
+        self.assertEqual(out["headline"], "Cash Handling")  # "Customer Service" and "Transaction Accuracy" use the posting's wording, which the history does not say
+        self.assertEqual(out["skills"], ["Cash Handling"])
+        self.assertEqual(bullets(out, "Cashier"), ["Assisted customers.", "Handled cash payments."])  # his own words stay
+        self.assertEqual({(l["where"], l["text"]) for l in report["labels"]},
+                         {("headline", "Customer Service"), ("headline", "Transaction Accuracy"), ("skills group label", "Customer Service")})
+
+    # 2. Confirmed fact keeps the label eligible
+    def test_2_a_confirmed_fact_keeps_the_headline_phrase_and_the_label(self):
+        out, report = self.sears(facts="- Provided customer service at the register")
+        self.assertIn("Customer Service", out["headline"].split(" | "))
+        self.assertEqual(out["skills"], ["Customer Service: Customer Service, Cash Handling"])
+        self.assertNotIn("Customer Service", [l["text"] for l in report["labels"]])
+
+    # 3. Marcus live fixture: his headline and labels are untouched
+    def test_3_marcus_headline_and_labels_are_unchanged(self):
+        out, report = audit()
+        self.assertEqual(out["headline"], WRITER_OUTPUT["headline"])
+        self.assertEqual([l for l in report["labels"] if l["where"] == "headline"], [])
+        self.assertEqual([line.partition(":")[0] for line in out["skills"]], [line.partition(":")[0] for line in WRITER_OUTPUT["skills"]])
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["headline"] = "Customer Service Professional | De-Escalation & Complaint Resolution | Retail Team Leadership"
+        out2, report2 = audit(resume)
+        self.assertEqual(out2["headline"], resume["headline"])  # his real headline from the live run passes phrase by phrase
+        self.assertEqual(report2["labels"], [])
+
+    # 4. Role-name, none-term and backed phrases
+    def test_4_role_name_and_no_evidence_phrases_are_left_out_and_a_backed_phrase_stays(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["headline"] = "Customer Success Specialist | Salesforce Administrator | De-Escalation"
+        out, report = audit(resume)
+        self.assertEqual(out["headline"], "De-Escalation")
+        why = {l["text"]: l["why"] for l in report["labels"]}
+        self.assertEqual(why["Salesforce Administrator"], "a requirement your history does not establish")
+        self.assertIn("posting's wording", why["Customer Success Specialist"])
+
+    # 5. Empty headline, on screen and in the Word file
+    def test_5_an_empty_headline_is_accepted_and_the_word_file_builds(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["headline"] = "Customer Success Specialist | Salesforce Administrator"
+        out, _ = audit(resume)
+        self.assertEqual(out["headline"], "")
+        text = self.docx_text(out)
+        self.assertNotIn("Salesforce", text)
+        self.assertIn("Shift Lead", text)
+
+    @staticmethod
+    def docx_text(resume):
+        import io
+        from docx import Document
+        import resume_builder as rb
+        doc = Document(io.BytesIO(rb.build_resume_bytes({**resume, "skills_style": "grouped"}, ats_mode=False, template="classic")))
+        return "\n".join(p.text for p in doc.paragraphs)
+
+    # 6. The same label is handled the same way everywhere except the summary (deferred)
+    def test_6_the_same_unsupported_label_is_absent_from_headline_skills_label_skills_and_bullets(self):
+        out, report = self.sears(headline="Customer Service | Cash Handling", skills=["Customer Service: Customer Service, Cash Handling"],
+                                 bullets_=["Assisted customers.", "Provided friendly customer service"])
+        everywhere = " | ".join([out["headline"]] + out["skills"] + bullets(out, "Cashier")).lower()
+        self.assertNotIn("customer service", everywhere)
+        self.assertIn("cash handling", everywhere)
+        self.assertIn("assisted customers.", everywhere)  # his own words stay
+
+    # 7. Removing a label never removes the supported skills under it, and a partly supported label keeps its supported part
+    def test_7_a_removed_label_keeps_the_supported_skills_under_it_and_a_partly_supported_label_keeps_its_part(self):
+        out, _ = self.sears(skills=["Customer Service: Cash Handling, Transaction Processing"])
+        self.assertEqual(out["skills"], ["Cash Handling, Transaction Processing"])
+        out2, report2 = self.sears(headline="Cash Handling", skills=["Customer Service & Cash Handling: Cash Handling, Transaction Processing"])
+        self.assertEqual(out2["skills"], ["Cash Handling: Cash Handling, Transaction Processing"])
+        self.assertEqual([l["text"] for l in report2["labels"]], ["Customer Service"])
+
+    # 8. Deduplicated notice
+    def test_8_a_label_left_out_in_several_places_is_one_notice_item_and_one_count(self):
+        _, report = self.sears(headline="Customer Service | Cash Handling")
+        notice = provenance.notice_text(report)
+        items = [i for i in notice["items"] if i["text"] == "Customer Service"]
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["change"], "left out of your headline, skills group label and skills")
+        self.assertEqual(notice["count"], 1)
+        self.assertIn("1 statement was not in your own words", notice["message"])
+
+    # Output locations: on-screen content and the Word file both carry the correction
+    def test_the_on_screen_resume_and_the_word_file_both_reflect_the_corrected_headline_and_skills(self):
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.S.TERMS)}
+            if name == "career_job_build_resume":
+                return {"resume_data": {**copy.deepcopy(self.S.WRITER), "headline": "Customer Service | Cash Handling | Transaction Accuracy"}}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            result = term_pipeline.build_checked_resume(self.S.PROFILE, self.S.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+        resume = result["resume_data"]
+        self.assertEqual(resume["headline"], "Cash Handling")  # what the page and the saved version carry
+        self.assertEqual(resume["skills"], ["Cash Handling"])
+        text = self.docx_text(resume)  # what the Word file prints
+        self.assertNotIn("customer service", text.lower())
+        self.assertIn("Cash Handling", text)
+        self.assertIn("Assisted customers.", text)
+        entry = next(t for t in result["term_report"] if t["term"] == "customer service")
+        self.assertEqual((entry["support"], entry["status"]), ("transferable", "transferable"))  # still reported as relevant experience, never as on the resume
+        notice = result["truth_notice"]["provenance"]
+        self.assertEqual([i["change"] for i in notice["items"] if i["text"] == "Customer Service"], ["left out of your headline, skills group label and skills"])
 
 
 class E_ThroughTheBuild(unittest.TestCase):
