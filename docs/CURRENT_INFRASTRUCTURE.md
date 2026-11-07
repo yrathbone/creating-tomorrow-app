@@ -397,3 +397,7 @@ needed at all).
   failures in the other three tools. This wasn't something previously
   documented anywhere — it only became visible by reading every tool
   module side-by-side for this audit.
+
+## Release governance note (2026-11-07)
+
+As of 2026-11-07 the Render web service `creating-tomorrow` deploys manually: `render.yaml` sets `autoDeployTrigger: "off"` (PR #62). Merging to `main` does not deploy; a person starts a deploy from the Render dashboard (Manual Deploy). This note is a documentation-only change used to verify that a merge to `main` starts no deployment (audit ID S-18).
