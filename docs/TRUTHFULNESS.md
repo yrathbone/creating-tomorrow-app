@@ -49,13 +49,45 @@ screen recording is not video editing, mentoring a colleague is not working with
   the candidate's profile or confirmed facts is removed, with the reason `figure not in the candidate's evidence` in `claims_struck`. A number
   the evidence spells out ("five sections") also supplies its digit form, so "5 sections" is not mistaken for an invented figure. A true fact in
   the same sentence as the invented figure goes with it.
-- Still only flagged, not struck: invented **names** (tools, employers; the name check has a higher false-positive risk), which the quality
-  check hands to the edit pass.
+- Invented **names** (tools, employers) are still only flagged by this strike step, but the provenance check below now puts a bullet that adds
+  them back to the candidate's own words, so they no longer reach the resume as written.
 - Paraphrases are caught when a sentence uses most of an unsupported term's distinctive words (at least two, and two thirds) and at least one
   of them is not in the candidate's own evidence ("Managed customer bank accounts" for "bank account servicing"; "subject matter resource" for
   "subject matter experts"). A sentence made only of the candidate's own words is never struck by this rule.
-- Still not caught: a paraphrase that shares too few words with the planned term ("Polished each lesson recording"), and an invented **duty**
-  that is not a posting term and not a denied topic.
+- Closed by the provenance check below: a paraphrase that shares too few words with the planned term ("Polished each lesson recording") and
+  an invented **duty** that is not a posting term and not a denied topic. A bullet with two or more new content words, or any word borrowed
+  from another role or the posting, is put back to the candidate's own sentences for that role or held out; it is never kept as written.
+
+## Provenance: where each statement came from (`career/provenance.py`)
+
+- **The rule:** a substantive claim may appear only if the candidate's own history states it, and a bullet only in the role where it was stated.
+- **Bullets** are compared with the saved entry of the same role. A harmless paraphrase (at most one new word, nothing borrowed or from the
+  posting) is kept and listed as "kept, not verified". Anything else is a new factual assertion and is put back to all of the candidate's own
+  sentences it draws on, or held out. A duplicate of a line already there is dropped.
+- **Unmatched roles:** a resume role that cannot be matched to a saved role (title and employer) is kept, named in the notice as not checked
+  ("did you mean ..."), and listed in the saved truth review. Nothing true is deleted, and nothing in it is presented as verified.
+- **Summary:** a sentence that places the candidate in the posting's role name, or states a requirement the plan marks "none", is left out.
+- **Skills:** a "none" term, posting wording the history never states, or a transferable term whose words are each in the history but never
+  together ("Scheduling Calls") is removed unless the plan backs it. The recombination rule alone leaves a transferable label that has a
+  word the history never uses ("Customer Service" for "assisted customers") in place, but **the posting-wording rule removes it when the
+  posting names that label and no confirmed fact supports it**: "Customer Service" does not appear in Skills on the strength of "assisted
+  customers" alone. The candidate's real experience stays on the resume as their own bullet ("Assisted customers.") and stays in the report
+  as transferable experience with its evidence; a confirmed fact that states it puts the skill back. Relaxing this needs a separate review.
+- **Headline and Skills group labels:** the same decision as for a Skills item is applied to each headline phrase (between the bars) and to each
+  group label; a phrase or label joining several ideas ("A & B") keeps its supported parts. An unsupported phrase or label is left out and
+  reported in the notice (once per distinct label, with every place it was left out); an unsupported group label never removes the supported
+  skills under it (the line prints without the label); an empty headline is accepted. A confirmed fact that states the label keeps it eligible.
+  **Organising headings:** a Skills group label part that is only a generic category word is kept even when the posting uses the word and the
+  history does not ("Tools", "Operations & Tools", "Team", "Platforms & Systems"). It must pass four guards: (1) every content word is on the closed
+  allowlist (tools, operations, team, platforms, systems, technical, technology, applications, software, core, key, additional, other, general,
+  environments; nothing is added automatically and an unknown word never qualifies); (2) it does not equal, contain or sit inside any plan term at
+  any support level; (3) a label of two or more words does not appear as a phrase in the posting text (so an untracked "Technical Support" is still
+  checked); (4) it is not made only of the posting's job-title words. Matching is on whole words with capitalisation and punctuation normalised.
+  Anything else, such as "Customer Service" or "Customer Success", keeps the full evidence decision. This exception applies to Skills group labels
+  only, never to headline phrases, summaries, skill items or bullets.
+  The summary is deliberately NOT filtered this way yet (a separate design and false-positive review is pending).
+- **Limits:** a paraphrase with at most one new word is kept (not verified); a single new fact worded with only words from the candidate's own
+  history is not seen; the checks compare words, not meaning.
 
 ## Known limits (be honest about these)
 

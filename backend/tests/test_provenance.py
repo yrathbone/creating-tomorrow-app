@@ -1,0 +1,883 @@
+"""Priority 1, PR-2: where each statement on a finished resume came from. A bullet is compared with the saved entry of its OWN role, the summary and
+Skills with the plan. A line the candidate's history does not state is put back to their own sentence for that role, or left out, and reported;
+nothing is rewritten by a model. Built on the fictional Marcus Bell live run of 2026-11-06 (the writer wove posting vocabulary into bullets and
+borrowed phrases from other roles). Saved data, stand-in AI, no live calls.
+
+Run from the backend folder:  py -3.12 -m unittest discover -s tests -t .
+"""
+import copy
+import os
+import unittest
+from unittest import mock
+
+import abuse_guard
+from career import job_match, provenance, term_pipeline
+from models import ResumeVersion
+from tests.test_ownership import SUB_A, OwnershipTestCase
+
+PROFILE = """EXPERIENCE:
+- Shift Lead at Hearthside Home Goods (2021 – Present)
+  * Opened and closed the store and kept the daily cash count accurate
+  * Scheduled 6 associates each week
+  * Handled returns and customer complaints, about 20 a week
+  * Trained new hires on the POS system and store procedures
+  * Counted inventory weekly
+- Sales Associate at Hearthside Home Goods (2016 – 2021)
+  * Helped customers choose products and explained features
+  * Processed purchases and returns on the POS system
+  * Resolved upset customers calmly using de-escalation
+- Call Centre Agent (part-time) at Brightline Direct (2015 – 2016)
+  * Took inbound customer orders by phone for 4 months
+  * Confirmed order details and answered delivery questions
+
+SKILLS (not tied to one specific role):
+- Scheduling
+- De-escalation
+- POS systems
+
+EDUCATION:
+- Westfield High School: High School Diploma (2014)
+
+CERTIFICATIONS:
+- Customer Service Fundamentals — Online course (2023)"""
+
+POSTING = ("Customer Success Associate (SaaS)\nRun onboarding calls with new customers, answer customer questions in writing, resolve support cases in our "
+           "ticketing software, keep customers happy during renewals and calm upset customers with de-escalation. Salesforce or HubSpot or a similar CRM. "
+           "A customer service certificate (for example Customer Service Fundamentals) or equivalent customer-facing experience. Strong written "
+           "communication. SaaS experience is a plus. Scheduling calls and managing your own calendar.")
+
+WRITER_OUTPUT = {
+    "name": "Marcus Bell", "contact": "Naperville, IL | marcus.bell@example.com", "headline": "Customer Service Professional",
+    "summary": ("Customer-facing professional with experience across retail sales, shift leadership, and phone-based order support. "
+                "Well suited to a customer success environment focused on customer service."),
+    "skills": ["Customer Service: Customer Service, Customer Success, Customer Service Certificate, De-escalation",
+               "Operations & Tools: POS Systems, Scheduling, Phone Communication"],
+    "experience": [
+        {"title": "Shift Lead", "subtitle": "Hearthside Home Goods — 2021 – Present", "bullets": [
+            "Opened and closed the store and kept the daily cash count accurate",
+            "Scheduled 6 associates each week, coordinating shift coverage and calendars",
+            "Handled returns and customer complaints, about 20 a week, using de-escalation to calm upset customers",
+            "Trained new hires on the POS system and store procedures",
+            "Counted inventory weekly"]},
+        {"title": "Sales Associate", "subtitle": "Hearthside Home Goods — 2016 – 2021", "bullets": [
+            "Helped customers choose products and explained features, building rapport to support customer service",
+            "Processed purchases and returns on the POS system",
+            "Resolved upset customers calmly using de-escalation, answering customer questions and handling complaints"]},
+        {"title": "Call Centre Agent (part-time)", "subtitle": "Brightline Direct — 2015 – 2016", "bullets": [
+            "Took inbound customer orders by phone for 4 months",
+            "Confirmed order details and answered delivery questions"]},
+    ],
+    "education": ["Westfield High School: High School Diploma (2014)"], "certifications": ["Customer Service Fundamentals — Online course (2023)"],
+}
+
+PLAN = [
+    {"term": "customer success", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "customer-facing roles"},
+    {"term": "customer service certificate", "kind": "skill", "importance": "required", "support": "related", "evidence": "Certifications: Customer Service Fundamentals (2023)."},
+    {"term": "de-escalation", "kind": "skill", "importance": "required", "support": "literal", "evidence": "Skills list: De-escalation"},
+    {"term": "phone communication", "kind": "skill", "importance": "mentioned", "support": "related", "evidence": "Call Centre Agent: took inbound customer orders by phone"},
+    {"term": "customer service", "kind": "skill", "importance": "required", "support": "literal", "evidence": "Certification: Customer Service Fundamentals"},
+    {"term": "ticketing software", "kind": "skill", "importance": "required", "support": "none", "evidence": ""},
+    {"term": "Salesforce", "kind": "skill", "importance": "required", "support": "none", "evidence": ""},
+]
+
+
+def audit(resume=None, terms=PLAN, profile=PROFILE, facts=""):
+    return provenance.audit_and_repair(copy.deepcopy(resume or WRITER_OUTPUT), profile, POSTING, facts, "Customer Success Associate", terms)
+
+
+def bullets(resume, title):
+    return next(j["bullets"] for j in resume["experience"] if j["title"] == title)
+
+
+class A_ParsingTheProfile(unittest.TestCase):
+    def test_roles_are_separated_with_their_own_sentences(self):
+        roles, general = provenance.parse_profile(PROFILE)
+        self.assertEqual([(r["title"], r["organization"], len(r["sentences"])) for r in roles],
+                         [("Shift Lead", "Hearthside Home Goods", 5), ("Sales Associate", "Hearthside Home Goods", 3), ("Call Centre Agent (part-time)", "Brightline Direct", 2)])
+        self.assertIn("De-escalation", general)
+        self.assertIn("Customer Service Fundamentals", general)
+        self.assertNotIn("Scheduled 6 associates", general)
+
+    def test_a_role_skill_line_counts_as_that_roles_evidence(self):
+        text = "EXPERIENCE:\n- Shift Lead at Acme (2021)\n  * Scheduled staff\n  * Skill: Coaching — coached two new leads\n\nSKILLS (not tied to one specific role):\n(none recorded yet)"
+        roles, _ = provenance.parse_profile(text)
+        self.assertIn("coached", roles[0]["text"])
+
+
+class B_BulletsAreCheckedAgainstTheirOwnRole(unittest.TestCase):
+    def test_the_four_marcus_bullets_are_put_back_to_his_own_sentences(self):
+        out, report = audit()
+        self.assertEqual(bullets(out, "Shift Lead"), ["Opened and closed the store and kept the daily cash count accurate", "Scheduled 6 associates each week",
+                                                    "Handled returns and customer complaints, about 20 a week", "Trained new hires on the POS system and store procedures", "Counted inventory weekly"])
+        self.assertEqual(bullets(out, "Sales Associate"), ["Helped customers choose products and explained features", "Processed purchases and returns on the POS system",
+                                                         "Resolved upset customers calmly using de-escalation"])
+        self.assertEqual(len(report["restored"]), 4)
+        self.assertEqual(report["held"][0]["where"], "summary")  # only the summary positioning line is held, no bullet
+
+    def test_the_reasons_name_the_posting_or_the_role_the_words_came_from(self):
+        _, report = audit()
+        why = {r["before"]: r["basis"] for r in report["restored"]}
+        by_start = lambda start: next(v for k, v in why.items() if k.startswith(start))
+        self.assertIn("posting's wording", by_start("Scheduled 6 associates each week, c"))
+        self.assertIn("Sales Associate role", by_start("Handled returns and customer complaints,"))
+        self.assertIn("Call Centre Agent (part-time) and Shift Lead role", by_start("Resolved upset customers calmly using "))
+        self.assertIn("posting's wording", by_start("Helped customers choose products an"))
+
+    def test_cross_role_borrowing_is_found_in_both_directions(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        bullets(resume, "Call Centre Agent (part-time)").append("Scheduled 6 associates each week")  # a Shift Lead sentence under another role
+        out, report = audit(resume)
+        self.assertNotIn("Scheduled 6 associates each week", bullets(out, "Call Centre Agent (part-time)"))
+        self.assertTrue(any("Shift Lead role" in r["problem"] for r in report["held"] if r["where"].endswith('"Call Centre Agent (part-time)"')))
+
+    def test_a_bullet_with_no_matching_sentence_of_his_own_is_held_not_kept(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        bullets(resume, "Shift Lead").append("Configured the ticketing software and the Salesforce dashboard for renewals")
+        out, report = audit(resume)
+        self.assertNotIn("Configured the ticketing software and the Salesforce dashboard for renewals", bullets(out, "Shift Lead"))
+        self.assertTrue(any("ticketing software" in h["text"] for h in report["held"]))
+
+    def test_faithful_bullets_and_paraphrases_are_left_alone(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["experience"][0]["bullets"] = ["Opened and closed the store and kept the daily cash count accurate", "Counted inventory every week",
+                                              "Trained new hires on the POS system and store procedures", "Scheduled 6 associates each week"]
+        out, report = audit(resume)
+        self.assertEqual(bullets(out, "Shift Lead"), resume["experience"][0]["bullets"])
+        about_shift_lead = [r for r in report["restored"] + report["held"] if r["where"].endswith('"Shift Lead"')]
+        self.assertEqual(about_shift_lead, [])  # the other two roles still carry the writer's embellished bullets
+        self.assertTrue(all(n["where"].endswith('"Shift Lead"') for n in report["notes"] if "every" in n["text"]))  # a paraphrase is at most a note
+
+    def test_a_duplicate_of_a_line_already_there_is_dropped_not_repeated(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        bullets(resume, "Shift Lead").append("Counted inventory weekly, tracking calendar changes")
+        out, report = audit(resume)
+        self.assertEqual(bullets(out, "Shift Lead").count("Counted inventory weekly"), 1)
+        self.assertTrue(any(r["after"] == "" for r in report["restored"]))
+
+    def test_a_role_that_cannot_be_matched_is_left_as_written(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["experience"][0]["title"] = "Store Director"
+        out, _ = audit(resume)
+        self.assertEqual(bullets(out, "Store Director"), bullets(WRITER_OUTPUT, "Shift Lead"))
+
+    def test_a_confirmed_fact_counts_as_evidence(self):
+        out, _ = audit(facts="- Coordinated shift coverage and calendars for the team")
+        self.assertIn("Scheduled 6 associates each week, coordinating shift coverage and calendars", bullets(out, "Shift Lead"))
+
+    def test_the_input_is_not_modified(self):
+        before = copy.deepcopy(WRITER_OUTPUT)
+        provenance.audit_and_repair(WRITER_OUTPUT, PROFILE, POSTING, "", "Customer Success Associate", PLAN)
+        self.assertEqual(WRITER_OUTPUT, before)
+
+
+class C_SummaryAndSkills(unittest.TestCase):
+    def test_a_positioning_sentence_under_the_postings_role_name_is_left_out_and_the_rest_stays(self):
+        out, report = audit()
+        self.assertEqual(out["summary"], "Customer-facing professional with experience across retail sales, shift leadership, and phone-based order support.")
+        self.assertEqual(report["held"][0]["problem"], "places you in the posting's role name")
+
+    def test_positioning_that_his_history_does_state_is_kept(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["summary"] = "Well suited to customer service work."
+        out, report = audit(resume)
+        self.assertEqual(out["summary"], "Well suited to customer service work.")
+        self.assertEqual(report["held"], [])
+
+    def test_a_sentence_stating_an_unevidenced_requirement_is_left_out(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["summary"] = "Experienced with ticketing software and customer service."
+        out, report = audit(resume)
+        self.assertEqual(out["summary"], "")
+        self.assertIn("ticketing software", report["held"][0]["problem"])
+
+    def test_customer_success_cannot_be_printed_as_a_skill_but_backed_terms_stay(self):
+        out, report = audit()
+        self.assertEqual(report["skills_removed"], ["Customer Success"])
+        self.assertEqual(out["skills"][0], "Customer Service: Customer Service, Customer Service Certificate, De-escalation")
+        self.assertEqual(out["skills"][1], "Operations & Tools: POS Systems, Scheduling, Phone Communication")
+
+    def test_a_none_term_is_removed_even_when_its_words_are_in_the_history(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"].append("Tools: Salesforce")
+        out, report = audit(resume)
+        self.assertIn("Salesforce", report["skills_removed"])
+
+    def test_without_a_plan_only_the_posting_wording_check_applies(self):
+        out, report = audit(terms=None)
+        self.assertIn("Customer Success", report["skills_removed"])
+        self.assertEqual(len(report["restored"]), 4)
+
+
+class D_TheNotice(unittest.TestCase):
+    def test_a_plain_message_and_one_item_per_change(self):
+        _, report = audit()
+        notice = provenance.notice_text(report)
+        self.assertEqual(notice["count"], 4 + 1 + 1)  # four bullets put back, one summary sentence, one skill
+        self.assertIn("put them back to your wording or left them out", notice["message"])
+        self.assertIn("add it to that role in your profile and rebuild", notice["message"])
+        self.assertEqual(len(notice["items"]), 6)
+        self.assertTrue(all(i["text"] and i["change"] and i["why"] for i in notice["items"]))
+
+    def test_nothing_changed_means_no_message(self):
+        clean = {**WRITER_OUTPUT, "summary": "", "skills": ["Tools: POS Systems"]}
+        clean["experience"] = [{**j, "bullets": [b for b in PROFILE_BULLETS[j["title"]]]} for j in WRITER_OUTPUT["experience"]]
+        _, report = audit(clean)
+        self.assertEqual(provenance.notice_text(report), {"count": 0, "message": "", "items": []})
+
+
+PROFILE_BULLETS = {
+    "Shift Lead": ["Opened and closed the store and kept the daily cash count accurate", "Scheduled 6 associates each week", "Handled returns and customer complaints, about 20 a week",
+                   "Trained new hires on the POS system and store procedures", "Counted inventory weekly"],
+    "Sales Associate": ["Helped customers choose products and explained features", "Processed purchases and returns on the POS system", "Resolved upset customers calmly using de-escalation"],
+    "Call Centre Agent (part-time)": ["Took inbound customer orders by phone for 4 months", "Confirmed order details and answered delivery questions"],
+}
+
+
+class G_NewFactualAssertionsAreNeverKeptAsWritten(unittest.TestCase):
+    """Review concern 1: an invented bullet that overlaps neither another role nor the posting used to be kept and only noted."""
+    INVENTED = ["Organized quarterly safety audits for the Naperville store", "Maintained the store's inventory database",
+                "Negotiated supplier discounts with regional vendors"]
+
+    def shift_lead(self, bullet):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["experience"][0]["bullets"] = [bullet]
+        return audit(resume)
+
+    def test_invented_bullets_with_no_overlap_are_held_out(self):
+        for bullet in self.INVENTED:
+            out, report = self.shift_lead(bullet)
+            self.assertEqual(bullets(out, "Shift Lead"), [], bullet)
+            self.assertEqual([h["text"] for h in report["held"] if h["where"].endswith('"Shift Lead"')], [bullet])
+            self.assertIn("adds new facts your Shift Lead entry does not state", report["held"][0]["problem"])
+
+    def test_a_harmless_paraphrase_is_kept_and_listed_as_not_verified(self):
+        out, report = self.shift_lead("Assisted new hires with the POS system and store procedures")
+        self.assertEqual(bullets(out, "Shift Lead"), ["Assisted new hires with the POS system and store procedures"])
+        self.assertEqual(report["notes"][0]["words"], ["Assisted"])
+        notice = provenance.notice_text(report)
+        self.assertTrue(any(i["change"] == "kept, not verified" and "Assisted" in i["why"] for i in notice["items"]))
+        self.assertIn("not verified", notice["message"])
+
+    def test_a_reordering_with_no_new_words_is_kept_without_a_note(self):
+        out, report = self.shift_lead("Kept the daily cash count accurate when opening and closing the store")
+        self.assertEqual(len(bullets(out, "Shift Lead")), 1)
+        self.assertEqual(report["notes"], [])
+
+    def test_a_bullet_that_merges_several_of_his_sentences_is_put_back_to_all_of_them(self):
+        merged = "Scheduled 6 associates each week, trained new hires on the POS system and kept the daily cash count accurate, coordinating calendars"
+        out, report = self.shift_lead(merged)
+        self.assertEqual(bullets(out, "Shift Lead"), ["Opened and closed the store and kept the daily cash count accurate", "Scheduled 6 associates each week",
+                                                    "Trained new hires on the POS system and store procedures"])
+        self.assertEqual(len([r for r in report["restored"] if r["where"].endswith('"Shift Lead"')]), 1)  # nothing true was lost: every sentence it drew on is back, in his words
+
+    def test_every_notice_item_says_what_happened_and_never_calls_anything_verified(self):
+        _, report = audit()
+        notice = provenance.notice_text(report)
+        self.assertNotIn("verified:", notice["message"])
+        for item in notice["items"]:
+            head = item["change"].split(":")[0].split(" (")[0]
+            self.assertTrue(head in ("now reads", "left out", "kept, not checked", "kept, not verified") or head.startswith("left out of your "), head)
+
+
+class H_UnmatchedRolesAreNamedNotDeleted(unittest.TestCase):
+    """Review concern 2."""
+    def with_unmatched(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["experience"].append({"title": "Store Director", "subtitle": "Hearthside Home Goods Co. — 2022 – Present", "bullets": ["Led a team of 40 across three stores"]})
+        return audit(resume)
+
+    def test_the_role_and_its_bullets_are_kept_and_named_as_unverified(self):
+        out, report = self.with_unmatched()
+        self.assertEqual(bullets(out, "Store Director"), ["Led a team of 40 across three stores"])  # nothing true is deleted
+        self.assertEqual([(r["title"], r["nearest"]) for r in report["unverified_roles"]], [("Store Director", "Shift Lead at Hearthside Home Goods")])
+
+    def test_the_notice_says_it_was_not_checked_and_offers_the_nearest_saved_role(self):
+        _, report = self.with_unmatched()
+        notice = provenance.notice_text(report)
+        item = next(i for i in notice["items"] if i["change"] == "kept, not checked")
+        self.assertIn("Store Director", item["text"])
+        self.assertIn("did you mean Shift Lead at Hearthside Home Goods?", item["why"])
+        self.assertIn("1 role could not be matched to your saved profile", notice["message"])
+        self.assertIn("kept but not checked", notice["message"])
+
+    def test_matched_roles_are_not_reported(self):
+        _, report = audit()
+        self.assertEqual(report["unverified_roles"], [])
+
+    def test_the_unverified_role_survives_the_build_and_is_in_the_saved_report(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["experience"].append({"title": "Store Director", "subtitle": "Elsewhere Inc — 2022", "bullets": ["Ran the store"]})
+        with mock.patch.object(job_match, "_call_with_retry", lambda name, *a, **k: {"terms": copy.deepcopy(PLAN)} if name == "career_term_plan" else {"resume_data": copy.deepcopy(resume)}):
+            result = term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Marcus Bell", "Naperville, IL | m@example.com")
+        self.assertEqual([r["title"] for r in result["provenance"]["unverified_roles"]], ["Store Director"])
+        self.assertIn("Ran the store", result["resume_data"]["experience"][-1]["bullets"])
+
+
+class I_TransferableSkillsOnlyWhenTheirWordsAppearTogether(unittest.TestCase):
+    """PR-2c: "Scheduling Calls" (scheduling staff plus a call-centre job) must not print as a skill. The recombination rule leaves other transferable
+    labels alone; the posting-wording rule can still remove one the posting names (see class J)."""
+    def plan(self, *extra):
+        return PLAN + list(extra)
+
+    def test_a_recombination_of_words_that_never_appear_together_is_removed(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"] = ["Operations & Tools: POS Systems, Scheduling, Scheduling Calls"]
+        out, report = audit(resume, terms=self.plan({"term": "scheduling calls", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "x"}))
+        self.assertEqual(out["skills"], ["Operations & Tools: POS Systems, Scheduling"])
+        self.assertEqual(report["skills_removed"], ["Scheduling Calls"])
+        self.assertIn("never appear together", report["skills_detail"][0]["why"])
+
+    def test_a_transferable_label_whose_words_do_appear_together_stays(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"] = ["Team: New Hire Training"]
+        out, report = audit(resume, terms=self.plan({"term": "new hire training", "kind": "skill", "importance": "mentioned", "support": "transferable", "evidence": "x"}))
+        self.assertEqual(out["skills"], ["Team: New Hire Training"])
+        self.assertEqual(report["skills_removed"], [])
+
+    def test_the_recombination_rule_alone_leaves_a_label_with_a_word_the_history_never_uses_in_place(self):
+        # Only the recombination rule is under test here, so the posting does NOT name the label ("service" is absent from it). When the posting
+        # does name it and no confirmed fact supports it, the posting-wording rule removes it: class J.
+        profile ="EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n"
+        resume = {"summary": "", "skills": ["Customer Service: Customer Service, Cash Handling"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers."]}]}
+        terms = [{"term": "customer service", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "assisted customers"},
+                 {"term": "cash handling", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "handled cash payments"}]
+        out, report = provenance.audit_and_repair(resume, profile, "Bank Teller. Help customers and handle cash accurately.", "", "Bank Teller", terms)
+        self.assertEqual(out["skills"], ["Customer Service: Customer Service, Cash Handling"])
+        self.assertEqual(report["skills_removed"], [])
+
+    def test_a_skill_the_plan_backs_is_never_removed_by_this_rule(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"] = ["Operations & Tools: Scheduling Calls"]
+        out, _ = audit(resume, terms=self.plan({"term": "scheduling calls", "kind": "skill", "importance": "required", "support": "related", "evidence": "Scheduled 6 associates each week"}))
+        self.assertEqual(out["skills"], ["Operations & Tools: Scheduling Calls"])
+
+    def test_a_skill_that_only_contains_a_backed_term_is_still_checked_on_its_own(self):
+        # "scheduling" is backed (literal) in PLAN's history; "Scheduling Calls" adds a word and must not ride on it
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["skills"] = ["Operations & Tools: Scheduling, Scheduling Calls"]
+        terms = self.plan({"term": "scheduling", "kind": "skill", "importance": "mentioned", "support": "literal", "evidence": "Skills list"},
+                          {"term": "scheduling calls", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "x"})
+        out, report = audit(resume, terms=terms)
+        self.assertEqual(out["skills"], ["Operations & Tools: Scheduling"])
+        self.assertEqual(report["skills_removed"], ["Scheduling Calls"])
+
+
+class J_SearsCashierCustomerService(unittest.TestCase):
+    """The Sears cashier example (review of PR #61). The history says the candidate "assisted customers"; the posting asks for "Customer Service";
+    no confirmed fact says they did customer service. The label must not appear in Skills on that alone, and the real experience must stay
+    represented as transferable experience, never lost and never promoted to a verified skill."""
+    PROFILE = "EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n  * Resolved basic customer concerns.\n"
+    POSTING = "Bank Teller. Process deposits and payments accurately; handle cash; provide friendly customer service; resolve customer concerns."
+    TERMS = [{"term": "customer service", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "Cashier at Sears: assisted customers and resolved basic customer concerns"},
+             {"term": "cash handling", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "Cashier at Sears: handled cash payments"}]
+    WRITER = {"name": "Sam Ortiz", "contact": "Chicago, IL | sam@example.com", "headline": "", "summary": "",
+              "skills": ["Customer Service: Customer Service, Cash Handling"], "education": [], "certifications": [],
+              "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers.", "Handled cash payments."]}]}
+
+    def audit(self, facts=""):
+        return provenance.audit_and_repair(copy.deepcopy(self.WRITER), self.PROFILE, self.POSTING, facts, "Bank Teller", copy.deepcopy(self.TERMS))
+
+    def test_customer_service_is_not_printed_as_a_skill_on_assisted_customers_alone(self):
+        out, report = self.audit()
+        self.assertEqual(report["skills_removed"], ["Customer Service"])
+        self.assertEqual(out["skills"], ["Cash Handling"])  # the group label is left out too; the supported skill under it stays
+        self.assertEqual(report["skills_detail"], [{"skill": "Customer Service", "why": "uses the posting's wording, which your history does not say"}])
+        self.assertEqual(report["labels"], [{"where": "skills group label", "text": "Customer Service", "why": "uses the posting's wording, which your history does not say"}])
+
+    def test_the_legitimate_customer_facing_experience_stays_as_his_own_bullet(self):
+        out, report = self.audit()
+        self.assertEqual(bullets(out, "Cashier"), ["Assisted customers.", "Handled cash payments."])
+        self.assertEqual(report["restored"] + report["held"], [])  # nothing about the experience itself was changed
+
+    def test_the_removal_is_reported_to_the_candidate_never_silent(self):
+        _, report = self.audit()
+        items = [i for i in provenance.notice_text(report)["items"] if i["text"] == "Customer Service"]
+        self.assertEqual(len(items), 1)  # left out of the group label AND the skills: one item, not two
+        self.assertEqual((items[0]["change"], items[0]["why"]), ("left out of your skills group label and skills", "uses the posting's wording, which your history does not say"))
+
+    def test_a_confirmed_fact_that_states_it_puts_the_skill_back(self):
+        out, report = self.audit(facts="- Provided customer service at the register")
+        self.assertEqual(out["skills"], ["Customer Service: Customer Service, Cash Handling"])
+        self.assertEqual(report["skills_removed"], [])
+
+    def test_through_the_build_it_is_off_the_skills_line_and_kept_as_transferable_experience(self):
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.TERMS)}
+            if name == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(self.WRITER)}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            result = term_pipeline.build_checked_resume(self.PROFILE, self.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+        resume = result["resume_data"]
+        skill_items = [i.strip().lower() for line in resume["skills"] for i in (line.partition(":")[2] if ":" in line else line).split(",")]
+        self.assertFalse(any(line.lower().startswith("customer service") for line in resume["skills"]), "no 'Customer Service' group label either")
+        self.assertNotIn("customer service", skill_items)  # not in the verified Skills section
+        self.assertIn("cash handling", skill_items)
+        self.assertIn("Assisted customers.", bullets(resume, "Cashier"))  # the experience itself is still on the resume
+        entry = next(t for t in result["term_report"] if t["term"] == "customer service")
+        self.assertEqual(entry["support"], "transferable")  # still reported as transferable experience, with its evidence, never as verified
+        self.assertIn("assisted customers", entry["evidence"])
+        self.assertIn("Customer Service", result["truth_notice"]["provenance"]["skills_removed"])
+
+
+class K_HeadlineAndSkillsLabels(unittest.TestCase):
+    """Fix A (headline) and Fix B (skills group labels): the existing Skills-item evidence decision, applied to every headline phrase and every group
+    label. Eight scenarios from the approved plan, with the Sears cashier and the Marcus live-run fixtures. Summary filtering is NOT broadened (Fix C is
+    deferred): the summary is deliberately outside the same-standard test below."""
+    S = J_SearsCashierCustomerService
+
+    def sears(self, headline="Customer Service | Cash Handling | Transaction Accuracy", skills=None, bullets_=None, facts=""):
+        resume = copy.deepcopy(self.S.WRITER)
+        resume["headline"] = headline
+        resume["skills"] = skills if skills is not None else ["Customer Service: Customer Service, Cash Handling"]
+        if bullets_ is not None:
+            resume["experience"][0]["bullets"] = bullets_
+        return provenance.audit_and_repair(resume, self.S.PROFILE, self.S.POSTING, facts, "Bank Teller", copy.deepcopy(self.S.TERMS))
+
+    # 1. Sears, no confirmed fact
+    def test_1_sears_headline_and_label_do_not_present_customer_service_without_a_confirmed_fact(self):
+        out, report = self.sears()
+        self.assertEqual(out["headline"], "Cash Handling")  # "Customer Service" and "Transaction Accuracy" use the posting's wording, which the history does not say
+        self.assertEqual(out["skills"], ["Cash Handling"])
+        self.assertEqual(bullets(out, "Cashier"), ["Assisted customers.", "Handled cash payments."])  # his own words stay
+        self.assertEqual({(l["where"], l["text"]) for l in report["labels"]},
+                         {("headline", "Customer Service"), ("headline", "Transaction Accuracy"), ("skills group label", "Customer Service")})
+
+    # 2. Confirmed fact keeps the label eligible
+    def test_2_a_confirmed_fact_keeps_the_headline_phrase_and_the_label(self):
+        out, report = self.sears(facts="- Provided customer service at the register")
+        self.assertIn("Customer Service", out["headline"].split(" | "))
+        self.assertEqual(out["skills"], ["Customer Service: Customer Service, Cash Handling"])
+        self.assertNotIn("Customer Service", [l["text"] for l in report["labels"]])
+
+    # 3. Marcus live fixture: his headline and labels are untouched
+    def test_3_marcus_headline_and_labels_are_unchanged(self):
+        out, report = audit()
+        self.assertEqual(out["headline"], WRITER_OUTPUT["headline"])
+        self.assertEqual([l for l in report["labels"] if l["where"] == "headline"], [])
+        self.assertEqual([line.partition(":")[0] for line in out["skills"]], [line.partition(":")[0] for line in WRITER_OUTPUT["skills"]])
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["headline"] = "Customer Service Professional | De-Escalation & Complaint Resolution | Retail Team Leadership"
+        out2, report2 = audit(resume)
+        self.assertEqual(out2["headline"], resume["headline"])  # his real headline from the live run passes phrase by phrase
+        self.assertEqual(report2["labels"], [])
+
+    # 4. Role-name, none-term and backed phrases
+    def test_4_role_name_and_no_evidence_phrases_are_left_out_and_a_backed_phrase_stays(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["headline"] = "Customer Success Specialist | Salesforce Administrator | De-Escalation"
+        out, report = audit(resume)
+        self.assertEqual(out["headline"], "De-Escalation")
+        why = {l["text"]: l["why"] for l in report["labels"]}
+        self.assertEqual(why["Salesforce Administrator"], "a requirement your history does not establish")
+        self.assertIn("posting's wording", why["Customer Success Specialist"])
+
+    # 5. Empty headline, on screen and in the Word file
+    def test_5_an_empty_headline_is_accepted_and_the_word_file_builds(self):
+        resume = copy.deepcopy(WRITER_OUTPUT)
+        resume["headline"] = "Customer Success Specialist | Salesforce Administrator"
+        out, _ = audit(resume)
+        self.assertEqual(out["headline"], "")
+        text = self.docx_text(out)
+        self.assertNotIn("Salesforce", text)
+        self.assertIn("Shift Lead", text)
+
+    @staticmethod
+    def docx_text(resume):
+        import io
+        from docx import Document
+        import resume_builder as rb
+        doc = Document(io.BytesIO(rb.build_resume_bytes({**resume, "skills_style": "grouped"}, ats_mode=False, template="classic")))
+        return "\n".join(p.text for p in doc.paragraphs)
+
+    # 6. The same label is handled the same way everywhere except the summary (deferred)
+    def test_6_the_same_unsupported_label_is_absent_from_headline_skills_label_skills_and_bullets(self):
+        out, report = self.sears(headline="Customer Service | Cash Handling", skills=["Customer Service: Customer Service, Cash Handling"],
+                                 bullets_=["Assisted customers.", "Provided friendly customer service"])
+        everywhere = " | ".join([out["headline"]] + out["skills"] + bullets(out, "Cashier")).lower()
+        self.assertNotIn("customer service", everywhere)
+        self.assertIn("cash handling", everywhere)
+        self.assertIn("assisted customers.", everywhere)  # his own words stay
+
+    # 7. Removing a label never removes the supported skills under it, and a partly supported label keeps its supported part
+    def test_7_a_removed_label_keeps_the_supported_skills_under_it_and_a_partly_supported_label_keeps_its_part(self):
+        out, _ = self.sears(skills=["Customer Service: Cash Handling, Transaction Processing"])
+        self.assertEqual(out["skills"], ["Cash Handling, Transaction Processing"])
+        out2, report2 = self.sears(headline="Cash Handling", skills=["Customer Service & Cash Handling: Cash Handling, Transaction Processing"])
+        self.assertEqual(out2["skills"], ["Cash Handling: Cash Handling, Transaction Processing"])
+        self.assertEqual([l["text"] for l in report2["labels"]], ["Customer Service"])
+
+    # 8. Deduplicated notice
+    def test_8_a_label_left_out_in_several_places_is_one_notice_item_and_one_count(self):
+        _, report = self.sears(headline="Customer Service | Cash Handling")
+        notice = provenance.notice_text(report)
+        items = [i for i in notice["items"] if i["text"] == "Customer Service"]
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["change"], "left out of your headline, skills group label and skills")
+        self.assertEqual(notice["count"], 1)
+        self.assertIn("1 statement was not in your own words", notice["message"])
+
+    # Output locations: on-screen content and the Word file both carry the correction
+    def test_the_on_screen_resume_and_the_word_file_both_reflect_the_corrected_headline_and_skills(self):
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.S.TERMS)}
+            if name == "career_job_build_resume":
+                return {"resume_data": {**copy.deepcopy(self.S.WRITER), "headline": "Customer Service | Cash Handling | Transaction Accuracy"}}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            result = term_pipeline.build_checked_resume(self.S.PROFILE, self.S.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+        resume = result["resume_data"]
+        self.assertEqual(resume["headline"], "Cash Handling")  # what the page and the saved version carry
+        self.assertEqual(resume["skills"], ["Cash Handling"])
+        text = self.docx_text(resume)  # what the Word file prints
+        self.assertNotIn("customer service", text.lower())
+        self.assertIn("Cash Handling", text)
+        self.assertIn("Assisted customers.", text)
+        entry = next(t for t in result["term_report"] if t["term"] == "customer service")
+        self.assertEqual((entry["support"], entry["status"]), ("transferable", "transferable"))  # still reported as relevant experience, never as on the resume
+        notice = result["truth_notice"]["provenance"]
+        self.assertEqual([i["change"] for i in notice["items"] if i["text"] == "Customer Service"], ["left out of your headline, skills group label and skills"])
+
+
+class L_GenericGroupLabelsAndLabelRemoval(unittest.TestCase):
+    """Review checks on PR #61 after Fix A and B: what happens to generic organisational labels. Four of these tests characterise behaviour that the
+    approved heading rule (class N) leaves unchanged; the two "Tools" tests were updated where that rule intentionally changes the result.
+    See Group_Label_Review_2026-11-06.md and Group_Label_Rule_Proposal_2026-11-06.md."""
+    PROFILE = ("EXPERIENCE:\n- Cashier at Sears (2019 – 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n"
+               "  * Resolved basic customer concerns.\n")
+
+    def labelled(self, label, posting, items=("POS Systems", "Cash Handling"), profile=None):
+        resume = {"summary": "", "headline": "", "skills": [f"{label}: {', '.join(items)}"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Handled cash payments."]}]}
+        return provenance.audit_and_repair(resume, profile or self.PROFILE, posting, "", "Bank Teller", [])
+
+    # --- what the comparison treats as filler: some generic words can never trigger the posting-wording rule, others can
+    def test_support_skills_and_experience_are_filler_and_never_change_a_label(self):
+        for label in ("Support", "Retail & Support", "Technical Support", "Core Skills", "Experience"):
+            out, report = self.labelled(label, "Bank Teller. Provide support, use your skills and experience, support customers.")
+            self.assertEqual(out["skills"], [f"{label}: POS Systems, Cash Handling"], label)
+            self.assertEqual(report["labels"], [], label)
+
+    def test_a_tools_label_is_a_heading_and_is_kept_whether_or_not_the_posting_and_the_history_use_the_word(self):
+        # UPDATED for the approved heading rule: before it, "Tools" was left out when the posting said "tools" and the history never did.
+        for posting in ("Bank Teller. Use banking tools daily.", "Bank Teller. Handle cash accurately."):
+            out, report = self.labelled("Tools", posting)
+            self.assertEqual(out["skills"], ["Tools: POS Systems, Cash Handling"], posting)
+            self.assertEqual(report["labels"], [], posting)
+        out2, _ = self.labelled("Tools", "Bank Teller. Use banking tools daily.", profile=self.PROFILE + "  * Used the register tools to ring up sales.\n")
+        self.assertEqual(out2["skills"], ["Tools: POS Systems, Cash Handling"])
+
+    def test_a_label_joining_a_generic_and_a_skill_like_part_keeps_the_part_that_passes(self):
+        # UPDATED: both parts are generic headings now, so the whole label stays; the mixed case (one heading, one qualification) is in class N.
+        out, report = self.labelled("Operations & Tools", "Bank Teller. Use banking tools daily.")
+        self.assertEqual(out["skills"], ["Operations & Tools: POS Systems, Cash Handling"])
+        self.assertEqual(report["labels"], [])
+
+    def test_skill_like_labels_are_treated_the_same_way_as_generic_ones_today(self):
+        out, report = self.labelled("Customer Service", "Bank Teller. Provide friendly customer service.")
+        self.assertEqual(out["skills"], ["POS Systems, Cash Handling"])
+        self.assertEqual([l["text"] for l in report["labels"]], ["Customer Service"])  # no distinction between a heading and a qualification yet
+
+    # --- check 3: a supported skill is never deleted only because its group label was removed
+    def test_supported_skills_are_never_deleted_because_their_label_was_removed(self):
+        items = ("Cash Handling", "Transaction Processing", "Problem Resolution")
+        posting = "Bank Teller. Provide friendly customer service; use banking tools; banking compliance; resolve customer concerns."
+        for label in ("Customer Service", "Tools", "Banking", "Customer Service & Banking", "Banking Tools & Compliance", "Cash Handling", "Support"):
+            out, _ = self.labelled(label, posting, items=items)
+            text = " | ".join(out["skills"])
+            for item in items:
+                self.assertIn(item, text, f"{item} lost under label {label!r}")
+
+
+class N_OrganisingHeadingsVersusQualificationLabels(unittest.TestCase):
+    """The approved group-label rule: a Skills group label part that is only a generic organising heading is kept; a qualification label keeps the full
+    evidence decision. Closed allowlist, four guards (vocabulary, plan term at any support level, posting phrase, job title), whole words only. Applies to
+    Skills group labels ONLY."""
+    PROFILE = L_GenericGroupLabelsAndLabelRemoval.PROFILE
+    ITEMS = ("Cash Handling", "Transaction Processing")
+    BASE_TERMS = [{"term": "customer service", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "assisted customers"},
+                  {"term": "cash handling", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "handled cash payments"}]
+    POSTING = "Bank Teller. Use banking tools, platforms and systems with your team across core operations. Provide friendly customer service."
+
+    def lab(self, label, posting=None, title="Bank Teller", extra_terms=(), facts="", items=None, headline="", summary="", bullets_=None):
+        resume = {"summary": summary, "headline": headline, "skills": [f"{label}: {', '.join(items or self.ITEMS)}"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": bullets_ or ["Handled cash payments."]}]}
+        terms = copy.deepcopy(self.BASE_TERMS) + [dict(t) for t in extra_terms]
+        return provenance.audit_and_repair(resume, self.PROFILE, posting or self.POSTING, facts, title, terms)
+
+    def shown(self, label, **kw):
+        out, report = self.lab(label, **kw)
+        return out["skills"][0], report
+
+    # --- the allowlist is exactly the approved one
+    def test_the_allowlist_is_exactly_the_approved_closed_list(self):
+        self.assertEqual(provenance.HEADING_WORDS, frozenset({"tools", "operations", "team", "platforms", "systems", "technical", "technology", "applications",
+                                                              "software", "core", "key", "additional", "other", "general", "environments"}))
+
+    # --- positive: generic headings are kept
+    def test_generic_headings_are_kept_with_their_skills(self):
+        for label in ("Tools", "Operations & Tools", "Team", "Platforms & Systems", "Core Tools", "Technical Tools", "CORE-TOOLS", "Platforms/Systems"):
+            line, report = self.shown(label)
+            self.assertEqual(line, f"{label}: Cash Handling, Transaction Processing", label)
+            self.assertEqual(report["labels"], [], label)
+            self.assertEqual(provenance.notice_text(report)["items"], [], label)  # a kept heading is not a truthfulness event: no notice
+
+    # --- negative: qualification labels keep the existing decision
+    def test_qualification_labels_are_still_removed(self):
+        cases = [("Customer Service", {}), ("Customer Success", {"title": "Customer Success Associate", "posting": "Customer Success Associate. Own customer success outcomes."}),
+                 ("Data Analysis", {"posting": "Analyst. Perform data analysis."}),
+                 ("Technical Support", {"posting": "Bank Teller. Offer technical support to branch staff."}),  # the posting names it; the plan never tracked it (guard 3)
+                 ("Operations", {"title": "Operations Associate", "posting": "Operations Associate. Support daily operations."}),  # the role name (guard 4)
+                 ("CRM Tools", {"extra_terms": [{"term": "crm tools", "kind": "skill", "importance": "required", "support": "none", "evidence": ""}]}),  # "CRM" is not on the allowlist
+                 ("Platform Tools", {"extra_terms": [{"term": "platform tools", "kind": "skill", "importance": "required", "support": "none", "evidence": ""}]})]  # allowlist words, but a plan term (guard 2)
+        for label, kw in cases:
+            line, report = self.shown(label, **kw)
+            self.assertEqual(line, "Cash Handling, Transaction Processing", label)  # the label goes, both skills stay
+            self.assertEqual([l["text"] for l in report["labels"]], [label], label)
+
+    def test_a_heading_word_inside_a_plan_term_of_any_support_level_is_checked_not_exempt(self):
+        for support in ("literal", "related", "transferable", "none"):
+            line, report = self.shown("Tools", extra_terms=[{"term": "platform tools", "kind": "skill", "importance": "required", "support": support, "evidence": "x"}])
+            self.assertEqual(line, "Cash Handling, Transaction Processing", support)
+            self.assertEqual([l["text"] for l in report["labels"]], ["Tools"], support)
+
+    def test_an_unknown_word_never_qualifies_for_the_heading_exception(self):
+        line, report = self.shown("Tools & Widgets", posting="Bank Teller. Use widgets and tools.")
+        self.assertEqual(line, "Tools: Cash Handling, Transaction Processing")
+        self.assertEqual([l["text"] for l in report["labels"]], ["Widgets"])
+        for word in ("Operational", "Toolkit", "Technician", "Teams and Teamwork", "Systemic"):  # near-misses of allowlist words are NOT on the list
+            line2, report2 = self.shown(word, posting=f"Bank Teller. Experience with {word.lower()}.")
+            self.assertEqual([l["text"] for l in report2["labels"]], [word.split(" ")[0] if " " in word else word][:1] if line2 == "Cash Handling, Transaction Processing" else [l["text"] for l in report2["labels"]], word)
+            self.assertTrue(line2.startswith(word + ":") is False or report2["labels"] == [], word)
+
+    # --- whole words only, capitalisation and punctuation normalised
+    def test_matching_uses_whole_words_never_substrings(self):
+        # "system" is inside "ecosystem": a plan term "ecosystem health" must NOT pull the heading "Systems" into the checked group
+        line, report = self.shown("Systems", extra_terms=[{"term": "ecosystem health", "kind": "skill", "importance": "mentioned", "support": "none", "evidence": ""}])
+        self.assertEqual(line, "Systems: Cash Handling, Transaction Processing")
+        self.assertEqual(report["labels"], [])
+        # "core tools" inside "hardcore tools" is not a posting phrase either
+        line2, _ = self.shown("Core Tools", posting="Bank Teller. Use hardcore tools daily.")
+        self.assertEqual(line2, "Core Tools: Cash Handling, Transaction Processing")
+        # but the real phrase, in any capitalisation or punctuation, is
+        line3, report3 = self.shown("Core Tools", posting="Bank Teller. Use CORE-tools daily.")
+        self.assertEqual(line3, "Cash Handling, Transaction Processing")
+        self.assertEqual([l["text"] for l in report3["labels"]], ["Core Tools"])
+
+    # --- partial labels
+    def test_a_label_with_one_heading_and_one_qualification_keeps_only_the_heading(self):
+        line, report = self.shown("Customer Service & Tools")
+        self.assertEqual(line, "Tools: Cash Handling, Transaction Processing")
+        self.assertEqual([l["text"] for l in report["labels"]], ["Customer Service"])
+        line2, report2 = self.shown("Delivery & Technology", title="Delivery Associate", posting="Delivery Associate. Use delivery technology daily.")
+        self.assertEqual(line2, "Technology: Cash Handling, Transaction Processing")
+        self.assertEqual([l["text"] for l in report2["labels"]], ["Delivery"])
+
+    # --- evidence preserved: supported skills under every label, and the confirmed fact
+    def test_supported_skills_are_kept_under_every_label_removed_kept_or_partial(self):
+        labels = ["Tools", "Operations & Tools", "Customer Service", "Customer Success", "Technical Support", "Customer Service & Tools", "Data Analysis", "Operations"]
+        for label in labels:
+            line, _ = self.shown(label, posting=self.POSTING + " Offer technical support. Perform data analysis. Own customer success outcomes.")
+            for item in self.ITEMS:
+                self.assertIn(item, line, f"{item} lost under {label!r}")
+
+    def test_a_confirmed_fact_keeps_a_qualification_label_eligible(self):
+        line, report = self.shown("Customer Service", facts="- Provided customer service at the register")
+        self.assertEqual(line, "Customer Service: Cash Handling, Transaction Processing")
+        self.assertEqual(report["labels"], [])
+
+    # --- scope: only Skills group labels change
+    def test_headline_phrases_skill_items_bullets_and_summary_stay_under_the_existing_strict_decision(self):
+        out, report = self.lab("Customer Service", headline="Tools | Cash Handling", items=("Tools", "Cash Handling"),
+                               summary="Uses tools daily.", bullets_=["Handled cash payments."])
+        self.assertEqual(out["headline"], "Cash Handling")  # the headline phrase "Tools" is still decided strictly (the posting says it, the history never does)
+        self.assertEqual(out["skills"], ["Cash Handling"])  # and so is the skill ITEM "Tools"
+        self.assertEqual(out["summary"], "Uses tools daily.")  # the summary is untouched
+        self.assertEqual(bullets(out, "Cashier"), ["Handled cash payments."])
+        self.assertEqual({(l["where"], l["text"]) for l in report["labels"]}, {("skills group label", "Customer Service"), ("headline", "Tools")})
+
+    # --- guard mutation checks: each guard is what keeps its case out of the exemption
+    def test_each_guard_and_the_allowlist_is_what_keeps_its_case_removed(self):
+        mutations = [("_not_a_posting_phrase", "Technical Support", {"posting": "Bank Teller. Offer technical support to branch staff."}),
+                     ("_not_a_plan_term", "Platform Tools", {"extra_terms": [{"term": "platform tools", "kind": "skill", "importance": "required", "support": "none", "evidence": ""}]}),
+                     ("_not_the_role_name", "Operations", {"title": "Operations Associate", "posting": "Operations Associate. Support daily operations."}),
+                     ("_vocabulary_ok", "Data Analysis", {"posting": "Bank Teller. Perform analysis of data."})]  # untracked, not a posting phrase, not the title: only the vocabulary keeps it out
+        for guard, label, kw in mutations:
+            line, _ = self.shown(label, **kw)
+            self.assertEqual(line, "Cash Handling, Transaction Processing", f"{label} is removed with the guard in place")
+            with mock.patch.object(provenance, guard, return_value=True):
+                line_broken, report_broken = self.shown(label, **kw)
+            self.assertEqual(line_broken, f"{label}: Cash Handling, Transaction Processing", f"{label} would slip through without {guard}")
+            self.assertEqual(report_broken["labels"], [])
+        with mock.patch.object(provenance, "_HEADING_TOKENS", frozenset(provenance._HEADING_TOKENS | {provenance._token(w) for w in ("data", "analysis")})):
+            line_extended, _ = self.shown("Data Analysis", posting="Bank Teller. Perform analysis of data.")
+        self.assertEqual(line_extended, "Data Analysis: Cash Handling, Transaction Processing")  # adding words to the allowlist WOULD exempt it: hence the exactness test above
+
+    # --- screen and Word output stay consistent
+    def test_screen_data_and_the_word_file_match_for_kept_headings_and_removed_qualification_labels(self):
+        writer = {"name": "Sam Ortiz", "contact": "Chicago, IL | sam@example.com", "headline": "", "summary": "",
+                  "skills": ["Tools: Cash Handling, Transaction Processing", "Customer Service: Problem Resolution"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers.", "Handled cash payments."]}]}
+
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.BASE_TERMS)}
+            if name == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(writer)}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            result = term_pipeline.build_checked_resume(self.PROFILE, self.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+        resume = result["resume_data"]
+        self.assertEqual(resume["skills"], ["Tools: Cash Handling, Transaction Processing", "Problem Resolution"])
+        paragraphs = K_HeadlineAndSkillsLabels.docx_text(resume).split("\n")
+        for line in resume["skills"]:
+            self.assertTrue(any(p.replace("\t", " ").strip() == line for p in paragraphs), line)  # the Word file prints exactly each Skills line
+        self.assertFalse(any(p.startswith("Customer Service") for p in paragraphs))
+        self.assertEqual([i["text"] for i in result["truth_notice"]["provenance"]["items"] if i["change"].startswith("left out")], ["Customer Service"])  # the kept "Tools" is silent
+
+
+class M_HeadlineAndSkillsLabelsOnScreenAndInTheWordFile(unittest.TestCase):
+    """Review check 4 on the Marcus fixture: the headline and each Skills line are the same words in the saved resume data (the screen) and in the
+    generated Word document, with the unsupported items left out of both."""
+    def test_marcus_headline_and_skills_lines_match_between_the_resume_data_and_the_word_file(self):
+        writer = {**copy.deepcopy(WRITER_OUTPUT), "headline": "Customer Service Professional | De-Escalation & Complaint Resolution | Customer Success Specialist"}
+        with mock.patch.object(job_match, "_call_with_retry", lambda name, *a, **k: {"terms": copy.deepcopy(PLAN)} if name == "career_term_plan" else {"resume_data": copy.deepcopy(writer)}):
+            result = term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Marcus Bell", "Naperville, IL | marcus.bell@example.com")
+        resume = result["resume_data"]
+        self.assertEqual(resume["headline"], "Customer Service Professional | De-Escalation & Complaint Resolution")  # the role-name phrase is gone
+        self.assertNotIn("Customer Success", " ".join(resume["skills"]))
+        paragraphs = K_HeadlineAndSkillsLabels.docx_text(resume).split("\n")
+        self.assertIn(resume["headline"], paragraphs)  # the Word file prints exactly the headline on screen
+        for line in resume["skills"]:
+            self.assertTrue(any(p.replace("\t", " ").strip() == line.strip() for p in paragraphs), line)  # and exactly each Skills line, label and items
+        self.assertNotIn("Customer Success", "\n".join(paragraphs))
+
+
+class E_ThroughTheBuild(unittest.TestCase):
+    def build(self, terms=PLAN):
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(terms)}
+            if name == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(WRITER_OUTPUT)}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            return term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Marcus Bell", "Naperville, IL | marcus.bell@example.com")
+
+    def test_the_finished_resume_has_his_own_sentences_and_no_borrowed_or_posting_wording(self):
+        result = self.build()
+        text = " ".join(result["resume_data"]["summary"].split() + [b for j in result["resume_data"]["experience"] for b in j["bullets"]] + result["resume_data"]["skills"]).lower()
+        for phrase in ("coordinating shift coverage", "calendars", "building rapport", "answering customer questions and handling complaints", "customer success"):
+            self.assertNotIn(phrase, text, phrase)
+        self.assertEqual(bullets(result["resume_data"], "Shift Lead")[1], "Scheduled 6 associates each week")
+
+    def test_the_notice_reports_it_and_the_report_follows_the_final_resume(self):
+        result = self.build()
+        self.assertEqual(result["truth_notice"]["provenance"]["count"], 6)
+        status = {r["term"]: r["status"] for r in result["term_report"]}
+        self.assertNotEqual(status["customer success"], "on_resume")  # no longer on the resume, so no longer reported as on it
+
+    def test_a_clean_build_reports_nothing(self):
+        clean = {**WRITER_OUTPUT, "summary": "Customer-facing professional with retail and phone experience.", "skills": ["Tools: POS Systems"]}
+        clean["experience"] = [{**j, "bullets": list(PROFILE_BULLETS[j["title"]])} for j in WRITER_OUTPUT["experience"]]
+        with mock.patch.object(job_match, "_call_with_retry", lambda name, *a, **k: {"terms": copy.deepcopy(PLAN)} if name == "career_term_plan" else {"resume_data": copy.deepcopy(clean)}):
+            result = term_pipeline.build_checked_resume(PROFILE, POSTING, [], "Marcus Bell", "Naperville, IL | m@example.com")
+        self.assertEqual(result["truth_notice"]["provenance"]["count"], 0)
+        self.assertEqual(result["resume_data"]["experience"][0]["bullets"], PROFILE_BULLETS["Shift Lead"])
+
+
+class F_SavedWithTheResume(OwnershipTestCase):
+    def setUp(self):
+        super().setUp()
+        for patcher in (mock.patch.dict(os.environ, {"RATE_LIMIT_USER": "1000/60"}), mock.patch.object(abuse_guard, "LIMITER", abuse_guard.SlidingWindowLimiter())):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        abuse_guard.IN_FLIGHT.reset()
+        self.onboard(self.a)
+
+    def test_the_provenance_report_is_saved_in_the_truth_review_only_when_it_changed_something(self):
+        report = {"restored": [{"where": "w", "before": "b", "after": "a", "basis": "x"}], "held": [], "skills_removed": [], "notes": [], "count": 1, "message": "m", "items": []}
+
+        def fake_build(profile_text, job_description, confirmed_facts, name, contact, denials, answers_text="", saved_terms=None):
+            return {"resume_data": copy.deepcopy(WRITER_OUTPUT), "role_selection": [], "term_report": [], "ats_match": None, "provenance": report}
+
+        with mock.patch("career.routes.build_checked_resume", fake_build):
+            res = self.call("POST", "/job-build-resume", self.a, json={"job_description": POSTING, "name": "Marcus Bell", "contact": "Naperville, IL | m@example.com",
+                                                                        "confirmed_facts": [], "qa_history": []})
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertEqual(res.json()["resume_data"]["truth_review"]["provenance"]["count"], 1)
+        with self.Session() as s:
+            self.assertEqual(s.query(ResumeVersion).count(), 1)
+
+
+class O_TransferableExperienceStatedInTheSavedHistory(unittest.TestCase):
+    """Guard 3 follow-up. The candidate's saved history itself states the experience ("provided customer service", "trained new hires"). Nothing here
+    relies on a confirmed fact (facts is empty) or on a plan term backing the label (the plan is empty or tracks other terms). The history alone is the
+    evidence, and the posting names the same phrases, so the posting-wording rule and Guard 3 are both live."""
+    PROFILE = ("EXPERIENCE:\n- Cashier at Sears (2019 \u2013 2024)\n  * Provided customer service at the front counter.\n  * Handled cash payments.\n"
+               "  * Trained new hires on the register.\n  * Resolved billing questions for customers.\n")
+    POSTING = ("Bank Teller. Provide customer service. Handle cash accurately. Train new hires. Use core tools and technical support systems. "
+               "Own customer success outcomes. Perform data analysis.")
+    BULLETS = ["Provided customer service at the front counter.", "Handled cash payments.", "Trained new hires on the register."]
+
+    def run_audit(self, skills, plan=()):
+        resume = {"summary": "", "headline": "", "skills": skills, "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears \u2014 2019 \u2013 2024", "bullets": list(self.BULLETS)}]}
+        return provenance.audit_and_repair(resume, self.PROFILE, self.POSTING, "", "Bank Teller", [dict(t) for t in plan])
+
+    def test_experience_the_history_states_keeps_its_label_and_items_with_no_fact_and_no_plan_term(self):
+        out, report = self.run_audit(["Customer Service: Training New Hires, Cash Handling"])
+        self.assertEqual(out["skills"], ["Customer Service: Training New Hires, Cash Handling"])  # the label survives on the history alone
+        self.assertEqual(report["labels"], [])
+        self.assertEqual(report["skills_removed"], [])
+        self.assertEqual(report["restored"], [])
+        self.assertEqual(report["held"], [])
+
+    def test_the_candidates_original_experience_is_preserved_exactly(self):
+        out, _ = self.run_audit(["Customer Service: Cash Handling", "Tools: Problem Resolution"])
+        self.assertEqual(bullets(out, "Cashier"), self.BULLETS)
+        self.assertEqual(out["experience"][0]["subtitle"], "Sears \u2014 2019 \u2013 2024")
+
+    def test_transferable_experience_stays_represented_when_the_plan_marks_it_transferable(self):
+        plan = [{"term": "onboarding", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "Trained new hires on the register."}]
+        out, report = self.run_audit(["Customer Service: Training New Hires"], plan)
+        self.assertEqual(out["skills"], ["Customer Service: Training New Hires"])
+        self.assertEqual(report["skills_removed"], [])
+        self.assertEqual(report["labels"], [])
+
+    def test_unsupported_qualifications_are_not_introduced_next_to_the_genuine_ones(self):
+        skills = ["Customer Service: Training New Hires, Customer Success, Data Analysis, Technical Support",
+                  "Customer Success: Cash Handling", "Data Analysis: Cash Handling"]
+        out, report = self.run_audit(skills)
+        text = " | ".join(out["skills"])
+        self.assertIn("Customer Service: Training New Hires", text)  # genuine label and item stay
+        for fabricated in ("Customer Success", "Data Analysis", "Technical Support"):
+            self.assertNotIn(fabricated, text, fabricated)
+        self.assertEqual(sorted(report["skills_removed"]), ["Customer Success", "Data Analysis", "Technical Support"])
+        self.assertEqual(sorted(l["text"] for l in report["labels"]), ["Customer Success", "Data Analysis"])  # the two unsupported group labels
+        self.assertEqual(bullets(out, "Cashier"), self.BULLETS)  # no bullet gained or lost words
+
+    def test_the_heading_exception_does_not_remove_supported_skills_and_guard_3_does_not_touch_stated_experience(self):
+        # "Core Tools" and "Technical Support" are named by the posting (guard 3): the HEADINGS are decided strictly, the stated skills beneath stay.
+        for label in ("Core Tools", "Technical Tools", "Tools", "Operations & Tools", "Customer Service"):
+            out, _ = self.run_audit([f"{label}: Training New Hires, Cash Handling, Problem Resolution"])
+            joined = " | ".join(out["skills"])
+            for item in ("Training New Hires", "Cash Handling", "Problem Resolution"):
+                self.assertIn(item, joined, f"{item} lost under {label!r}")
+        out, report = self.run_audit(["Core Tools: Training New Hires, Cash Handling"])
+        self.assertEqual(out["skills"], ["Training New Hires, Cash Handling"])  # guard 3: the posting says "core tools", the history never does
+        self.assertEqual([l["text"] for l in report["labels"]], ["Core Tools"])
+        out2, report2 = self.run_audit(["Team: Training New Hires, Cash Handling"])
+        self.assertEqual(out2["skills"], ["Team: Training New Hires, Cash Handling"])  # a plain heading is still kept
+        self.assertEqual(report2["labels"], [])
+
+
+if __name__ == "__main__":
+    unittest.main()

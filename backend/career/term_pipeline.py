@@ -17,7 +17,7 @@ fix-up fails or comes back malformed the step-3 resume is kept.
 import json
 import re
 
-from career import job_match, resume_quality
+from career import job_match, provenance, resume_quality
 from career.job_match import JobMatchError
 
 MAX_TERMS = 60  # long postings have 40+ distinct terms (one real posting filled 45 of 45); scanners such as Jobscan count them all
@@ -823,6 +823,17 @@ def truth_notice(struck: list, removed: list, held: list | None = None, restored
     return notice
 
 
+def check_provenance(result: dict, resume: dict, profile_text: str, job_description: str, confirmed_facts: list, terms: list[dict] | None) -> dict:
+    """Every bullet is compared with the saved entry of its own role, the summary and Skills with the plan (see career/provenance.py). A line the
+    candidate's own history does not state is put back to their own sentence for that role, or left out, and reported in result["provenance"];
+    returns the checked resume."""
+    checked, report = provenance.audit_and_repair(resume, profile_text, job_description, facts_text_for(confirmed_facts), posting_title(job_description), terms)
+    result["provenance"] = {**report, **provenance.notice_text(report)}
+    if result["provenance"]["count"]:
+        print(f"[career.truth] provenance restored={len(report['restored'])} held={len(report['held'])} skills_removed={len(report['skills_removed'])}")
+    return checked
+
+
 def _facts_as_resume(confirmed_facts: list) -> dict:
     return {"summary": "", "experience": [{"title": "confirmed facts", "bullets": [str(f.get("bullet_text", "")) for f in confirmed_facts or []]}]}
 
@@ -880,8 +891,9 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
         result["skills_removed"] = removed
         result["claims_struck"] = []
         resume = check_verb_wording(result, resume, profile_text, confirmed_facts, answers_text)
+        resume = check_provenance(result, resume, profile_text, job_description, confirmed_facts, None)
         result["resume_data"] = resume
-        result["truth_notice"] = truth_notice([], removed, result["lines_held"], result["verbs_restored"])
+        result["truth_notice"] = {**truth_notice([], removed, result["lines_held"], result["verbs_restored"]), "provenance": result["provenance"]}
         result["claim_review"] = []
         log_quality(quality)
         result["term_report"] = []
@@ -918,7 +930,9 @@ def build_checked_resume(profile_text: str, job_description: str, confirmed_fact
     result["skills_removed"] = removed
     result["claims_struck"] = struck
     resume = check_verb_wording(result, resume, profile_text, confirmed_facts, answers_text)
-    result["truth_notice"] = truth_notice(struck, removed, result["lines_held"], result["verbs_restored"])
+    resume = check_provenance(result, resume, profile_text, job_description, confirmed_facts, terms)
+    check_placement(resume, terms)  # statuses and the score follow the resume as finally written
+    result["truth_notice"] = {**truth_notice(struck, removed, result["lines_held"], result["verbs_restored"]), "provenance": result["provenance"]}
     if removed or struck or result["claim_review"] or conflicts:
         print(f"[career.truth] skills_removed={len(removed)} sentences_struck={len(struck)} unsupported_claims_left={len(result['claim_review'])} answer_conflicts={len(conflicts)}")
     result["quality"] = quality

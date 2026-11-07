@@ -1205,6 +1205,8 @@ async def job_build_resume(
             "verbs_restored": result.get("verbs_restored") or [],
             "lines_held": result.get("lines_held") or [],
             "truth_notice": result.get("truth_notice") or {"count": 0, "message": "", "held": [], "held_message": "", "restored_message": ""},
+            # what the provenance check changed (kept only when it changed something), so a reviewer can see it later
+            **({"provenance": result["provenance"]} if (result.get("provenance") or {}).get("count") else {}),
         },
     }
     version = ResumeVersion(
