@@ -40,9 +40,12 @@ test("a hostile question id cannot break out of its attribute", async ({ page })
   await page.evaluate((hostile) => {
     renderQuestions(hostile.map((h, i) => ({ id: h, question: `Question ${i}: ${h}` })));
   }, HOSTILE);
-  expect(await page.evaluate(() => window.__xss)).toBeUndefined();
-  const attrs = await page.evaluate(() => [...document.querySelectorAll("#questions-list input")].flatMap((i) => [...i.attributes].map((a) => a.name)));
+  await page.waitForTimeout(200); // injected handlers such as onerror/onload fire asynchronously
+  expect(await page.evaluate(() => window.__xss), "script executed").toBeUndefined();
+  const attrs = await page.evaluate(() => [...document.querySelectorAll("#questions-list *")].flatMap((i) => [...i.attributes].map((a) => a.name)));
   expect(attrs.filter((n) => /^on/i.test(n)), "event-handler attributes created from a question id").toEqual([]);
+  const injected = await page.evaluate(() => document.querySelectorAll("#questions-list img, #questions-list svg, #questions-list iframe, #questions-list script").length);
+  expect(injected, "elements created from a question id").toBe(0);
 });
 
 test("the markdown article renderer escapes raw HTML (a link-URL weakness is tracked separately as N-01, see the unit test marked todo)", async ({ page }) => {

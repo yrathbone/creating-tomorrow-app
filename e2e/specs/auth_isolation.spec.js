@@ -45,3 +45,9 @@ test("a signed-in fictional person reaches their dashboard without being sent ba
   // the page shows the dashboard when a session exists; give it time to read the stored session and call the local API
   await expect(page.locator("#dashboard-top")).toBeVisible({ timeout: 15_000 });
 });
+
+test("control: without a stub session the dashboard is not shown (so the signed-in check above can fail)", async ({ page }) => {
+  await page.goto("/career/login.html");
+  await page.waitForTimeout(2000);
+  await expect(page.locator("#dashboard-top")).not.toBeVisible();
+});

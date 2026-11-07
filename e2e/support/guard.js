@@ -47,13 +47,10 @@ const test = base.test.extend({
       return route.abort("blockedbyclient");
     });
     await use(page);
+    // after the test body: fail if anything tried to leave the machine (done here, in the fixture, so it applies in EVERY spec file)
+    base.expect(violations, "requests that tried to leave this machine were blocked").toEqual([]);
   },
   signIn: async ({ page }, use) => { await use((who) => signIn(page, who)); },
-});
-
-// After every test: fail if anything tried to leave the machine.
-test.afterEach(async ({ violations }) => {
-  base.expect(violations, "requests that tried to leave this machine were blocked").toEqual([]);
 });
 
 module.exports = { test, expect: base.expect, loadTokens };

@@ -59,6 +59,11 @@ def build_safe_env(env: dict, workdir: str, ai_port: int = CLOSED_LOCAL_PORT) ->
         "COGNITO_USER_POOL_ID": FAKE_POOL,
         "COGNITO_APP_CLIENT_ID": frontend_client_id(),
         "CT_ISOLATE_PARSING": "1",
+        # Belt and braces for the server process: any outbound HTTP call (AI, Cognito, anything) is sent to a dead local proxy and fails at once.
+        "HTTP_PROXY": f"http://127.0.0.1:{CLOSED_LOCAL_PORT}",
+        "HTTPS_PROXY": f"http://127.0.0.1:{CLOSED_LOCAL_PORT}",
+        "ALL_PROXY": f"http://127.0.0.1:{CLOSED_LOCAL_PORT}",
+        "NO_PROXY": "127.0.0.1,localhost",
     })
     return clean
 
@@ -77,6 +82,11 @@ def assert_safe_env(env: dict) -> None:
         problems.append("ANTHROPIC_BASE_URL is not local")
     if env.get("COGNITO_REGION") != FAKE_REGION or env.get("COGNITO_USER_POOL_ID") != FAKE_POOL:
         problems.append("Cognito region/pool are not the fakes")
+    for k in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"):
+        if env.get(k) != f"http://127.0.0.1:{CLOSED_LOCAL_PORT}":
+            problems.append(f"{k} is not the dead local proxy")
+    if env.get("NO_PROXY") != "127.0.0.1,localhost":
+        problems.append("NO_PROXY is not local only")
     for k in ("TURNSTILE_SECRET_KEY", "TURNSTILE_SITE_KEY"):
         if env.get(k):
             problems.append(f"{k} is set")

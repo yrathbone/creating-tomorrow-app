@@ -61,13 +61,17 @@ class A_TheLauncherCanOnlyPointAtLocalFakes(unittest.TestCase):
         for gone in ("TURNSTILE_SECRET_KEY", "TURNSTILE_SITE_KEY", "AWS_ACCESS_KEY_ID", "RENDER_EXTERNAL_URL", "PGHOST", "CT_MODEL"):
             self.assertNotIn(gone, safe)
         self.assertEqual(safe["PATH"], "/usr/bin")  # harmless variables pass through
+        # outbound calls from the server process go to a dead local proxy, except to this machine
+        for k in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"):
+            self.assertEqual(safe[k], "http://127.0.0.1:9")
+        self.assertEqual(safe["NO_PROXY"], "127.0.0.1,localhost")
 
     def test_the_safety_check_refuses_each_unsafe_value_on_its_own(self):
         good = self.mod.build_safe_env({}, self.workdir)
         for key, bad in (("DATABASE_URL", "postgresql://user:pw@dpg.render.com/db"), ("ANTHROPIC_API_KEY", "sk-ant-fictional"),
                          ("ANTHROPIC_BASE_URL", "https://api.anthropic.com"), ("COGNITO_REGION", "us-east-2"),
                          ("COGNITO_USER_POOL_ID", "us-east-2_realpool"), ("TURNSTILE_SECRET_KEY", "0x-fictional"), ("CT_E2E", "0"),
-                         ("SOME_URL", "https://creatingtomorrow.net/api")):
+                         ("SOME_URL", "https://creatingtomorrow.net/api"), ("HTTPS_PROXY", ""), ("NO_PROXY", "*")):
             with self.assertRaises(SystemExit, msg=key):
                 self.mod.assert_safe_env({**good, key: bad})
 

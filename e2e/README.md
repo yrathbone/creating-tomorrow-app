@@ -9,21 +9,24 @@ Local only. Fictional people, a stubbed sign-in, no AI. Nothing here can reach t
 4. Tokens for two fictional people (A, B) are written to `e2e/.auth/` (ignored by git). No password, cookie or real token is ever read or stored.
 5. AI is never called: responses that a page needs are supplied by the test (`renderMatchReport(...)` with fixture data) or the step is not tested here. Live AI validation is a separate, explicitly approved activity.
 
-## Run (after installing; installing downloads packages and browsers: needs approval)
+## Run
 ```
 cd e2e
-npm install                      # @playwright/test and @axe-core/playwright, pinned
-npx playwright install chromium  # or set E2E_CHANNEL=chrome / msedge to use the browser already on the computer
+npm ci --ignore-scripts          # installs the exact pinned packages from package-lock.json; no install scripts run
 set CT_E2E=1                     # (PowerShell: $env:CT_E2E = "1")
-npx playwright test --project=chromium
+set E2E_CHANNEL=chrome           # use the Chrome already on the computer: no browser download (PowerShell: $env:E2E_CHANNEL = "chrome")
+npx playwright test --project=chromium --project=mobile-chromium
 ```
-Projects: chromium, firefox, webkit, mobile-chromium (Pixel 5), mobile-webkit (iPhone SE). Mobile projects check layout only; real phones are still required for the file picker, downloads, keyboards and viewers.
+Firefox and WebKit projects are defined but need `npx playwright install firefox webkit` (a browser download that needs separate approval); they have NOT been run. Their per-request guard works, but the browser-level host-name block below is configured for Chromium only.
+
+Layers that keep the tests local: (1) the server launcher scrubs the environment, uses fake AI/Cognito/database settings and a dead local proxy for outbound calls; (2) the browser blocks every host name except 127.0.0.1, localhost and the pinned sign-in library CDN (Chromium `--host-resolver-rules`); (3) the per-request guard aborts and records anything else and fails the test (self-tests in `specs/guard_selftest.spec.js` prove it). The only external requests are GETs for the pinned, integrity-checked sign-in library on cdn.jsdelivr.net: no tokens, cookies or test data are sent.
 
 ## What is covered now
 - `smoke.spec.js`: every public page loads, has a title and `lang`, throws no script errors, does not scroll sideways; security headers present.
 - `a11y.spec.js`: axe-core (WCAG 2.2 AA tags) on every public page; **critical** violations fail, everything else is attached and listed as annotations until a baseline is agreed; one keyboard focus check.
 - `security_xss.spec.js`: hostile strings through the real `renderMatchReport` and `renderQuestions` and the markdown renderer in a real browser (no script, no dialog, no injected elements).
-- `auth_isolation.spec.js`: stubbed sign-in; no/garbage/ID token refused; A's record cannot be read, changed or deleted by B; a signed-in fictional person reaches the dashboard.
+- `auth_isolation.spec.js`: stubbed sign-in; no/garbage/ID token refused; A's record cannot be read, changed or deleted by B; a signed-in fictional person reaches the dashboard, and a signed-out visitor does not.
+- `guard_selftest.spec.js`: the guard fails any test that reaches for Anthropic or Cognito; a redirect to a real service does not connect.
 
 ## Next steps (not done)
 J1-J13 user journeys with mocked AI responses; tighten the axe baseline; resilience scenarios (slow network, offline, expired token, double submit, refresh); a CI job (a workflow change, needs approval) that runs this suite and, once stable, becomes a required check (a ruleset change, founder action).

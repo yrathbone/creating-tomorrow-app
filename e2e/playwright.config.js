@@ -5,6 +5,9 @@ const { defineConfig, devices } = require("@playwright/test");
 const PORT = process.env.E2E_PORT || "8765";
 // Optional: use the browser already installed on this computer instead of downloading one (E2E_CHANNEL=chrome or msedge).
 const channel = process.env.E2E_CHANNEL || undefined;
+// Browser-level guard (Chromium): every host name except this machine and the pinned sign-in CDN fails to resolve, for pages, workers, redirects and
+// WebSockets alike. It is independent of the per-request guard in support/guard.js (two layers).
+const CHROMIUM_ARGS = ["--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost, EXCLUDE cdn.jsdelivr.net"];
 
 module.exports = defineConfig({
   testDir: "./specs",
@@ -28,11 +31,11 @@ module.exports = defineConfig({
     timeout: 60_000,
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"], channel } },
+    { name: "chromium", use: { ...devices["Desktop Chrome"], channel, launchOptions: { args: CHROMIUM_ARGS } } },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
     // Layout and touch-target checks only. Real iPhone and Android behaviour (file picker, downloads, keyboards) needs real devices.
-    { name: "mobile-chromium", use: { ...devices["Pixel 5"], channel } },
+    { name: "mobile-chromium", use: { ...devices["Pixel 5"], channel, launchOptions: { args: CHROMIUM_ARGS } } },
     { name: "mobile-webkit", use: { ...devices["iPhone SE"] } },
   ],
 });

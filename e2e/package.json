@@ -12,5 +12,8 @@
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.64.1"
+  },
+  "overrides": {
+    "playwright-core": "1.64.1"
   }
 }
