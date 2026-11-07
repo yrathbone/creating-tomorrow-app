@@ -67,6 +67,12 @@ screen recording is not video editing, mentoring a colleague is not working with
 - **Unmatched roles:** a resume role that cannot be matched to a saved role (title and employer) is kept, named in the notice as not checked
   ("did you mean ..."), and listed in the saved truth review. Nothing true is deleted, and nothing in it is presented as verified.
 - **Summary:** a sentence that places the candidate in the posting's role name, or states a requirement the plan marks "none", is left out.
+  A sentence that states a TRANSFERABLE plan phrase (for example "customer service" when the history only says "assisted customers") is checked with
+  the same evidence decision as a Skills label: the phrase must be stated in the saved history or a confirmed fact. If it is not, the sentence is put
+  back to the candidate's ONE matching saved sentence (their words, never reworded; the phrase's own words cannot create the match, exactly one saved
+  sentence must qualify, and it must cover every other word the history contains) or, when that is not safe, held with the confirmed-fact path.
+  The notice says what changed once per sentence. Descriptive, paraphrased and trait-only summaries are not touched. Limit: only exact plan phrases
+  are caught, not a synonym ("customer care"), and words in sentences that do not state a plan phrase are not compared.
 - **Skills:** a "none" term, posting wording the history never states, or a transferable term whose words are each in the history but never
   together ("Scheduling Calls") is removed unless the plan backs it. The recombination rule alone leaves a transferable label that has a
   word the history never uses ("Customer Service" for "assisted customers") in place, but **the posting-wording rule removes it when the
@@ -85,7 +91,7 @@ screen recording is not video editing, mentoring a colleague is not working with
   checked); (4) it is not made only of the posting's job-title words. Matching is on whole words with capitalisation and punctuation normalised.
   Anything else, such as "Customer Service" or "Customer Success", keeps the full evidence decision. This exception applies to Skills group labels
   only, never to headline phrases, summaries, skill items or bullets.
-  The summary is deliberately NOT filtered this way yet (a separate design and false-positive review is pending).
+  The summary is not filtered by this label rule; it has its own phrase rule (see "Summary" above).
 - **Limits:** a paraphrase with at most one new word is kept (not verified); a single new fact worded with only words from the candidate's own
   history is not seen; the checks compare words, not meaning.
 
