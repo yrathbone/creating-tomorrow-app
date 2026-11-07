@@ -1,0 +1,12 @@
+{
+  "_note": "Accessibility baseline recorded on the local test server (chromium, axe-core 4.13, WCAG 2.2 AA tags). A rule not listed for a page FAILS the test; a listed rule may not report MORE elements than recorded. When a fix lands, lower or remove the entry. First recorded 2026-11-07 on main 1ef27b5 + PR #65.",
+  "/": { "color-contrast": 1 },
+  "/about.html": { "color-contrast": 1 },
+  "/learn.html": { "color-contrast": 1 },
+  "/privacy.html": { "color-contrast": 1 },
+  "/accessibility.html": { "color-contrast": 1 },
+  "/contact.html": { "color-contrast": 1 },
+  "/tool.html": { "color-contrast": 1 },
+  "/career/login.html": { "color-contrast": 1 },
+  "dashboard (signed in as fictional person A)": { "color-contrast": 4 }
+}
