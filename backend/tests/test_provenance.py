@@ -7,6 +7,7 @@ Run from the backend folder:  py -3.12 -m unittest discover -s tests -t .
 """
 import copy
 import os
+import re
 import unittest
 from unittest import mock
 
@@ -877,6 +878,243 @@ class O_TransferableExperienceStatedInTheSavedHistory(unittest.TestCase):
         out2, report2 = self.run_audit(["Team: Training New Hires, Cash Handling"])
         self.assertEqual(out2["skills"], ["Team: Training New Hires, Cash Handling"])  # a plain heading is still kept
         self.assertEqual(report2["labels"], [])
+
+
+class P_SummaryTransferablePhrases(unittest.TestCase):
+    """Fix C (audit D-04), approved design A+. A summary sentence that states a TRANSFERABLE plan phrase the saved history and the confirmed facts never
+    state is put back to the candidate's ONE matching saved sentence (their words, never ours) or held. Role-name positioning and "none" terms are the
+    existing rules and are unchanged. See Fix_C_Summary_Design_2026-11-07.md."""
+    PROFILE = ("EXPERIENCE:\n- Cashier at Sears (2019 \u2013 2024)\n  * Processed customer purchases.\n  * Handled cash payments.\n  * Assisted customers.\n"
+               "  * Resolved basic customer concerns.\n")
+    POSTING = "Bank Teller. Provide friendly customer service. Handle cash accurately. Work in a fast-paced banking environment."
+    PLAN = [{"term": "customer service", "kind": "skill", "importance": "required", "support": "transferable", "evidence": "assisted customers"},
+            {"term": "banking", "kind": "skill", "importance": "required", "support": "none", "evidence": ""}]
+    SEARS_DRAFT = "Delivers friendly customer service and handles cash accurately."
+
+    def run_audit(self, summary, facts="", profile=None, terms="default", title="Bank Teller"):
+        resume = {"summary": summary, "headline": "", "skills": ["Cash Handling"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears \u2014 2019 \u2013 2024", "bullets": ["Assisted customers."]}]}
+        plan = copy.deepcopy(self.PLAN) if terms == "default" else terms
+        return provenance.audit_and_repair(resume, profile or self.PROFILE, self.POSTING, facts, title, plan)
+
+    def summary_items(self, report):
+        return [x for x in report["restored"] + report["held"] if x["where"] == "summary"]
+
+    # --- Sears: unsupported
+    def test_sears_transferable_phrase_stated_as_fact_is_put_back_to_the_candidates_own_saved_sentence(self):
+        out, report = self.run_audit(self.SEARS_DRAFT)
+        self.assertEqual(out["summary"], "Handled cash payments.")  # exactly the candidate's saved words
+        self.assertEqual(len(report["restored"]), 1)
+        self.assertEqual(report["held"], [])
+        self.assertIn("customer service", report["restored"][0]["basis"])
+        self.assertIn("confirmed fact", report["restored"][0]["basis"])  # the existing confirmation path
+        notice = provenance.notice_text(report)
+        self.assertEqual(notice["count"], 1)
+        self.assertEqual(notice["items"][0]["change"], "now reads: Handled cash payments.")
+
+    def test_a_sentence_with_no_single_saved_sentence_to_stand_in_is_held_with_the_confirmation_path(self):
+        out, report = self.run_audit("Provides excellent customer service.")
+        self.assertEqual(out["summary"], "")
+        self.assertEqual(report["restored"], [])
+        self.assertEqual([h["text"] for h in report["held"]], ["Provides excellent customer service."])
+        self.assertIn("confirmed fact", report["held"][0]["problem"])
+
+    # --- confirmed facts override removal
+    def test_a_confirmed_fact_that_states_the_phrase_keeps_the_sentence_unchanged(self):
+        out, report = self.run_audit(self.SEARS_DRAFT, facts="- Provided friendly customer service at the register")
+        self.assertEqual(out["summary"], self.SEARS_DRAFT)
+        self.assertEqual(self.summary_items(report), [])
+
+    def test_the_candidates_own_saved_words_state_the_phrase_so_nothing_changes(self):
+        profile = self.PROFILE + "  * Provided customer service at the counter.\n"
+        out, report = self.run_audit(self.SEARS_DRAFT, profile=profile)
+        self.assertEqual(out["summary"], self.SEARS_DRAFT)
+        self.assertEqual(self.summary_items(report), [])
+
+    # --- Marcus unchanged
+    def test_marcus_summary_is_exactly_as_before(self):
+        out, report = audit()
+        self.assertEqual(out["summary"], "Customer-facing professional with experience across retail sales, shift leadership, and phone-based order support.")
+        self.assertEqual([h["text"] for h in report["held"] if h["where"] == "summary"],
+                         ["Well suited to a customer success environment focused on customer service."])
+
+    # --- mixed supported and unsupported, existing rules
+    def test_a_sentence_with_a_none_term_is_held_by_the_existing_rule_not_restored(self):
+        out, report = self.run_audit("Handled cash payments and assisted customers, bringing banking expertise to every shift.")
+        self.assertEqual(out["summary"], "")
+        self.assertEqual(report["restored"], [])
+        self.assertIn("banking", report["held"][0]["problem"])
+        self.assertNotIn("confirmed fact", report["held"][0]["problem"])  # the unchanged wording of the existing rule
+
+    def test_role_name_positioning_is_still_held_by_the_existing_rule(self):
+        out, report = self.run_audit("Well suited to a fast-paced bank teller environment.")
+        self.assertEqual(out["summary"], "")
+        self.assertEqual(report["held"][0]["problem"], "places you in the posting's role name")
+
+    def test_in_a_two_sentence_summary_only_the_unsupported_sentence_changes(self):
+        out, report = self.run_audit("Cashier with five years of experience handling cash payments. Delivers friendly customer service.")
+        self.assertEqual(out["summary"], "Cashier with five years of experience handling cash payments.")
+        self.assertEqual(len(self.summary_items(report)), 1)
+
+    # --- legitimate summaries untouched
+    def test_descriptive_paraphrased_and_trait_summaries_are_kept_word_for_word(self):
+        for text in ("Cashier with five years of experience handling cash payments and assisting customers.",
+                     "Experienced in processing customer purchases and resolving customer concerns.",
+                     "Dependable, detail-oriented professional who values accuracy.",
+                     "Friendly and accurate cashier."):
+            out, report = self.run_audit(text)
+            self.assertEqual(out["summary"], text, text)
+            self.assertEqual(self.summary_items(report), [], text)
+
+    def test_with_no_plan_the_rule_does_nothing(self):
+        for terms in (None, []):
+            out, report = self.run_audit(self.SEARS_DRAFT, terms=terms)
+            self.assertEqual(out["summary"], self.SEARS_DRAFT)
+
+    def test_a_literal_or_related_plan_term_is_never_touched(self):
+        for support in ("literal", "related"):
+            plan = [{"term": "customer service", "kind": "skill", "importance": "required", "support": support, "evidence": "x"}]
+            out, _ = self.run_audit(self.SEARS_DRAFT, terms=plan)
+            self.assertEqual(out["summary"], self.SEARS_DRAFT, support)
+
+    # --- safeguards: never a collection, never two roles, never a distorted meaning
+    def test_two_matching_saved_sentences_from_different_roles_hold_the_sentence_instead_of_guessing(self):
+        profile = ("EXPERIENCE:\n- Cashier at Sears (2019 \u2013 2024)\n  * Handled cash payments.\n  * Assisted customers.\n"
+                   "- Clerk at Mart (2015 \u2013 2018)\n  * Handled cash deposits.\n")
+        out, report = self.run_audit(self.SEARS_DRAFT, profile=profile)
+        self.assertEqual(out["summary"], "")
+        self.assertEqual(report["restored"], [])
+        self.assertEqual(len(report["held"]), 1)
+
+    def test_a_replacement_that_would_drop_part_of_the_meaning_is_held(self):
+        # the draft also says it processes purchases; the only matching saved sentence covers cash only, so restoring it would distort the meaning
+        out, report = self.run_audit("Delivers customer service while handling cash and processing purchases.")
+        self.assertEqual(out["summary"], "")
+        self.assertEqual(len(report["held"]), 1)
+
+    def test_a_single_matching_sentence_that_covers_only_part_of_the_draft_is_held(self):
+        # exactly one saved sentence qualifies ("Handled cash payments."), but the draft also says "assisting", which the history contains: restoring it
+        # would silently drop that half of the meaning, so the sentence is held
+        out, report = self.run_audit("Delivers customer service, handling cash and always assisting.")
+        self.assertEqual(out["summary"], "")
+        self.assertEqual(report["restored"], [])
+        self.assertEqual(len(report["held"]), 1)
+
+    def test_the_phrase_itself_cannot_create_a_match(self):
+        profile = self.PROFILE + "  * Assisted with service desk setup.\n"  # shares only the word "service" with the phrase
+        out, report = self.run_audit("Delivers customer service.", profile=profile)
+        self.assertEqual(out["summary"], "")
+        self.assertEqual(report["restored"], [])
+
+    def test_two_draft_sentences_that_restore_to_the_same_saved_sentence_give_one_sentence(self):
+        out, report = self.run_audit("Delivers friendly customer service and handles cash accurately. Provides customer service while handling cash.")
+        self.assertEqual(out["summary"], "Handled cash payments.")
+        self.assertEqual(len(report["restored"]), 2)  # both draft sentences are reported once each
+        self.assertEqual([r["after"] for r in report["restored"]], ["Handled cash payments.", ""])
+        self.assertEqual(provenance.notice_text(report)["items"][1]["change"], "left out (already said elsewhere)")
+
+    # --- no new words, no invented details
+    def test_every_word_of_a_changed_summary_is_the_candidates_own(self):
+        saved_words = set(re.findall(r"[a-z']+", (self.PROFILE + " Provided friendly customer service at the register").lower()))
+        for draft in (self.SEARS_DRAFT, "Delivers customer service and handles cash payments.", "Provides customer service every day while handling cash daily.",
+                      "Brings customer service expertise and handles cash."):
+            out, report = self.run_audit(draft)
+            if self.summary_items(report):
+                for word in re.findall(r"[a-z']+", out["summary"].lower()):
+                    self.assertIn(word, saved_words, f"{word!r} in {out['summary']!r} is not the candidate's word")
+
+    def test_restoration_uses_only_the_matching_candidates_saved_roles(self):
+        other = "EXPERIENCE:\n- Pilot at Sky (2010 \u2013 2014)\n  * Handled cash payments.\n"
+        out, _ = self.run_audit(self.SEARS_DRAFT, profile=other)
+        self.assertEqual(out["summary"], "Handled cash payments.")  # from the profile it was given; nothing from the Sears profile of the other tests
+        out2, _ = self.run_audit(self.SEARS_DRAFT, profile="EXPERIENCE:\n- Pilot at Sky (2010 \u2013 2014)\n  * Flew aircraft.\n")
+        self.assertEqual(out2["summary"], "")  # nothing of this candidate covers it: held, nothing borrowed
+
+    # --- guards prove themselves
+    def test_mutations_the_checks_are_what_keep_these_cases_right(self):
+        with mock.patch.object(provenance, "_restore_summary_sentence", return_value=""):
+            out, report = self.run_audit(self.SEARS_DRAFT)
+        self.assertEqual((out["summary"], len(report["held"])), ("", 1))  # restoration disabled: held instead
+        with mock.patch.object(provenance, "_restore_summary_sentence", return_value="Handled cash payments."):
+            out2, _ = self.run_audit("Delivers customer service while handling cash and processing purchases.")
+        self.assertEqual(out2["summary"], "Handled cash payments.")  # without the coverage guard the meaning would be dropped silently
+
+    # --- review checks on the Fix C PR: the rest of the resume is untouched, a fully held summary leaves no broken layout, notices say which is which
+    def build(self, summary):
+        writer = {"name": "Sam Ortiz", "contact": "Chicago, IL | sam@example.com", "headline": "", "summary": summary,
+                  "skills": ["Cash Handling, Transaction Processing"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers.", "Handled cash payments."]}]}
+
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.PLAN)}
+            if name == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(writer)}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            return term_pipeline.build_checked_resume(self.PROFILE, self.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+
+    def test_restoring_the_summary_does_not_erase_assisted_customers_from_the_experience_or_the_transferable_evidence(self):
+        result = self.build(self.SEARS_DRAFT)
+        resume = result["resume_data"]
+        self.assertEqual(resume["summary"], "Handled cash payments.")
+        self.assertEqual(resume["experience"][0]["bullets"], ["Assisted customers.", "Handled cash payments."])  # the candidate's own bullets are untouched
+        word = K_HeadlineAndSkillsLabels.docx_text(resume)
+        self.assertIn("Assisted customers.", word)
+        report = {t["term"]: t for t in result["term_report"]}
+        self.assertEqual(report["customer service"]["status"], "transferable")  # still shown as transferable evidence, not deleted and not upgraded
+        self.assertEqual(report["customer service"]["evidence"], "assisted customers")
+        self.assertNotIn("customer service", " ".join(resume["skills"]).lower())
+
+    def test_a_completely_held_summary_leaves_no_empty_heading_and_the_rest_of_the_document_intact(self):
+        result = self.build("Provides excellent customer service.")
+        resume = result["resume_data"]
+        self.assertEqual(resume["summary"], "")
+        word = K_HeadlineAndSkillsLabels.docx_text(resume)
+        paragraphs = [p.strip() for p in word.split("\n")]
+        self.assertNotIn("PROFESSIONAL SUMMARY", [p.upper() for p in paragraphs])  # no heading with nothing under it
+        for expected in ("Sam Ortiz", "Assisted customers.", "Handled cash payments."):
+            self.assertTrue(any(expected in p for p in paragraphs), expected)
+        self.assertEqual(result["truth_notice"]["provenance"]["count"], 1)  # and the candidate is told
+
+    def test_notices_tell_restored_from_held_and_both_explain_the_confirmation_path(self):
+        result = self.build("Provides excellent customer service. Delivers customer service while handling cash.")
+        items = result["truth_notice"]["provenance"]["items"]
+        by_text = {i["text"]: i for i in items}
+        self.assertEqual(len(items), 2)
+        restored = by_text["Delivers customer service while handling cash."]
+        held = by_text["Provides excellent customer service."]
+        self.assertEqual(restored["change"], "now reads: Handled cash payments.")
+        self.assertEqual(held["change"], "left out")
+        self.assertIn("put back to your own words", restored["why"])
+        self.assertIn("no single saved sentence", held["why"])
+        for item in items:
+            self.assertIn("add it as a confirmed fact or to your profile and rebuild", item["why"])
+        self.assertEqual(result["resume_data"]["summary"], "Handled cash payments.")
+
+    # --- screen versus Word
+    def test_screen_summary_and_the_word_file_are_the_same_words(self):
+        writer = {"name": "Sam Ortiz", "contact": "Chicago, IL | sam@example.com", "headline": "", "summary": self.SEARS_DRAFT,
+                  "skills": ["Cash Handling, Transaction Processing"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears \u2014 2019 \u2013 2024", "bullets": ["Assisted customers.", "Handled cash payments."]}]}
+
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.PLAN)}
+            if name == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(writer)}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            result = term_pipeline.build_checked_resume(self.PROFILE, self.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+        resume = result["resume_data"]
+        self.assertEqual(resume["summary"], "Handled cash payments.")
+        paragraphs = K_HeadlineAndSkillsLabels.docx_text(resume).split("\n")
+        self.assertTrue(any(p.strip() == "Handled cash payments." for p in paragraphs))
+        self.assertFalse(any("customer service" in p.lower() for p in paragraphs if p.strip().startswith("Delivers")))
+        items = [i for i in result["truth_notice"]["provenance"]["items"] if i["text"] == self.SEARS_DRAFT]
+        self.assertEqual(len(items), 1)  # one notice item for the one changed sentence
 
 
 if __name__ == "__main__":

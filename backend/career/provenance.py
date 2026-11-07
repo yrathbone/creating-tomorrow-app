@@ -177,6 +177,26 @@ def _is_heading(part: str, plan_terms: list[str], posting_text: str, posting_tit
             and _not_a_posting_phrase(tokens, _tokens(posting_text)) and _not_the_role_name(content, _tokens(posting_title)))
 
 
+def _restore_summary_sentence(sentence: str, phrase: str, roles: list[dict], whole: set[str]) -> str:
+    """Fix C (D-04). The ONE saved sentence of the candidate that a summary sentence draws on, or "" when no single saved sentence can safely stand in for
+    it. Keyword overlap alone is not enough: (1) the words of the unsupported phrase are ignored, so the phrase itself cannot create a match; (2) at least
+    two of the remaining words are in the saved sentence and more than half of the saved sentence's own words are in the draft; (3) exactly ONE saved
+    sentence qualifies (never a collection of bullets, never two roles); (4) every remaining word the history DOES contain is covered by that sentence, so
+    the replacement cannot drop part of the meaning. The words returned are the candidate's own, never ours."""
+    rest = stems(sentence) - stems(phrase)
+    known = rest & whole
+    found = []
+    for role in roles:
+        for saved in role["sentences"]:
+            own = stems(saved)
+            shared = rest & own
+            if own and len(shared) >= 2 and len(shared) * 2 > len(own) and saved not in found:
+                found.append(saved)
+    if len(found) != 1 or not known or known - stems(found[0]):
+        return ""
+    return found[0]
+
+
 def audit_and_repair(resume: dict, profile_text: str, posting_text: str, facts_text: str = "", posting_title: str = "", terms: list[dict] | None = None) -> tuple[dict, dict]:
     """Returns (checked resume, report). report = {restored, held, skills_removed, skills_detail, notes, unverified_roles} with plain-language
     reasons; every list is empty when nothing needed to change. The input is not modified."""
@@ -248,15 +268,33 @@ def audit_and_repair(resume: dict, profile_text: str, posting_text: str, facts_t
     title_core = rq.distinct_roots(posting_title)
     sentences = [s for s in rq._SENTENCE_SPLIT.split(str(out.get("summary", "")).strip()) if s.strip()]
     keep_sentences = []
+    history_text = f"{profile_text}\n{facts_text or ''}"  # the saved profile plus the confirmed facts: the two things that can back a statement
+    confirm = "If it is true, add it as a confirmed fact or to your profile and rebuild."
     for sentence in sentences:
         places_in_role = bool(_POSITIONING.search(sentence)) and len(title_core) >= 2 and len(title_core & rq.distinct_roots(sentence)) >= 2
         states = next((t for t in none_terms if term_in_text(t, sentence)), "")
         if places_in_role or states:
             report["held"].append({"where": "summary", "text": sentence.strip(),
                                    "problem": "places you in the posting's role name" if places_in_role else f"states \"{states}\", which your history does not establish"})
-        else:
+            continue
+        # Fix C: a transferable posting phrase stated as fact. Backed only when the saved history or a confirmed fact states it (the same decision as a
+        # Skills label or a headline phrase). Otherwise: put back to the candidate's one matching saved sentence, or held. Never reworded.
+        phrase = next((t for t in transferable_terms if term_in_text(t, sentence) and not term_in_text(t, history_text)), "")
+        if not phrase:
             keep_sentences.append(sentence.strip())
-    if len(keep_sentences) != len(sentences):
+            continue
+        saved = _restore_summary_sentence(sentence, phrase, roles, whole)
+        if saved and rq.distinct_roots(saved) in [rq.distinct_roots(k) for k in keep_sentences]:
+            report["restored"].append({"where": "summary", "before": sentence.strip(), "after": "",
+                                       "basis": f"already stated elsewhere in your summary; this one stated \"{phrase}\", which your history does not say. {confirm}"})
+        elif saved:
+            keep_sentences.append(saved)
+            report["restored"].append({"where": "summary", "before": sentence.strip(), "after": saved,
+                                       "basis": f"put back to your own words; the draft stated \"{phrase}\", which your history does not say. {confirm}"})
+        else:
+            report["held"].append({"where": "summary", "text": sentence.strip(),
+                                   "problem": f"states \"{phrase}\", which your history does not say, and no single saved sentence of yours could replace it. {confirm}"})
+    if [k.strip() for k in keep_sentences] != [x.strip() for x in sentences]:  # a sentence left out OR put back to the candidate's own wording
         out["summary"] = " ".join(keep_sentences)
 
     # ---- the ONE evidence decision for a short label (a skill, a headline phrase, a skills group label). Never a requirement the history does not
