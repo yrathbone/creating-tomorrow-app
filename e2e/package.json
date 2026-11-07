@@ -1,0 +1,16 @@
+{
+  "name": "creating-tomorrow-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Browser and accessibility tests for Creating Tomorrow. Local only: fictional accounts, stubbed sign-in, no AI. See README.md.",
+  "scripts": {
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "test:a11y": "playwright test specs/a11y.spec.js",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.64.1"
+  }
+}

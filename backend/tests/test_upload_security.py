@@ -275,5 +275,60 @@ class F_PastedAndUploadedTextIsDataNotInstructions(unittest.TestCase):
                 self.assertRegex(text, r"system=with_untrusted_rule\(")
 
 
+@mock.patch.dict(os.environ, ISOLATED)
+class G_HostileFilesAreRefusedWithAPlainMessageNeverACrash(unittest.TestCase):
+    """N-01 follow-up (upload hardening, the condition for deferring a signature scanner): oversized and over-compressed files, files that are not what
+    their name says, double extensions and path-like names. Local fixtures only, fictional content, built here byte by byte; nothing written to disk."""
+    def run_async(self, name, data):
+        return asyncio.run(extractor.extract_text_async(name, data))
+
+    def bomb(self, entries=1, size=0):
+        out = io.BytesIO()
+        with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+            for i in range(entries):
+                zf.writestr(f"word/part{i}.xml", b"\0" * size if size else b"x")
+        return out.getvalue()
+
+    def test_a_docx_that_unpacks_past_the_limit_is_refused_without_being_unpacked(self):
+        data = self.bomb(entries=1, size=extractor.MAX_DOCX_UNPACKED_BYTES + 1024 * 1024)  # about 101 MB of zeros: well under 1 MB on the wire
+        self.assertLess(len(data), 1024 * 1024)
+        with self.assertRaisesRegex(ValueError, "too large or complex"):
+            self.run_async("resume.docx", data)
+
+    def test_a_docx_with_thousands_of_parts_is_refused(self):
+        with self.assertRaisesRegex(ValueError, "too large or complex"):
+            self.run_async("resume.docx", self.bomb(entries=extractor.MAX_DOCX_ENTRIES + 1))
+
+    def test_files_that_are_not_what_their_name_says_come_back_as_a_plain_message(self):
+        exe = b"MZ\x90\x00" + b"\0" * 200
+        for name, data in (("resume.docx", exe), ("resume.pdf", exe), ("resume.docx", pdf_plain()), ("resume.pdf", docx_with()), ("resume.docx", b"")):
+            with self.assertRaises(ValueError, msg=name):
+                self.run_async(name, data)
+
+    def test_double_extensions_and_executable_names_are_judged_by_the_last_extension(self):
+        for name in ("resume.docx.exe", "resume.pdf.js", "resume.txt.bat", "resume.docx.", "resume", ".docx.scr"):
+            with self.assertRaisesRegex(ValueError, "Unsupported file type|Could not read", msg=name):
+                self.run_async(name, docx_with())
+        # a .txt after another extension is just text and is read as text
+        self.assertEqual(self.run_async("resume.docx.txt", b"plain"), "plain")
+
+    def test_a_path_like_file_name_has_no_effect_on_the_disk(self):
+        before = set(os.listdir(tempfile.gettempdir()))
+        with tempfile.TemporaryDirectory() as workdir:
+            cwd = os.getcwd()
+            os.chdir(workdir)
+            try:
+                for name in ("../../etc/passwd.txt", "..\\..\\Windows\\win.ini.txt", "/absolute/path/resume.txt", "C:\\resume.txt", "a\0b.txt"):
+                    self.assertEqual(self.run_async(name, b"fictional text"), "fictional text", name)
+                self.assertEqual(os.listdir(workdir), [])  # nothing was created, named after the upload or otherwise
+            finally:
+                os.chdir(cwd)
+        self.assertEqual(set(os.listdir(tempfile.gettempdir())) - before, set())
+
+    def test_binary_and_control_characters_in_a_text_file_never_raise(self):
+        text = self.run_async("resume.txt", b"Jane\0Doe\xff\xfe\x1b[31m red \x07")
+        self.assertIsInstance(text, str)
+
+
 if __name__ == "__main__":
     unittest.main()
