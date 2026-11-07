@@ -1099,7 +1099,8 @@ function backToLogin(notice) {
   noticeEl.textContent = notice || "";
   noticeEl.hidden = !notice;
   loginError.hidden = true;
-  if (notice) document.getElementById("login-password").focus();
+  // keyboard and screen-reader users must not lose their place: after a reset the password box, after "Back to sign in" the email box
+  document.getElementById(notice ? "login-password" : "login-email").focus();
 }
 
 // Asks for a code. A person we cannot find looks exactly like one we can, so this never reveals who has an account.

@@ -37,11 +37,10 @@ test("forgot-password panel: Enter on the link opens it and moves focus to the e
   await expect(page.locator("#login-form")).toBeHidden();
 });
 
-// KNOWN FINDING E1-F1 (Medium-Low, WCAG 2.4.3 Focus Order): "Back to sign in" hides the panel the keyboard focus was in, and focus falls back to <body>,
-// so a keyboard or screen-reader user must start again from the top of the page. test.fail() records the defect as an expected failure: when the page is
-// fixed the test starts passing, Playwright reports it, and the annotation must be removed.
+// FINDING E1-F1 (Medium-Low, WCAG 2.4.3 Focus Order), FIXED in the same branch: "Back to sign in" used to hide the panel the keyboard focus was in, so focus fell
+// back to <body> and the person had to start again from the top of the page. login.js now focuses the email box. This test was first recorded as an
+// expected failure (test.fail) and proved the defect; it now guards the fix.
 test("forgot-password panel: Back to sign in returns focus to a control on the sign-in form", async ({ page }) => {
-  test.fail(true, "Known finding E1-F1: focus is lost to <body> after 'Back to sign in' (fix: focus #login-email or the heading when the panel changes)");
   await page.goto("/career/login.html");
   await page.click("#forgot-open-btn");
   await page.click("#forgot-back-btn");
