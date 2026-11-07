@@ -1039,6 +1039,60 @@ class P_SummaryTransferablePhrases(unittest.TestCase):
             out2, _ = self.run_audit("Delivers customer service while handling cash and processing purchases.")
         self.assertEqual(out2["summary"], "Handled cash payments.")  # without the coverage guard the meaning would be dropped silently
 
+    # --- review checks on the Fix C PR: the rest of the resume is untouched, a fully held summary leaves no broken layout, notices say which is which
+    def build(self, summary):
+        writer = {"name": "Sam Ortiz", "contact": "Chicago, IL | sam@example.com", "headline": "", "summary": summary,
+                  "skills": ["Cash Handling, Transaction Processing"], "education": [], "certifications": [],
+                  "experience": [{"title": "Cashier", "subtitle": "Sears — 2019 – 2024", "bullets": ["Assisted customers.", "Handled cash payments."]}]}
+
+        def fake(name, system, user, tool, extract=None):
+            if name == "career_term_plan":
+                return {"terms": copy.deepcopy(self.PLAN)}
+            if name == "career_job_build_resume":
+                return {"resume_data": copy.deepcopy(writer)}
+            raise job_match.JobMatchError("edit unavailable")
+
+        with mock.patch.object(job_match, "_call_with_retry", fake):
+            return term_pipeline.build_checked_resume(self.PROFILE, self.POSTING, [], "Sam Ortiz", "Chicago, IL | sam@example.com")
+
+    def test_restoring_the_summary_does_not_erase_assisted_customers_from_the_experience_or_the_transferable_evidence(self):
+        result = self.build(self.SEARS_DRAFT)
+        resume = result["resume_data"]
+        self.assertEqual(resume["summary"], "Handled cash payments.")
+        self.assertEqual(resume["experience"][0]["bullets"], ["Assisted customers.", "Handled cash payments."])  # the candidate's own bullets are untouched
+        word = K_HeadlineAndSkillsLabels.docx_text(resume)
+        self.assertIn("Assisted customers.", word)
+        report = {t["term"]: t for t in result["term_report"]}
+        self.assertEqual(report["customer service"]["status"], "transferable")  # still shown as transferable evidence, not deleted and not upgraded
+        self.assertEqual(report["customer service"]["evidence"], "assisted customers")
+        self.assertNotIn("customer service", " ".join(resume["skills"]).lower())
+
+    def test_a_completely_held_summary_leaves_no_empty_heading_and_the_rest_of_the_document_intact(self):
+        result = self.build("Provides excellent customer service.")
+        resume = result["resume_data"]
+        self.assertEqual(resume["summary"], "")
+        word = K_HeadlineAndSkillsLabels.docx_text(resume)
+        paragraphs = [p.strip() for p in word.split("\n")]
+        self.assertNotIn("PROFESSIONAL SUMMARY", [p.upper() for p in paragraphs])  # no heading with nothing under it
+        for expected in ("Sam Ortiz", "Assisted customers.", "Handled cash payments."):
+            self.assertTrue(any(expected in p for p in paragraphs), expected)
+        self.assertEqual(result["truth_notice"]["provenance"]["count"], 1)  # and the candidate is told
+
+    def test_notices_tell_restored_from_held_and_both_explain_the_confirmation_path(self):
+        result = self.build("Provides excellent customer service. Delivers customer service while handling cash.")
+        items = result["truth_notice"]["provenance"]["items"]
+        by_text = {i["text"]: i for i in items}
+        self.assertEqual(len(items), 2)
+        restored = by_text["Delivers customer service while handling cash."]
+        held = by_text["Provides excellent customer service."]
+        self.assertEqual(restored["change"], "now reads: Handled cash payments.")
+        self.assertEqual(held["change"], "left out")
+        self.assertIn("put back to your own words", restored["why"])
+        self.assertIn("no single saved sentence", held["why"])
+        for item in items:
+            self.assertIn("add it as a confirmed fact or to your profile and rebuild", item["why"])
+        self.assertEqual(result["resume_data"]["summary"], "Handled cash payments.")
+
     # --- screen versus Word
     def test_screen_summary_and_the_word_file_are_the_same_words(self):
         writer = {"name": "Sam Ortiz", "contact": "Chicago, IL | sam@example.com", "headline": "", "summary": self.SEARS_DRAFT,
