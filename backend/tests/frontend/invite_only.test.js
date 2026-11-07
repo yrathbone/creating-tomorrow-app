@@ -87,16 +87,17 @@ test("first-login 'choose your password' step exists with matching, hidden-by-de
   assert.strictEqual((html.match(/autocomplete="new-password"/g) || []).length >= 2, true);
 });
 
-test("newPasswordProblem: at least 8 characters and both boxes must match", () => {
+test("newPasswordProblem: at least 12 characters and both boxes must match", () => {
   const src = read("career", "login.js");
   const fn = src.slice(src.indexOf("function newPasswordProblem"), src.indexOf("loginForm.addEventListener"));
   const ctx = {};
   vm.createContext(ctx);
   vm.runInContext(fn, ctx);
-  assert.strictEqual(ctx.newPasswordProblem("abcdefgh", "abcdefgh"), "");
-  assert.match(ctx.newPasswordProblem("short", "short"), /at least 8 characters/);
-  assert.match(ctx.newPasswordProblem("", ""), /at least 8 characters/);
-  assert.match(ctx.newPasswordProblem("abcdefgh", "abcdefgx"), /don['’]t match/);
+  assert.strictEqual(ctx.newPasswordProblem("abcdefghijkl", "abcdefghijkl"), "");
+  assert.match(ctx.newPasswordProblem("short", "short"), /at least 12 characters/);
+  assert.match(ctx.newPasswordProblem("abcdefghijk", "abcdefghijk"), /at least 12 characters/); // 11 is still too short
+  assert.match(ctx.newPasswordProblem("", ""), /at least 12 characters/);
+  assert.match(ctx.newPasswordProblem("abcdefghijkl", "abcdefghijkx"), /don['’]t match/);
 });
 
 test("login.js: the invited person's temporary password leads to the new-password step, then the same sign-in as everyone", () => {
