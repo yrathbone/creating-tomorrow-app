@@ -21,3 +21,11 @@ test("the sign-in password field has no minimum (existing passwords keep working
   const login = html.match(/<input[^>]*id="login-password"[^>]*>/)[0];
   assert.ok(!/minlength=/.test(login), login);
 });
+
+test("the invite-only sign-up page (which creates no account) asks for the same 12 characters, so the site says one thing", () => {
+  const reg = fs.readFileSync(path.join(FRONTEND, "career", "register.html"), "utf8");
+  const field = reg.match(/<input[^>]*id="signup-password"[^>]*>/)[0];
+  assert.match(field, /minlength="12"/);
+  assert.ok(!/minlength="8"/.test(reg));
+  assert.match(reg, /At least 12 characters\./);
+});
