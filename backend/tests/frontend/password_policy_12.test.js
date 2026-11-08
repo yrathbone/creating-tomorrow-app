@@ -29,3 +29,9 @@ test("the invite-only sign-up page (which creates no account) asks for the same 
   assert.ok(!/minlength="8"/.test(reg));
   assert.match(reg, /At least 12 characters\./);
 });
+
+test("the invite-only page says plainly that its form cannot create an account and saves nothing", () => {
+  const reg = fs.readFileSync(path.join(FRONTEND, "career", "register.html"), "utf8");
+  assert.match(reg, /This form cannot create an account during the beta, and nothing you type here is saved or sent/);
+  assert.match(reg, /<h1>Career Profile is by invitation<\/h1>/);
+});
