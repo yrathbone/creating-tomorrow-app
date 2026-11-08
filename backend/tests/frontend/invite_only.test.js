@@ -224,3 +224,32 @@ test("narrow screens: the invitation actions wrap instead of overflowing, and th
   const links = css.match(/body\.auth-v5 \.invite-actions a\s*\{([^}]*)\}/)[1];
   assert.ok(!/(^|[;\s])(width|min-width):\s*\d/.test(links), "no fixed width on the buttons");
 });
+
+// ---- one invitation prompt on the sign-in card (RP-0002 addendum 02) ----
+test("the sign-in card has exactly one invitation prompt: the older 'Want an invitation? Find out how.' sentence is gone", () => {
+  const html = LOGIN_PAGE();
+  const card = html.slice(html.indexOf('id="step-login"'), html.indexOf('id="step-forgot"'));
+  assert.ok(!/Want an invitation/i.test(html), "older sentence removed");
+  assert.ok(!/Find out how/i.test(html), "older link text removed");
+  assert.strictEqual((card.match(/href="register\.html"/g) || []).length, 1, "one link to the invitation page on the sign-in card");
+  assert.strictEqual((html.match(/href="register\.html"/g) || []).length, 1, "one link to the invitation page on the whole sign-in page");
+  assert.strictEqual((card.match(/Learn how to join/g) || []).length, 1);
+  assert.match(card, /New to Creating Tomorrow\? We&rsquo;re currently welcoming participants by invitation\. <a href="register\.html">Learn how to join<\/a>\./);
+});
+
+test("the remaining invitation paragraph still explains the temporary password and the first-time choice (nothing else was removed)", () => {
+  const html = LOGIN_PAGE();
+  assert.match(html, /<p class="hint">Career Profile is in <strong>beta testing<\/strong> and is <strong>by invitation only<\/strong>\. If you were invited, sign in with the email address and temporary password from your invitation; you will choose your own password the first time\.<\/p>/);
+});
+
+test("keyboard order inside the sign-in card, from the document: email, password, Sign in, Forgot your password, Trouble signing in, Learn how to join (and nothing after it)", () => {
+  const html = LOGIN_PAGE();
+  const card = html.slice(html.indexOf('id="step-login"'), html.indexOf('id="step-forgot"'));
+  const order = [...card.matchAll(/<(input|button|a)\b([^>]*)>/g)].map((m) => {
+    const id = (m[2].match(/\bid="([^"]+)"/) || [])[1];
+    const href = (m[2].match(/\bhref="([^"]+)"/) || [])[1];
+    return id || (href ? (href.startsWith("mailto:") ? "mailto" : href) : m[1]);
+  });
+  assert.deepStrictEqual(order, ["login-email", "login-password", "login-btn", "forgot-open-btn", "mailto", "register.html"]);
+  assert.ok(!/tabindex=/.test(card), "no custom tab order inside the card");
+});
