@@ -160,3 +160,67 @@ test("Contact, Privacy and Terms say Career Profile is a beta by invitation", ()
   assert.match(read("contact.html"), /A Career Profile invitation\.<\/strong> Career Profile is in beta testing and is by invitation only/);
   assert.match(read("privacy.html"), /Career Profile is in beta testing and is by invitation only for now/);
 });
+
+// ---- the sign-in page links to the invitation page (RP-0002 addendum 01) ----
+const LOGIN_PAGE = () => read("career", "login.html");
+
+test("the sign-in page has a clear link beneath the sign-in form to the invitation page", () => {
+  const html = LOGIN_PAGE();
+  const m = html.match(/<p class="login-help login-join">New to Creating Tomorrow\? We&rsquo;re currently welcoming participants by invitation\. <a href="register\.html">Learn how to join<\/a>\.<\/p>/);
+  assert.ok(m, "the approved sentence and link are present, exactly once");
+  assert.strictEqual((html.match(/Learn how to join/g) || []).length, 1);
+  const step = html.slice(html.indexOf('id="step-login"'), html.indexOf('id="step-forgot"'));
+  const iForm = step.indexOf("</form>");
+  const iLink = step.indexOf("Learn how to join");
+  assert.ok(iForm > 0 && iLink > iForm, "the link is after the sign-in form, inside the sign-in card");
+  assert.ok(iLink < step.indexOf('id="login-error"'), "before the error area, which stays last");
+  assert.ok(!/target=|aria-label=|rel=/.test(m[0]), "a plain same-tab link with its own visible text");
+});
+
+test("the link uses the correct relative path and both pages lead to each other (no dead end, no loop through scripts)", () => {
+  const dir = path.join(FRONTEND, "career");
+  assert.ok(fs.existsSync(path.join(dir, "register.html")), "register.html exists next to login.html");
+  const toLogin = REGISTER_PAGE().match(/<a class="btn-primary" href="([^"]+)">Sign in<\/a>/)[1];
+  assert.strictEqual(toLogin, "login.html");
+  assert.ok(fs.existsSync(path.join(dir, toLogin)));
+  for (const href of [...LOGIN_PAGE().matchAll(/href="(register\.html)"/g)].map((x) => x[1])) assert.ok(fs.existsSync(path.join(dir, href)), href);
+});
+
+test("sign-in and password recovery are untouched: the same forms, fields, buttons and panels exist, and login.js still drives them", () => {
+  const html = LOGIN_PAGE();
+  for (const id of ["login-form", "login-email", "login-password", "login-btn", "forgot-open-btn", "forgot-request-form", "forgot-email", "forgot-request-btn", "forgot-confirm-form", "forgot-code",
+    "forgot-new-password", "forgot-new-password-confirm", "forgot-confirm-btn", "forgot-resend-btn", "forgot-back-btn", "forgot-error", "newpassword-form", "newpassword-input", "newpassword-confirm",
+    "newpassword-btn", "newpassword-error", "login-error", "login-notice", "step-login", "step-forgot", "step-newpassword"]) assert.ok(html.includes(`id="${id}"`), id);
+  assert.strictEqual((html.match(/<form\b/g) || []).length, 14, "no form was added or removed (the sign-in page has 14 forms, including the four sign-in and recovery forms, exactly as before)");
+  assert.ok(html.indexOf('<p class="login-help"><button type="button" id="forgot-open-btn"') < html.indexOf("Learn how to join"), "Forgot your password stays directly beneath the form, before the new link");
+  const js = read("career", "login.js");
+  for (const needle of ["forgot-open-btn", "forgot-back-btn", "newpassword-form", "login-form"]) assert.ok(js.includes(needle), needle);
+});
+
+test("auth.js no longer says register.html loads the sign-in library", () => {
+  const js = read("career", "js", "auth.js");
+  assert.ok(!/register\.html/.test(js), "stale mention removed");
+  assert.match(js, /script tag in login\.html /);
+});
+
+test("the two invitation-page buttons share one height rule and a visible keyboard focus indicator", () => {
+  const css = read("career", "auth-v5.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rule = css.match(/body\.auth-v5 \.invite-actions a\s*\{([^}]*)\}/);
+  assert.ok(rule, "one rule for both links");
+  for (const need of [/box-sizing:\s*border-box/, /min-height:\s*3rem/, /display:\s*inline-flex/, /align-items:\s*center/, /border:\s*2px solid/, /margin-top:\s*0/]) assert.match(rule[1], need);
+  const focus = css.match(/body\.auth-v5 \.invite-actions a:focus-visible\s*\{([^}]*)\}/);
+  assert.ok(focus, "a focus-visible rule for both links");
+  assert.match(focus[1], /outline:\s*3px solid #003395/);
+  assert.match(focus[1], /outline-offset:\s*3px/);
+  assert.ok(!/outline:\s*(none|0)/.test(css.match(/body\.auth-v5 \.invite-actions[^{]*\{[^}]*\}/g).join(" ")), "the focus indicator is never switched off");
+});
+
+test("narrow screens: the invitation actions wrap instead of overflowing, and the page adds no fixed widths", () => {
+  const css = read("career", "auth-v5.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const box = css.match(/body\.auth-v5 \.invite-actions\s*\{([^}]*)\}/)[1];
+  assert.match(box, /display:\s*flex/);
+  assert.match(box, /flex-wrap:\s*wrap/);
+  assert.match(box, /gap:\s*0\.75rem\s*;/); // when the buttons stack on a narrow screen they keep a 12 px gap (not 4 px)
+  const links = css.match(/body\.auth-v5 \.invite-actions a\s*\{([^}]*)\}/)[1];
+  assert.ok(!/(^|[;\s])(width|min-width):\s*\d/.test(links), "no fixed width on the buttons");
+});
