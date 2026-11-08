@@ -31,7 +31,7 @@ from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
 from career.ingestion import IngestionError, discover, ElevateError, start_resume_review
-from career.job_match import JobMatchError, build_general_resume, compare_to_job
+from career.job_match import JobMatchError, attempt_guard_active, build_general_resume, compare_to_job
 from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
 from career.resume_quality import candidate_answers_text, denials_from_history, drop_unsourced_bullets
@@ -43,7 +43,7 @@ from extractor import extract_text_async
 from models import Application, CareerProfile, Certification, Education, Experience, Language, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
 from limits import BoundedDict, BoundedDictList, BoundedList, Long, Medium, Short, Tiny
 from errors import internal_error
-from ai_status import ai_failure
+from ai_status import CONFIG_MESSAGE, ai_failure
 from abuse_guard import user_ai_guard
 from download_names import attachment_headers
 from profile_copy import build_profile_copy_bytes
@@ -101,6 +101,21 @@ def require_profile(
 
 # Order matters: the per-account rate limit first (an unconsented account still counts toward it), then consent.
 AI_ROUTE_GUARDS = [Depends(user_ai_guard), Depends(require_profile)]
+
+
+def _closed_while_attempt_guard_active(route: str):
+    """C-46: while CAREER_AI_ATTEMPT_LIMIT is set (ARMED or INVALID, including after the latch has invalidated a run), the
+    career AI routes whose model calls do not go through job_match._call_with_retry are closed, so they can neither send
+    uncounted requests nor be reached by accident during a validation window. OFF: no effect."""
+    def check() -> None:
+        if attempt_guard_active(route):
+            raise HTTPException(status_code=503, detail=CONFIG_MESSAGE, headers={"X-AI-Status": "unavailable"})
+    return check
+
+
+def unguarded_ai_route_guards(route: str) -> list:
+    """AI_ROUTE_GUARDS (rate limit, then consent), then the C-46 closure check, for the four routes outside the budget."""
+    return AI_ROUTE_GUARDS + [Depends(_closed_while_attempt_guard_active(route))]
 
 
 @router.get("/me")
@@ -628,7 +643,7 @@ async def discard_resume_draft(
     return {"discarded": True}
 
 
-@router.post("/resume-start", dependencies=AI_ROUTE_GUARDS)
+@router.post("/resume-start", dependencies=unguarded_ai_route_guards("/resume-start"))
 async def resume_start(
     resume_file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
@@ -686,7 +701,7 @@ class ResumeDiscoverRequest(BaseModel):
     round_number: int = 1
 
 
-@router.post("/resume-discover", dependencies=AI_ROUTE_GUARDS)
+@router.post("/resume-discover", dependencies=unguarded_ai_route_guards("/resume-discover"))
 async def resume_discover(
     req: ResumeDiscoverRequest,
     current_user: User = Depends(get_current_user),
@@ -1100,7 +1115,7 @@ class JobDiscoverRequest(BaseModel):
     round_number: int = 1
 
 
-@router.post("/job-discover", dependencies=AI_ROUTE_GUARDS)
+@router.post("/job-discover", dependencies=unguarded_ai_route_guards("/job-discover"))
 async def job_discover(
     req: JobDiscoverRequest,
     current_user: User = Depends(get_current_user),
@@ -1272,7 +1287,7 @@ async def build_general_resume_route(
 # gap-finding triggered it, it only ever sees categories/history/
 # questions as opaque context.
 
-@router.post("/skill-scan", dependencies=AI_ROUTE_GUARDS)
+@router.post("/skill-scan", dependencies=unguarded_ai_route_guards("/skill-scan"))
 async def skill_scan(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),

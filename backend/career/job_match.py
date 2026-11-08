@@ -24,6 +24,9 @@ via career.ingestion - not reimplemented here.
 """
 import json
 import os
+import secrets
+import threading
+from datetime import datetime, timezone
 
 import anthropic
 
@@ -404,13 +407,118 @@ def require_resume_shape(data: dict) -> dict:
     return data
 
 
+# --- Validation attempt budget (C-46) -------------------------------------------------------------------------------
+# CAREER_AI_ATTEMPT_LIMIT limits the model attempts sent through _call_with_retry below, and nothing else. It is NOT an
+# account-wide Anthropic spending limit: the public tools, the career gap interview (elevate), resume upload, skill scan
+# and the AI key check use their own clients and are not counted here. Modes:
+#   OFF     (unset, empty or spaces): exactly today's behaviour; the SDK keeps its default automatic retries; nothing is
+#           counted or logged here.
+#   ARMED   (a whole number 0 to 100): the SDK's automatic retries are off (max_retries=0) and every attempt takes a numbered
+#           slot BEFORE it is sent; once the slots are used, further attempts are refused without being sent.
+#   INVALID (anything else): fail closed; every attempt is refused without being sent.
+# Once a process has seen ARMED or INVALID it never goes back to uncounted OFF (the latch): a later change of the setting
+# inside the same process invalidates the run and refuses everything until the process restarts. While the guard is active
+# the four career AI routes that bypass this helper are closed (career/routes.py). Log lines carry only the boot id, the
+# call label, a route path and numbers: never prompts, replies, credentials or anything about a person.
+ATTEMPT_LIMIT_ENV = "CAREER_AI_ATTEMPT_LIMIT"
+MAX_ATTEMPT_LIMIT = 100
+BUDGET_REFUSED_MESSAGE = "We couldn't complete this comparison right now. Please try again."
+
+_budget_lock = threading.Lock()
+_budget = {"boot": "", "used": 0, "latched": None, "run_invalid": False}
+
+
+def _new_boot_id() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + secrets.token_hex(3)
+
+
+def _read_attempt_mode() -> tuple:
+    """("off", None), ("armed", limit) or ("invalid", None), from the environment only."""
+    raw = os.environ.get(ATTEMPT_LIMIT_ENV)
+    if raw is None or not raw.strip():
+        return ("off", None)
+    value = raw.strip()
+    if value.isascii() and value.isdigit() and int(value) <= MAX_ATTEMPT_LIMIT:
+        return ("armed", int(value))
+    return ("invalid", None)
+
+
+def _effective_mode_locked() -> tuple:
+    """The mode to apply now, with the one-way latch. Call only while holding _budget_lock."""
+    current = _read_attempt_mode()
+    latched = _budget["latched"]
+    if latched is None:
+        if current[0] != "off":
+            _budget["latched"] = current
+        return current
+    if current != latched and not _budget["run_invalid"]:
+        _budget["run_invalid"] = True
+        print(f"[ai-budget] RUN INVALID boot={_budget['boot']} reason=config_changed")
+    return ("invalid", None) if _budget["run_invalid"] else latched
+
+
+def _take_attempt(label: str) -> bool:
+    """Called immediately before each model request. Returns False in OFF mode (nothing counted) and True when a numbered
+    slot was taken; raises JobMatchError, with nothing sent, when the guard refuses."""
+    with _budget_lock:
+        mode, limit = _effective_mode_locked()
+        if mode == "off":
+            return False
+        boot, used = _budget["boot"], _budget["used"]
+        if mode == "invalid":
+            reason = "disarmed_while_armed" if _budget["run_invalid"] else "invalid_config"
+            print(f"[ai-budget] refused boot={boot} tool={label} reason={reason} used={used}")
+            raise JobMatchError(BUDGET_REFUSED_MESSAGE)
+        if used >= limit:
+            print(f"[ai-budget] refused boot={boot} tool={label} reason=limit_reached used={used} limit={limit}")
+            raise JobMatchError(BUDGET_REFUSED_MESSAGE)
+        _budget["used"] = used + 1
+        print(f"[ai-attempt] boot={boot} tool={label} n={used + 1} limit={limit}")
+        return True
+
+
+def attempt_guard_active(route: str) -> bool:
+    """For career/routes.py: True (and logged) while the guard is ARMED or INVALID, so the career AI routes that bypass
+    _call_with_retry stay closed. Applies the same latch as _take_attempt."""
+    with _budget_lock:
+        mode, _ = _effective_mode_locked()
+        if mode == "off":
+            return False
+        print(f"[ai-budget] closed boot={_budget['boot']} route={route}")
+        return True
+
+
+def _start_budget() -> None:
+    """A new process: new boot id, nothing used, no latch. If the process starts ARMED or INVALID, latch now and say so once."""
+    with _budget_lock:
+        _budget.update(boot=_new_boot_id(), used=0, latched=None, run_invalid=False)
+        mode, limit = _effective_mode_locked()
+        if mode == "armed":
+            print(f"[ai-budget] armed boot={_budget['boot']} limit={limit}")
+        elif mode == "invalid":
+            print(f"[ai-budget] armed boot={_budget['boot']} limit=invalid_config")
+
+
+def _reset_attempt_budget_for_tests() -> None:
+    """Tests only: behave like a freshly started process (also how the tests simulate a restart)."""
+    _start_budget()
+
+
+_start_budget()
+
+
 def _call_with_retry(label: str, system_prompt: str, user_prompt: str, tool: dict, extract) -> dict:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise JobMatchError("ANTHROPIC_API_KEY is not set on the server.")
 
-    client = anthropic.Anthropic()
+    client, client_counted = None, None
 
     for attempt in range(2):  # original attempt + at most one retry
+        counted = _take_attempt(label)  # before anything is sent; raises when the validation budget refuses
+        if client is None or counted != client_counted:
+            # OFF: the SDK's default client, exactly as before. ARMED: no hidden SDK retries, so every attempt is counted.
+            client = anthropic.Anthropic(max_retries=0) if counted else anthropic.Anthropic()
+            client_counted = counted
         prompt_for_this_attempt = user_prompt + (RETRY_NOTE if attempt > 0 else "")
         try:
             response = client.messages.create(
