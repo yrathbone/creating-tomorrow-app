@@ -20,56 +20,50 @@ function fakeElement(extra = {}) {
   }, extra);
 }
 
-// ---- the sign-up page ----
-function loadRegister() {
-  const form = fakeElement({ hidden: false });
-  const error = fakeElement();
-  const created = [];
-  const sandbox = {
-    document: {
-      getElementById: (id) => ({ "signup-form": form, "signup-error": error }[id] || null),
-      createElement: (tag) => { const e = fakeElement({ tag, hidden: false }); created.push(e); return e; },
-      createTextNode: (text) => ({ text }),
-    },
-    encodeURIComponent,
-  };
-  vm.createContext(sandbox);
-  vm.runInContext(read("career", "register.js"), sandbox);
-  return { form, error, created };
-}
+// ---- the invitation page (Option B: information only, no form) ----
+const REGISTER_PAGE = () => read("career", "register.html");
+const textOf = (html) => html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ").replace(/&rsquo;/g, "\u2019").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 
-test("submitting the sign-up form creates nothing: it only explains that Career Profile is in beta and by invitation", async () => {
-  const { form, error } = loadRegister(); // the stub has no signUp(): calling it would throw
-  let prevented = false;
-  await form.fire("submit", { preventDefault: () => { prevented = true; } });
-  assert.strictEqual(prevented, true);
-  assert.strictEqual(error.hidden, false);
-  const spans = error.children.filter((c) => c.tag === "span").map((c) => c.textContent).join(" ");
-  assert.match(spans, /currently in beta testing and is by invitation only/);
+test("the invitation page is information only: no form, no inputs, no buttons, no scripts, and register.js is gone", () => {
+  const html = REGISTER_PAGE();
+  assert.ok(!/<form\b|<input\b|<button\b|<textarea\b|<select\b/i.test(html), "no form controls");
+  assert.ok(!/<script\b/i.test(html), "no scripts (nothing here talks to a server)");
+  assert.ok(!fs.existsSync(path.join(FRONTEND, "career", "register.js")), "career/register.js was removed with the form");
 });
 
-test("the explanation offers a way to ask for an invitation and a way in for people who already have one", async () => {
-  const { form, error } = loadRegister();
-  await form.fire("submit", { preventDefault() {} });
-  const links = error.children.filter((c) => c.tag === "a");
-  assert.strictEqual(links.length, 2);
-  assert.match(links[0].href, /^mailto:yovanarathbone@creatingtomorrow\.net\?subject=Career%20Profile%20beta%20invitation%20request$/);
-  assert.strictEqual(links[1].href, "login.html");
+test("the invitation page uses the approved wording and no account-creation labels", () => {
+  const html = REGISTER_PAGE();
+  assert.match(html, /<title>Join Creating Tomorrow<\/title>/);
+  assert.match(html, /<meta name="description" content="Creating Tomorrow is in a limited testing phase while we work to make our tools reliable, accessible, and helpful\." \/>/);
+  assert.strictEqual((html.match(/<h1>/g) || []).length, 1);
+  assert.match(html, /<h1>Join Creating Tomorrow<\/h1>/);
+  const text = textOf(html);
+  assert.ok(text.includes("We\u2019re currently welcoming participants by invitation."), text);
+  assert.ok(text.includes("Creating Tomorrow is in a limited testing phase while we work to make our tools reliable, accessible, and helpful."));
+  assert.ok(text.includes("Already received an invitation? Sign in to get started."));
+  for (const gone of ["Create an account", "Create account", "Create a Creating Tomorrow account", "Career Profile is by invitation", "step-signup", "signup-"]) assert.ok(!html.includes(gone), `still present: ${gone}`);
+  assert.ok(!/password|e-?mail address/i.test(text), "the page does not ask for or mention a password or email address to type");
 });
 
-test("register.js never talks to the sign-in service", () => {
-  const js = read("career", "register.js");
-  for (const call of ["signUp(", "confirmRegistration(", "resendConfirmationCode(", "fetch(", "AmazonCognito"]) {
-    assert.ok(!js.includes(call), `register.js must not call ${call}`);
-  }
+test("the two actions are real links: Sign in goes to the sign-in page; Request an invitation opens the existing invitation-contact address (nothing is collected here)", () => {
+  const html = REGISTER_PAGE();
+  const links = [...html.matchAll(/<a class="(btn-primary|btn-secondary)" href="([^"]+)">([^<]+)<\/a>/g)].map((m) => ({ cls: m[1], href: m[2], label: m[3] }));
+  assert.deepStrictEqual(links, [
+    { cls: "btn-primary", href: "login.html", label: "Sign in" },
+    { cls: "btn-secondary", href: "mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20beta%20invitation%20request", label: "Request an invitation" },
+  ]);
+  assert.ok(html.indexOf(">Sign in</a>") < html.indexOf(">Request an invitation</a>"), "Sign in comes first");
+  assert.ok(html.indexOf("Already received an invitation?") < html.indexOf(">Sign in</a>"), "the guidance comes before the actions");
 });
 
-test("the sign-up page says beta + invitation-only up front and has no confirmation-code steps left", () => {
-  const html = read("career", "register.html");
-  assert.match(html, /<h1>Career Profile is by invitation<\/h1>/);
-  assert.match(html, /beta testing/);
-  assert.match(html, /by invitation only/);
-  for (const gone of ["step-confirm", "confirm-code", "step-done", "Create your account"]) assert.ok(!html.includes(gone), gone);
+test("the invitation page keeps the site navigation and the footer links (keyboard and screen-reader users still have a way around)", () => {
+  const html = REGISTER_PAGE();
+  assert.match(html, /<nav class="site-nav">/);
+  for (const href of ["../index.html", "../learn.html", "../videos.html", "../about.html", "login.html", "../tool.html"]) assert.ok(html.includes(`<a href="${href}"`) || html.includes(`href="${href}"`), `nav link ${href}`);
+  assert.match(html, /<nav class="h5-footer-nav" aria-label="Footer">/);
+  assert.match(html, /<main>/);
+  assert.match(html, /<html lang="en">/);
+  assert.match(html, /<meta name="robots" content="noindex" \/>/);
 });
 
 // ---- the sign-in page ----

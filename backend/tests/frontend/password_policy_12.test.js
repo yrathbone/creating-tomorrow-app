@@ -22,16 +22,38 @@ test("the sign-in password field has no minimum (existing passwords keep working
   assert.ok(!/minlength=/.test(login), login);
 });
 
-test("the invite-only sign-up page (which creates no account) asks for the same 12 characters, so the site says one thing", () => {
+test("Option B: the invitation page has no password field, so the 12-character hint and sentence of the earlier interim commits are gone with the form", () => {
   const reg = fs.readFileSync(path.join(FRONTEND, "career", "register.html"), "utf8");
-  const field = reg.match(/<input[^>]*id="signup-password"[^>]*>/)[0];
-  assert.match(field, /minlength="12"/);
-  assert.ok(!/minlength="8"/.test(reg));
-  assert.match(reg, /At least 12 characters\./);
+  assert.ok(!/<input\b/i.test(reg), "no inputs");
+  assert.ok(!/new-password|At least 12 characters|This form cannot create an account/.test(reg), "nothing left of the interim wording");
 });
 
-test("the invite-only page says plainly that its form cannot create an account and saves nothing", () => {
+test("both corrections survive together: the reset and invited-person pages keep the 12-character rule while the invitation page keeps no form", () => {
+  assert.strictEqual((html.match(/autocomplete="new-password"/g) || []).length, 4);
+  assert.strictEqual((html.match(/minlength="12"/g) || []).length, 4);
+  assert.strictEqual((html.match(/At least 12 characters\./g) || []).length, 2);
   const reg = fs.readFileSync(path.join(FRONTEND, "career", "register.html"), "utf8");
-  assert.match(reg, /This form cannot create an account during the beta, and nothing you type here is saved or sent/);
-  assert.match(reg, /<h1>Career Profile is by invitation<\/h1>/);
+  assert.ok(!/<form\b/i.test(reg));
+});
+
+test("site-wide guard: any new-password field on any page must ask for 12 characters, so neither correction can be undone by accident", () => {
+  const files = [];
+  (function walk(dir) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === "node_modules") continue;
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (e.name.endsWith(".html")) files.push(full);
+    }
+  })(FRONTEND);
+  let seen = 0;
+  for (const f of files) {
+    const page = fs.readFileSync(f, "utf8");
+    for (const m of page.matchAll(/<input[^>]*autocomplete="new-password"[^>]*>/g)) {
+      seen++;
+      const min = Number((m[0].match(/minlength="(\d+)"/) || [])[1] || 0);
+      assert.ok(min >= 12, `${path.relative(FRONTEND, f)}: ${m[0]}`);
+    }
+  }
+  assert.strictEqual(seen, 4, "exactly the four fields on the sign-in page exist today");
 });

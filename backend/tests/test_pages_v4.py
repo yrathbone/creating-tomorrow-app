@@ -98,8 +98,9 @@ class SmallFixes(unittest.TestCase):
         login, register = read("career", "login.html"), read("career", "register.html")
         self.assertIn('id="login-password" name="password" autocomplete="current-password"', login)
         self.assertIn('id="login-email" name="email" autocomplete="username"', login)
-        self.assertIn('autocomplete="new-password"', register)
-        self.assertIn('autocomplete="email"', register)
+        # Option B: the invitation page has no form fields at all, so there is nothing for a password manager to fill
+        self.assertNotIn("<input", register)
+        self.assertNotIn("autocomplete=", register)
 
     def test_dynamic_dropdowns_carry_a_name(self):
         self.assertIn('layout.name = "resume-layout"', read("career", "js", "history.js"))
