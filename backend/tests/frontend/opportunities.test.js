@@ -1,5 +1,6 @@
-// My Opportunities (C-52): the saved-links card. Runs the real frontend/career/js/opportunities.js
-// in a bare VM with a small fake DOM and a stub authedFetch. Nothing is sent anywhere.
+// My Opportunities (C-52), smallest member flow: the saved-links card. Runs the real
+// frontend/career/js/opportunities.js in a bare VM with a small fake DOM and a stub authedFetch.
+// Nothing is sent anywhere.
 // Run:  node --test backend/tests/frontend
 const test = require("node:test");
 const assert = require("node:assert");
@@ -12,15 +13,21 @@ const source = fs.readFileSync(path.join(FRONTEND, "js", "opportunities.js"), "u
 const html = fs.readFileSync(path.join(FRONTEND, "login.html"), "utf8");
 
 function makeEl(tag) {
-  return {
-    tagName: tag, children: [], textContent: "", value: "", hidden: true, className: "", type: "", href: "", target: "", rel: "",
-    dataset: {}, listeners: {},
+  const el = {
+    tagName: tag, children: [], value: "", hidden: true, className: "", type: "", href: "", target: "", rel: "",
+    dataset: {}, listeners: {}, _text: "",
     appendChild(child) { this.children.push(child); return child; },
     addEventListener(type, fn) { (this.listeners[type] = this.listeners[type] || []).push(fn); },
     focus() { this.focused = true; },
     reset() { this.resetCalled = true; },
     classList: { add() {}, remove() {}, toggle() {} },
   };
+  // Like a real DOM: setting textContent replaces the children, so "" clears them.
+  Object.defineProperty(el, "textContent", {
+    get() { return this._text; },
+    set(v) { this._text = v; if (v === "") this.children = []; },
+  });
+  return el;
 }
 
 // Recursively collects elements (not text nodes) that match the predicate.
@@ -84,11 +91,8 @@ test("the card stays hidden when the server answers 404 (feature switched off)",
   assert.deepStrictEqual(calls.map((c) => c.url), ["/api/career/opportunities"]);
 });
 
-test("the card shows saved links; an https posting becomes a link with safe attributes", async () => {
-  const { sandbox, els } = load({
-    "/api/career/opportunities": ok([item()]),
-    "/api/career/resume-versions": ok([]),
-  });
+test("the card shows saved links, and a https posting becomes a link with safe attributes", async () => {
+  const { sandbox, els } = load({ "/api/career/opportunities": ok([item()]) });
   await sandbox.loadOpportunities();
   assert.strictEqual(els["opportunities-card"].hidden, false);
   const list = els["opportunity-list"];
@@ -104,10 +108,7 @@ test("the card shows saved links; an https posting becomes a link with safe attr
 test("a link that is not https gets no anchor element at all", async () => {
   const bogus = ["http://jobs.example.com/x", "javascript:alert(1)", "https://user:pw@jobs.example.com/x", "not a url"];
   for (const u of bogus) {
-    const { sandbox, els } = load({
-      "/api/career/opportunities": ok([item({ job_url: u })]),
-      "/api/career/resume-versions": ok([]),
-    });
+    const { sandbox, els } = load({ "/api/career/opportunities": ok([item({ job_url: u })]) });
     await sandbox.loadOpportunities();
     assert.strictEqual(find(els["opportunity-list"], (el) => el.tagName === "a").length, 0, u);
   }
@@ -115,10 +116,7 @@ test("a link that is not https gets no anchor element at all", async () => {
 
 test("saved text is written as text, never parsed as markup", async () => {
   const hostile = "<img src=x onerror=alert(1)>";
-  const { sandbox, els } = load({
-    "/api/career/opportunities": ok([item({ title: hostile, employer: hostile })]),
-    "/api/career/resume-versions": ok([]),
-  });
+  const { sandbox, els } = load({ "/api/career/opportunities": ok([item({ title: hostile, employer: hostile })]) });
   await sandbox.loadOpportunities();
   const strong = find(els["opportunity-list"], (el) => el.tagName === "strong")[0];
   assert.strictEqual(strong.textContent, hostile);
@@ -133,80 +131,36 @@ test("safeHttpsHref accepts plain https and rejects every other shape", () => {
   }
 });
 
-test("an update carries every stored field, sends no state unless asked, and keeps the approval", () => {
-  const { sandbox } = load({});
-  const payload = sandbox.buildUpdatePayload(item({
-    approval: { status: "changed_since_approval", version_id: 7 },
-    state: "saved",
-  }));
-  assert.strictEqual(payload.title, "Program Analyst");
-  assert.strictEqual(payload.base_min, 80000);
-  assert.strictEqual(payload.base_max, 95000);
-  assert.strictEqual(payload.base_period, "annual");
-  assert.strictEqual(payload.approved_resume_version_id, 7);
-  assert.strictEqual(payload.dismiss_reason, null);
-  assert.strictEqual(Object.prototype.hasOwnProperty.call(payload, "state"), false);
-});
-
-test("an update of a dismissed link keeps its reason; a removed approval clears the id", () => {
-  const { sandbox } = load({});
-  const dismissed = sandbox.buildUpdatePayload(item({ state: "dismissed", dismiss_reason: "pay_too_low" }));
-  assert.strictEqual(dismissed.dismiss_reason, "pay_too_low");
-  const removed = sandbox.buildUpdatePayload(item({ approval: { status: "version_removed", version_id: 9 } }));
-  assert.strictEqual(removed.approved_resume_version_id, null);
-});
-
-test("re-approving a changed résumé clears the approval first, then approves the same version", async () => {
-  const stored = item({ approval: { status: "changed_since_approval", version_id: 7 } });
-  const { sandbox, calls } = load({
-    "PUT /api/career/opportunities/1": ok(stored),
-  });
-  await sandbox.approveResume(stored, 7);
-  const puts = calls.filter((c) => c.method === "PUT");
-  assert.strictEqual(puts.length, 2);
-  assert.strictEqual(puts[0].body.approved_resume_version_id, null);
-  assert.strictEqual(puts[1].body.approved_resume_version_id, 7);
-});
-
-test("approving a résumé for a link that was never approved needs one save", async () => {
-  const { sandbox, calls } = load({ "PUT /api/career/opportunities/1": ok(item()) });
-  await sandbox.approveResume(item(), 3);
-  const puts = calls.filter((c) => c.method === "PUT");
-  assert.strictEqual(puts.length, 1);
-  assert.strictEqual(puts[0].body.approved_resume_version_id, 3);
-});
-
-test("recording an application posts once and says so when it was already recorded", async () => {
-  const { sandbox, calls, els } = load({
-    "POST /api/career/opportunities/1/record-application": ok({ already_recorded: true, opportunity: item({ state: "applied" }), application: { id: 5 } }),
-    "/api/career/applications": ok([]),
-  });
-  await sandbox.recordApplication(item());
-  const posts = calls.filter((c) => c.method === "POST");
-  assert.strictEqual(posts.length, 1);
-  assert.strictEqual(els["opportunities-status"].textContent, "This job is already in your tracker.");
-});
-
-test("a refused application shows the server's message", async () => {
-  const { sandbox, els } = load({
-    "POST /api/career/opportunities/1/record-application": bad(409, { message: "Approve a current résumé first." }),
-  });
-  await sandbox.recordApplication(item());
-  assert.strictEqual(els["opportunities-status"].textContent, "Approve a current résumé first.");
+test("the add form sends only the manual fields, with no approval, application or state fields", async () => {
+  const { sandbox, calls, els } = load({ "POST /api/career/opportunities": ok(item({ id: 9 })), "/api/career/opportunities": ok([]) });
+  els["opportunity-title"] = { value: "Analyst" };
+  els["opportunity-url"] = { value: "https://jobs.example.com/x" };
+  els["opportunity-base-min"] = { value: "" };
+  els["opportunity-base-max"] = { value: "" };
+  els["opportunity-employer"] = { value: "Acme" };
+  const created = await sandbox.submitOpportunityForm({ preventDefault() {} });
+  assert.ok(created);
+  const post = calls.find((c) => c.method === "POST");
+  assert.ok(post, "POST sent");
+  for (const forbidden of ["state", "approved_resume_version_id", "application_id", "dismiss_reason"]) {
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(post.body, forbidden), false, forbidden);
+  }
+  assert.strictEqual(post.body.title, "Analyst");
+  assert.strictEqual(post.body.job_url, "https://jobs.example.com/x");
 });
 
 test("the add form refuses a non-https link without calling the server", async () => {
-  const { sandbox, calls, els, getEl } = load({});
+  const { sandbox, calls, getEl } = load({});
   getEl("opportunity-title").value = "Analyst";
   getEl("opportunity-url").value = "http://jobs.example.com/x";
   const result = await sandbox.submitOpportunityForm({ preventDefault() {} });
   assert.strictEqual(result, null);
   assert.strictEqual(calls.length, 0);
-  assert.match(els["opportunities-status"].textContent, /https:\/\//);
+  assert.match(getEl("opportunities-status").textContent, /https:\/\//);
 });
 
 test("the add form refuses pay that is not a whole number", async () => {
-  const { sandbox, calls, els, getEl } = load({});
+  const { sandbox, calls, getEl } = load({});
   getEl("opportunity-title").value = "Analyst";
   getEl("opportunity-url").value = "https://jobs.example.com/x";
   getEl("opportunity-base-min").value = "80000.5";
@@ -215,17 +169,33 @@ test("the add form refuses pay that is not a whole number", async () => {
   assert.strictEqual(calls.length, 0);
 });
 
-test("the page has the card hidden by default, and the feature script loads after the applications script", () => {
+test("remove sends one DELETE and drops the link from the list", async () => {
+  const { sandbox, calls, els } = load({
+    "/api/career/opportunities": ok([item({ id: 1 }), item({ id: 2, title: "Other role" })]),
+    "DELETE /api/career/opportunities/1": ok({ deleted: true }),
+  });
+  await sandbox.loadOpportunities();
+  await sandbox.deleteOpportunity(vm.runInContext("allOpportunities[0]", sandbox));
+  const deletes = calls.filter((c) => c.method === "DELETE");
+  assert.deepStrictEqual(deletes.map((d) => d.url), ["/api/career/opportunities/1"]);
+  assert.strictEqual(els["opportunity-list"].children.length, 1);
+});
+
+test("the page has the card hidden by default, with no approval or comparison controls, and loads the script after applications", () => {
   const card = html.match(/<div class="card span-2 opportunities-card" id="opportunities-card"[^>]*>/);
   assert.ok(card, "card markup present");
   assert.match(card[0], /\shidden>/);
+  const cardBlock = html.slice(html.indexOf('id="opportunities-card"'), html.indexOf('id="general-resume-card"'));
+  for (const removed of ["opportunities-context", "opportunities-tracker-btn", "job-target-add-btn", "approve", "record-application"]) {
+    assert.strictEqual(cardBlock.includes(removed), false, removed);
+  }
   const applicationsAt = html.indexOf('<script src="js/applications.js">');
   const opportunitiesAt = html.indexOf('<script src="js/opportunities.js">');
   assert.ok(applicationsAt > 0 && opportunitiesAt > applicationsAt);
 });
 
-test("the module never builds markup from strings", () => {
-  for (const banned of ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval("]) {
+test("the module never builds markup from strings and never calls the approval or application routes", () => {
+  for (const banned of ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "record-application", "/resume-versions", "approved_resume"]) {
     assert.strictEqual(source.includes(banned), false, banned);
   }
 });
