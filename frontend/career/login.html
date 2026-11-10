@@ -462,6 +462,44 @@
           </div>
         </div>
 
+        <div class="card span-2 opportunities-card" id="opportunities-card" hidden>
+          <div class="dashboard-card-header"><h2 id="opportunities-heading" tabindex="-1">My Opportunities</h2></div>
+          <p class="hint">Job links you save yourself. Creating Tomorrow does not fetch, scrape or endorse them.</p>
+          <p id="opportunities-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+          <p id="opportunities-context" class="hint" hidden></p>
+          <button type="button" id="opportunities-add-toggle" class="btn-secondary">+ Save a job link</button>
+          <form id="opportunity-form" hidden>
+            <label class="field"><span>Job title</span><input id="opportunity-title" type="text" maxlength="200" required></label>
+            <label class="field"><span>Employer</span><input id="opportunity-employer" type="text" maxlength="200"></label>
+            <label class="field"><span>Job link (https only)</span><input id="opportunity-url" type="url" maxlength="2000" required></label>
+            <label class="field"><span>Location</span><input id="opportunity-location" type="text" maxlength="300"></label>
+            <label class="field"><span>Work arrangement</span>
+              <select id="opportunity-arrangement">
+                <option value="">Not stated</option>
+                <option value="remote">Remote</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="on_site">On-site</option>
+              </select>
+            </label>
+            <label class="field"><span>Guaranteed base pay: minimum (optional)</span><input id="opportunity-base-min" type="number" inputmode="numeric" step="1" min="0" max="10000000"></label>
+            <label class="field"><span>Guaranteed base pay: maximum (optional)</span><input id="opportunity-base-max" type="number" inputmode="numeric" step="1" min="0" max="10000000"></label>
+            <label class="field"><span>Base pay period</span>
+              <select id="opportunity-base-period">
+                <option value="">Not stated</option>
+                <option value="annual">Per year</option>
+                <option value="hourly">Per hour</option>
+              </select>
+            </label>
+            <label class="field"><span>Other pay (not base), in your words</span><input id="opportunity-pay-note" type="text" maxlength="300"></label>
+            <label class="field"><span>Notes</span><textarea id="opportunity-notes" rows="3" maxlength="2000"></textarea></label>
+            <button type="submit" id="opportunity-save-btn">Save this link</button>
+            <button type="button" id="opportunity-cancel-btn" class="btn-secondary">Cancel</button>
+          </form>
+          <ul id="opportunity-list" class="opportunity-list"></ul>
+          <p id="opportunity-empty" class="hint" hidden>No saved links yet.</p>
+          <button type="button" id="opportunities-tracker-btn" class="btn-secondary" hidden>Open my tracker</button>
+        </div>
+
         <div class="card span-2 resume-card" id="general-resume-card">
           <div class="dashboard-card-header"><h2 id="general-resume-heading" tabindex="-1">Showcase your experience</h2></div>
           <p id="general-resume-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -950,6 +988,7 @@
   <script src="js/history.js"></script>
   <script src="js/skillsVisual.js"></script>
   <script src="js/applications.js"></script>
+  <script src="js/opportunities.js"></script>
   <script src="js/generalResume.js"></script>
   <script src="js/nextStep.js"></script>
   <script src="js/exportMenu.js"></script>
