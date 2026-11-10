@@ -40,7 +40,7 @@ from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_ch
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
 from extractor import extract_text_async
-from models import Application, CareerProfile, Certification, Education, Experience, Language, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
+from models import Application, CareerProfile, Certification, Education, Experience, Language, Opportunity, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
 from limits import BoundedDict, BoundedDictList, BoundedList, Long, Medium, Short, Tiny
 from errors import internal_error
 from ai_status import ai_failure
@@ -1910,6 +1910,20 @@ async def delete_language(
         return {"deleted": True}
 
 
+def _opportunity_export(o: Opportunity) -> dict:
+    """Stored fields of a saved job link, as the member owns them. No server fetch, no derived state."""
+    return {
+        "id": o.id, "title": o.title, "employer": o.employer, "job_url": o.job_url, "location_text": o.location_text,
+        "work_arrangement": o.work_arrangement, "employment_type": o.employment_type, "base_min": o.base_min,
+        "base_max": o.base_max, "base_period": o.base_period, "pay_note": o.pay_note, "state": o.state,
+        "dismiss_reason": o.dismiss_reason, "last_verified_on": o.last_verified_on, "notes": o.notes,
+        "application_id": o.application_id, "approved_resume_version_id": o.approved_resume_version_id,
+        "follow_up_on": o.follow_up_on,
+        "created_at": o.created_at.isoformat() if o.created_at else None,
+        "updated_at": o.updated_at.isoformat() if o.updated_at else None,
+    }
+
+
 def _collect_export(db: Session, profile: CareerProfile) -> dict:
     """Everything saved for this profile, as plain data. Shared by the data-file backup and the readable copy,
     so the two can never disagree about what is saved."""
@@ -1926,6 +1940,13 @@ def _collect_export(db: Session, profile: CareerProfile) -> dict:
         db.rollback()  # applications table not migrated yet: the backup still works without it
         applications = []
 
+    # Saved job links (C-52): same pattern. Not migrated yet -> the backup still works without them.
+    try:
+        opportunities = db.query(Opportunity).filter_by(career_profile_id=profile.id).order_by(Opportunity.created_at.desc(), Opportunity.id.desc()).all()
+    except Exception:
+        db.rollback()
+        opportunities = []
+
     # Languages need migration 0008. If it has not been applied, say so in the backup itself
     # (and in the log) rather than silently exporting an empty list.
     languages_unavailable = False
@@ -1941,6 +1962,7 @@ def _collect_export(db: Session, profile: CareerProfile) -> dict:
     result = {
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "applications": [_application_to_dict(a) for a in applications],
+        "opportunities": [_opportunity_export(o) for o in opportunities],
         "experiences": [_experience_to_dict(e) for e in experiences],
         "education": [_education_to_dict(e) for e in education],
         "certifications": [_certification_to_dict(c) for c in certifications],
@@ -2030,7 +2052,7 @@ async def delete_my_account(
     profile_id = db.query(CareerProfile.id).filter_by(user_id=user_id).scalar()
     if profile_id is not None:
         for key, model in (
-            ("applications", Application), ("resume_versions", ResumeVersion), ("scan_history", ScanHistory),
+            ("opportunities", Opportunity), ("applications", Application), ("resume_versions", ResumeVersion), ("scan_history", ScanHistory),
             ("skills", Skill), ("experiences", Experience), ("education", Education),
             ("certifications", Certification), ("languages", Language), ("drafts", ResumeIngestionDraft),
         ):
