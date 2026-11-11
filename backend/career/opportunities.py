@@ -250,6 +250,15 @@ def _version(o: Opportunity) -> str:
     return hashlib.sha256(json.dumps(fields, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()[:32]
 
 
+def _approved_document_summary(db: Session, o: Opportunity):
+    """What the member approved, as stored: the date saved and the layout. None when no approved document is stored."""
+    doc = db.query(OpportunityDocument).filter_by(opportunity_id=o.id).one_or_none()
+    if doc is None:
+        return None
+    return {"saved_on": doc.created_at.date().isoformat() if doc.created_at else None, "layout": doc.layout,
+            "content_sha256": doc.content_sha256[:12]}
+
+
 def _to_dict(db: Session, o: Opportunity) -> dict:
     app_exists = False
     if o.application_id is not None:
@@ -275,6 +284,7 @@ def _to_dict(db: Session, o: Opportunity) -> dict:
         "last_verified_on": o.last_verified_on, "notes": o.notes, "follow_up_on": o.follow_up_on,
         "approval": _approval(db, o),
         "version": _version(o),
+        "approved_document": _approved_document_summary(db, o),
         "created_at": o.created_at.isoformat() if o.created_at else None,
         "updated_at": o.updated_at.isoformat() if o.updated_at else None,
         "safety_notice": ("Creating Tomorrow does not endorse employers or guarantee the authenticity of listings. "

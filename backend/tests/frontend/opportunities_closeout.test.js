@@ -36,6 +36,13 @@ function find(el, pred, out = []) {
   return out;
 }
 
+function textOf(el) {
+  if (!el) return "";
+  let s = el.textNode !== undefined ? el.textNode : el.textContent || "";
+  for (const c of (el.children || [])) s += textOf(c);
+  return s;
+}
+
 function button(root, label) {
   const hits = find(root, (el) => el.tagName === "button" && el.textContent === label);
   assert.ok(hits.length > 0, "button present: " + label);
@@ -276,4 +283,18 @@ test("a saved follow-up date is shown as saved, not as a draft", async () => {
 test("the focus refresh does not redraw while the member is in the list or has an unsaved date", () => {
   assert.ok(source.includes("list.contains(active)"), "focus inside the list is respected");
   assert.ok(source.includes("captureFollowUpDrafts()).length > 0"), "unsaved dates are respected");
+});
+
+test("a saved link with a stored approved document says so, distinct from the current résumé, and offers its download", async () => {
+  const saved = item({ id: 1, approved_document: { saved_on: "2026-11-11", layout: "classic", content_sha256: "2cb6054b0589" } });
+  const { sandbox, els } = load({ "/api/career/opportunities": ok([saved]) });
+  await sandbox.loadOpportunities();
+  assert.ok(textOf(els["opportunity-list"]).includes("Approved document saved on 2026-11-11"), "note shown");
+  assert.ok(textOf(els["opportunity-list"]).includes("does not change"), "distinct from the current résumé");
+  assert.ok(find(els["opportunity-list"], (el) => el.tagName === "button" && el.textContent === "Download the approved document").length === 1, "download offered");
+});
+
+test("the approved-document download uses the stored-file route, not the current-résumé route", () => {
+  assert.ok(source.includes('"/api/career/opportunities/" + item.id + "/approved-document"'), "stored route");
+  assert.ok(!source.includes("/resume-versions/"), "no current-résumé route in the card");
 });

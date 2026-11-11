@@ -237,6 +237,14 @@ function buildOpportunityItem(item, followUpDraft) {
     approval.textContent = approvalLabel(item.approval);
     li.appendChild(approval);
   }
+  if (item.approved_document) {
+    // The stored file the member approved. It is not your current résumé: it does not change when your layout or résumé changes.
+    const doc = document.createElement("p");
+    doc.className = "hint";
+    doc.textContent = "Approved document saved on " + (item.approved_document.saved_on || "an earlier date") +
+      " (layout: " + item.approved_document.layout + "). This is the exact file you approved for this job. It does not change when your résumé or layout changes.";
+    li.appendChild(doc);
+  }
   if (item.application_id) {
     const applied = document.createElement("p");
     applied.className = "hint";
@@ -278,6 +286,9 @@ function buildOpportunityItem(item, followUpDraft) {
         "Set aside as suspicious. Check the employer’s site yourself before you share any information."), "btn-secondary"));
       actions.appendChild(buildDismissControls(item));
     }
+  }
+  if (item.approved_document) {
+    actions.appendChild(makeButton("Download the approved document", () => downloadApprovedDocument(item)));
   }
   actions.appendChild(makeButton("Remove", () => deleteOpportunity(item), "btn-secondary"));
   li.appendChild(actions);
@@ -367,6 +378,26 @@ async function approveOpportunityResume(id, versionId) {
   allOpportunities = allOpportunities.map((o) => (o.id === id ? updated : o));
   renderOpportunities();
   return "Approved. This resume is now the approved version for this saved job.";
+}
+
+// Downloads the stored approved file for this saved job (not a re-rendered copy of the current résumé).
+async function downloadApprovedDocument(item) {
+  const res = await authedFetch("/api/career/opportunities/" + item.id + "/approved-document");
+  if (!res.ok) {
+    setOpportunityStatus(await readOpportunityError(res, "The approved document could not be downloaded."));
+    return;
+  }
+  const blob = await res.blob();
+  if (typeof URL === "undefined" || !URL.createObjectURL || typeof document === "undefined" || !document.body) return;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "Approved_Resume_for_saved_job.docx";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  setOpportunityStatus("Downloaded the approved document for this saved job.");
 }
 
 async function deleteOpportunity(item) {
