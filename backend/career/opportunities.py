@@ -12,7 +12,7 @@ import json
 import os
 import re
 import unicodedata
-from datetime import datetime  # noqa: F401  (kept for type readers)
+from datetime import date, datetime  # noqa: F401  (datetime kept for type readers)
 from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -21,7 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
-from career.routes import ApplicationIn, _application_to_dict, _validated_application_fields, get_career_profile_or_404
+from career.routes import ApplicationIn, _application_to_dict, _preferred_layout, _validated_application_fields, get_career_profile_or_404
 from db import get_db_session
 from limits import Long, Short, Tiny
 from models import Application, CareerProfile, Opportunity, ResumeVersion, User
@@ -42,8 +42,15 @@ BASE_PERIODS = ("hourly", "annual")
 DISMISS_REASONS = ("not_interested", "wrong_location", "pay_too_low", "looks_suspicious", "other")
 SETTABLE_STATES = ("saved", "dismissed")   # 'applied' comes only from record-application
 MAX_PAY = 10_000_000
-TRACKING = re.compile(r"^(utm_.*|fbclid|gclid|trk.*|refid|trackingid|src)$", re.IGNORECASE)
+# Tracking parameters removed for the duplicate key only. src and refid are NOT removed: some job boards use them to identify
+# the posting, so removing them could merge two distinct jobs (C-52 correction F03).
+TRACKING = re.compile(r"^(utm_.*|fbclid|gclid|trk.*|trackingid)$", re.IGNORECASE)
+UNSUPPORTED_ADDRESS = "This web address isn’t supported yet. Please enter a standard HTTPS job link."
+# Bumped by hand whenever backend/resume_builder.py changes how a résumé is drawn. The approval fingerprint includes it, so a
+# renderer change cannot leave an old approval reading "current". Not automatic: maintainers must bump it with such a change.
+RENDER_FINGERPRINT = "resume-builder-2026-11-11"
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+NUMERIC_LABEL = re.compile(r"^(0[xX][0-9a-fA-F]*|[0-9]+)$")   # decimal, octal or hex label: an IPv4 part in another notation
 URL_FORBIDDEN = re.compile(r"[\x00-\x1f\x7f\s]")   # no spaces, no control characters inside a link
 BLOCKED_SUFFIXES = (".local", ".internal", ".localhost", ".test", ".invalid", ".home", ".lan")
 SOURCE_LABELS = (("linkedin.com", "LinkedIn (saved by you)"), ("indeed.com", "Indeed (saved by you)"), ("usajobs.gov", "USAJOBS"))
@@ -81,9 +88,18 @@ def normalize_job_url(raw: object) -> tuple[str, str]:
     if "@" in parts.netloc or parts.username or parts.password:
         raise _bad("Links with a username or password are not accepted.")
     host = (parts.hostname or "").lower()
-    if not host or not host.isascii():
+    if not host:
         raise _bad("That link does not have a readable web address.")
-    if "." not in host or host == "localhost" or host.endswith(BLOCKED_SUFFIXES) or _is_ip(host.strip("[]")):
+    # Unicode host names and percent-encoded host names are not supported in MVP-0 (the browser would decode them to a
+    # different name than the one stored for duplicate checking). Punycode (xn--) names are plain ASCII and are accepted.
+    if not host.isascii() or "%" in host:
+        raise _bad(UNSUPPORTED_ADDRESS)
+    # A trailing dot ("localhost.", "127.0.0.1.") or an empty label is refused outright, never silently trimmed.
+    if host.endswith(".") or ".." in host or host.startswith("."):
+        raise _bad("That address is not a public website. Paste the employer's or site's public link.")
+    # A last label that is decimal, octal or hex (0x7f, 0X1, 0177) makes the whole host an IPv4 address in some other
+    # notation, which browsers normalise (0x7f.0x0.0x0.0x1 is 127.0.0.1). Refuse those hosts.
+    if "." not in host or host == "localhost" or host.endswith(BLOCKED_SUFFIXES) or _is_ip(host.strip("[]")) or NUMERIC_LABEL.match(host.rsplit(".", 1)[-1]):
         raise _bad("That address is not a public website. Paste the employer's or site's public link.")
     if port not in (None, 443):
         raise _bad("Only standard secure (https) links can be saved.")
@@ -137,8 +153,32 @@ def _source_label(stored_url: str) -> str:
     return DEFAULT_SOURCE
 
 
-def _resume_hash(v: ResumeVersion) -> str:
-    data = json.dumps(v.resume_data or {}, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+def _real_date(value: str) -> bool:
+    """YYYY-MM-DD and an actual calendar day (2026-02-31 and 2026-13-01 are refused)."""
+    if not ISO_DATE.match(value):
+        return False
+    try:
+        date.fromisoformat(value)
+        return True
+    except ValueError:
+        return False
+
+
+def _output_fingerprint(db: Session, v: ResumeVersion) -> str:
+    """What the approval is for: the version's content AND the layout the downloaded DOCX is drawn with (the saved profile
+    layout, which is the download default). Profile settings unrelated to the rendering are not part of it.
+    Other inputs to the document, checked for C-52 F02:
+      - ats_mode: a download-time option, not stored. An approval covers the default (visual) rendering only; an ATS-mode
+        download is a different file and is not covered by the approval.
+      - template query parameter: a download-time override. Same limitation as ats_mode.
+      - document properties (created, modified, author): set to the download time by the renderer. Not part of the
+        approval; the body text and styles are.
+      - renderer code: covered by RENDER_FINGERPRINT (manual).
+    """
+    profile = db.get(CareerProfile, v.career_profile_id)
+    layout = _preferred_layout(db, profile) if profile is not None else "classic"
+    payload = {"resume_data": v.resume_data or {}, "layout": layout, "renderer": RENDER_FINGERPRINT}
+    data = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 
@@ -158,7 +198,6 @@ class OpportunityIn(BaseModel):
     dismiss_reason: Tiny | None = None
     last_verified_on: Tiny | None = None
     follow_up_on: Tiny | None = None
-    approved_resume_version_id: int | None = None
 
 
 class RecordIn(BaseModel):
@@ -181,7 +220,7 @@ def _approval(db: Session, o: Opportunity) -> dict | None:
     v = db.get(ResumeVersion, o.approved_resume_version_id)
     if v is None or v.career_profile_id != o.career_profile_id:
         return {"version_id": o.approved_resume_version_id, "status": "version_removed"}
-    if _resume_hash(v) != o.approved_resume_hash:
+    if _output_fingerprint(db, v) != o.approved_resume_hash:
         return {"version_id": v.id, "status": "changed_since_approval"}
     return {"version_id": v.id, "status": "current"}
 
@@ -218,6 +257,13 @@ def _to_dict(db: Session, o: Opportunity) -> dict:
     }
 
 
+def _application_still_linked(db: Session, profile: CareerProfile, o: Opportunity) -> bool:
+    if o.application_id is None:
+        return False
+    app = db.get(Application, o.application_id)
+    return app is not None and app.career_profile_id == profile.id
+
+
 def _apply_fields(db: Session, profile: CareerProfile, o: Opportunity, req: OpportunityIn, creating: bool) -> None:
     o.title = _clean_text(req.title, 300, "job title", required=True)
     o.employer = _clean_text(req.employer, 300, "employer")
@@ -236,20 +282,13 @@ def _apply_fields(db: Session, profile: CareerProfile, o: Opportunity, req: Oppo
     o.base_min, o.base_max, o.base_period = req.base_min, req.base_max, req.base_period
     o.pay_note = _check_pay(req.base_min, req.base_max, req.base_period, req.pay_note)
     o.notes = _clean_text(req.notes, 2000, "notes", multiline=True)
-    if req.last_verified_on is not None and not ISO_DATE.match(req.last_verified_on):
+    if req.last_verified_on is not None and not _real_date(req.last_verified_on):
         raise _bad("Enter the date you checked the link as a valid date.")
-    if req.follow_up_on is not None and not ISO_DATE.match(req.follow_up_on):
+    if req.follow_up_on is not None and not _real_date(req.follow_up_on):
         raise _bad("Enter the follow-up date as a valid date.")
     o.last_verified_on, o.follow_up_on = req.last_verified_on, req.follow_up_on
-    # approval: one résumé version, fingerprinted at the moment of approval
-    if req.approved_resume_version_id is None:
-        o.approved_resume_version_id, o.approved_resume_hash = None, None
-    else:
-        v = db.query(ResumeVersion).filter_by(id=req.approved_resume_version_id, career_profile_id=profile.id).one_or_none()
-        if v is None:
-            raise _bad("That résumé no longer exists.")
-        if o.approved_resume_version_id != v.id or creating:
-            o.approved_resume_version_id, o.approved_resume_hash = v.id, _resume_hash(v)
+    # The résumé approval is NOT set here. It changes only through PUT /opportunities/{id}/approval, so a details edit (with or
+    # without the approval field) can never clear or replace an approval, and cannot be refused because of one.
     # state: only saved or dismissed can be set here
     if req.state is not None:
         if req.state not in SETTABLE_STATES:
@@ -282,6 +321,9 @@ async def list_opportunities(state: str | None = None, current_user: User = Depe
 @router.post("/opportunities")
 async def create_opportunity(req: OpportunityIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
     profile = get_career_profile_or_404(db, current_user)
+    # Serialise saves for one member: lock the profile row, then count. On PostgreSQL concurrent saves wait here,
+    # so the 200-link cap cannot be exceeded. (SQLite ignores FOR UPDATE; tests cover the SQL, not the race.)
+    db.query(CareerProfile).filter_by(id=profile.id).with_for_update().one()
     count = db.query(Opportunity).filter_by(career_profile_id=profile.id).count()
     if count >= MAX_PER_MEMBER:
         raise HTTPException(status_code=409, detail=f"You have {MAX_PER_MEMBER} saved links. Delete or dismiss some first.")
@@ -303,9 +345,40 @@ async def create_opportunity(req: OpportunityIn, current_user: User = Depends(ge
 @router.put("/opportunities/{opportunity_id}")
 async def update_opportunity(opportunity_id: int, req: OpportunityIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
     profile = get_career_profile_or_404(db, current_user)
-    o = _owned(db, profile, opportunity_id)
+    o = _owned(db, profile, opportunity_id, lock=True)  # serialised with record-application
     try:
         _apply_fields(db, profile, o, req, creating=False)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    db.refresh(o)
+    return _to_dict(db, o)
+
+
+class ApprovalIn(BaseModel):
+    approved_resume_version_id: StrictInt | None = None
+
+
+@router.put("/opportunities/{opportunity_id}/approval")
+async def set_approval(opportunity_id: int, req: ApprovalIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    """Changes only the approved résumé version of one saved link. Every other field is left exactly as stored, so a
+    client holding an old copy of the link cannot overwrite newer details. Refused once an application is recorded."""
+    profile = get_career_profile_or_404(db, current_user)
+    try:
+        o = _owned(db, profile, opportunity_id, lock=True)   # serialised with record-application and other edits
+        if req.approved_resume_version_id == o.approved_resume_version_id:
+            db.rollback()                                    # nothing to change; releases the lock
+            return _to_dict(db, o)
+        if _application_still_linked(db, profile, o):
+            raise HTTPException(status_code=409, detail="An application is already recorded for this job, so its résumé approval cannot change. The application keeps the résumé it was recorded with.")
+        if req.approved_resume_version_id is None:
+            o.approved_resume_version_id, o.approved_resume_hash = None, None
+        else:
+            v = db.query(ResumeVersion).filter_by(id=req.approved_resume_version_id, career_profile_id=profile.id).one_or_none()
+            if v is None:
+                raise _bad("That résumé no longer exists.")
+            o.approved_resume_version_id, o.approved_resume_hash = v.id, _output_fingerprint(db, v)
         db.commit()
     except Exception:
         db.rollback()
@@ -344,14 +417,22 @@ async def record_application(opportunity_id: int, req: RecordIn, current_user: U
             if existing is not None and existing.career_profile_id == profile.id:
                 db.rollback()   # nothing was changed; releases the lock
                 return {"already_recorded": True, "opportunity": _to_dict(db, o), "application": _application_to_dict(existing)}
+        if req.applied_on and not _real_date(req.applied_on.strip()):
+            raise _bad("Enter the date you applied as a valid date.")
         if o.state == "dismissed":
             raise HTTPException(status_code=409, detail="Restore this job before recording an application.")
-        resume_id = None
-        if o.approved_resume_version_id is not None:
-            approval = _approval(db, o)
-            if approval["status"] != "current":
-                raise HTTPException(status_code=409, detail="The résumé you approved for this job has changed since you approved it. Approve it again, then record the application.")
-            resume_id = approval["version_id"]
+        # A résumé must be approved for this job, and the approval must still be current, before an application is recorded.
+        if o.approved_resume_version_id is None:
+            raise HTTPException(status_code=409, detail="Approve a résumé for this saved job before recording the application.")
+        # Lock the approved version before reading its fingerprint: an edit, suggestion or deletion on this version waits
+        # for this transaction, and cannot change the content between the approval check and the application record.
+        db.query(ResumeVersion).filter_by(id=o.approved_resume_version_id).with_for_update().first()
+        approval = _approval(db, o)
+        if approval["status"] == "version_removed":
+            raise HTTPException(status_code=409, detail="The résumé you approved for this job was removed. Approve a résumé, then record the application.")
+        if approval["status"] != "current":
+            raise HTTPException(status_code=409, detail="The résumé you approved for this job has changed since you approved it. Approve it again, then record the application.")
+        resume_id = approval["version_id"]
         fields = _validated_application_fields(db, profile, ApplicationIn(
             job_title=o.title, company=o.employer, applied_on=req.applied_on, status="applied", resume_version_id=resume_id))
         app = Application(career_profile_id=profile.id, **fields)

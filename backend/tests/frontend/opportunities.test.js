@@ -126,7 +126,10 @@ test("saved text is written as text, never parsed as markup", async () => {
 test("safeHttpsHref accepts plain https and rejects every other shape", () => {
   const { sandbox } = load({});
   assert.strictEqual(sandbox.safeHttpsHref("https://jobs.example.com/a?b=1"), "https://jobs.example.com/a?b=1");
-  for (const u of ["http://x.example.com", "ftp://x.example.com", "https://a:b@x.example.com", "javascript:alert(1)", "", null, "https://"]) {
+  for (const u of ["http://x.example.com", "ftp://x.example.com", "https://a:b@x.example.com", "javascript:alert(1)", "", null, "https://",
+    "https://localhost./", "https://127.0.0.1./", "https://LOCALHOST./x", "https://127.0.0.1/", "https://[::1]/", "https://jobs.example.com./x",
+    "https://0177.0.0.1/", "https://0x7f.1/", "https://intranet.lan/x", "https://a..example.com/x", "https://example.com:8443/x",
+    "https://0x7f.0x0.0x0.0x1/", "https://192.168.0x1.0x1/", "https://0X7F.0X0.0X0.0X1/", "https://0x7f000001/"]) {
     assert.strictEqual(sandbox.safeHttpsHref(u), null, String(u));
   }
 });
@@ -181,6 +184,13 @@ test("remove sends one DELETE and drops the link from the list", async () => {
   assert.strictEqual(els["opportunity-list"].children.length, 1);
 });
 
+test("the add form shows the safety notice verbatim, inside the form", () => {
+  const formAt = html.indexOf('id="opportunity-form"');
+  const saveAt = html.indexOf('id="opportunity-save-btn"');
+  const notice = html.indexOf("Creating Tomorrow does not endorse employers or guarantee the authenticity of listings. Verify opportunities through the employer’s official website before sharing sensitive information. Never pay to apply for a job or receive a job offer.");
+  assert.ok(notice > formAt && notice < saveAt, "notice sits inside the form, above the save button");
+});
+
 test("the page has the card hidden by default, with no approval or comparison controls, and loads the script after applications", () => {
   const card = html.match(/<div class="card span-2 opportunities-card" id="opportunities-card"[^>]*>/);
   assert.ok(card, "card markup present");
@@ -194,8 +204,68 @@ test("the page has the card hidden by default, with no approval or comparison co
   assert.ok(applicationsAt > 0 && opportunitiesAt > applicationsAt);
 });
 
+test("Compare this job hands the saved link to the job card, and nothing else", async () => {
+  const { sandbox, els } = load({ "/api/career/opportunities": ok([item({ id: 7 })]) });
+  const seen = [];
+  sandbox.startJobFromOpportunity = (o) => seen.push(o.id);
+  await sandbox.loadOpportunities();
+  const btn = find(els["opportunity-list"], (el) => el.tagName === "button" && el.textContent === "Compare this job")[0];
+  assert.ok(btn, "compare button present");
+  btn.listeners.click[0]();
+  assert.deepStrictEqual(seen, [7]);
+});
+
+test("approving a resume sends only the approval, so a stale copy of the link cannot overwrite newer details", async () => {
+  const saved = item({ id: 9, notes: "Good fit", base: { min: 80000, max: 95000, period: "annual" }, pay_note: "Bonus varies", state: "saved" });
+  const { sandbox, calls } = load({
+    "/api/career/opportunities": ok([saved]),
+    "PUT /api/career/opportunities/9/approval": ok({ ...saved, approval: { version_id: 41, status: "current" } }),
+  });
+  await sandbox.loadOpportunities();
+  const msg = await sandbox.approveOpportunityResume(9, 41);
+  const put = calls.find((c) => c.method === "PUT");
+  assert.ok(put, "PUT sent");
+  assert.strictEqual(put.url, "/api/career/opportunities/9/approval");
+  assert.deepStrictEqual(Object.keys(put.body), ["approved_resume_version_id"]);
+  assert.strictEqual(put.body.approved_resume_version_id, 41);
+  assert.match(msg, /Approved/);
+});
+
+test("approval for a recorded application is refused with the server's sentence, and the link is left as it was", async () => {
+  const applied = item({ id: 11, state: "applied", application_id: 3 });
+  const { sandbox, els } = load({
+    "/api/career/opportunities": ok([applied]),
+    "PUT /api/career/opportunities/11/approval": bad(409, { message: "An application is already recorded for this job, so its resume approval cannot change." }),
+  });
+  await sandbox.loadOpportunities();
+  const msg = await sandbox.approveOpportunityResume(11, 41);
+  assert.match(msg, /already recorded|cannot change/);
+  assert.strictEqual(vm.runInContext("allOpportunities[0].state", sandbox), "applied");
+});
+
+test("the approval state is shown in words, and an applied link says the approval is fixed", async () => {
+  const { sandbox, els } = load({ "/api/career/opportunities": ok([
+    item({ id: 1, approval: { version_id: 5, status: "changed_since_approval" } }),
+    item({ id: 2, state: "applied", application_id: 4 }),
+  ]) });
+  await sandbox.loadOpportunities();
+  const text = textOf(els["opportunity-list"]);
+  assert.ok(text.includes("has changed since. Approve it again"));
+  assert.ok(text.includes("Its approved resume can no longer be changed here."));
+});
+
+test("the job card has the saved-link context and the approval control, both hidden by default", () => {
+  const ctx = html.match(/<p id="job-opportunity-context"[^>]*>/);
+  assert.ok(ctx && /\shidden>/.test(ctx[0]), "context line present and hidden");
+  const approval = html.match(/<div id="job-opportunity-approval"[^>]*>/);
+  assert.ok(approval && /\shidden>/.test(approval[0]), "approval block present and hidden");
+  const doneAt = html.indexOf('id="job-build-done-state"');
+  const approvalAt = html.indexOf('id="job-opportunity-approval"');
+  assert.ok(approvalAt > doneAt, "approval control sits in the finished-resume step");
+});
+
 test("the module never builds markup from strings and never calls the approval or application routes", () => {
-  for (const banned of ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "record-application", "/resume-versions", "approved_resume"]) {
+  for (const banned of ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "record-application", "/resume-versions", "/suggestions"]) {
     assert.strictEqual(source.includes(banned), false, banned);
   }
 });
