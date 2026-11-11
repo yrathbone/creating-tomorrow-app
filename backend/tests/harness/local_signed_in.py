@@ -83,12 +83,20 @@ def seed(db_path: pathlib.Path) -> None:
     subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], cwd=BACKEND, env=env, check=True)
     con = sqlite3.connect(db_path)
     for i, sub in enumerate(MEMBERS.values(), start=1):
-        con.execute("insert into users (cognito_sub) values (?)", (sub,))
+        con.execute("insert into users (cognito_sub, consent_given_at) values (?, datetime('now'))", (sub,))
         uid = con.execute("select id from users where cognito_sub=?", (sub,)).fetchone()[0]
         con.execute("insert into career_profiles (user_id) values (?)", (uid,))
         pid = con.execute("select id from career_profiles where user_id=?", (uid,)).fetchone()[0]
         data = json.dumps({"name": f"Synthetic Member {'AB'[i-1]}", "summary": "Synthetic test résumé.", "contact": "test@example.invalid"})
         con.execute("insert into resume_versions (career_profile_id, resume_data) values (?, ?)", (pid, data))
+        if i == 1:   # member A: the synthetic profile the AI stub answers for (tests/harness/ai_stub.py)
+            con.execute("insert into experiences (career_profile_id, title, organization, start_date, end_date, description, source, verified) "
+                        "values (?, ?, ?, ?, ?, ?, ?, ?)",
+                        (pid, "Customer Service Lead", "Sample Company", "2022", "2025",
+                         "Led a team of 6 agents handling customer escalations\nReduced average response time by 25% through a new triage process",
+                         "manual", 1))
+            for name in ["Team leadership", "Zendesk", "Excel"]:
+                con.execute("insert into skills (career_profile_id, name, source) values (?, ?, ?)", (pid, name, "manual"))
     con.commit()
     con.close()
 
@@ -99,7 +107,11 @@ def build_app(db_path: pathlib.Path, key):
     os.environ["COGNITO_REGION"] = REGION
     os.environ["COGNITO_USER_POOL_ID"] = POOL
     os.environ["COGNITO_APP_CLIENT_ID"] = CLIENT
+    # The AI stub answers the model calls (see tests/harness/ai_stub.py). The key value is a placeholder: nothing is sent.
+    os.environ["ANTHROPIC_API_KEY"] = "stub-not-a-real-key"
     sys.path.insert(0, str(BACKEND))
+    from tests.harness import ai_stub
+    ai_stub.install()
     import time as _t
     import auth.dependencies as deps
     deps._jwks_cache = {"keys": [public_jwk(key)]}          # the only substitution: the public key list
@@ -133,9 +145,6 @@ def build_app(db_path: pathlib.Path, key):
         text = (frontend / "career" / "js" / "auth.js").read_text(encoding="utf-8")
         text = text.replace(f'"{PROD_POOL}"', f'"{POOL}"').replace(f'"{PROD_CLIENT}"', f'"{CLIENT}"')
         return Response(text, media_type="application/javascript", headers={"Cache-Control": "no-store"})
-
-    async def not_found_harness(request):
-        return HTMLResponse("not available", status_code=404)
 
     harness_routes = [
         Route("/__harness/signin", signin),
