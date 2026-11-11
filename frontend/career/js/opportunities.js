@@ -134,7 +134,18 @@ async function loadOpportunities() {
   renderOpportunities();
 }
 
+// Follow-up dates typed but not yet saved, keyed by link id. Kept across re-renders so that a refresh cannot erase them.
+function captureFollowUpDrafts() {
+  const drafts = {};
+  for (const o of allOpportunities) {
+    const el = document.getElementById("opportunity-followup-" + o.id);
+    if (el && typeof el.value === "string" && el.value !== (o.follow_up_on || "")) drafts[o.id] = el.value;
+  }
+  return drafts;
+}
+
 function renderOpportunities() {
+  const drafts = captureFollowUpDrafts();
   const list = document.getElementById("opportunity-list");
   const empty = document.getElementById("opportunity-empty");
   const count = document.getElementById("opportunity-count");
@@ -147,7 +158,7 @@ function renderOpportunities() {
   if (empty) empty.hidden = shown.length > 0;
   const toggle = document.getElementById("opportunity-show-dismissed");
   if (toggle) toggle.textContent = showDismissedOpportunities ? "Hide dismissed links" : "Show dismissed links (" + dismissed.length + ")";
-  for (const item of shown) list.appendChild(buildOpportunityItem(item));
+  for (const item of shown) list.appendChild(buildOpportunityItem(item, drafts[item.id]));
 }
 
 function makeButton(label, onClick, className) {
@@ -169,7 +180,7 @@ function makeLabelled(labelText, control) {
   return label;
 }
 
-function buildOpportunityItem(item) {
+function buildOpportunityItem(item, followUpDraft) {
   const li = document.createElement("li");
   li.className = "opportunity-item";
 
@@ -247,7 +258,7 @@ function buildOpportunityItem(item) {
   }
 
   if (item.state !== "dismissed" && item.state !== "applied") {
-    li.appendChild(buildFollowUpControls(item));
+    li.appendChild(buildFollowUpControls(item, followUpDraft));
   }
 
   const notice = document.createElement("p");
@@ -274,12 +285,12 @@ function buildOpportunityItem(item) {
 }
 
 // Follow-up date: a date to remember, not a reminder. Nothing is sent to anyone.
-function buildFollowUpControls(item) {
+function buildFollowUpControls(item, draft) {
   const wrap = document.createElement("div");
   wrap.className = "opportunity-followup";
   const input = document.createElement("input");
   input.type = "date";
-  input.value = item.follow_up_on || "";
+  input.value = draft !== undefined ? draft : (item.follow_up_on || "");
   input.id = "opportunity-followup-" + item.id;
   wrap.appendChild(makeLabelled("Follow-up date (a date to remember; no reminder is sent)", input));
   wrap.appendChild(makeButton("Save follow-up date", () => {
@@ -439,9 +450,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const cancel = document.getElementById("opportunity-cancel-btn");
   if (cancel) cancel.addEventListener("click", () => { if (form) form.hidden = true; });
   // Approval state can change in another tab or screen: read it again when this window is back in use.
+  // A refresh re-draws the list, so it waits while the member is typing in the list or has an unsaved follow-up date.
   const refreshIfVisible = () => {
     const card = document.getElementById("opportunities-card");
-    if (card && !card.hidden && document.visibilityState !== "hidden") loadOpportunities();
+    if (!card || card.hidden || document.visibilityState === "hidden") return;
+    const list = document.getElementById("opportunity-list");
+    const active = typeof document.activeElement !== "undefined" ? document.activeElement : null;
+    if (list && active && typeof list.contains === "function" && list.contains(active)) return;
+    if (Object.keys(captureFollowUpDrafts()).length > 0) return;
+    loadOpportunities();
   };
   if (typeof window !== "undefined" && window.addEventListener) window.addEventListener("focus", refreshIfVisible);
   if (document.addEventListener) document.addEventListener("visibilitychange", refreshIfVisible);

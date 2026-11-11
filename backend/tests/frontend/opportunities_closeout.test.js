@@ -251,3 +251,29 @@ test("the card reads the approval again when the window is back in use, and a jo
   assert.ok(source.includes('document.addEventListener("visibilitychange", refreshIfVisible)'), "visibility refresh");
   assert.ok(/await loadOpportunities\(\);\s*\n\s*const items/.test(jobSource), "fresh read before recording");
 });
+
+test("an unsaved follow-up date survives a re-draw of the list (focus refresh, conflict reload)", async () => {
+  const saved = item({ id: 1, follow_up_on: null });
+  const { sandbox, els } = load({ "/api/career/opportunities": ok([saved]) });
+  await sandbox.loadOpportunities();
+  els["opportunity-followup-1"] = { value: "2026-12-01" };   // the typed, unsaved value in the page
+  vm.runInContext("renderOpportunities()", sandbox);
+  const input = find(els["opportunity-list"], (el) => el.id === "opportunity-followup-1")[0];
+  assert.ok(input, "input re-created");
+  assert.strictEqual(input.value, "2026-12-01", "typed date kept");
+});
+
+test("a saved follow-up date is shown as saved, not as a draft", async () => {
+  const saved = item({ id: 1, follow_up_on: "2026-11-20" });
+  const { sandbox, els } = load({ "/api/career/opportunities": ok([saved]) });
+  await sandbox.loadOpportunities();
+  els["opportunity-followup-1"] = { value: "2026-11-20" };
+  vm.runInContext("renderOpportunities()", sandbox);
+  const input = find(els["opportunity-list"], (el) => el.id === "opportunity-followup-1")[0];
+  assert.strictEqual(input.value, "2026-11-20");
+});
+
+test("the focus refresh does not redraw while the member is in the list or has an unsaved date", () => {
+  assert.ok(source.includes("list.contains(active)"), "focus inside the list is respected");
+  assert.ok(source.includes("captureFollowUpDrafts()).length > 0"), "unsaved dates are respected");
+});
