@@ -1,28 +1,34 @@
-"""Secure configuration for the disposable Neon PostgreSQL test branch (C-52 round 8).
+"""Secure configuration for the disposable Neon PostgreSQL test branch c52-test (C-52 round 9).
 
-Where the connection comes from (in this order):
-1. The environment variable CT_TEST_POSTGRES_URL (set in the current shell only; nothing is written anywhere).
+Source (first match wins):
+1. Environment variables (current shell only).
 2. A local file outside the repository: CT_TEST_POSTGRES_ENV_FILE, or by default
-   %USERPROFILE%\\.creating-tomorrow\\c52-test.env. It holds two lines:
-       CT_TEST_POSTGRES_URL=postgresql://...?sslmode=require
-       CT_TEST_POSTGRES_DB=<the expected database name on the test branch>
-   The file is never read by git (it is outside the repository) and is never printed.
+   %USERPROFILE%\\.creating-tomorrow\\c52-test.env. Never read by git; never printed.
 
-What is checked before any test runs
-- Scheme is PostgreSQL, the connection requires TLS (sslmode=require or verify-full).
-- The host is a Neon endpoint (*.neon.tech) and is not a Render host.
-- The database name in the URL equals CT_TEST_POSTGRES_DB (the expected test database).
-- A live connection reports that database name, TLS in use, and the server version.
-- The server major version is reported explicitly. PostgreSQL 18 results do not establish PostgreSQL 16 compatibility.
+Required settings (names only; values are never printed):
+  CT_TEST_POSTGRES_URL       direct connection string for the c52-test branch (TLS required)
+  CT_TEST_NEON_ENDPOINT      the endpoint identifier of the c52-test branch, copied from the Neon dashboard (ep-...)
+  CT_TEST_POSTGRES_DB        the database name on that branch (for example neondb)
+  CT_TEST_DISPOSABLE_CONFIRMED=yes   the founder confirms this database is disposable and holds no real member data
+Optional:
+  CT_TEST_NEON_REGION        default us-east-2
+  CT_TEST_PG_MAJOR           default 18 (the server major version the run must report)
 
-Nothing here prints the URL, the host, or the password. Logs contain only the check results.
+Checks before any test or migration runs
+- TLS is required (sslmode=require or verify-full).
+- The host is <endpoint>.<region>.aws.neon.tech with the expected endpoint identifier and region. Any other host is refused.
+- The host and database name must not contain "prod", and no Render host is accepted.
+- The URL database equals CT_TEST_POSTGRES_DB.
+- A live connection reports the same database name, TLS in use, and the expected server major version.
+
+Output contains only check results and the reported version. The URL, host, user, and password are never printed.
 """
 import os
 import pathlib
 from urllib.parse import parse_qs, urlparse
 
 DEFAULT_FILE = pathlib.Path(os.path.expanduser("~")) / ".creating-tomorrow" / "c52-test.env"
-FORBIDDEN_HOST_PARTS = ("render.com", "onrender", "amazonaws")
+FORBIDDEN_FRAGMENTS = ("render", "onrender", "prod", "production")
 
 
 class ConfigError(Exception):
@@ -42,43 +48,54 @@ def _read_env_file(path: pathlib.Path) -> dict:
     return values
 
 
-def load() -> tuple[str, str]:
-    """Returns (url, expected_database). Raises ConfigError with a message that never contains the URL."""
-    url = os.environ.get("CT_TEST_POSTGRES_URL", "")
-    expected = os.environ.get("CT_TEST_POSTGRES_DB", "")
-    if not url:
-        path = pathlib.Path(os.environ.get("CT_TEST_POSTGRES_ENV_FILE") or DEFAULT_FILE)
-        values = _read_env_file(path)
-        url = values.get("CT_TEST_POSTGRES_URL", "")
-        expected = expected or values.get("CT_TEST_POSTGRES_DB", "")
-    if not url:
-        raise ConfigError("NOT CONFIGURED: no CT_TEST_POSTGRES_URL in the environment or the local test file.")
+def _setting(name: str, file_values: dict, default: str = "") -> str:
+    return os.environ.get(name) or file_values.get(name, "") or default
+
+
+def load() -> dict:
+    """Returns the validated settings. Raises ConfigError with a message that never contains a secret."""
+    path = pathlib.Path(os.environ.get("CT_TEST_POSTGRES_ENV_FILE") or DEFAULT_FILE)
+    fv = _read_env_file(path)
+    url = _setting("CT_TEST_POSTGRES_URL", fv)
+    endpoint = _setting("CT_TEST_NEON_ENDPOINT", fv).lower()
+    region = _setting("CT_TEST_NEON_REGION", fv, "us-east-2").lower()
+    expected_db = _setting("CT_TEST_POSTGRES_DB", fv)
+    confirmed = _setting("CT_TEST_DISPOSABLE_CONFIRMED", fv).lower()
+    major = int(_setting("CT_TEST_PG_MAJOR", fv, "18"))
+    missing = [n for n, v in (("CT_TEST_POSTGRES_URL", url), ("CT_TEST_NEON_ENDPOINT", endpoint),
+                              ("CT_TEST_POSTGRES_DB", expected_db)) if not v]
+    if missing:
+        raise ConfigError("NOT CONFIGURED: missing " + ", ".join(missing) + " (in the environment or the local test file).")
+    if confirmed != "yes":
+        raise ConfigError("REFUSED: CT_TEST_DISPOSABLE_CONFIRMED=yes is required (the founder confirms the database is disposable).")
+    if not endpoint.startswith("ep-"):
+        raise ConfigError("REFUSED: the endpoint identifier must be a Neon endpoint identifier (ep-...).")
     p = urlparse(url)
     if p.scheme not in ("postgresql", "postgresql+psycopg"):
         raise ConfigError("REFUSED: the connection is not a PostgreSQL URL.")
-    query = parse_qs(p.query)
-    sslmode = (query.get("sslmode") or [""])[0]
+    sslmode = (parse_qs(p.query).get("sslmode") or [""])[0]
     if sslmode not in ("require", "verify-full", "verify-ca"):
-        raise ConfigError("REFUSED: the connection must require TLS (sslmode=require).")
+        raise ConfigError("REFUSED: the connection must require TLS (sslmode=require or verify-full).")
     host = (p.hostname or "").lower()
-    if not host.endswith(".neon.tech"):
-        raise ConfigError("REFUSED: the host is not a Neon endpoint.")
-    if any(part in host for part in FORBIDDEN_HOST_PARTS):
-        raise ConfigError("REFUSED: the host belongs to a hosting platform that is not the test project.")
+    expected_host_suffix = f".{region}.aws.neon.tech"
+    if not host.endswith(expected_host_suffix):
+        raise ConfigError("REFUSED: the host is not a Neon host in the expected region.")
+    if host.split(".")[0] != endpoint:
+        raise ConfigError("REFUSED: the host's endpoint identifier is not the c52-test endpoint identifier.")
+    if any(f in host for f in FORBIDDEN_FRAGMENTS):
+        raise ConfigError("REFUSED: the host contains a name that belongs to production or to a hosting platform.")
     db_name = (p.path or "/").lstrip("/")
-    if not expected:
-        raise ConfigError("REFUSED: CT_TEST_POSTGRES_DB (the expected test database name) is not set.")
-    if db_name != expected:
-        raise ConfigError("REFUSED: the database in the URL is not the expected test database.")
-    if "prod" in db_name.lower() or "production" in db_name.lower():
+    if db_name != expected_db:
+        raise ConfigError("REFUSED: the database in the URL is not the expected database.")
+    if any(f in db_name.lower() for f in FORBIDDEN_FRAGMENTS):
         raise ConfigError("REFUSED: the database name looks like production.")
-    return url, expected
+    return {"url": url, "database": expected_db, "endpoint": endpoint, "major": major}
 
 
-def verify(url: str, expected_db: str) -> dict:
-    """Connects and reports identity facts (no secrets). Raises ConfigError on any mismatch."""
+def verify(cfg: dict) -> dict:
+    """Connects with TLS and checks the database name, TLS state, and server major version. Prints no secrets."""
     import sqlalchemy as sa
-    eng = sa.create_engine(url.replace("postgresql://", "postgresql+psycopg://", 1))
+    eng = sa.create_engine(cfg["url"].replace("postgresql://", "postgresql+psycopg://", 1), connect_args={"connect_timeout": 15})
     try:
         with eng.connect() as c:
             row = c.execute(sa.text(
@@ -88,8 +105,11 @@ def verify(url: str, expected_db: str) -> dict:
     finally:
         eng.dispose()
     db_name, version_num, ssl_on = row
-    if db_name != expected_db:
-        raise ConfigError("REFUSED: the live database name does not match the expected test database.")
+    if db_name != cfg["database"]:
+        raise ConfigError("REFUSED: the live database name does not match the expected database.")
     if not ssl_on:
         raise ConfigError("REFUSED: the live connection is not using TLS.")
-    return {"database": db_name, "tls": bool(ssl_on), "server_major_version": version_num // 10000}
+    major = version_num // 10000
+    if major != cfg["major"]:
+        raise ConfigError(f"REFUSED: the server reports PostgreSQL {major}, expected {cfg['major']}.")
+    return {"database": db_name, "tls": True, "server_major_version": major}

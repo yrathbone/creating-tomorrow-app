@@ -15,11 +15,12 @@ sys.path.insert(0, os.path.join(BACKEND, "tests", "harness"))
 import pg_test_config  # noqa: E402
 
 try:
-    URL, EXPECTED_DB = pg_test_config.load()
-    VERIFIED = pg_test_config.verify(URL, EXPECTED_DB)
+    CFG = pg_test_config.load()
+    URL, EXPECTED_DB = CFG["url"], CFG["database"]
+    VERIFIED = pg_test_config.verify(CFG)
     SKIP_REASON = ""
 except pg_test_config.ConfigError as e:
-    URL, EXPECTED_DB, VERIFIED = "", "", None
+    CFG, URL, EXPECTED_DB, VERIFIED = None, "", "", None
     SKIP_REASON = str(e)
 
 
