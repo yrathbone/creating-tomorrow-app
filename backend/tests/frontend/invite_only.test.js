@@ -22,7 +22,7 @@ function fakeElement(extra = {}) {
 
 // ---- the invitation page (Option B: information only, no form) ----
 const REGISTER_PAGE = () => read("career", "register.html");
-const textOf = (html) => html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&rsquo;/g, "\u2019").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+const textOf = (html) => html.replace(/<script[\s\S]*?<\/script\s*>|<style[\s\S]*?<\/style\s*>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&rsquo;/g, "\u2019").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 
 test("the invitation page is information only: no form, no inputs, no buttons, no scripts, and register.js is gone", () => {
   const html = REGISTER_PAGE();
