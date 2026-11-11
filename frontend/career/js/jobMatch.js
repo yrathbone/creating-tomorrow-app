@@ -1222,6 +1222,10 @@ document.getElementById("job-applied-btn").addEventListener("click", (event) => 
   document.getElementById("job-applied-title").value = at > 0 ? label.slice(0, at) : label;
   document.getElementById("job-applied-company").value = at > 0 ? label.slice(at + 4) : "";
   document.getElementById("job-applied-date").value = todayIso();
+  // A saved job's application takes its title and employer from the saved link, so those two fields are not editable there.
+  const linkedApplication = !!jobState.opportunityId;
+  document.getElementById("job-applied-title").disabled = linkedApplication;
+  document.getElementById("job-applied-company").disabled = linkedApplication;
   document.getElementById("job-applied-form").hidden = false;
   document.getElementById("job-applied-btn").hidden = true;
   if (fromKeyboard) focusJob(document.getElementById("job-applied-title"));

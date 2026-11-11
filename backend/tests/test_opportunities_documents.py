@@ -150,5 +150,18 @@ class DocumentTests(unittest.TestCase):
             self.assertEqual(self.client.get("/api/career/applications/1/approved-document").status_code, 404)
 
 
+    def test_F07_readable_copy_lists_the_approved_document_for_the_saved_job(self):
+        import io
+        from docx import Document
+        made = self.create().json()
+        self._approve(made["id"])
+        r = self.client.get("/api/career/export/readable")
+        self.assertEqual(r.status_code, 200, r.text)
+        text = "\n".join(p.text for p in Document(io.BytesIO(r.content)).paragraphs)
+        self.assertIn("APPROVED RÉSUMÉ DOCUMENTS FOR SAVED JOBS", text)
+        self.assertIn("Customer Service Lead", text)
+        self.assertIn("does not change when your résumé or layout changes", text)
+
+
 if __name__ == "__main__":
     unittest.main()

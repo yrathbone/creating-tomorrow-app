@@ -2025,7 +2025,8 @@ def _collect_export(db: Session, profile: CareerProfile) -> dict:
         "applications": [_application_to_dict(a) for a in applications],
         "opportunities": [_opportunity_export(o) for o in opportunities],
         "approved_documents": [
-            {"opportunity_id": d.opportunity_id, "resume_version_id": d.resume_version_id, "layout": d.layout, "template": d.template,
+            {"opportunity_id": d.opportunity_id, "job_title": next((o.title for o in opportunities if o.id == d.opportunity_id), None),
+             "resume_version_id": d.resume_version_id, "layout": d.layout, "template": d.template,
              "ats_mode": bool(d.ats_mode), "renderer": d.renderer, "content_sha256": d.content_sha256,
              "created_at": d.created_at.isoformat() if d.created_at else None, "resume_snapshot": d.resume_snapshot,
              "docx_base64": base64.b64encode(d.docx).decode("ascii")}
