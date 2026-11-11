@@ -850,7 +850,7 @@ let completeNewPassword = null;
 
 // Pure (unit-tested): what to tell the person about the two password boxes, or "" if they are fine.
 function newPasswordProblem(password, again) {
-  if (!password || password.length < 8) return "Your password needs at least 8 characters.";
+  if (!password || password.length < 12) return "Your password needs at least 12 characters.";
   if (password !== again) return "The two passwords don’t match.";
   return "";
 }

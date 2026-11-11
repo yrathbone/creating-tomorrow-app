@@ -54,8 +54,8 @@ test("one name for signing in: the page, its title, its button and the register 
   assert.match(login, /<h1>Sign in<\/h1>/);
   assert.match(login, /id="login-btn">Sign in<\/button>/);
   assert.match(login, /Back to sign in<\/button>/);
-  assert.match(read("career/register.html"), /<a href="login\.html">sign in<\/a>/);
-  assert.match(read("career/register.html"), /<title>Create an account — Creating Tomorrow<\/title>/);
+  assert.match(read("career/register.html"), /<a class="btn-primary" href="login\.html">Sign in<\/a>/);
+  assert.match(read("career/register.html"), /<title>Join Creating Tomorrow<\/title>/);
   for (const page of PAGES) assert.ok(!/\bLog In\b|<h1>Log in<\/h1>/.test(read(page + ".html")), `${page}: "Log In" label`);
   for (const page of ["career/login", "career/register"]) assert.ok(!/\blog in\b/i.test(visibleText(read(page + ".html"))), `${page}: "log in" in the visible text`);
 });
