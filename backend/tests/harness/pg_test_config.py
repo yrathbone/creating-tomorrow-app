@@ -98,13 +98,16 @@ def verify(cfg: dict) -> dict:
     eng = sa.create_engine(cfg["url"].replace("postgresql://", "postgresql+psycopg://", 1), connect_args={"connect_timeout": 15})
     try:
         with eng.connect() as c:
+            # Client-side TLS state from the driver (authoritative for this connection); server view kept as a second signal.
+            client_tls = bool(c.connection.driver_connection.pgconn.ssl_in_use)
             row = c.execute(sa.text(
                 "select current_database(), current_setting('server_version_num')::int, "
                 "(select ssl from pg_stat_ssl where pid = pg_backend_pid())"
             )).one()
     finally:
         eng.dispose()
-    db_name, version_num, ssl_on = row
+    db_name, version_num, server_ssl = row
+    ssl_on = client_tls  # Neon terminates TLS at its proxy, so the server-side pg_stat_ssl view is not a TLS check for this client
     if db_name != cfg["database"]:
         raise ConfigError("REFUSED: the live database name does not match the expected database.")
     if not ssl_on:
