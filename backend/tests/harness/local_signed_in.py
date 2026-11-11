@@ -104,6 +104,7 @@ def seed(db_path: pathlib.Path) -> None:
 def build_app(db_path: pathlib.Path, key):
     os.environ["DATABASE_URL"] = "sqlite:///" + db_path.as_posix()
     os.environ["CT_OPPORTUNITIES_ENABLED"] = "1"
+    os.environ["CT_OPPORTUNITIES_ALLOWED_SUBS"] = MEMBERS["a"]   # founder stand-in: only synthetic member A is allowed
     os.environ["COGNITO_REGION"] = REGION
     os.environ["COGNITO_USER_POOL_ID"] = POOL
     os.environ["COGNITO_APP_CLIENT_ID"] = CLIENT

@@ -61,7 +61,7 @@ class SignedInAuthorization(unittest.TestCase):
             mock.patch.object(deps, "_jwks_cache", {"keys": [_jwk(self.key)]}),
             mock.patch.object(deps, "_jwks_fetched_at", None),
             mock.patch.object(deps, "_jwks_last_attempt", time.monotonic()),
-            mock.patch.dict("os.environ", {"CT_OPPORTUNITIES_ENABLED": "1"}),
+            mock.patch.dict("os.environ", {"CT_OPPORTUNITIES_ENABLED": "1", "CT_OPPORTUNITIES_ALLOWED_SUBS": "me,other,synthetic-member-a,synthetic-member-b"}),
         ]
         for p in patches:
             p.start()

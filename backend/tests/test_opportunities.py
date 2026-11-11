@@ -30,7 +30,7 @@ def _no_network(*args, **kwargs):
 
 class OpportunityRoutes(unittest.TestCase):
     def setUp(self):
-        self._env = mock.patch.dict(os.environ, {"CT_OPPORTUNITIES_ENABLED": "1"})
+        self._env = mock.patch.dict(os.environ, {"CT_OPPORTUNITIES_ENABLED": "1", "CT_OPPORTUNITIES_ALLOWED_SUBS": "me,other,synthetic-member-a,synthetic-member-b"})
         self._env.start()
         self.addCleanup(self._env.stop)
         # no outbound network can happen in these tests

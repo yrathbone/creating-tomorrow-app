@@ -35,7 +35,20 @@ def require_enabled() -> None:
         raise HTTPException(status_code=404, detail="Not found.")
 
 
-router = APIRouter(dependencies=[Depends(require_enabled)])
+def allowed_member_subs() -> set:
+    """Cognito subject identifiers allowed to use My Opportunities, from CT_OPPORTUNITIES_ALLOWED_SUBS (comma-separated).
+    Empty or unset means nobody. Set in the environment of the running service only; never in the code or in Git."""
+    raw = os.environ.get("CT_OPPORTUNITIES_ALLOWED_SUBS", "")
+    return {v.strip() for v in raw.split(",") if v.strip()}
+
+
+def require_allowed_member(current_user: User = Depends(get_current_user)) -> None:
+    """Server-side account check (default deny). Returns the same 404 as a switched-off feature, so the feature is not revealed."""
+    if not current_user.cognito_sub or current_user.cognito_sub not in allowed_member_subs():
+        raise HTTPException(status_code=404, detail="Not found.")
+
+
+router = APIRouter(dependencies=[Depends(require_enabled), Depends(require_allowed_member)])
 
 MAX_PER_MEMBER = 200
 MAX_URL_CHARS = 2000
