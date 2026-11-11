@@ -177,12 +177,16 @@ def _output_fingerprint(db: Session, v: ResumeVersion) -> str:
     """
     profile = db.get(CareerProfile, v.career_profile_id)
     layout = _preferred_layout(db, profile) if profile is not None else "classic"
-    payload = {"resume_data": v.resume_data or {}, "layout": layout, "renderer": RENDER_FINGERPRINT}
+    # Approved rendering = the visual (not ATS) document in the saved layout. The mode and template are stated here so that a
+    # change to either is part of the approval. An ATS-mode or other-template download is a different file and is not approved.
+    payload = {"resume_data": v.resume_data or {}, "layout": layout, "template": layout, "ats_mode": False, "renderer": RENDER_FINGERPRINT}
     data = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 
 class OpportunityIn(BaseModel):
+    # The version the card was showing (from GET or the last save). A details save is refused if the link changed since.
+    if_version: Tiny | None = None
     title: Short
     employer: Short | None = None
     job_url: str
@@ -225,6 +229,24 @@ def _approval(db: Session, o: Opportunity) -> dict | None:
     return {"version_id": v.id, "status": "current"}
 
 
+STALE_MESSAGE = ("This saved link was changed in another tab or window, so your change was not saved. "
+                 "Reload the page to see the latest details, then make the change again.")
+
+
+def _version(o: Opportunity) -> str:
+    """A token for the link's current stored content, including its approval and application link. Content-based, so it
+    works the same on SQLite and PostgreSQL (no timestamp resolution issue) and needs no new column."""
+    fields = {
+        "title": o.title, "employer": o.employer, "job_url": o.job_url, "location_text": o.location_text,
+        "work_arrangement": o.work_arrangement, "employment_type": o.employment_type, "base_min": o.base_min,
+        "base_max": o.base_max, "base_period": o.base_period, "pay_note": o.pay_note, "state": o.state,
+        "dismiss_reason": o.dismiss_reason, "last_verified_on": o.last_verified_on, "notes": o.notes,
+        "follow_up_on": o.follow_up_on, "application_id": o.application_id,
+        "approved_resume_version_id": o.approved_resume_version_id, "approved_resume_hash": o.approved_resume_hash,
+    }
+    return hashlib.sha256(json.dumps(fields, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()[:32]
+
+
 def _to_dict(db: Session, o: Opportunity) -> dict:
     app_exists = False
     if o.application_id is not None:
@@ -249,6 +271,7 @@ def _to_dict(db: Session, o: Opportunity) -> dict:
         "application_removed": removed, "application_id": o.application_id if app_exists else None,
         "last_verified_on": o.last_verified_on, "notes": o.notes, "follow_up_on": o.follow_up_on,
         "approval": _approval(db, o),
+        "version": _version(o),
         "created_at": o.created_at.isoformat() if o.created_at else None,
         "updated_at": o.updated_at.isoformat() if o.updated_at else None,
         "safety_notice": ("Creating Tomorrow does not endorse employers or guarantee the authenticity of listings. "
@@ -346,6 +369,9 @@ async def create_opportunity(req: OpportunityIn, current_user: User = Depends(ge
 async def update_opportunity(opportunity_id: int, req: OpportunityIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
     profile = get_career_profile_or_404(db, current_user)
     o = _owned(db, profile, opportunity_id, lock=True)  # serialised with record-application
+    if req.if_version is not None and req.if_version != _version(o):
+        db.rollback()   # nothing changed; releases the lock
+        raise HTTPException(status_code=409, detail={"message": STALE_MESSAGE})
     try:
         _apply_fields(db, profile, o, req, creating=False)
         db.commit()
@@ -367,9 +393,15 @@ async def set_approval(opportunity_id: int, req: ApprovalIn, current_user: User 
     profile = get_career_profile_or_404(db, current_user)
     try:
         o = _owned(db, profile, opportunity_id, lock=True)   # serialised with record-application and other edits
-        if req.approved_resume_version_id == o.approved_resume_version_id:
+        if req.approved_resume_version_id is None and o.approved_resume_version_id is None:
             db.rollback()                                    # nothing to change; releases the lock
             return _to_dict(db, o)
+        if req.approved_resume_version_id == o.approved_resume_version_id and o.approved_resume_version_id is not None:
+            same = db.query(ResumeVersion).filter_by(id=o.approved_resume_version_id, career_profile_id=profile.id).one_or_none()
+            if same is not None and _output_fingerprint(db, same) == o.approved_resume_hash:
+                db.rollback()                                # still current: nothing to change; releases the lock
+                return _to_dict(db, o)
+            # same version, but the approval is stale (content or layout changed): approving again refreshes it
         if _application_still_linked(db, profile, o):
             raise HTTPException(status_code=409, detail="An application is already recorded for this job, so its résumé approval cannot change. The application keeps the résumé it was recorded with.")
         if req.approved_resume_version_id is None:

@@ -52,6 +52,7 @@ class CloseoutTests(unittest.TestCase):
     setUp = base.OpportunityRoutes.setUp
     create = base.OpportunityRoutes.create
     count = base.OpportunityRoutes.count
+    _body = base.OpportunityRoutes._body
 
     # ----------------------------------------------------------------- helpers
     def _db(self):
@@ -328,6 +329,57 @@ class CloseoutTests(unittest.TestCase):
         r = self.client.post("/api/career/job-compare", json={"job_description": "A posting long enough to check for the test run.", "opportunity_id": other_made["id"]})
         self.assertIn(r.status_code, (404, 403), r.text)
         self.assertNotEqual(r.status_code, 200)
+
+    # ----------------------------------------------------------------- F06: stale card cannot overwrite newer details
+    def test_F06_details_save_from_an_outdated_card_is_refused_and_newer_details_stay(self):
+        made = self.create().json()
+        t0 = made["version"]
+        first = self.client.put(f"/api/career/opportunities/{made['id']}", json={**self._body(), "notes": "From tab A", "if_version": t0})
+        self.assertEqual(first.status_code, 200, first.text)
+        t1 = first.json()["version"]
+        self.assertNotEqual(t0, t1)
+        stale = self.client.put(f"/api/career/opportunities/{made['id']}", json={**self._body(), "notes": "From stale tab B", "if_version": t0})
+        self.assertEqual(stale.status_code, 409, stale.text)
+        self.assertIn("Reload the page", stale.json()["detail"]["message"])
+        db = self._db()
+        self.assertEqual(db.get(Opportunity, made["id"]).notes, "From tab A")
+        db.close()
+        fresh = self.client.put(f"/api/career/opportunities/{made['id']}", json={**self._body(), "notes": "From tab B after reload", "if_version": t1})
+        self.assertEqual(fresh.status_code, 200, fresh.text)
+
+    def test_F06_an_approval_change_makes_an_outdated_card_stale(self):
+        made = self.create().json()
+        before = made["version"]
+        self.client.put(f"/api/career/opportunities/{made['id']}/approval", json={"approved_resume_version_id": self.my_resume_id})
+        r = self.client.put(f"/api/career/opportunities/{made['id']}", json={**self._body(), "notes": "x", "if_version": before})
+        self.assertEqual(r.status_code, 409, r.text)
+
+    def test_F06_a_save_without_a_version_is_still_accepted_for_older_clients(self):
+        made = self.create().json()
+        r = self.client.put(f"/api/career/opportunities/{made['id']}", json={**self._body(), "notes": "no version sent"})
+        self.assertEqual(r.status_code, 200, r.text)
+
+    # ----------------------------------------------------------------- F02b: material rendering inputs
+    def test_F02b_approval_is_still_current_after_an_ats_download_because_it_does_not_change_the_approved_rendering(self):
+        made = self.create().json()
+        self.client.put(f"/api/career/opportunities/{made['id']}/approval", json={"approved_resume_version_id": self.my_resume_id})
+        self.assertEqual(self.client.get(f"/api/career/resume-versions/{self.my_resume_id}/download?ats_mode=true").status_code, 200)
+        self.assertEqual(self._approval_of(made["id"])["status"], "current")
+
+    def test_F02b_template_change_before_recording_blocks_recording_and_after_recording_the_record_is_unchanged(self):
+        made = self.create().json()
+        self.client.put(f"/api/career/opportunities/{made['id']}/approval", json={"approved_resume_version_id": self.my_resume_id})
+        self.client.put("/api/career/resume-layout", json={"layout": "traditional"})
+        self.assertEqual(self.client.post(f"/api/career/opportunities/{made['id']}/record-application", json={}).status_code, 409)
+        self.client.put(f"/api/career/opportunities/{made['id']}/approval", json={"approved_resume_version_id": self.my_resume_id})
+        rec = self.client.post(f"/api/career/opportunities/{made['id']}/record-application", json={"applied_on": "2026-11-09"})
+        self.assertEqual(rec.status_code, 200, rec.text)
+        app_id = rec.json()["application"]["id"]
+        self.client.put("/api/career/resume-layout", json={"layout": "modern"})
+        db = self._db()
+        self.assertEqual(db.get(Application, app_id).resume_version_id, self.my_resume_id)
+        db.close()
+        self.assertEqual(self.client.put(f"/api/career/applications/{app_id}", json=self._app_body(resume_version_id=None)).status_code, 409)
 
 
 if __name__ == "__main__":

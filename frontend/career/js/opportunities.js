@@ -88,6 +88,8 @@ function buildUpdatePayload(item, changes) {
     follow_up_on: item.follow_up_on || null,
     state: item.state === "applied" || item.application_removed ? null : item.state,
     dismiss_reason: item.dismiss_reason || null,
+    // The version this card is showing. The server refuses the save if the link changed since (another tab or window).
+    if_version: item.version || null,
   };
   return Object.assign(body, changes || {});
 }
@@ -315,6 +317,7 @@ async function changeOpportunity(item, changes, doneMessage) {
   });
   if (!res.ok) {
     setOpportunityStatus(await readOpportunityError(res, "That change was not saved."));
+    if (res.status === 409) await loadOpportunities(); // show the latest details the server has, so the change can be made again
     return null;
   }
   const updated = await res.json();
@@ -435,6 +438,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (toggle) toggle.addEventListener("click", toggleOpportunityForm);
   const cancel = document.getElementById("opportunity-cancel-btn");
   if (cancel) cancel.addEventListener("click", () => { if (form) form.hidden = true; });
+  // Approval state can change in another tab or screen: read it again when this window is back in use.
+  const refreshIfVisible = () => {
+    const card = document.getElementById("opportunities-card");
+    if (card && !card.hidden && document.visibilityState !== "hidden") loadOpportunities();
+  };
+  if (typeof window !== "undefined" && window.addEventListener) window.addEventListener("focus", refreshIfVisible);
+  if (document.addEventListener) document.addEventListener("visibilitychange", refreshIfVisible);
   const showDismissed = document.getElementById("opportunity-show-dismissed");
   if (showDismissed) showDismissed.addEventListener("click", () => {
     showDismissedOpportunities = !showDismissedOpportunities;

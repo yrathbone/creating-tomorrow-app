@@ -1428,6 +1428,8 @@ document.getElementById("job-opportunity-approve-btn").addEventListener("click",
 // Records the application for a saved job through the saved-link route. The server refuses it unless a résumé is approved
 // for that job and the approval is still current; the check here only gives a clearer message earlier.
 async function recordSavedJobApplication(opportunityId, appliedOn) {
+  // Read the link again first, so the check uses the approval as it is now (another tab may have changed it).
+  if (typeof loadOpportunities === "function") await loadOpportunities();
   const items = typeof allOpportunities !== "undefined" ? allOpportunities : [];
   const item = items.find((o) => o.id === opportunityId);
   if (item && (!item.approval || item.approval.status !== "current")) {

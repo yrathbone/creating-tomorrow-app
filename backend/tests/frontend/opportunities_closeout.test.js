@@ -222,3 +222,32 @@ test("opening a comparison from a saved link restores the link from the stored c
   assert.ok(body.includes("data.opportunity_id"), "reads the saved link from the comparison");
   assert.ok(body.includes("jobState.opportunityId = data.opportunity_id"), "keeps it for approval and recording");
 });
+
+test("every details save sends the version the card is showing, so an outdated card is refused by the server", async () => {
+  const saved = item({ id: 1, version: "abc123" });
+  const { sandbox, calls } = load({ "/api/career/opportunities": ok([saved]), [`PUT ${APPROVAL_PATH}`]: ok({ ...saved, version: "def456" }) });
+  await sandbox.loadOpportunities();
+  await sandbox.changeOpportunity(saved, { notes: "x" }, "saved");
+  assert.strictEqual(calls.find((c) => c.method === "PUT").body.if_version, "abc123");
+});
+
+test("a conflict tells the member to reload and shows the latest saved details", async () => {
+  const saved = item({ id: 1, version: "abc123", notes: "old" });
+  const latest = item({ id: 1, version: "zzz999", notes: "newer, from another tab" });
+  const { sandbox, calls, els } = load({
+    "/api/career/opportunities": ok([saved]),
+    [`PUT ${APPROVAL_PATH}`]: { ok: false, status: 409, json: async () => ({ detail: { message: "This saved link was changed in another tab or window, so your change was not saved. Reload the page to see the latest details, then make the change again." } }) },
+  });
+  await sandbox.loadOpportunities();
+  // the list the server returns on the reload carries the newer details
+  calls.length = 0;
+  await sandbox.changeOpportunity(saved, { notes: "mine" }, "saved");
+  assert.match(els["opportunities-status"].textContent, /Reload the page/);
+  assert.ok(calls.some((c) => c.method === "GET" && c.url === "/api/career/opportunities"), "the list is read again after a conflict");
+});
+
+test("the card reads the approval again when the window is back in use, and a job card records only after a fresh read", () => {
+  assert.ok(source.includes('window.addEventListener("focus", refreshIfVisible)'), "focus refresh");
+  assert.ok(source.includes('document.addEventListener("visibilitychange", refreshIfVisible)'), "visibility refresh");
+  assert.ok(/await loadOpportunities\(\);\s*\n\s*const items/.test(jobSource), "fresh read before recording");
+});
