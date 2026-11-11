@@ -8,7 +8,7 @@ are live; Experience is the first Manual CRUD entity.
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, UniqueConstraint, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, LargeBinary, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -298,3 +298,25 @@ class Opportunity(Base):
     follow_up_on: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class OpportunityDocument(Base):
+    """The exact résumé document a member approved for one saved job (C-52 F07). Written once at approval, replaced only by a
+    new approval, removed when the approval is cleared or the saved job is deleted. Nothing here is recomputed later: the stored
+    bytes are what was approved. Layout, template and mode are recorded so the document can be explained; a changed profile
+    setting never changes these rows."""
+    __tablename__ = "opportunity_documents"
+    __table_args__ = (UniqueConstraint("opportunity_id", name="uq_opportunity_documents_opportunity"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    opportunity_id: Mapped[int] = mapped_column(ForeignKey("opportunities.id", ondelete="CASCADE"), index=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"), index=True)
+    resume_version_id: Mapped[int | None] = mapped_column(ForeignKey("resume_versions.id", ondelete="SET NULL"), nullable=True)
+    resume_snapshot: Mapped[dict] = mapped_column(JSON)
+    layout: Mapped[str] = mapped_column(String)
+    template: Mapped[str] = mapped_column(String)
+    ats_mode: Mapped[bool] = mapped_column(Boolean, default=False)
+    renderer: Mapped[str] = mapped_column(String)
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    docx: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

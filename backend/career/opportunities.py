@@ -16,6 +16,7 @@ from datetime import date, datetime  # noqa: F401  (datetime kept for type reade
 from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel, StrictInt
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -23,8 +24,10 @@ from sqlalchemy.orm import Session
 from auth.dependencies import get_current_user
 from career.routes import ApplicationIn, _application_to_dict, _preferred_layout, _validated_application_fields, get_career_profile_or_404
 from db import get_db_session
+from download_names import attachment_headers
+from resume_builder import build_resume_bytes
 from limits import Long, Short, Tiny
-from models import Application, CareerProfile, Opportunity, ResumeVersion, User
+from models import Application, CareerProfile, Opportunity, OpportunityDocument, ResumeVersion, User
 
 
 def require_enabled() -> None:
@@ -382,6 +385,27 @@ async def update_opportunity(opportunity_id: int, req: OpportunityIn, current_us
     return _to_dict(db, o)
 
 
+def _freeze_approved_document(db: Session, profile: CareerProfile, o: Opportunity, v: ResumeVersion) -> None:
+    """Stores the exact DOCX the member is approving: the visual rendering in the saved layout. Replaces any earlier one."""
+    layout = _preferred_layout(db, profile)
+    try:
+        docx = build_resume_bytes(v.resume_data or {}, ats_mode=False, template=layout)
+    except Exception:
+        raise _bad("The résumé could not be prepared for approval. Please try again, or build the résumé again.")
+    db.query(OpportunityDocument).filter_by(opportunity_id=o.id).delete(synchronize_session=False)
+    db.add(OpportunityDocument(
+        opportunity_id=o.id, career_profile_id=profile.id, resume_version_id=v.id,
+        resume_snapshot=json.loads(json.dumps(v.resume_data or {})), layout=layout, template=layout, ats_mode=False,
+        renderer=RENDER_FINGERPRINT, content_sha256=hashlib.sha256(docx).hexdigest(), docx=docx,
+    ))
+
+
+def _drop_approved_documents(db: Session, opportunity_ids) -> None:
+    ids = list(opportunity_ids)
+    if ids:
+        db.query(OpportunityDocument).filter(OpportunityDocument.opportunity_id.in_(ids)).delete(synchronize_session=False)
+
+
 class ApprovalIn(BaseModel):
     approved_resume_version_id: StrictInt | None = None
 
@@ -406,11 +430,13 @@ async def set_approval(opportunity_id: int, req: ApprovalIn, current_user: User 
             raise HTTPException(status_code=409, detail="An application is already recorded for this job, so its résumé approval cannot change. The application keeps the résumé it was recorded with.")
         if req.approved_resume_version_id is None:
             o.approved_resume_version_id, o.approved_resume_hash = None, None
+            _drop_approved_documents(db, [o.id])
         else:
             v = db.query(ResumeVersion).filter_by(id=req.approved_resume_version_id, career_profile_id=profile.id).one_or_none()
             if v is None:
                 raise _bad("That résumé no longer exists.")
             o.approved_resume_version_id, o.approved_resume_hash = v.id, _output_fingerprint(db, v)
+            _freeze_approved_document(db, profile, o, v)
         db.commit()
     except Exception:
         db.rollback()
@@ -423,6 +449,7 @@ async def set_approval(opportunity_id: int, req: ApprovalIn, current_user: User 
 async def delete_opportunity(opportunity_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
     profile = get_career_profile_or_404(db, current_user)
     o = _owned(db, profile, opportunity_id)
+    _drop_approved_documents(db, [o.id])
     db.delete(o)   # the tracker entry, if any, is kept: it is a separate record
     db.commit()
     return {"deleted": True}
@@ -433,6 +460,8 @@ async def clear_dismissed(state: str, current_user: User = Depends(get_current_u
     if state != "dismissed":
         raise _bad("Only dismissed links can be cleared in one step.")
     profile = get_career_profile_or_404(db, current_user)
+    dismissed_ids = [row.id for row in db.query(Opportunity.id).filter_by(career_profile_id=profile.id, state="dismissed").all()]
+    _drop_approved_documents(db, dismissed_ids)
     n = db.query(Opportunity).filter_by(career_profile_id=profile.id, state="dismissed").delete(synchronize_session=False)
     db.commit()
     return {"deleted": n}
@@ -465,6 +494,8 @@ async def record_application(opportunity_id: int, req: RecordIn, current_user: U
         if approval["status"] != "current":
             raise HTTPException(status_code=409, detail="The résumé you approved for this job has changed since you approved it. Approve it again, then record the application.")
         resume_id = approval["version_id"]
+        if db.query(OpportunityDocument.id).filter_by(opportunity_id=o.id).first() is None:
+            raise HTTPException(status_code=409, detail="The approved document for this job is not saved. Approve the résumé again, then record the application.")
         fields = _validated_application_fields(db, profile, ApplicationIn(
             job_title=o.title, company=o.employer, applied_on=req.applied_on, status="applied", resume_version_id=resume_id))
         app = Application(career_profile_id=profile.id, **fields)
@@ -480,3 +511,33 @@ async def record_application(opportunity_id: int, req: RecordIn, current_user: U
     db.refresh(o)
     db.refresh(app)
     return {"already_recorded": False, "opportunity": _to_dict(db, o), "application": _application_to_dict(app)}
+
+
+def _document_response(doc: OpportunityDocument) -> Response:
+    return Response(
+        content=doc.docx,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={**attachment_headers(doc.resume_snapshot.get("name"), "_Resume.docx"), "X-Document-SHA256": doc.content_sha256},
+    )
+
+
+@router.get("/opportunities/{opportunity_id}/approved-document")
+async def download_approved_document(opportunity_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    """The exact document approved for this saved job, as it was when approved (stored bytes; not re-rendered)."""
+    profile = get_career_profile_or_404(db, current_user)
+    o = _owned(db, profile, opportunity_id)
+    doc = db.query(OpportunityDocument).filter_by(opportunity_id=o.id, career_profile_id=profile.id).one_or_none()
+    if doc is None:
+        raise HTTPException(status_code=404, detail="No approved document is saved for this job.")
+    return _document_response(doc)
+
+
+@router.get("/applications/{application_id}/approved-document")
+async def download_application_document(application_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    """The exact document the application was recorded with (C-52 applications only)."""
+    profile = get_career_profile_or_404(db, current_user)
+    o = db.query(Opportunity).filter_by(application_id=application_id, career_profile_id=profile.id).one_or_none()
+    doc = db.query(OpportunityDocument).filter_by(opportunity_id=o.id, career_profile_id=profile.id).one_or_none() if o is not None else None
+    if doc is None:
+        raise HTTPException(status_code=404, detail="No approved document is saved for this application.")
+    return _document_response(doc)

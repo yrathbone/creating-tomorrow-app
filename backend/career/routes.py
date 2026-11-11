@@ -40,7 +40,7 @@ from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_ch
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
 from extractor import extract_text_async
-from models import Application, CareerProfile, Certification, Education, Experience, Language, Opportunity, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
+from models import Application, CareerProfile, Certification, Education, Experience, Language, Opportunity, OpportunityDocument, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
 from limits import BoundedDict, BoundedDictList, BoundedList, Long, Medium, Short, Tiny
 from errors import internal_error
 from ai_status import ai_failure
@@ -2001,6 +2001,12 @@ def _collect_export(db: Session, profile: CareerProfile) -> dict:
     except Exception:
         db.rollback()
         opportunities = []
+    # The exact documents approved for saved jobs (C-52 F07), with the content they were made from.
+    try:
+        approved_documents = db.query(OpportunityDocument).filter_by(career_profile_id=profile.id).order_by(OpportunityDocument.id).all()
+    except Exception:
+        db.rollback()
+        approved_documents = []
 
     # Languages need migration 0008. If it has not been applied, say so in the backup itself
     # (and in the log) rather than silently exporting an empty list.
@@ -2018,6 +2024,13 @@ def _collect_export(db: Session, profile: CareerProfile) -> dict:
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "applications": [_application_to_dict(a) for a in applications],
         "opportunities": [_opportunity_export(o) for o in opportunities],
+        "approved_documents": [
+            {"opportunity_id": d.opportunity_id, "resume_version_id": d.resume_version_id, "layout": d.layout, "template": d.template,
+             "ats_mode": bool(d.ats_mode), "renderer": d.renderer, "content_sha256": d.content_sha256,
+             "created_at": d.created_at.isoformat() if d.created_at else None, "resume_snapshot": d.resume_snapshot,
+             "docx_base64": base64.b64encode(d.docx).decode("ascii")}
+            for d in approved_documents
+        ],
         "experiences": [_experience_to_dict(e) for e in experiences],
         "education": [_education_to_dict(e) for e in education],
         "certifications": [_certification_to_dict(c) for c in certifications],
@@ -2107,7 +2120,7 @@ async def delete_my_account(
     profile_id = db.query(CareerProfile.id).filter_by(user_id=user_id).scalar()
     if profile_id is not None:
         for key, model in (
-            ("opportunities", Opportunity), ("applications", Application), ("resume_versions", ResumeVersion), ("scan_history", ScanHistory),
+            ("opportunity_documents", OpportunityDocument), ("opportunities", Opportunity), ("applications", Application), ("resume_versions", ResumeVersion), ("scan_history", ScanHistory),
             ("skills", Skill), ("experiences", Experience), ("education", Education),
             ("certifications", Certification), ("languages", Language), ("drafts", ResumeIngestionDraft),
         ):
