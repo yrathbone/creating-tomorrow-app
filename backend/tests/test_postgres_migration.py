@@ -1,29 +1,29 @@
-"""PostgreSQL migration checks for C-52 (0010 and 0011). Prepared, NOT RUN until a trusted PostgreSQL test database exists.
+"""PostgreSQL migration checks for C-52 (0010 and 0011). Runs only against the configured disposable Neon test branch.
 
-Runs only when CT_TEST_POSTGRES_URL points at a DISPOSABLE, localhost-only test database with synthetic data. It refuses any
-other host, and it refuses a database whose name does not contain "test". It never runs against production.
+Configuration and identity checks live in tests/harness/pg_test_config.py. Nothing runs unless the configuration passes, and
+the connection string is never printed. Results for PostgreSQL 18 do not establish PostgreSQL 16 compatibility.
 
-Checks: upgrade to head, downgrade to 0009, re-upgrade; the opportunities and opportunity_documents tables exist; the cascade
-from opportunities to opportunity_documents holds.
+Checks: upgrade to head, downgrade to 0009, re-upgrade; the opportunities and opportunity_documents tables exist.
 """
 import os
 import subprocess
 import sys
 import unittest
-from urllib.parse import urlparse
 
 BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-URL = os.environ.get("CT_TEST_POSTGRES_URL", "")
+sys.path.insert(0, os.path.join(BACKEND, "tests", "harness"))
+import pg_test_config  # noqa: E402
+
+try:
+    URL, EXPECTED_DB = pg_test_config.load()
+    VERIFIED = pg_test_config.verify(URL, EXPECTED_DB)
+    SKIP_REASON = ""
+except pg_test_config.ConfigError as e:
+    URL, EXPECTED_DB, VERIFIED = "", "", None
+    SKIP_REASON = str(e)
 
 
-def _allowed(url: str) -> bool:
-    if not url:
-        return False
-    p = urlparse(url)
-    return p.scheme.startswith("postgresql") and p.hostname in ("127.0.0.1", "localhost") and "test" in (p.path or "").lower()
-
-
-@unittest.skipUnless(_allowed(URL), "NOT RUN: set CT_TEST_POSTGRES_URL to a disposable localhost PostgreSQL test database")
+@unittest.skipUnless(VERIFIED is not None, "NOT RUN: " + SKIP_REASON)
 class PostgresMigrationCycle(unittest.TestCase):
     def _alembic(self, *args):
         env = dict(os.environ, DATABASE_URL=URL)
@@ -38,7 +38,7 @@ class PostgresMigrationCycle(unittest.TestCase):
     def test_tables_present_after_upgrade(self):
         self._alembic("upgrade", "head")
         import sqlalchemy as sa
-        eng = sa.create_engine(URL)
+        eng = sa.create_engine(URL.replace("postgresql://", "postgresql+psycopg://", 1))
         with eng.connect() as c:
             names = {r[0] for r in c.execute(sa.text("select table_name from information_schema.tables where table_schema='public'"))}
         eng.dispose()
