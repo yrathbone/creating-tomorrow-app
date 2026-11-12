@@ -21,7 +21,7 @@ test("the consent screen has a pilot notice with the age line, the read-every-li
   assert.match(notice, /Tell us how it went/);
   assert.match(notice, /sent to our AI provider \(Anthropic\)/);
   assert.match(notice, /ID numbers, bank details, or other people’s private information/);
-  assert.match(notice, /Backup copies kept for recovery can hold it for a short time longer/);
+  assert.match(notice, /Our hosting provider does not keep backup copies of your information\./);
 });
 
 test("the notice is above the consent button, so it is read before the person agrees", () => {
