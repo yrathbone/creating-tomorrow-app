@@ -56,6 +56,11 @@ class PostgresConcurrencyIsolation(unittest.TestCase):
         Base.metadata.create_all(cls.engine)
         cls.Session = sessionmaker(bind=cls.engine)
         cls.key = _new_key()
+        # Synthetic identifiers. A, B and CAP are on the founder-only allowlist; C is deliberately not.
+        cls.a_sub, cls.b_sub = "pg-synthetic-a-" + uuid.uuid4().hex[:6], "pg-synthetic-b-" + uuid.uuid4().hex[:6]
+        cls.cap_sub = "pg-synthetic-cap-" + uuid.uuid4().hex[:6]
+        cls.c_sub = "pg-synthetic-c-" + uuid.uuid4().hex[:6]
+        allowed = ",".join([cls.a_sub, cls.b_sub, cls.cap_sub])
         cls._patches = [
             mock.patch.object(deps, "COGNITO_REGION", REGION),
             mock.patch.object(deps, "COGNITO_USER_POOL_ID", POOL),
@@ -63,7 +68,7 @@ class PostgresConcurrencyIsolation(unittest.TestCase):
             mock.patch.object(deps, "_jwks_cache", {"keys": [_jwk(cls.key)]}),
             mock.patch.object(deps, "_jwks_fetched_at", None),
             mock.patch.object(deps, "_jwks_last_attempt", time.monotonic()),
-            mock.patch.dict(os.environ, {"CT_OPPORTUNITIES_ENABLED": "1"}),
+            mock.patch.dict(os.environ, {"CT_OPPORTUNITIES_ENABLED": "1", "CT_OPPORTUNITIES_ALLOWED_SUBS": allowed}),
         ]
         for p in cls._patches:
             p.start()
@@ -80,11 +85,14 @@ class PostgresConcurrencyIsolation(unittest.TestCase):
 
         app.dependency_overrides[get_db_session] = session
         cls.app = app
-        cls.a_sub, cls.b_sub = "pg-synthetic-a-" + uuid.uuid4().hex[:6], "pg-synthetic-b-" + uuid.uuid4().hex[:6]
         cls.a = {"Authorization": "Bearer " + access_token(cls.key, cls.a_sub)}
         cls.b = {"Authorization": "Bearer " + access_token(cls.key, cls.b_sub)}
+        cls.cap = {"Authorization": "Bearer " + access_token(cls.key, cls.cap_sub)}
+        cls.c = {"Authorization": "Bearer " + access_token(cls.key, cls.c_sub)}
         cls.a_resume = cls._seed(cls.a_sub, "Synthetic A")
         cls._seed(cls.b_sub, "Synthetic B")
+        cls._seed(cls.cap_sub, "Synthetic Cap")
+        cls._seed(cls.c_sub, "Synthetic C (not allowlisted)")
 
     @classmethod
     def tearDownClass(cls):
@@ -143,16 +151,17 @@ class PostgresConcurrencyIsolation(unittest.TestCase):
 
     # ------------------------------------------------------------------ 200-link cap under concurrency
     def test_200_link_cap_holds_under_ten_simultaneous_creates(self):
+        # Dedicated member (CAP) so the count starts at zero regardless of test order.
         c = self.client()
         for i in range(199):
-            r = c.post("/api/career/opportunities", headers=self.a, json={"title": "Seed", "job_url": f"https://jobs.example-employer.com/cap/{i}"})
+            r = c.post("/api/career/opportunities", headers=self.cap, json={"title": "Seed", "job_url": f"https://jobs.example-employer.com/cap/{i}"})
             self.assertEqual(r.status_code, 200, r.text)
-        calls = [(lambda i: (lambda cl: cl.post("/api/career/opportunities", headers=self.a, json={"title": "Race", "job_url": f"https://jobs.example-employer.com/race/{i}"})))(i) for i in range(10)]
+        calls = [(lambda i: (lambda cl: cl.post("/api/career/opportunities", headers=self.cap, json={"title": "Race", "job_url": f"https://jobs.example-employer.com/race/{i}"})))(i) for i in range(10)]
         results = self._run_threads(calls)
         codes = sorted(r.status_code if not isinstance(r, Exception) else "exc" for r in results)
         self.assertEqual(codes.count(200), 1, codes)
         self.assertEqual(codes.count(409), 9, codes)
-        self.assertEqual(self._count("select count(*) from opportunities o join career_profiles p on p.id = o.career_profile_id join users u on u.id = p.user_id where u.cognito_sub = :s", s=self.a_sub), 200)
+        self.assertEqual(self._count("select count(*) from opportunities o join career_profiles p on p.id = o.career_profile_id join users u on u.id = p.user_id where u.cognito_sub = :s", s=self.cap_sub), 200)
 
     # ------------------------------------------------------------------ duplicate links under concurrency
     def test_duplicate_link_is_created_once_under_ten_simultaneous_saves(self):
@@ -177,11 +186,20 @@ class PostgresConcurrencyIsolation(unittest.TestCase):
         codes = [r.status_code if not isinstance(r, Exception) else "exc" for r in results]
         self.assertNotIn("exc", codes, codes)
         self.assertNotIn(500, codes, codes)
+        # Exactly one application and one stored document for the job, each pointing at the approved version.
         self.assertEqual(self._count("select count(*) from applications a join opportunities o on o.application_id = a.id where o.id = :i", i=oid), 1)
-        row = self._count("select application_id from opportunities where id = :i", i=oid)
-        self.assertIsNotNone(row)
-        app_ref = self._count("select resume_version_id from applications where id = :a", a=row)
-        self.assertEqual(app_ref, self.a_resume)
+        app_id = self._count("select application_id from opportunities where id = :i", i=oid)
+        self.assertIsNotNone(app_id)
+        self.assertEqual(self._count("select resume_version_id from applications where id = :a", a=app_id), self.a_resume)
+        self.assertEqual(self._count("select count(*) from opportunity_documents where opportunity_id = :i", i=oid), 1)
+        self.assertEqual(self._count("select resume_version_id from opportunity_documents where opportunity_id = :i", i=oid), self.a_resume)
+        # The stored document is the one the approval fingerprint was taken from: the download carries its stored hash.
+        stored_hash = self._count("select content_sha256 from opportunity_documents where opportunity_id = :i", i=oid)
+        dl = c.get(f"/api/career/opportunities/{oid}/approved-document", headers=self.a)
+        self.assertEqual(dl.status_code, 200, dl.text)
+        self.assertEqual(dl.headers.get("X-Document-SHA256"), stored_hash)
+        approved_hash = self._count("select approved_resume_hash from opportunities where id = :i", i=oid)
+        self.assertIsNotNone(approved_hash)
 
     # ------------------------------------------------------------------ cross-member isolation
     def test_member_b_cannot_read_change_or_download_member_a_records(self):
@@ -191,6 +209,8 @@ class PostgresConcurrencyIsolation(unittest.TestCase):
         c.put(f"/api/career/opportunities/{oid}/approval", headers=self.a, json={"approved_resume_version_id": self.a_resume})
         rec = c.post(f"/api/career/opportunities/{oid}/record-application", headers=self.a, json={"applied_on": "2026-11-11"}).json()
         app_id = rec["application"]["id"]
+        # B is allowlisted, so B's refusals below come from ownership checks, not from the allowlist.
+        self.assertEqual(c.get("/api/career/opportunities", headers=self.b).status_code, 200)
         self.assertNotIn(oid, [x["id"] for x in c.get("/api/career/opportunities", headers=self.b).json()])
         self.assertEqual(c.put(f"/api/career/opportunities/{oid}", headers=self.b, json={"title": "x", "job_url": "https://jobs.example-employer.com/iso/z"}).status_code, 404)
         self.assertEqual(c.delete(f"/api/career/opportunities/{oid}", headers=self.b).status_code, 404)
@@ -226,6 +246,25 @@ class PostgresConcurrencyIsolation(unittest.TestCase):
         self.assertEqual(self._count("select count(*) from opportunity_documents d join career_profiles p on p.id = d.career_profile_id join users u on u.id = p.user_id where u.cognito_sub = :s", s=sub), 0)
 
     # ------------------------------------------------------------------ feature switch OFF
+    # ------------------------------------------------------------------ authorization denial (allowlist), not ownership
+    def test_signed_in_member_not_on_the_allowlist_is_denied_on_every_route(self):
+        c = self.client()
+        made = c.post("/api/career/opportunities", headers=self.a, json={"title": "A for denial", "job_url": "https://jobs.example-employer.com/deny/" + uuid.uuid4().hex[:6]}).json()
+        oid = made["id"]
+        denied = [
+            c.get("/api/career/opportunities", headers=self.c),
+            c.post("/api/career/opportunities", headers=self.c, json={"title": "x", "job_url": "https://jobs.example-employer.com/deny/c"}),
+            c.get(f"/api/career/opportunities/{oid}/approved-document", headers=self.c),
+            c.delete("/api/career/opportunities?state=dismissed", headers=self.c),
+        ]
+        for r in denied:
+            self.assertEqual(r.status_code, 404, r.text)
+        # Same answer as a switched-off feature, so the feature is not revealed to a non-member.
+        with mock.patch.dict(os.environ, {"CT_OPPORTUNITIES_ENABLED": ""}):
+            off = c.get("/api/career/opportunities", headers=self.a)
+        self.assertEqual((denied[0].status_code, denied[0].json()), (off.status_code, off.json()))
+        self.assertEqual(self._count("select count(*) from opportunities o join career_profiles p on p.id = o.career_profile_id join users u on u.id = p.user_id where u.cognito_sub = :s", s=self.c_sub), 0)
+
     def test_feature_switch_off_returns_404_on_postgresql(self):
         with mock.patch.dict(os.environ, {"CT_OPPORTUNITIES_ENABLED": ""}):
             self.assertEqual(self.client().get("/api/career/opportunities", headers=self.a).status_code, 404)
