@@ -1,0 +1,31 @@
+/* Privacy note: the small asterisk under each page heading and the short note at the bottom of every page. */
+.privacy-mark {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-privacy-note {
+  max-width: 70ch;
+  margin: 2rem auto 0;
+  padding: 1rem 16px 1.5rem;
+  border-top: 1px solid currentColor;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.site-privacy-note h2 {
+  font-size: 1rem;
+  margin: 0 0 0.4rem;
+}
+
+.site-privacy-note p {
+  margin: 0 0 0.5rem;
+}
+
+.site-privacy-note a {
+  color: inherit;
+}
