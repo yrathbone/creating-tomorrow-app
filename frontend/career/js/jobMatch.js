@@ -19,6 +19,7 @@ const jobState = {
   jobFit: null,
   jobTitle: "",
   resumeVersionId: null,
+  opportunityId: null,
 };
 let currentJobQuestions = [];
 const JOB_MAX_ROUNDS = 4;
@@ -91,6 +92,7 @@ function hideAllJobStates() {
 
 document.getElementById("job-target-add-btn").addEventListener("click", (event) => {
   const fromKeyboard = jobKeyboardPress(event); // read first: once the button is hidden the browser no longer says it had a keyboard focus ring
+  clearOpportunityContext(); // a plain "Add a job" is not linked to any saved link
   hideAllJobStates();
   jobInputState.hidden = false;
   if (fromKeyboard) focusJob(document.getElementById("job-description-input"));
@@ -124,7 +126,7 @@ document.getElementById("job-compare-form").addEventListener("submit", async (e)
     const res = await authedFetch("/api/career/job-compare", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ job_description: jobDescription }),
+      body: JSON.stringify(jobState.opportunityId ? { job_description: jobDescription, opportunity_id: jobState.opportunityId } : { job_description: jobDescription }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -485,6 +487,8 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     stopProcessingState(jobBuildLoadingState);
     jobBuildLoadingState.hidden = true;
     jobBuildDoneState.hidden = false;
+    showOpportunityApproval();
+    if (typeof loadOpportunities === "function") loadOpportunities(); // the saved link's approval state is read again from the server
     carryLayoutChoice("job-build-layout", "job-resume-template");
     if (typeof loadScanHistory === "function") loadScanHistory();
     if (typeof loadResumeVersions === "function") loadResumeVersions();
@@ -1218,6 +1222,10 @@ document.getElementById("job-applied-btn").addEventListener("click", (event) => 
   document.getElementById("job-applied-title").value = at > 0 ? label.slice(0, at) : label;
   document.getElementById("job-applied-company").value = at > 0 ? label.slice(at + 4) : "";
   document.getElementById("job-applied-date").value = todayIso();
+  // A saved job's application takes its title and employer from the saved link, so those two fields are not editable there.
+  const linkedApplication = !!jobState.opportunityId;
+  document.getElementById("job-applied-title").disabled = linkedApplication;
+  document.getElementById("job-applied-company").disabled = linkedApplication;
   document.getElementById("job-applied-form").hidden = false;
   document.getElementById("job-applied-btn").hidden = true;
   if (fromKeyboard) focusJob(document.getElementById("job-applied-title"));
@@ -1233,15 +1241,22 @@ document.getElementById("job-applied-save-btn").addEventListener("click", async 
   const saveBtn = document.getElementById("job-applied-save-btn");
   saveBtn.disabled = true;
   try {
-    await addApplication({
-      job_title: document.getElementById("job-applied-title").value,
-      company: document.getElementById("job-applied-company").value,
-      applied_on: document.getElementById("job-applied-date").value || null,
-      scan_history_id: jobState.scanHistoryId,
-      resume_version_id: jobState.resumeVersionId,
-    });
-    document.getElementById("job-applied-form").hidden = true;
-    msg.textContent = "Added to your tracker. Find it under Applications in your Career Snapshot, and update it when you hear back.";
+    if (jobState.opportunityId) {
+      // C-52: a comparison started from a saved link is recorded through that link, which checks the approved résumé.
+      await recordSavedJobApplication(jobState.opportunityId, document.getElementById("job-applied-date").value || null);
+      document.getElementById("job-applied-form").hidden = true;
+      msg.textContent = "Recorded for this saved job. It is now in your tracker, and you can add a follow-up date on the saved link.";
+    } else {
+      await addApplication({
+        job_title: document.getElementById("job-applied-title").value,
+        company: document.getElementById("job-applied-company").value,
+        applied_on: document.getElementById("job-applied-date").value || null,
+        scan_history_id: jobState.scanHistoryId,
+        resume_version_id: jobState.resumeVersionId,
+      });
+      document.getElementById("job-applied-form").hidden = true;
+      msg.textContent = "Added to your tracker. Find it under Applications in your Career Snapshot, and update it when you hear back.";
+    }
   } catch (err) {
     msg.textContent = err.message || "Couldn’t add that application.";
   } finally {
@@ -1291,6 +1306,7 @@ function resetJobTarget() {
   jobState.jobFit = null;
   jobState.jobTitle = "";
   jobState.resumeVersionId = null;
+  clearOpportunityContext();
   resetAppliedBlock();
   renderJobFit(null);
   document.getElementById("job-fit-after").hidden = true;
@@ -1371,8 +1387,87 @@ function restoreCurrentJobTarget() {
   btn.hidden = false;
 }
 
+// Saved-link handoff (C-52). The posting text is pasted by the member: this app never fetches a saved link.
+// The saved link only supplies the context shown above the paste box and the link that the resume approval is recorded on.
+function startJobFromOpportunity(item) {
+  if (!item || !item.id) return;
+  // Start clean: nothing from a previous comparison (pasted posting, match, build, approval) may carry over.
+  resetJobTarget();
+  jobState.opportunityId = item.id;
+  const ctx = document.getElementById("job-opportunity-context");
+  ctx.textContent = "Comparing for your saved link: " + item.title + (item.employer ? " at " + item.employer : "") +
+    ". Paste the job description from the employer’s page below.";
+  ctx.hidden = false;
+  hideAllJobStates();
+  jobTargetEmpty.hidden = true;
+  jobInputState.hidden = false;
+  document.getElementById("job-description-input").focus();
+  jobStepStarted(jobInputState);
+}
+
+function clearOpportunityContext() {
+  jobState.opportunityId = null;
+  const ctx = document.getElementById("job-opportunity-context");
+  if (ctx) { ctx.textContent = ""; ctx.hidden = true; }
+  const box = document.getElementById("job-opportunity-approval");
+  if (box) box.hidden = true;
+  const status = document.getElementById("job-opportunity-approval-status");
+  if (status) status.textContent = "";
+}
+
+function showOpportunityApproval() {
+  const box = document.getElementById("job-opportunity-approval");
+  if (!box) return;
+  box.hidden = !(jobState.opportunityId && jobState.resumeVersionId);
+  document.getElementById("job-opportunity-approval-status").textContent = "";
+}
+
+document.getElementById("job-opportunity-approve-btn").addEventListener("click", async () => {
+  const status = document.getElementById("job-opportunity-approval-status");
+  status.textContent = "Saving the approval...";
+  const message = await approveOpportunityResume(jobState.opportunityId, jobState.resumeVersionId);
+  status.textContent = message;
+});
+
+// Records the application for a saved job through the saved-link route. The server refuses it unless a résumé is approved
+// for that job and the approval is still current; the check here only gives a clearer message earlier.
+async function recordSavedJobApplication(opportunityId, appliedOn) {
+  // Read the link again first, so the check uses the approval as it is now (another tab may have changed it).
+  if (typeof loadOpportunities === "function") await loadOpportunities();
+  const items = typeof allOpportunities !== "undefined" ? allOpportunities : [];
+  const item = items.find((o) => o.id === opportunityId);
+  if (item && (!item.approval || item.approval.status !== "current")) {
+    throw new Error("Approve the résumé for this saved job before you record the application.");
+  }
+  const res = await authedFetch("/api/career/opportunities/" + opportunityId + "/record-application", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ applied_on: appliedOn }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(formatErrorDetail(err.detail, "The application was not recorded."));
+  }
+  const data = await res.json();
+  if (typeof allOpportunities !== "undefined" && data.opportunity) {
+    allOpportunities = allOpportunities.map((o) => (o.id === opportunityId ? data.opportunity : o));
+    if (typeof renderOpportunities === "function") renderOpportunities();
+  }
+  return data;
+}
+
 function openJobTarget(latest) {
+  clearOpportunityContext();
   const data = latest.result_data;
+  if (data.opportunity_id) {
+    // The comparison was started from a saved link: keep that link for approval and for recording the application.
+    const items = typeof allOpportunities !== "undefined" ? allOpportunities : [];
+    const linked = items.find((o) => o.id === data.opportunity_id);
+    jobState.opportunityId = data.opportunity_id;
+    const ctx = document.getElementById("job-opportunity-context");
+    ctx.textContent = "Comparing for your saved link" + (linked ? ": " + linked.title + (linked.employer ? " at " + linked.employer : "") : "") + ".";
+    ctx.hidden = false;
+  }
   jobState.jobDescription = data.job_description || "";
   jobState.matchReport = data.match_report;
   jobState.categories = data.categories || [];

@@ -191,7 +191,9 @@ test("sign-in and password recovery are untouched: the same forms, fields, butto
   for (const id of ["login-form", "login-email", "login-password", "login-btn", "forgot-open-btn", "forgot-request-form", "forgot-email", "forgot-request-btn", "forgot-confirm-form", "forgot-code",
     "forgot-new-password", "forgot-new-password-confirm", "forgot-confirm-btn", "forgot-resend-btn", "forgot-back-btn", "forgot-error", "newpassword-form", "newpassword-input", "newpassword-confirm",
     "newpassword-btn", "newpassword-error", "login-error", "login-notice", "step-login", "step-forgot", "step-newpassword"]) assert.ok(html.includes(`id="${id}"`), id);
-  assert.strictEqual((html.match(/<form\b/g) || []).length, 14, "no form was added or removed (the sign-in page has 14 forms, including the four sign-in and recovery forms, exactly as before)");
+  // Only the sign-in and recovery forms are pinned here. Other forms on the same page (for example the saved-job forms) have their own tests.
+  const signInForms = [...html.matchAll(/<form\b[^>]*\sid="([^"]+)"/g)].map((m) => m[1]).filter((id) => /^(login|forgot|newpassword)-/.test(id)).sort();
+  assert.deepStrictEqual(signInForms, ["forgot-confirm-form", "forgot-request-form", "login-form", "newpassword-form"], "the sign-in and recovery forms are exactly as before");
   assert.ok(html.indexOf('<p class="login-help"><button type="button" id="forgot-open-btn"') < html.indexOf("Learn how to join"), "Forgot your password stays directly beneath the form, before the new link");
   const js = read("career", "login.js");
   for (const needle of ["forgot-open-btn", "forgot-back-btn", "newpassword-form", "login-form"]) assert.ok(js.includes(needle), needle);

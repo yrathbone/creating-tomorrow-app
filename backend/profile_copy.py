@@ -186,6 +186,20 @@ def build_profile_copy_bytes(data: dict, name: str | None = None, contact: str |
                     for run in para.runs:
                         run.font.size = Pt(9.5)
 
+    approved_docs = data.get("approved_documents") or []
+    _heading(doc, "Approved résumé documents for saved jobs")
+    if not approved_docs:
+        _none_yet(doc, "approved documents")
+    for d in approved_docs:
+        p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.keep_with_next = True
+        r = p.add_run(_join([d.get("job_title") or "Saved job"], ": "))
+        r.bold = True
+        _small(doc, "Approved " + pretty_date(d.get("created_at")) + " (layout: " + str(d.get("layout") or "classic") + ").", keep=True)
+        _small(doc, "This is the exact file you approved for this job. It does not change when your résumé or layout changes. "
+                    "Reference " + str(d.get("content_sha256") or "")[:12] + ".", after=6)
+
     scans = data.get("scan_history") or []
     titles_by_scan = {s.get("id"): s.get("job_title") for s in scans}
     _heading(doc, "Scans you have run")

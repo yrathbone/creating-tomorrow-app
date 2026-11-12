@@ -1,0 +1,40 @@
+/* My Opportunities (C-52): layout for the saved-links card. Class names are specific to this card. */
+.opportunity-item {
+  border-top: 1px solid currentColor;
+  padding: 0.75rem 0;
+  list-style: none;
+}
+.opportunity-actions,
+.opportunity-list-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+.opportunity-followup,
+.opportunity-dismiss {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+  margin: 0.5rem 0;
+}
+.opportunity-followup .field,
+.opportunity-dismiss .field {
+  min-width: min(100%, 14rem);
+}
+.opportunity-actions button,
+.opportunity-list-tools button,
+.opportunity-followup button,
+.opportunity-dismiss button {
+  min-height: 44px;
+  max-width: 100%;
+}
+@media (max-width: 480px) {
+  .opportunity-actions button,
+  .opportunity-list-tools button,
+  .opportunity-followup button,
+  .opportunity-dismiss button {
+    width: 100%;
+  }
+}

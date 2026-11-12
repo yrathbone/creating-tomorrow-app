@@ -8,7 +8,7 @@ are live; Experience is the first Manual CRUD entity.
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, LargeBinary, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -261,4 +261,62 @@ class Application(Base):
     status: Mapped[str] = mapped_column(String, default="applied")  # applied | no_response | interview | rejected | offer
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
     status_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Opportunity(Base):
+    """A job link a member saved themselves (C-52 MVP-0). The server never fetches the link. Owned by the career profile.
+
+    state is saved | dismissed | applied. 'applied' is stored only through the record-application route, and it is
+    effective only while application_id points at an existing application (see docs/C52-IMPLEMENTATION-NOTE.md).
+    approved_resume_hash is the SHA-256 of the approved résumé version's data at approval time; a change to that data
+    makes the approval read as 'changed since approval'.
+    """
+    __tablename__ = "opportunities"
+    __table_args__ = (UniqueConstraint("career_profile_id", "dedupe_key", name="uq_opportunities_profile_dedupe"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"), index=True)
+    title: Mapped[str] = mapped_column(String)
+    employer: Mapped[str | None] = mapped_column(String, nullable=True)
+    job_url: Mapped[str] = mapped_column(String)
+    dedupe_key: Mapped[str] = mapped_column(String(64))
+    location_text: Mapped[str | None] = mapped_column(String, nullable=True)
+    work_arrangement: Mapped[str | None] = mapped_column(String, nullable=True)
+    employment_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    base_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    base_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    base_period: Mapped[str | None] = mapped_column(String, nullable=True)
+    pay_note: Mapped[str | None] = mapped_column(String, nullable=True)
+    state: Mapped[str] = mapped_column(String, default="saved")
+    dismiss_reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_verified_on: Mapped[str | None] = mapped_column(String, nullable=True)
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+    application_id: Mapped[int | None] = mapped_column(ForeignKey("applications.id", ondelete="SET NULL"), nullable=True)
+    approved_resume_version_id: Mapped[int | None] = mapped_column(ForeignKey("resume_versions.id", ondelete="SET NULL"), nullable=True)
+    approved_resume_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    follow_up_on: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class OpportunityDocument(Base):
+    """The exact résumé document a member approved for one saved job (C-52 F07). Written once at approval, replaced only by a
+    new approval, removed when the approval is cleared or the saved job is deleted. Nothing here is recomputed later: the stored
+    bytes are what was approved. Layout, template and mode are recorded so the document can be explained; a changed profile
+    setting never changes these rows."""
+    __tablename__ = "opportunity_documents"
+    __table_args__ = (UniqueConstraint("opportunity_id", name="uq_opportunity_documents_opportunity"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    opportunity_id: Mapped[int] = mapped_column(ForeignKey("opportunities.id", ondelete="CASCADE"), index=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id"), index=True)
+    resume_version_id: Mapped[int | None] = mapped_column(ForeignKey("resume_versions.id", ondelete="SET NULL"), nullable=True)
+    resume_snapshot: Mapped[dict] = mapped_column(JSON)
+    layout: Mapped[str] = mapped_column(String)
+    template: Mapped[str] = mapped_column(String)
+    ats_mode: Mapped[bool] = mapped_column(Boolean, default=False)
+    renderer: Mapped[str] = mapped_column(String)
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    docx: Mapped[bytes] = mapped_column(LargeBinary)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
