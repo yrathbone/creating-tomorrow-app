@@ -1,7 +1,7 @@
-"""PostgreSQL migration checks for C-52 (0010 and 0011). Runs only against the configured disposable Neon test branch.
+"""PostgreSQL migration checks for C-52 (0010 and 0011). Runs only against the configured disposable self-hosted C-52 test database.
 
 Configuration and identity checks live in tests/harness/pg_test_config.py. Nothing runs unless the configuration passes, and
-the connection string is never printed. Results for PostgreSQL 18 do not establish PostgreSQL 16 compatibility.
+the connection string is never printed. The target server major version is PostgreSQL 16.
 
 Checks: upgrade to head, downgrade to 0009, re-upgrade; the opportunities and opportunity_documents tables exist.
 """

@@ -1,9 +1,9 @@
 """C-52 PostgreSQL concurrency, isolation, locking, deletion and switch checks (round 8).
 
-Runs ONLY against the configured disposable Neon test branch (tests/harness/pg_test_config.py). Synthetic members only.
+Runs ONLY against the configured disposable self-hosted C-52 test database (tests/harness/pg_test_config.py). Synthetic members only.
 All tables live in a dedicated schema created for this run and dropped at the end. Real token verification is used
 (the test signing key is generated at run time, as in test_signed_in_harness.py). Nothing is printed except results.
-Results for PostgreSQL 18 do not establish PostgreSQL 16 compatibility.
+The target server major version is PostgreSQL 16.
 """
 import os
 import sys
