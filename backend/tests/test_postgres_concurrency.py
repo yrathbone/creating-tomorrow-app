@@ -231,6 +231,10 @@ class PostgresConcurrencyIsolation(unittest.TestCase):
     # ------------------------------------------------------------------ export and account deletion on PostgreSQL
     def test_export_and_account_deletion_remove_saved_links_documents_and_applications(self):
         sub = "pg-synthetic-del-" + uuid.uuid4().hex[:6]
+        with mock.patch.dict(os.environ, {"CT_OPPORTUNITIES_ALLOWED_SUBS": ",".join([self.a_sub, self.b_sub, self.cap_sub, sub])}):
+            self._export_and_delete_body(sub)
+
+    def _export_and_delete_body(self, sub):
         headers = {"Authorization": "Bearer " + access_token(self.key, sub)}
         vid = self._seed(sub, "Synthetic Delete")
         c = self.client()
