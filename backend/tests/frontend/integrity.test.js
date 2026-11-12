@@ -33,10 +33,10 @@ test("the sign-in page pins the exact library version with a sha384 fingerprint"
   assert.match(html, /<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/amazon-cognito-identity-js@6\.3\.20\/dist\/amazon-cognito-identity\.min\.js" integrity="sha384-SVW\/JUAWuaFjpcvT65qqpCfy5aD\/6\+mTPt046MJYXaNbaI70H1WE4fvhVc0iKOvi" crossorigin="anonymous"><\/script>/);
 });
 
-test("the sign-up page no longer loads the sign-in library it never uses", () => {
+test("the invitation page loads no scripts at all (no sign-in library, no outside host, no register.js)", () => {
   const html = fs.readFileSync(path.join(FRONTEND, "career", "register.html"), "utf8");
   assert.ok(!html.includes("amazon-cognito-identity"), "no library");
   assert.ok(!html.includes("jsdelivr"), "no outside script host");
-  const js = fs.readFileSync(path.join(FRONTEND, "career", "register.js"), "utf8");
-  assert.ok(!js.includes("AmazonCognito"), "register.js does not use it");
+  assert.ok(!/<script\b/i.test(html), "no script tags");
+  assert.ok(!fs.existsSync(path.join(FRONTEND, "career", "register.js")), "register.js removed");
 });

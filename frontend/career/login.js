@@ -851,7 +851,7 @@ let completeNewPassword = null;
 
 // Pure (unit-tested): what to tell the person about the two password boxes, or "" if they are fine.
 function newPasswordProblem(password, again) {
-  if (!password || password.length < 8) return "Your password needs at least 8 characters.";
+  if (!password || password.length < 12) return "Your password needs at least 12 characters.";
   if (password !== again) return "The two passwords don’t match.";
   return "";
 }
@@ -864,9 +864,20 @@ function passwordResetMessage(err) {
   if (code === "LimitExceededException" || code === "TooManyRequestsException") return "Too many tries. Please wait a few minutes and try again.";
   if (code === "InvalidPasswordException") return (err && err.message) || "That password isn’t strong enough. Try a longer one.";
   if (code === "InvalidParameterException" || code === "NotAuthorizedException") {
-    return "We can’t reset this password online yet. If you haven’t logged in for the first time, use the temporary password from your invitation. Otherwise, email us and we’ll help.";
+    return "We can’t reset this password online. If you were invited and haven’t signed in yet, your invitation may have expired. Email us and we’ll send you a new one.";
   }
   return (err && err.message) || "Something went wrong. Please try again.";
+}
+
+// Pure (unit-tested): what to tell the person when sign-in fails. An expired invitation gets a plain next step;
+// anything else keeps the service text.
+function signInProblem(err) {
+  const code = err && err.code;
+  const message = (err && err.message) || "";
+  if (code === "NotAuthorizedException" && /expired/i.test(message)) {
+    return "Your invitation’s temporary password has expired. Email us and we’ll send you a new invitation.";
+  }
+  return message || "Login failed.";
 }
 
 loginForm.addEventListener("submit", async (e) => {
@@ -888,7 +899,7 @@ loginForm.addEventListener("submit", async (e) => {
     }
     await finishSignIn(result.accessToken);
   } catch (err) {
-    loginError.textContent = (err && err.message) || "Login failed.";
+    loginError.textContent = signInProblem(err);
     loginError.hidden = false;
   } finally {
     loginBtn.disabled = false;

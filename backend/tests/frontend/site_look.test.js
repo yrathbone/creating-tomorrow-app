@@ -106,8 +106,8 @@ test("the chrome rules hold their contrast and layout: cobalt header, gold butto
   assert.match(css, /\.nav-links a\.nav-account \{ background: var\(--c6-gold\); border-color: var\(--c6-gold\); color: #071c42; \}/);
   assert.match(css, /grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
   assert.match(css, /\.h5-footer-privacy \{ grid-area: privacy; justify-self: center; max-width: none;/);
-  assert.match(css, /\.h5-footer-brand \{ grid-area: brand; justify-self: end; \}/);
-  assert.match(css, /\.h5-footer \.nav-wordmark-gold \{ color: var\(--c6-gold-footer\); \}/);
+  assert.match(css, /\.h5-footer-brand \{ grid-area: brand; justify-self: end; background: var\(--c6-blue\); padding: 0\.55rem 0\.9rem; border-radius: 10px; \}/); // F-12: wordmark sits on the navy band
+  assert.match(css, /\.h5-footer \.nav-wordmark-gold \{ color: var\(--c6-gold\); \}/); // F-12: header gold on the navy band
   assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem;/);
   const hex = (n) => parseInt(n, 16) / 255;
   const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));

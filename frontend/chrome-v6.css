@@ -61,15 +61,16 @@ body.chrome-v6:not(.dashboard-v4) .h5-footer-row { display: contents; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-nav { grid-area: nav; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links { grid-area: legal; justify-self: end; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-copy { grid-area: copy; margin: 0; max-width: none; }
-body.chrome-v6:not(.dashboard-v4) .h5-footer-brand { grid-area: brand; justify-self: end; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer-brand { grid-area: brand; justify-self: end; background: var(--c6-blue); padding: 0.55rem 0.9rem; border-radius: 10px; }
 /* the privacy sentence uses the full footer width, so on a desktop it stays on one line (on a phone it wraps as it must) */
 body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { grid-area: privacy; justify-self: center; max-width: none; margin: 0.75rem 0 0.25rem; text-align: center; color: #000000; }
 /* free-tools wording: the first words are underlined, which sets that promise apart from the signed-in side, where data is saved */
 body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy .h5-nosave { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
 /* ---------- footer: colours ---------- */
-body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-wordmark-title { color: var(--c6-blue); }
-body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-wordmark-gold { color: var(--c6-gold-footer); }
+/* F-12 (founder, 2026-11-10): the footer wordmark sits on the navy band, so its colours are the header colours: white and the header gold. */
+body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-wordmark-title { color: #ffffff; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-wordmark-gold { color: var(--c6-gold); }
 /* only Privacy and Terms (and the & between them) are crimson */
 body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a:nth-of-type(-n+2) { color: var(--c6-crimson); }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a:nth-of-type(-n+2):hover { color: var(--c6-crimson-deep); }

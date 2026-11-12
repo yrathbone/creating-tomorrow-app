@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Create an account — Creating Tomorrow</title>
-  <meta name="description" content="Create a Creating Tomorrow account to build your Career Profile." />
+  <title>Join Creating Tomorrow</title>
+  <meta name="description" content="Creating Tomorrow is in a limited testing phase while we work to make our tools reliable, accessible, and helpful." />
   <meta name="robots" content="noindex" />
   <link rel="icon" href="../favicon.ico" sizes="48x48" />
   <link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png" />
   <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
   <link rel="manifest" href="../site.webmanifest" />
   <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="../privacy-note.css">
   <link rel="stylesheet" href="../style.css" />
   <link rel="stylesheet" href="auth-v5.css" />
   <link rel="stylesheet" href="../chrome-v6.css" />
@@ -29,27 +30,19 @@
   </nav>
 
   <header class="page-header">
-    <p class="guide-eyebrow" style="text-align: center;">Career Profile</p>
-    <h1>Career Profile is by invitation</h1>
-    <p class="tagline">Career Profile is in <strong>beta testing</strong>, so new accounts are by invitation only right now. Your existing tools stay free and fully anonymous, and you don&rsquo;t need an account to use them.</p>
+    <h1>Join Creating Tomorrow</h1>
+<a class="privacy-mark" href="#privacy-note">* Privacy: see the note at the bottom of this page</a>
+    <p class="tagline">We&rsquo;re currently welcoming participants by invitation.</p>
   </header>
 
   <main>
-    <section class="card" id="step-signup">
-      <h2>Create an account</h2>
-      <p>If you were invited, you don&rsquo;t need to sign up: <a href="login.html">sign in</a> with the email address and temporary password in your invitation. Not invited yet? Accounts are by invitation only for now: you can <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20beta%20invitation%20request">email us to ask for one</a>.</p>
-      <form id="signup-form">
-        <label class="field">
-          <span>Email</span>
-          <input type="email" id="signup-email" name="email" autocomplete="email" required />
-        </label>
-        <label class="field">
-          <span>Password</span>
-          <input type="password" id="signup-password" name="new-password" autocomplete="new-password" minlength="8" required />
-        </label>
-        <button type="submit" id="signup-btn">Create account</button>
-      </form>
-      <div id="signup-error" class="error" role="alert" hidden></div>
+    <section class="card" id="invitation-info">
+      <p>Creating Tomorrow is in a limited testing phase while we work to make our tools reliable, accessible, and helpful.</p>
+      <p>Already received an invitation? Sign in to get started.</p>
+      <div class="invite-actions">
+        <a class="btn-primary" href="login.html">Sign in</a>
+        <a class="btn-secondary" href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20beta%20invitation%20request">Request an invitation</a>
+      </div>
     </section>
   </main>
 
@@ -68,7 +61,10 @@
     </div>
   </footer>
 
-  <script src="js/auth.js"></script>
-  <script src="register.js"></script>
+<section id="privacy-note" class="site-privacy-note" aria-labelledby="privacy-note-title">
+  <h2 id="privacy-note-title">Privacy</h2>
+  <p>We keep your information only while your account exists. When you delete your account, we delete it from our database straight away. Our hosting provider does not keep backup copies of your information.</p>
+  <p><a href="../privacy.html">Privacy details</a></p>
+</section>
 </body>
 </html>

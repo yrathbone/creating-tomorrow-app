@@ -1,6 +1,6 @@
 /*
 Cognito sign-up/sign-in calls (amazon-cognito-identity-js, loaded via CDN
-script tag in login.html/register.html - no build step, per Decision 3).
+script tag in login.html - no build step, per Decision 3).
 Promise-wrapped versions of the SDK's callback-based API.
 
 Session storage (Phase 1B): the SDK caches its tokens (access, ID, refresh)

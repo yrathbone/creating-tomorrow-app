@@ -76,3 +76,8 @@ body.auth-v5:not(.dashboard-v4) .success { color: var(--blue); }
 .h5-footer-copy { margin: 0.6rem 0 0; font-size: 0.88rem; color: #596b85; text-align: left; max-width: none; }
 @media (max-width: 1000px) { .h5-footer-row { flex-direction: column; align-items: flex-start; } }
 @media (max-width: 620px) { .h5-footer .h5-wrap { padding: 0 1.1rem; } }
+/* invitation page (register.html): the two actions sit side by side and wrap on a narrow screen */
+body.auth-v5 .invite-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: stretch; margin-top: 1.5rem; }
+/* both actions: one height, one border width (the primary button gets a border in its own colour so the two match), and a keyboard focus ring that is never removed */
+body.auth-v5 .invite-actions a { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-height: 3rem; margin-top: 0; border: 2px solid var(--blue); }
+body.auth-v5 .invite-actions a:focus-visible { outline: 3px solid #003395; outline-offset: 3px; }

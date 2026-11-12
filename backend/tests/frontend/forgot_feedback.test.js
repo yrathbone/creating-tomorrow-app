@@ -85,8 +85,8 @@ test("passwordResetMessage: plain words for each failure, and the service's own 
   assert.match(m("LimitExceededException"), /Too many/);
   assert.match(m("TooManyRequestsException"), /Too many/);
   assert.strictEqual(m("InvalidPasswordException", "Password does not conform to policy: too short"), "Password does not conform to policy: too short");
-  assert.match(m("InvalidParameterException"), /temporary password from your invitation/);
-  assert.match(m("NotAuthorizedException"), /email us/);
+  assert.match(m("InvalidParameterException"), /invitation may have expired/);
+  assert.match(m("NotAuthorizedException"), /email us/i);
   assert.strictEqual(m("Whatever", "Network error"), "Network error");
   assert.match(ctx.passwordResetMessage(null), /Something went wrong/);
 });
@@ -141,4 +141,14 @@ test("the address used for feedback and help is the one on the Contact page", ()
   const contact = read("contact.html").match(/mailto:([^"]+)"/)[1];
   assert.strictEqual(contact, "yovanarathbone@creatingtomorrow.net");
   for (const m of loginHtml.matchAll(/mailto:([^?"]+)/g)) assert.strictEqual(m[1], contact);
+});
+
+test("signInProblem: an expired invitation gets a plain next step; other errors keep the service text", () => {
+  const ctx = runSlice("function signInProblem", "loginForm.addEventListener");
+  const expired = ctx.signInProblem({ code: "NotAuthorizedException", message: "Temporary password has expired and must be reset by an administrator" });
+  assert.match(expired, /has expired/);
+  assert.match(expired, /email us/i);
+  assert.doesNotMatch(expired, /Temporary password has expired and must be reset/, "never show the raw service text");
+  assert.equal(ctx.signInProblem({ code: "NotAuthorizedException", message: "Incorrect username or password." }), "Incorrect username or password.");
+  assert.equal(ctx.signInProblem(null), "Login failed.");
 });

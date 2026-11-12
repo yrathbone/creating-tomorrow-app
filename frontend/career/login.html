@@ -11,6 +11,7 @@
   <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
   <link rel="manifest" href="../site.webmanifest" />
   <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="../privacy-note.css">
   <link rel="stylesheet" href="../style.css" />
   <link rel="stylesheet" href="dashboard-v4.css" />
   <link rel="stylesheet" href="opportunities.css" />
@@ -35,6 +36,7 @@
   <header class="page-header" id="page-header">
     <p class="guide-eyebrow" style="text-align: center;">Career Profile</p>
     <h1>Sign in</h1>
+<a class="privacy-mark" href="#privacy-note">* Privacy: see the note at the bottom of this page</a>
     <p class="tagline">This is an early, invite-only preview.</p>
   </header>
 
@@ -55,7 +57,8 @@
         <button type="submit" id="login-btn">Sign in</button>
       </form>
       <p class="login-help"><button type="button" id="forgot-open-btn" class="link-button">Forgot your password?</button> <span aria-hidden="true">·</span> <a href="mailto:yovanarathbone@creatingtomorrow.net?subject=Career%20Profile%20sign-in%20help">Trouble signing in? Email us</a></p>
-      <p class="hint">Career Profile is in <strong>beta testing</strong> and is <strong>by invitation only</strong>. If you were invited, sign in with the email address and temporary password from your invitation; you will choose your own password the first time. Want an invitation? <a href="register.html">Find out how</a>.</p>
+      <p class="login-help login-join">New to Creating Tomorrow? We&rsquo;re currently welcoming participants by invitation. <a href="register.html">Learn how to join</a>.</p>
+      <p class="hint">Career Profile is in <strong>beta testing</strong> and is <strong>by invitation only</strong>. If you were invited, sign in with the email address and temporary password from your invitation; you will choose your own password the first time.</p>
       <div id="login-error" class="error" role="alert" hidden></div>
     </section>
 
@@ -77,12 +80,12 @@
         </label>
         <label class="field">
           <span>New password</span>
-          <input type="password" id="forgot-new-password" name="new-password" autocomplete="new-password" minlength="8" required />
-          <span class="hint">At least 8 characters.</span>
+          <input type="password" id="forgot-new-password" name="new-password" autocomplete="new-password" minlength="12" required />
+          <span class="hint">At least 12 characters.</span>
         </label>
         <label class="field">
           <span>Type it again</span>
-          <input type="password" id="forgot-new-password-confirm" name="new-password-confirm" autocomplete="new-password" minlength="8" required />
+          <input type="password" id="forgot-new-password-confirm" name="new-password-confirm" autocomplete="new-password" minlength="12" required />
         </label>
         <button type="submit" id="forgot-confirm-btn">Save new password</button>
         <p class="login-help"><button type="button" id="forgot-resend-btn" class="link-button">Send a new code</button></p>
@@ -97,12 +100,12 @@
       <form id="newpassword-form">
         <label class="field">
           <span>New password</span>
-          <input type="password" id="newpassword-input" name="new-password" autocomplete="new-password" minlength="8" required />
-          <span class="hint">At least 8 characters.</span>
+          <input type="password" id="newpassword-input" name="new-password" autocomplete="new-password" minlength="12" required />
+          <span class="hint">At least 12 characters.</span>
         </label>
         <label class="field">
           <span>Type it again</span>
-          <input type="password" id="newpassword-confirm" name="new-password-confirm" autocomplete="new-password" minlength="8" required />
+          <input type="password" id="newpassword-confirm" name="new-password-confirm" autocomplete="new-password" minlength="12" required />
         </label>
         <button type="submit" id="newpassword-btn">Save password and continue</button>
       </form>
@@ -1004,5 +1007,10 @@
   <script src="js/nextStep.js"></script>
   <script src="js/exportMenu.js"></script>
   <script src="js/deleteAccount.js"></script>
+<section id="privacy-note" class="site-privacy-note" aria-labelledby="privacy-note-title">
+  <h2 id="privacy-note-title">Privacy</h2>
+  <p>We keep your information only while your account exists. When you delete your account, we delete it from our database straight away. Our hosting provider does not keep backup copies of your information.</p>
+  <p><a href="../privacy.html">Privacy details</a></p>
+</section>
 </body>
 </html>
