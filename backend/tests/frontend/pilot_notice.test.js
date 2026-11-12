@@ -39,9 +39,9 @@ test("Privacy and Terms carry the same adults-only rule and the deletion/backup 
   const terms = read("terms.html");
   assert.match(privacy, /you must be 18 or older to create one/);
   assert.match(privacy, /<strong>If you delete your account\.<\/strong>/);
-  assert.match(privacy, /we are confirming exactly how long and will state it here/);
+  assert.match(privacy, /Our hosting provider does not keep backup copies of your information\./);
   assert.match(terms, /optional and is for people 18 or older/);
-  assert.match(privacy, /Last updated November 4, 2026/);
+  assert.match(privacy, /Last updated November 11, 2026/);
   assert.match(terms, /Last updated November 4, 2026/);
 });
 
