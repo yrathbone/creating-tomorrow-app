@@ -303,12 +303,40 @@ class SyncRules(DiscoveryBase):
         self.assertEqual(report2["boards"][0]["updated"], 2)
         self.assertEqual(db2.query(JobPosting).count(), 2)
 
-    def test_missing_posting_closes_on_a_complete_run(self):
+    def test_missing_posting_closes_only_after_two_complete_runs(self):
         self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}})
         db, report, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=1))
-        self.assertEqual(report["boards"][0]["closed"], 1)
-        closed = db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).one()
+        self.assertEqual(report["boards"][0]["closed"], 0)
+        self.assertEqual(report["boards"][0]["missing_once"], 1)
+        self.assertEqual(db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).count(), 0)
+        db2, report2, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=2))
+        self.assertEqual(report2["boards"][0]["closed"], 1)
+        closed = db2.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).one()
         self.assertEqual(closed.source_job_id, "2")
+
+    def test_same_day_rerun_never_closes(self):
+        self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}})
+        self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=1))
+        db, report, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=1))
+        self.assertEqual(report["boards"][0]["closed"], 0)
+        self.assertEqual(db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).count(), 0)
+
+    def test_reappearing_before_the_second_run_clears_the_mark(self):
+        self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}})
+        self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=1))
+        db, _, _ = self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}}, today=TODAY + timedelta(days=2))
+        row = db.query(JobPosting).filter_by(source_job_id="2").one()
+        self.assertIsNone(row.missing_on)
+        self.assertIsNone(row.closed_on)
+        db2, report2, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=3))
+        self.assertEqual(report2["boards"][0]["closed"], 0)  # counts as missing once again, not closed
+
+    def test_held_run_does_not_advance_the_missing_mark(self):
+        self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}})
+        self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=1))
+        self._run({"sample-a": urllib.error.HTTPError("u", 500, "x", {}, None)}, today=TODAY + timedelta(days=2))
+        db, report, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=2))
+        self.assertEqual(report["boards"][0]["closed"], 1)  # second complete missing run, on a later day than the first mark
 
     def test_http_error_changes_nothing(self):
         self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}})

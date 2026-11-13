@@ -211,7 +211,7 @@ def fetch_board_records(board: dict, opener=None) -> tuple[list[dict], int]:
 
 def apply_board_records(db, board: dict, records: list[dict], malformed: int, today: date) -> dict:
     """Write one board's result. Returns counts only (no titles, no links)."""
-    counts = {"added": 0, "updated": 0, "duplicate_skipped": 0, "closed": 0, "close_held": ""}
+    counts = {"added": 0, "updated": 0, "duplicate_skipped": 0, "closed": 0, "missing_once": 0, "close_held": ""}
     existing = {p.source_job_id: p for p in db.query(JobPosting).filter_by(source=board["source"], board_token=board["board_token"]).all()}
     open_before = sum(1 for p in existing.values() if p.closed_on is None)
     total = len(records) + malformed
@@ -245,14 +245,20 @@ def apply_board_records(db, board: dict, records: list[dict], malformed: int, to
             row.title, row.company, row.location_text = rec["title"], rec["company"], rec["location_text"]
             row.work_arrangement, row.employment_type = rec["work_arrangement"], rec["employment_type"]
             row.job_url, row.url_hash = rec["job_url"], rec["url_hash"]
-            row.last_seen_on, row.closed_on = today, None  # seen again: open again if it had closed
+            row.last_seen_on, row.closed_on, row.missing_on = today, None, None  # seen again: open again, no longer missing
             counts["updated"] += 1
 
+    # Two-run confirmation: a posting missing from a complete run is only marked (missing_on). It closes on a later run,
+    # on a different day, if it is still missing. A same-day rerun or a held run never closes anything.
     if not counts["close_held"]:
         for source_job_id, row in existing.items():
             if row.closed_on is None and source_job_id not in seen:
-                row.closed_on = today
-                counts["closed"] += 1
+                if row.missing_on is None:
+                    row.missing_on = today
+                    counts["missing_once"] += 1
+                elif row.missing_on < today:
+                    row.closed_on = today
+                    counts["closed"] += 1
     return counts
 
 
