@@ -5,8 +5,8 @@ hand (job_discovery_run.py). Boards come only from the approved registry career/
 
 Protections (founder requirement 5: failed, partial or malformed responses must never close active postings):
 - A board is read once per run for all members (central fetch).
-- Only HTTP 200 with a JSON object and a list of jobs counts as a response. Redirects are refused. Responses over 2 MB or with
-  more than 5000 jobs are refused. Anything else is "held": nothing for that board changes.
+- Only HTTP 200 with a JSON object and a list of jobs counts as a response. Redirects are refused. Responses over the byte limit
+  (2 MB Greenhouse, 5 MB Ashby, read in bounded chunks) or with more than 5000 jobs are refused. Anything else is "held": nothing for that board changes.
 - Postings are closed only when the response is complete, the malformed share is at most 20%, and the response is not an empty
   list while postings were open (an empty list is held for founder review, not closed).
 - If the open count falls below 20% of the previous open count (with at least 5 open before), closing is held.
@@ -37,7 +37,10 @@ SOURCE_URLS = {
 }
 TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,100}$")
 TIMEOUT_SECONDS = 10
-MAX_BYTES = 2_000_000
+MAX_BYTES = 2_000_000          # Greenhouse: no descriptions requested, so 2 MB is ample
+ASHBY_MAX_BYTES = 5_000_000    # Ashby: every item carries descriptionHtml/descriptionPlain. Measured 1,960,620 bytes for
+                               # Plaid (143 jobs) on 2026-11-12, so 5 MB leaves about 2.5x headroom. Never above 10 MB.
+MAX_BYTES_BY_SOURCE = {"greenhouse": MAX_BYTES, "ashby": ASHBY_MAX_BYTES}
 MAX_JOBS = 5000
 MAX_MALFORMED_SHARE = 0.2
 RETENTION_DAYS = 14
@@ -86,22 +89,39 @@ def load_registry(path: Path = REGISTRY_PATH) -> list[dict]:
 
 def fetch_payload(board: dict, opener=None):
     url = SOURCE_URLS[board["source"]].format(token=board["board_token"])
+    limit = MAX_BYTES_BY_SOURCE[board["source"]]
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     try:
         with (opener or _OPENER).open(req, timeout=TIMEOUT_SECONDS) as resp:
             if resp.status != 200:
                 raise BoardError(f"HTTP {resp.status}")
-            body = resp.read(MAX_BYTES + 1)
+            declared = resp.headers.get("Content-Length") if getattr(resp, "headers", None) is not None else None
+            if declared is not None and declared.isdigit() and int(declared) > limit:
+                raise BoardError("response too large")  # refused before reading the body
+            body = _read_bounded(resp, limit)
     except urllib.error.HTTPError as e:
         raise BoardError(f"HTTP {e.code}") from None
     except (urllib.error.URLError, TimeoutError, OSError):
         raise BoardError("network error") from None
-    if len(body) > MAX_BYTES:
-        raise BoardError("response too large")
     try:
         return json.loads(body.decode("utf-8"))
     except ValueError:
-        raise BoardError("response is not valid JSON") from None
+        # a truncated or malformed body is held here, never partly used
+        raise BoardError("response is not valid JSON or is incomplete") from None
+
+
+def _read_bounded(resp, limit: int) -> bytes:
+    """Reads in chunks and stops as soon as the byte limit is passed. Nothing beyond the limit is kept."""
+    chunks, total = [], 0
+    while True:
+        chunk = resp.read(65536)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > limit:
+            raise BoardError("response too large")
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 def _text(value, limit: int) -> str | None:

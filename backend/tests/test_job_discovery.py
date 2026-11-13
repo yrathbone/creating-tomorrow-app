@@ -473,5 +473,82 @@ class MigrationOffline(unittest.TestCase):
         self.assertNotIn("job_preferences", names)
 
 
+class AshbyResponseLimits(DiscoveryBase):
+    """Ashby responses carry descriptions, so they have their own, larger, byte limit (5 MB). Greenhouse stays at 2 MB."""
+
+    @staticmethod
+    def _big_ashby(count: int, pad_chars: int):
+        jobs = []
+        for i in range(count):
+            job = ash_job(f"big-{i}")
+            job["descriptionHtml"] = "<p>" + "x" * pad_chars + "</p>"
+            job["descriptionPlain"] = "x" * pad_chars
+            jobs.append(job)
+        return {"jobs": jobs}
+
+    def test_valid_larger_ashby_response_is_accepted(self):
+        body = json.dumps(self._big_ashby(143, 8_000)).encode("utf-8")  # about 2.3 MB: over the old 2 MB cap
+        self.assertGreater(len(body), 2_000_000)
+        records, malformed = fetch_board_records(BOARD_B, FakeOpener({"sample-b": body}))
+        self.assertEqual(len(records), 143)
+        self.assertEqual(malformed, 0)
+
+    def test_oversized_ashby_response_is_held(self):
+        body = json.dumps(self._big_ashby(40, 150_000)).encode("utf-8")  # about 6 MB: over the 5 MB Ashby cap
+        self.assertGreater(len(body), 5_000_000)
+        with self.assertRaises(BoardError) as ctx:
+            fetch_board_records(BOARD_B, FakeOpener({"sample-b": body}))
+        self.assertIn("too large", str(ctx.exception))
+
+    def test_greenhouse_still_refuses_two_megabytes(self):
+        body = json.dumps({"jobs": [gh_job(i) for i in range(10)], "pad": "y" * 2_200_000}).encode("utf-8")
+        with self.assertRaises(BoardError):
+            fetch_board_records(BOARD_A, FakeOpener({"sample-a": body}))
+
+    def test_declared_length_over_the_limit_is_refused_before_reading(self):
+        class Declared:
+            status = 200
+            headers = {"Content-Length": "9000000"}
+            def read(self, n=-1):
+                raise AssertionError("body must not be read when the declared length is over the limit")
+            def __enter__(self): return self
+            def __exit__(self, *exc): return False
+        class Opener:
+            def open(self, req, timeout=None): return Declared()
+        with self.assertRaises(BoardError):
+            fetch_board_records(BOARD_B, Opener())
+
+    def test_truncated_ashby_response_is_held(self):
+        full = json.dumps(self._big_ashby(20, 1_000)).encode("utf-8")
+        with self.assertRaises(BoardError):
+            fetch_board_records(BOARD_B, FakeOpener({"sample-b": full[: len(full) // 2]}))
+
+    def test_failed_ashby_request_is_held(self):
+        with self.assertRaises(BoardError):
+            fetch_board_records(BOARD_B, FakeOpener({"sample-b": urllib.error.HTTPError("u", 500, "x", {}, None)}))
+        with self.assertRaises(BoardError):
+            fetch_board_records(BOARD_B, FakeOpener({"sample-b": OSError("refused")}))
+
+    def test_unlisted_ashby_postings_are_excluded(self):
+        jobs = [ash_job("listed-1"), ash_job("hidden-1", listed=False), ash_job("listed-2")]
+        records, malformed = parse_ashby({"jobs": jobs}, BOARD_B)
+        self.assertEqual(sorted(r["source_job_id"] for r in records), ["listed-1", "listed-2"])
+        self.assertEqual(malformed, 0)
+
+    def test_oversized_response_changes_no_posting_state(self):
+        db, report, _ = self._run_ashby({"sample-b": {"jobs": [ash_job("keep-1"), ash_job("keep-2")]}})
+        self.assertEqual(report["boards"][0]["result"], "ok")
+        body = json.dumps(self._big_ashby(40, 150_000)).encode("utf-8")
+        db2, report2, _ = self._run_ashby({"sample-b": body}, today=TODAY + timedelta(days=1))
+        self.assertEqual(report2["boards"][0]["result"], "held")
+        self.assertEqual(db2.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).count(), 0)
+        self.assertEqual(db2.query(JobPosting).count(), 2)
+
+    def _run_ashby(self, bodies, today=TODAY):
+        db = self.Session()
+        report = run_sync(db, today, registry=[BOARD_B], opener=FakeOpener(bodies))
+        return db, report, None
+
+
 if __name__ == "__main__":
     unittest.main()
