@@ -103,6 +103,7 @@ from download_names import attachment_headers
 from db import check_connection
 from career.routes import router as career_router
 from career.opportunities import router as opportunities_router
+from career.discovery_routes import router as discovery_router
 
 @asynccontextmanager
 async def lifespan(_app):
@@ -113,6 +114,7 @@ async def lifespan(_app):
 app = FastAPI(title="Creating Tomorrow API", lifespan=lifespan)
 app.include_router(career_router, prefix="/api/career")
 app.include_router(opportunities_router, prefix="/api/career")
+app.include_router(discovery_router, prefix="/api/career")
 
 # Innermost on purpose: its 413/429/503 answers still pick up the security headers and CORS headers added by the layers around it.
 app.add_middleware(AbuseGuardMiddleware)

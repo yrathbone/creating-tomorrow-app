@@ -720,6 +720,7 @@ async function showProfileStep() {
   await loadResumeVersions();
   if (typeof loadApplications === "function") await loadApplications();
   if (typeof loadOpportunities === "function") await loadOpportunities();
+  if (typeof loadDiscovery === "function") await loadDiscovery();
   if (typeof restoreCurrentJobTarget === "function") restoreCurrentJobTarget();
   if (typeof loadLanguages === "function") await loadLanguages();
   if (typeof loadProfileBasics === "function") await loadProfileBasics();

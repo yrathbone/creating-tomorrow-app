@@ -6,9 +6,9 @@ sequence (Decision 4: Account -> Career Profile -> Manual CRUD -> Resume
 ingestion -> Evidence verification). Account and Career Profile/consent
 are live; Experience is the first Manual CRUD entity.
 """
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, LargeBinary, String, UniqueConstraint, text
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, JSON, LargeBinary, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -320,3 +320,57 @@ class OpportunityDocument(Base):
     content_sha256: Mapped[str] = mapped_column(String(64))
     docx: Mapped[bytes] = mapped_column(LargeBinary)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class JobPosting(Base):
+    """A posting read from an approved employer board (job discovery pilot, migration 0012). SYSTEM data: it has no member
+    owner, is read once per board per run for every member, and holds metadata only. No job description, compensation text,
+    department or office list is stored. A posting missing from its board's list on a complete run gets closed_on; rows closed
+    for 14 days are deleted (career/job_boards.py). A member's own saved link is a separate Opportunity row."""
+    __tablename__ = "job_postings"
+    __table_args__ = (
+        UniqueConstraint("source", "board_token", "source_job_id", name="uq_job_postings_board_job"),
+        UniqueConstraint("url_hash", name="uq_job_postings_url_hash"),
+        CheckConstraint("source IN ('greenhouse', 'ashby')", name="ck_job_postings_source"),
+        CheckConstraint("work_arrangement IS NULL OR work_arrangement IN ('remote', 'hybrid', 'on_site')", name="ck_job_postings_work_arrangement"),
+        CheckConstraint("last_seen_on >= first_seen_on", name="ck_job_postings_seen_order"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source: Mapped[str] = mapped_column(String(20))
+    board_token: Mapped[str] = mapped_column(String(100))
+    source_job_id: Mapped[str] = mapped_column(String(200))
+    title: Mapped[str] = mapped_column(String(300))
+    company: Mapped[str] = mapped_column(String(200))
+    location_text: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    work_arrangement: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    employment_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    job_url: Mapped[str] = mapped_column(String(2000))
+    url_hash: Mapped[str] = mapped_column(String(64))
+    first_seen_on: Mapped[date] = mapped_column(Date)
+    last_seen_on: Mapped[date] = mapped_column(Date)
+    closed_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class JobPreference(Base):
+    """One member's own confirmed job preferences (job discovery pilot, migration 0012). Preferences are the member's stated
+    choices, entered and confirmed by the member; they are never inferred. followed_boards lists approved board keys
+    ("source:board_token") the member chose; the count limit is enforced in the route (CT_JOB_BOARD_FOLLOW_LIMIT, default 10)."""
+    __tablename__ = "job_preferences"
+    __table_args__ = (
+        UniqueConstraint("career_profile_id", name="uq_job_preferences_profile"),
+        CheckConstraint("min_base IS NULL OR min_base >= 0", name="ck_job_preferences_min_base"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    career_profile_id: Mapped[int] = mapped_column(ForeignKey("career_profiles.id", ondelete="CASCADE"), index=False)
+    target_titles: Mapped[list] = mapped_column(JSON)
+    locations: Mapped[list] = mapped_column(JSON)
+    remote_ok: Mapped[bool] = mapped_column(Boolean, default=True)
+    onsite_ok: Mapped[bool] = mapped_column(Boolean, default=True)
+    employment_types: Mapped[list] = mapped_column(JSON)
+    min_base: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    exclude_words: Mapped[list] = mapped_column(JSON)
+    followed_boards: Mapped[list] = mapped_column(JSON)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

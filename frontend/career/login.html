@@ -473,6 +473,35 @@
           </div>
         </div>
 
+        <div class="card span-2 discovery-card" id="discovery-card" hidden>
+          <div class="dashboard-card-header"><h2 id="discovery-heading" tabindex="-1">Found for you (pilot)</h2></div>
+          <p class="hint">Postings from a short list of employer job boards, matched to the preferences you set here. Creating Tomorrow does not endorse employers. Check each posting on the employer’s own site before you share anything. The app never applies for you.</p>
+          <form id="discovery-prefs-form" class="discovery-form">
+            <label class="field"><span>Job titles you want (comma separated)</span><input type="text" id="discovery-titles" maxlength="800" /></label>
+            <label class="field"><span>Locations (comma separated)</span><input type="text" id="discovery-locations" maxlength="800" /></label>
+            <fieldset>
+              <legend>Work arrangement</legend>
+              <label><input type="checkbox" id="discovery-remote" /> Remote</label>
+              <label><input type="checkbox" id="discovery-onsite" /> On site or hybrid</label>
+            </fieldset>
+            <fieldset>
+              <legend>Employment type</legend>
+              <label><input type="checkbox" name="discovery-employment" value="full_time" /> Full time</label>
+              <label><input type="checkbox" name="discovery-employment" value="part_time" /> Part time</label>
+              <label><input type="checkbox" name="discovery-employment" value="contract" /> Contract</label>
+            </fieldset>
+            <label class="field"><span>Words to leave out of titles (comma separated)</span><input type="text" id="discovery-exclude" maxlength="800" /></label>
+            <fieldset>
+              <legend>Job boards to follow</legend>
+              <p class="hint" id="discovery-limit"></p>
+              <div id="discovery-boards"></div>
+            </fieldset>
+            <button type="submit" id="discovery-save-btn">Save preferences</button>
+          </form>
+          <p id="discovery-status" class="hint" role="status" aria-live="polite"></p>
+          <p id="discovery-message" class="hint"></p>
+          <ul id="discovery-list" class="opportunity-list"></ul>
+        </div>
         <div class="card span-2 opportunities-card" id="opportunities-card" hidden>
           <div class="dashboard-card-header"><h2 id="opportunities-heading" tabindex="-1">My Opportunities</h2></div>
           <p class="hint">Job links you save yourself. Creating Tomorrow does not fetch, scrape or endorse them.</p>
@@ -1004,6 +1033,7 @@
   <script src="js/skillsVisual.js"></script>
   <script src="js/applications.js"></script>
   <script src="js/opportunities.js"></script>
+  <script src="js/discovery.js"></script>
   <script src="js/generalResume.js"></script>
   <script src="js/nextStep.js"></script>
   <script src="js/exportMenu.js"></script>
