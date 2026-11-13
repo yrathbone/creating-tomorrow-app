@@ -395,6 +395,117 @@ class TwoRunTiming(DiscoveryBase):
             run_sync(db, datetime(2026, 11, 12, 12, 0), registry=[BOARD_A], opener=FakeOpener(self._missing_two()))
 
 
+class ClosingCap(DiscoveryBase):
+    """The closing cap blocks closures only. Marks are still set, and reappearing postings still lose their mark."""
+    T0 = datetime(2026, 11, 12, 12, 0, tzinfo=UTC)
+    H = timedelta(hours=1)
+
+    def _run(self, job_ids, now):
+        db = self.Session()
+        jobs = [gh_job(i) for i in job_ids]
+        report = run_sync(db, now, registry=[BOARD_A], opener=FakeOpener({"sample-a": {"jobs": jobs}}))
+        return db, report["boards"][0]
+
+    def _seed(self, count):
+        self._run(range(1, count + 1), self.T0 - timedelta(days=1))
+
+    def _row(self, db, job_id):
+        return db.query(JobPosting).filter_by(source_job_id=str(job_id)).one()
+
+    def _closed(self, db):
+        return sorted(int(p.source_job_id) for p in db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).all())
+
+    def test_cap_is_one_fifth_of_open_postings_with_a_floor_of_one(self):
+        from career.job_boards import closing_cap
+        self.assertEqual([closing_cap(n) for n in (0, 4, 5, 9, 10, 14, 25, 143)], [1, 1, 1, 1, 2, 2, 5, 28])
+
+    def test_small_board_one_eligible_closes(self):
+        self._seed(4)
+        self._run([1, 2, 3], self.T0)
+        db, board = self._run([1, 2], self.T0 + timedelta(hours=20))  # 4 open: cap 1, 1 eligible (job 4); job 3 gets its first mark
+        self.assertEqual(board["closed"], 1)
+        self.assertEqual(self._closed(db), [4])
+        self.assertIsNotNone(self._row(db, 3).missing_since)
+
+    def test_small_board_two_eligible_is_held(self):
+        self._seed(4)
+        self._run([1, 2], self.T0)                                    # jobs 3 and 4 marked
+        db, board = self._run([1, 2], self.T0 + timedelta(hours=20))  # 4 open: cap 1, 2 eligible
+        self.assertEqual(board["closed"], 0)
+        self.assertEqual(board["cap_blocked"], 2)
+        self.assertEqual(board["cap_held"], "closing cap: 2 eligible, limit 1")
+        self.assertEqual(self._closed(db), [])
+        for job_id in (3, 4):
+            self.assertEqual(self._row(db, job_id).missing_since.replace(tzinfo=UTC), self.T0)  # marks unchanged
+
+    def test_large_board_closes_exactly_its_cap(self):
+        self._seed(143)
+        self._run(range(1, 116), self.T0)                                   # 116-143 (28 postings) marked
+        db, board = self._run(range(1, 116), self.T0 + timedelta(hours=20))
+        self.assertEqual(board["cap_blocked"], 0)                           # 28 eligible <= cap 143 // 5 = 28
+        self.assertEqual(board["closed"], 28)
+
+    def test_large_board_holds_one_over_its_cap(self):
+        self._seed(143)
+        self._run(range(1, 115), self.T0)                                   # 115-143 (29 postings) marked
+        db, board = self._run(range(1, 115), self.T0 + timedelta(hours=20))
+        self.assertEqual(board["closed"], 0)
+        self.assertEqual(board["cap_held"], "closing cap: 29 eligible, limit 28")
+
+    def test_held_batch_leaves_marked_postings_unchanged_and_marks_new_ones(self):
+        self._seed(10)
+        self._run(range(1, 7), self.T0)                                     # 7, 8, 9, 10 marked at T0
+        db, board = self._run(list(range(1, 6)) + [11], self.T0 + timedelta(hours=20))  # 6 newly missing; 7-10 mature; 11 added
+        self.assertEqual(board["cap_blocked"], 4)                           # 4 eligible > cap 2
+        self.assertEqual(board["added"], 1)                                 # additions still apply
+        self.assertEqual(self._closed(db), [])
+        self.assertEqual(self._row(db, 6).missing_since.replace(tzinfo=UTC), self.T0 + timedelta(hours=20))  # first mark set
+        for job_id in (7, 8, 9, 10):
+            row = self._row(db, job_id)
+            self.assertIsNone(row.closed_on)
+            self.assertEqual(row.missing_since.replace(tzinfo=UTC), self.T0)
+
+    def test_reappearance_during_cap_hold_then_another_disappearance(self):
+        self._seed(10)                                                       # cap 2
+        self._run(range(1, 7), self.T0)                                      # 7, 8, 9, 10 marked at T0
+        db, board = self._run(range(1, 7), self.T0 + timedelta(hours=20))    # 4 eligible: held
+        self.assertEqual(board["cap_blocked"], 4)
+        db, board = self._run(range(1, 8), self.T0 + timedelta(hours=21))    # 7 reappears: mark cleared; 8, 9, 10 eligible (3 > 2): held
+        self.assertIsNone(self._row(db, 7).missing_since)
+        self.assertEqual(board["cap_blocked"], 3)
+        self.assertEqual(self._closed(db), [])
+        db, board = self._run(range(1, 7), self.T0 + timedelta(hours=22))    # 7 disappears again: first mark now, not closed
+        self.assertEqual(self._row(db, 7).missing_since.replace(tzinfo=UTC), self.T0 + timedelta(hours=22))
+        self.assertIsNone(self._row(db, 7).closed_on)
+        self.assertEqual(board["closed"], 0)
+        db, board = self._run(range(1, 7), self.T0 + timedelta(hours=43))    # 7 is 21 h old and eligible; 8-10 too: 4 > 2, held
+        self.assertEqual(board["cap_blocked"], 4)
+        self.assertEqual(self._closed(db), [])
+        db, board = self._run(range(1, 7), self.T0 + timedelta(days=30))     # time alone never releases the batch
+        self.assertEqual(board["cap_blocked"], 4)
+        self.assertEqual(self._closed(db), [])
+
+    def test_only_mature_postings_count_toward_the_cap(self):
+        self._seed(10)
+        self._run(range(1, 9), self.T0)                                      # 9, 10 marked at T0
+        self._run(range(1, 7), self.T0 + timedelta(hours=19))                # 7, 8 marked at 19 h (not mature at 20 h)
+        db, board = self._run(range(1, 7), self.T0 + timedelta(hours=20))    # eligible: 9, 10 (2 <= cap 2); 7, 8 not mature
+        self.assertEqual(board["cap_blocked"], 0)
+        self.assertEqual(self._closed(db), [9, 10])
+        self.assertIsNone(self._row(db, 7).closed_on)
+        self.assertIsNone(self._row(db, 8).closed_on)
+
+    def test_reappearance_that_shrinks_the_batch_releases_the_rest(self):
+        self._seed(4)
+        self._run([1, 2], self.T0)                                           # 3, 4 marked
+        db, board = self._run([1, 2], self.T0 + timedelta(hours=20))         # 2 eligible > cap 1: held
+        self.assertEqual(board["cap_blocked"], 2)
+        db, board = self._run([1, 2, 3], self.T0 + timedelta(hours=21))      # 3 reappears; 1 eligible <= cap 1: 4 closes
+        self.assertEqual(self._closed(db), [4])
+        self.assertIsNone(self._row(db, 3).missing_since)
+        self.assertEqual(board["closed"], 1)
+
+
 class SyncRules(DiscoveryBase):
     def _run(self, bodies, registry=(BOARD_A,), today=TODAY):
         db = self.Session()
@@ -421,12 +532,24 @@ class SyncRules(DiscoveryBase):
         closed = db2.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).one()
         self.assertEqual(closed.source_job_id, "2")
 
-    def test_same_day_rerun_never_closes(self):
+    def test_two_runs_with_no_elapsed_time_never_close(self):
+        # Elapsed time decides closing, not the calendar date: two runs at the same instant are never 20 hours apart.
         self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}})
         self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=1))
         db, report, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=1))
         self.assertEqual(report["boards"][0]["closed"], 0)
         self.assertEqual(db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).count(), 0)
+
+    def test_two_runs_on_one_utc_date_close_once_twenty_hours_apart(self):
+        # Same UTC date, 20 hours apart: closes. The calendar date is not what counts.
+        from career.job_boards import as_utc
+        self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}}, today=datetime(2026, 11, 12, 0, 0, tzinfo=UTC))
+        db, _, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=datetime(2026, 11, 12, 1, 0, tzinfo=UTC))
+        db, report, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=datetime(2026, 11, 12, 21, 0, tzinfo=UTC))
+        self.assertEqual(report["boards"][0]["closed"], 1)
+        self.assertEqual(as_utc(db.query(JobPosting).filter_by(source_job_id="2").one().missing_since), datetime(2026, 11, 12, 1, 0, tzinfo=UTC))
+        closed = db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).one()
+        self.assertEqual(closed.closed_on, date(2026, 11, 12))
 
     def test_reappearing_before_the_second_run_clears_the_mark(self):
         self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}})

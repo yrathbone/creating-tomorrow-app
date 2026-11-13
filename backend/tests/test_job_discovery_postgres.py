@@ -10,7 +10,7 @@ import os
 import subprocess
 import sys
 import unittest
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from unittest import mock
 from urllib.parse import urlsplit
 
@@ -33,6 +33,11 @@ def _local_test_database(url: str) -> bool:
 
 ENABLED = CONFIRM == "disposable" and _local_test_database(URL)
 SKIP = "NOT RUN: set CT_JOBS_PG_TEST_URL to a local *_test database and CT_JOBS_PG_TEST_CONFIRM=disposable"
+
+
+def _utc(value: datetime) -> datetime:
+    """Reads a stored timestamp as UTC, whatever timezone the database session returned it in."""
+    return value.astimezone(timezone.utc) if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
 
 
 @unittest.skipUnless(ENABLED, SKIP)
@@ -124,6 +129,65 @@ class JobDiscoveryPostgres(unittest.TestCase):
             conn.execute(sa.text("delete from career_profiles where id = :p"), {"p": pid})
             left = conn.execute(sa.text("select count(*) from job_preferences where career_profile_id = :p"), {"p": pid}).scalar()
         self.assertEqual(left, 0)  # deleting a career profile removes its preferences
+
+    # Closing timing on PostgreSQL. Every run uses a NEW session, and each check reads the stored row back, so the
+    # missing_since mark is proven to survive a save and reload between runs.
+    T0 = datetime(2026, 11, 12, 23, 55, tzinfo=timezone.utc)  # 23:55 UTC: the 20-hour window crosses midnight
+
+    def _sync(self, job_ids, now):
+        from career.job_boards import run_sync
+        from tests.test_job_discovery import BOARD_A, FakeOpener, gh_job
+        SessionLocal = sessionmaker(bind=self.engine)
+        with SessionLocal() as db:  # a fresh session per run: nothing is carried over in memory
+            report = run_sync(db, now, registry=[BOARD_A], opener=FakeOpener({"sample-a": {"jobs": [gh_job(i) for i in job_ids]}}))
+        return report["boards"][0]
+
+    def _stored(self, job_id):
+        """Reads the row back from the database (not from any session object)."""
+        with self.engine.connect() as c:
+            row = c.execute(sa.text("select missing_since, closed_on from job_postings where source_job_id = :j"),
+                            {"j": str(job_id)}).one()
+        return row.missing_since, row.closed_on
+
+    def _seed_two_postings(self):
+        self._reset_rows()
+        self.addCleanup(self._reset_rows)
+        self._sync([1, 2], self.T0 - timedelta(days=1))
+
+    def test_missing_since_reloads_just_under_twenty_hours_and_does_not_close(self):
+        self._seed_two_postings()
+        self._sync([1], self.T0)
+        mark, closed = self._stored(2)
+        self.assertEqual(_utc(mark), self.T0)     # saved as UTC, reloaded unchanged
+        self.assertIsNone(closed)
+        board = self._sync([1], self.T0 + timedelta(hours=20) - timedelta(seconds=1))
+        self.assertEqual(board["closed"], 0)
+        mark, closed = self._stored(2)
+        self.assertEqual(_utc(mark), self.T0)     # still the original mark
+        self.assertIsNone(closed)
+
+    def test_missing_since_reloads_at_exactly_twenty_hours_and_closes_across_midnight(self):
+        self._seed_two_postings()
+        self._sync([1], self.T0)
+        board = self._sync([1], self.T0 + timedelta(hours=20))           # 19:55 UTC on 13 Nov
+        self.assertEqual(board["closed"], 1)
+        mark, closed = self._stored(2)
+        self.assertEqual(_utc(mark), self.T0)
+        self.assertEqual(closed, date(2026, 11, 13))                      # the UTC date of the closing run
+
+    def test_reappearance_resets_the_clock_after_reload(self):
+        self._seed_two_postings()
+        self._sync([1], self.T0)                                          # mark at T0
+        self._sync([1, 2], self.T0 + timedelta(hours=5))                  # reappears: mark cleared in the database
+        self.assertIsNone(self._stored(2)[0])
+        self._sync([1], self.T0 + timedelta(hours=6))                     # missing again: new mark at T0 + 6 h
+        self.assertEqual(_utc(self._stored(2)[0]), self.T0 + timedelta(hours=6))
+        board = self._sync([1], self.T0 + timedelta(hours=20))            # 20 h after T0, but only 14 h after the new mark
+        self.assertEqual(board["closed"], 0)
+        self.assertIsNone(self._stored(2)[1])
+        board = self._sync([1], self.T0 + timedelta(hours=26))            # 20 h after the new mark
+        self.assertEqual(board["closed"], 1)
+        self.assertEqual(self._stored(2)[1], date(2026, 11, 14))  # T0 + 26 h is 01:55 UTC on 14 Nov
 
     def test_member_isolation_through_the_routes(self):
         self._reset_rows()

@@ -11,6 +11,8 @@ Protections (founder requirement 5: failed, partial or malformed responses must 
   list while postings were open (an empty list is held for founder review, not closed).
 - If the open count falls below 20% of the previous open count (with at least 5 open before), closing is held.
 - A posting closes only after two complete runs at least 20 hours apart (UTC). Calendar dates alone never decide closing.
+- Closing cap: a board may close at most max(1, 20% of its open postings) in one run. A bigger batch closes nothing that run;
+  marks and reappearance clearing still apply. The cap blocks closures only.
 - Each board is written in its own transaction; an error rolls back that board only.
 - Closed postings are deleted 14 days after closing.
 
@@ -46,6 +48,8 @@ MAX_JOBS = 5000
 MAX_MALFORMED_SHARE = 0.2
 RETENTION_DAYS = 14
 MIN_HOURS_MISSING_BEFORE_CLOSE = 20  # a posting must stay missing from complete runs for at least this long (UTC) before it closes
+CLOSING_CAP_DIVISOR = 5              # closing cap = 1/5 (20%) of the board's open postings before the run
+MIN_CLOSING_CAP = 1                  # ...and never less than 1, so small boards are protected too
 DROP_CHECK_MIN_OPEN = 5
 DROP_CHECK_MIN_SHARE = 0.2
 USER_AGENT = "CreatingTomorrow-pilot/1.0"
@@ -226,7 +230,8 @@ def apply_board_records(db, board: dict, records: list[dict], malformed: int, no
         raise ValueError("now must be timezone-aware")
     now = as_utc(now)
     today = now.date()
-    counts = {"added": 0, "updated": 0, "duplicate_skipped": 0, "closed": 0, "missing_once": 0, "close_held": ""}
+    counts = {"added": 0, "updated": 0, "duplicate_skipped": 0, "closed": 0, "missing_once": 0, "close_held": "",
+              "cap_held": "", "cap_blocked": 0}
     existing = {p.source_job_id: p for p in db.query(JobPosting).filter_by(source=board["source"], board_token=board["board_token"]).all()}
     open_before = sum(1 for p in existing.values() if p.closed_on is None)
     total = len(records) + malformed
@@ -265,17 +270,33 @@ def apply_board_records(db, board: dict, records: list[dict], malformed: int, no
 
     # Two-run confirmation with a minimum gap. A posting missing from a complete run is only marked (missing_since, UTC).
     # It closes on a later complete run once at least MIN_HOURS_MISSING_BEFORE_CLOSE hours have passed since the mark.
-    # The mark is set and cleared only by complete runs; a held run changes no mark. Nothing closes in the run that sets a mark.
+    # The mark is set and cleared only by complete runs; a whole-run hold changes no mark. Nothing closes in the run that sets a mark.
+    # Closing cap (closures only): if more postings would close on this run than closing_cap(open_before) allows, no posting on
+    # this board closes in this run. Marks are still set on newly missing postings, and reappearing postings still lose their mark.
     if not counts["close_held"]:
+        mature = [row for source_job_id, row in existing.items()
+                  if row.closed_on is None and source_job_id not in seen and row.missing_since is not None
+                  and now - as_utc(row.missing_since) >= timedelta(hours=MIN_HOURS_MISSING_BEFORE_CLOSE)]
+        cap = closing_cap(open_before)
+        cap_blocks = len(mature) > cap
+        if cap_blocks:
+            counts["cap_held"] = f"closing cap: {len(mature)} eligible, limit {cap}"
+            counts["cap_blocked"] = len(mature)
         for source_job_id, row in existing.items():
             if row.closed_on is None and source_job_id not in seen:
                 if row.missing_since is None:
                     row.missing_since = now
                     counts["missing_once"] += 1
-                elif now - as_utc(row.missing_since) >= timedelta(hours=MIN_HOURS_MISSING_BEFORE_CLOSE):
+                elif not cap_blocks and now - as_utc(row.missing_since) >= timedelta(hours=MIN_HOURS_MISSING_BEFORE_CLOSE):
                     row.closed_on = today
                     counts["closed"] += 1
     return counts
+
+
+def closing_cap(open_before: int) -> int:
+    """Most postings one board may close in one run: 20% of its open postings before the run, and never less than 1.
+    Integer arithmetic (20% = one fifth), so small boards get the floor of 1 and large boards 20%."""
+    return max(MIN_CLOSING_CAP, open_before // CLOSING_CAP_DIVISOR)
 
 
 def purge_closed(db, today: date) -> int:
