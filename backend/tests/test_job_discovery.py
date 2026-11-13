@@ -10,7 +10,7 @@ import os
 import socket
 import unittest
 import urllib.error
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from unittest import mock
 
 from fastapi import FastAPI
@@ -33,6 +33,12 @@ from models import CareerProfile, Experience, JobPosting, JobPreference, Opportu
 BOARD_A = {"source": "greenhouse", "board_token": "sample-a", "name": "Sample Employer A"}
 BOARD_B = {"source": "ashby", "board_token": "sample-b", "name": "Sample Employer B"}
 TODAY = date(2026, 11, 12)
+UTC = timezone.utc
+
+
+def as_now(value):
+    """A date means noon UTC on that date (so date + 1 day is 24 hours later). A datetime is used as given."""
+    return value if isinstance(value, datetime) else datetime.combine(value, time(12, 0), tzinfo=UTC)
 
 
 def _no_network(*args, **kwargs):
@@ -288,11 +294,112 @@ class FetchSafety(unittest.TestCase):
         self.assertEqual(load_registry(), [])
 
 
+class TwoRunTiming(DiscoveryBase):
+    """Closing needs two separate complete runs at least 20 hours apart, measured in UTC. Held runs change no mark."""
+    T0 = datetime(2026, 11, 12, 23, 55, tzinfo=UTC)  # 23:55 UTC, just before midnight
+    HOUR = timedelta(hours=1)
+
+    def _run(self, bodies, now, registry=(BOARD_A,)):
+        db = self.Session()
+        report = run_sync(db, now, registry=list(registry), opener=FakeOpener(bodies))
+        return db, report
+
+    def _complete(self, jobs):
+        return {"sample-a": {"jobs": jobs}}
+
+    def _missing_two(self):
+        return self._complete([gh_job(1)])  # job 2 is absent from a complete response
+
+    def _held(self):
+        return {"sample-a": urllib.error.HTTPError("u", 500, "x", {}, None)}
+
+    def _seed(self):
+        self._run(self._complete([gh_job(1), gh_job(2)]), self.T0 - timedelta(days=1))
+
+    def _row(self, db, job_id="2"):
+        return db.query(JobPosting).filter_by(source_job_id=job_id).one()
+
+    def _closed_count(self, db):
+        return db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).count()
+
+    def test_run_across_midnight_ten_minutes_apart_closes_nothing(self):
+        from career.job_boards import as_utc
+        self._seed()
+        db1, r1 = self._run(self._missing_two(), self.T0)                        # 23:55 UTC: mark set
+        self.assertEqual(r1["boards"][0]["missing_once"], 1)
+        self.assertEqual(as_utc(self._row(db1).missing_since), self.T0)
+        db2, r2 = self._run(self._missing_two(), self.T0 + timedelta(minutes=10))  # 00:05 UTC next date
+        self.assertEqual(r2["boards"][0]["closed"], 0)
+        self.assertEqual(self._closed_count(db2), 0)
+
+    def test_just_under_twenty_hours_does_not_close(self):
+        self._seed()
+        self._run(self._missing_two(), self.T0)
+        db, r = self._run(self._missing_two(), self.T0 + timedelta(hours=20) - timedelta(seconds=1))
+        self.assertEqual(r["boards"][0]["closed"], 0)
+        self.assertEqual(self._closed_count(db), 0)
+
+    def test_exactly_twenty_hours_closes_across_midnight(self):
+        self._seed()
+        self._run(self._missing_two(), self.T0)
+        db, r = self._run(self._missing_two(), self.T0 + timedelta(hours=20))  # 19:55 UTC on the next date
+        self.assertEqual(r["boards"][0]["closed"], 1)
+        closed = db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).one()
+        self.assertEqual(closed.source_job_id, "2")
+        self.assertEqual(closed.closed_on, date(2026, 11, 13))  # the UTC date of the closing run
+
+    def test_reappearance_clears_the_mark_and_the_clock_restarts(self):
+        from career.job_boards import as_utc
+        self._seed()
+        self._run(self._missing_two(), self.T0)                                   # mark at T0
+        self._run(self._complete([gh_job(1), gh_job(2)]), self.T0 + 5 * self.HOUR)  # reappears: mark cleared
+        db, _ = self._run(self._missing_two(), self.T0 + 6 * self.HOUR)           # missing again: new mark at T0+6h
+        self.assertEqual(as_utc(self._row(db).missing_since), self.T0 + 6 * self.HOUR)
+        db, r = self._run(self._missing_two(), self.T0 + 20 * self.HOUR)          # 20h after T0 but 14h after the new mark
+        self.assertEqual(r["boards"][0]["closed"], 0)
+        db, r = self._run(self._missing_two(), self.T0 + 26 * self.HOUR)          # 20h after the new mark
+        self.assertEqual(r["boards"][0]["closed"], 1)
+
+    def test_held_run_after_the_mark_does_not_reset_or_advance_it(self):
+        self._seed()
+        self._run(self._missing_two(), self.T0)                       # mark at T0
+        db, r = self._run(self._held(), self.T0 + 10 * self.HOUR)
+        self.assertEqual(r["boards"][0]["result"], "held")
+        self.assertEqual(self._closed_count(db), 0)
+        db, r = self._run(self._missing_two(), self.T0 + 15 * self.HOUR)  # 15h after the mark: still too soon
+        self.assertEqual(r["boards"][0]["closed"], 0)
+        db, r = self._run(self._held(), self.T0 + 21 * self.HOUR)         # past 20h, but held: nothing closes
+        self.assertEqual(r["boards"][0]["result"], "held")
+        self.assertEqual(self._closed_count(db), 0)
+        db, r = self._run(self._missing_two(), self.T0 + 22 * self.HOUR)  # complete and still 20h+: closes
+        self.assertEqual(r["boards"][0]["closed"], 1)
+
+    def test_held_run_sets_no_mark(self):
+        from career.job_boards import as_utc
+        self._seed()
+        self._run(self._held(), self.T0)                                  # held before any mark exists
+        db, r = self._run(self._missing_two(), self.T0 + self.HOUR)       # first complete missing run
+        self.assertEqual(as_utc(self._row(db).missing_since), self.T0 + self.HOUR)
+        self.assertEqual(r["boards"][0]["missing_once"], 1)
+
+    def test_offset_times_are_compared_in_utc(self):
+        local = timezone(timedelta(hours=-5))
+        self._seed()
+        self._run(self._missing_two(), datetime(2026, 11, 12, 18, 55, tzinfo=local))   # 23:55 UTC
+        db, r = self._run(self._missing_two(), datetime(2026, 11, 13, 14, 55, tzinfo=local))  # 19:55 UTC, exactly 20h
+        self.assertEqual(r["boards"][0]["closed"], 1)
+
+    def test_naive_time_is_refused(self):
+        db = self.Session()
+        with self.assertRaises(ValueError):
+            run_sync(db, datetime(2026, 11, 12, 12, 0), registry=[BOARD_A], opener=FakeOpener(self._missing_two()))
+
+
 class SyncRules(DiscoveryBase):
     def _run(self, bodies, registry=(BOARD_A,), today=TODAY):
         db = self.Session()
         opener = FakeOpener(bodies)
-        report = run_sync(db, today, registry=list(registry), opener=opener)
+        report = run_sync(db, as_now(today), registry=list(registry), opener=opener)
         return db, report, opener
 
     def test_first_run_adds_then_rerun_updates_without_duplicates(self):
@@ -326,7 +433,7 @@ class SyncRules(DiscoveryBase):
         self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=1))
         db, _, _ = self._run({"sample-a": {"jobs": [gh_job(1), gh_job(2)]}}, today=TODAY + timedelta(days=2))
         row = db.query(JobPosting).filter_by(source_job_id="2").one()
-        self.assertIsNone(row.missing_on)
+        self.assertIsNone(row.missing_since)
         self.assertIsNone(row.closed_on)
         db2, report2, _ = self._run({"sample-a": {"jobs": [gh_job(1)]}}, today=TODAY + timedelta(days=3))
         self.assertEqual(report2["boards"][0]["closed"], 0)  # counts as missing once again, not closed
@@ -574,7 +681,7 @@ class AshbyResponseLimits(DiscoveryBase):
 
     def _run_ashby(self, bodies, today=TODAY):
         db = self.Session()
-        report = run_sync(db, today, registry=[BOARD_B], opener=FakeOpener(bodies))
+        report = run_sync(db, as_now(today), registry=[BOARD_B], opener=FakeOpener(bodies))
         return db, report, None
 
 

@@ -7,7 +7,7 @@ Refuses to run unless CT_JOB_DISCOVERY_ENABLED is on. Nothing is scheduled by th
 import json
 import os
 import sys
-from datetime import date
+from datetime import datetime, timezone
 
 ON_VALUES = ("1", "true", "yes", "on")
 
@@ -22,7 +22,7 @@ def main() -> int:
     gen = get_db_session()
     db = next(gen)
     try:
-        report = run_sync(db, date.today())
+        report = run_sync(db, datetime.now(timezone.utc))
     except BoardError as e:
         print(f"STOP: {e}")
         return 1

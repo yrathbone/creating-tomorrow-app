@@ -350,7 +350,7 @@ class JobPosting(Base):
     first_seen_on: Mapped[date] = mapped_column(Date)
     last_seen_on: Mapped[date] = mapped_column(Date)
     closed_on: Mapped[date | None] = mapped_column(Date, nullable=True)
-    missing_on: Mapped[date | None] = mapped_column(Date, nullable=True)  # first complete run that did not list it; closing needs a second, later run
+    missing_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # UTC; first complete run that did not list it; closes only 20+ hours later on a later complete run
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

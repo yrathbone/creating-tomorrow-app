@@ -39,7 +39,7 @@ def upgrade() -> None:
         sa.Column("first_seen_on", sa.Date, nullable=False),
         sa.Column("last_seen_on", sa.Date, nullable=False),
         sa.Column("closed_on", sa.Date, nullable=True),
-        sa.Column("missing_on", sa.Date, nullable=True),
+        sa.Column("missing_since", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.UniqueConstraint("source", "board_token", "source_job_id", name="uq_job_postings_board_job"),
         sa.UniqueConstraint("url_hash", name="uq_job_postings_url_hash"),

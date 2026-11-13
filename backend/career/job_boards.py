@@ -10,6 +10,7 @@ Protections (founder requirement 5: failed, partial or malformed responses must 
 - Postings are closed only when the response is complete, the malformed share is at most 20%, and the response is not an empty
   list while postings were open (an empty list is held for founder review, not closed).
 - If the open count falls below 20% of the previous open count (with at least 5 open before), closing is held.
+- A posting closes only after two complete runs at least 20 hours apart (UTC). Calendar dates alone never decide closing.
 - Each board is written in its own transaction; an error rolls back that board only.
 - Closed postings are deleted 14 days after closing.
 
@@ -22,7 +23,7 @@ import logging
 import re
 import urllib.error
 import urllib.request
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from career.opportunities import normalize_job_url
@@ -44,6 +45,7 @@ MAX_BYTES_BY_SOURCE = {"greenhouse": MAX_BYTES, "ashby": ASHBY_MAX_BYTES}
 MAX_JOBS = 5000
 MAX_MALFORMED_SHARE = 0.2
 RETENTION_DAYS = 14
+MIN_HOURS_MISSING_BEFORE_CLOSE = 20  # a posting must stay missing from complete runs for at least this long (UTC) before it closes
 DROP_CHECK_MIN_OPEN = 5
 DROP_CHECK_MIN_SHARE = 0.2
 USER_AGENT = "CreatingTomorrow-pilot/1.0"
@@ -209,8 +211,21 @@ def fetch_board_records(board: dict, opener=None) -> tuple[list[dict], int]:
     return PARSERS[board["source"]](payload, board)
 
 
-def apply_board_records(db, board: dict, records: list[dict], malformed: int, today: date) -> dict:
-    """Write one board's result. Returns counts only (no titles, no links)."""
+def as_utc(value: datetime) -> datetime:
+    """Timestamps are stored and compared in UTC. SQLite returns naive datetimes, so a naive value is read as UTC."""
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
+def apply_board_records(db, board: dict, records: list[dict], malformed: int, now: datetime) -> dict:
+    """Write one board's result. Returns counts only (no titles, no links).
+
+    `now` must be timezone-aware. Calendar dates stored on rows are the UTC date of `now`; the closing rule compares elapsed
+    time in UTC, so the local timezone of the machine that runs the job has no effect on when a posting closes.
+    """
+    if now.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+    now = as_utc(now)
+    today = now.date()
     counts = {"added": 0, "updated": 0, "duplicate_skipped": 0, "closed": 0, "missing_once": 0, "close_held": ""}
     existing = {p.source_job_id: p for p in db.query(JobPosting).filter_by(source=board["source"], board_token=board["board_token"]).all()}
     open_before = sum(1 for p in existing.values() if p.closed_on is None)
@@ -245,18 +260,19 @@ def apply_board_records(db, board: dict, records: list[dict], malformed: int, to
             row.title, row.company, row.location_text = rec["title"], rec["company"], rec["location_text"]
             row.work_arrangement, row.employment_type = rec["work_arrangement"], rec["employment_type"]
             row.job_url, row.url_hash = rec["job_url"], rec["url_hash"]
-            row.last_seen_on, row.closed_on, row.missing_on = today, None, None  # seen again: open again, no longer missing
+            row.last_seen_on, row.closed_on, row.missing_since = today, None, None  # seen again: open again, no longer missing
             counts["updated"] += 1
 
-    # Two-run confirmation: a posting missing from a complete run is only marked (missing_on). It closes on a later run,
-    # on a different day, if it is still missing. A same-day rerun or a held run never closes anything.
+    # Two-run confirmation with a minimum gap. A posting missing from a complete run is only marked (missing_since, UTC).
+    # It closes on a later complete run once at least MIN_HOURS_MISSING_BEFORE_CLOSE hours have passed since the mark.
+    # The mark is set and cleared only by complete runs; a held run changes no mark. Nothing closes in the run that sets a mark.
     if not counts["close_held"]:
         for source_job_id, row in existing.items():
             if row.closed_on is None and source_job_id not in seen:
-                if row.missing_on is None:
-                    row.missing_on = today
+                if row.missing_since is None:
+                    row.missing_since = now
                     counts["missing_once"] += 1
-                elif row.missing_on < today:
+                elif now - as_utc(row.missing_since) >= timedelta(hours=MIN_HOURS_MISSING_BEFORE_CLOSE):
                     row.closed_on = today
                     counts["closed"] += 1
     return counts
@@ -267,15 +283,22 @@ def purge_closed(db, today: date) -> int:
     return db.query(JobPosting).filter(JobPosting.closed_on.is_not(None), JobPosting.closed_on < cutoff).delete(synchronize_session=False)
 
 
-def run_sync(db, today: date, registry: list[dict] | None = None, opener=None) -> dict:
-    """Central run: each approved board is read once. Returns a report with counts and reasons only."""
+def run_sync(db, now: datetime, registry: list[dict] | None = None, opener=None) -> dict:
+    """Central run: each approved board is read once. Returns a report with counts and reasons only.
+
+    `now` must be timezone-aware (the runner passes datetime.now(timezone.utc)).
+    """
+    if now.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+    now = as_utc(now)
+    today = now.date()
     boards = registry if registry is not None else load_registry()
-    report = {"date": today.isoformat(), "boards": []}
+    report = {"date": today.isoformat(), "run_at_utc": now.isoformat(), "boards": []}
     for board in boards:
         entry = {"board": board_key(board)}
         try:
             records, malformed = fetch_board_records(board, opener)
-            entry.update(apply_board_records(db, board, records, malformed, today))
+            entry.update(apply_board_records(db, board, records, malformed, now))
             entry["result"] = "ok"
             db.commit()
         except BoardError as e:
