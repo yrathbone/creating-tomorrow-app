@@ -130,6 +130,12 @@ async function loadOpportunities() {
     return;
   }
   allOpportunities = await res.json();
+  // Saved links whose application is still on record (C-52). The Applications tracker marks these.
+  if (typeof window !== "undefined") {
+    window.recordedFromSavedJobIds = new Set(
+      allOpportunities.filter((o) => o.state === "applied" && !o.application_removed && o.application_id != null).map((o) => o.application_id)
+    );
+  }
   card.hidden = false;
   renderOpportunities();
 }
@@ -292,6 +298,8 @@ function buildOpportunityItem(item, followUpDraft) {
   notice.textContent = item.safety_notice;
   li.appendChild(notice);
 
+  if (canRecordApplication(item)) li.appendChild(buildRecordControls(item));
+
   const actions = document.createElement("div");
   actions.className = "opportunity-actions";
   if (item.state === "dismissed") {
@@ -365,6 +373,46 @@ async function changeOpportunity(item, changes, doneMessage) {
   renderOpportunities();
   setOpportunityStatus(doneMessage);
   return updated;
+}
+
+// Record application (C-52): offered only for a saved link whose approved résumé is still current.
+// The server enforces every rule again (approval, locks, dismissed links, retries); this only shows the control.
+function canRecordApplication(item) {
+  return item.state === "saved" && !!item.approval && item.approval.status === "current";
+}
+
+function buildRecordControls(item) {
+  const wrap = document.createElement("div");
+  wrap.className = "opportunity-record";
+  const dateInput = document.createElement("input");
+  dateInput.type = "date";
+  dateInput.name = "applied-on";
+  wrap.appendChild(makeLabelled("Date you applied (optional)", dateInput));
+  wrap.appendChild(makeButton("Record application", () => recordApplication(item, dateInput.value)));
+  return wrap;
+}
+
+async function recordApplication(item, appliedOn) {
+  let res;
+  try {
+    res = await authedFetch("/api/career/opportunities/" + item.id + "/record-application", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ applied_on: appliedOn || null }),
+    });
+  } catch (err) {
+    setOpportunityStatus("The application could not be recorded. Check your connection and try again.");
+    return null;
+  }
+  if (!res.ok) {
+    setOpportunityStatus(await readOpportunityError(res, "The application was not recorded."));
+    if (res.status === 409) await loadOpportunities(); // show the latest details, so the record can be made again
+    return null;
+  }
+  setOpportunityStatus("Application recorded. It is now in your Applications tracker.");
+  await loadOpportunities();
+  if (typeof loadApplications === "function") await loadApplications();
+  return true;
 }
 
 function approvalLabel(approval) {

@@ -162,7 +162,16 @@ function renderApplications() {
 
   const grid = document.createElement("div");
   grid.className = "vis-grid";
-  for (const entry of allApplications) grid.appendChild(buildApplicationCard(entry));
+  for (const entry of allApplications) {
+    const card = buildApplicationCard(entry);
+    if (typeof window !== "undefined" && window.recordedFromSavedJobIds && window.recordedFromSavedJobIds.has(entry.id)) {
+      const note = document.createElement("p");
+      note.className = "hint";
+      note.textContent = "Recorded from a saved job. It keeps the résumé you approved for that job.";
+      card.appendChild(note);
+    }
+    grid.appendChild(card);
+  }
   list.appendChild(grid);
 }
 
