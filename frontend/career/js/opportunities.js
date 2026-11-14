@@ -144,6 +144,22 @@ function captureFollowUpDrafts() {
   return drafts;
 }
 
+// Count line above the list: one chip for saved links, and one for applied links only when there are any.
+// Dismissed links are not counted here; their number is on the "Show dismissed links" button.
+function renderOpportunitySummary(el, savedCount, appliedCount) {
+  el.textContent = "";
+  const saved = document.createElement("span");
+  saved.className = "opportunity-chip opportunity-chip-saved";
+  saved.textContent = savedCount + (savedCount === 1 ? " saved link" : " saved links");
+  el.appendChild(saved);
+  if (appliedCount > 0) {
+    const applied = document.createElement("span");
+    applied.className = "opportunity-chip opportunity-chip-applied";
+    applied.textContent = appliedCount + " applied";
+    el.appendChild(applied);
+  }
+}
+
 function renderOpportunities() {
   const drafts = captureFollowUpDrafts();
   const list = document.getElementById("opportunity-list");
@@ -153,7 +169,9 @@ function renderOpportunities() {
   list.textContent = "";
   const active = allOpportunities.filter((o) => o.state !== "dismissed");
   const dismissed = allOpportunities.filter((o) => o.state === "dismissed");
-  const appliedCount = allOpportunities.filter((o) => o.state === "applied").length; const savedCount = active.length - appliedCount; if (count) count.textContent = savedCount + (savedCount === 1 ? " saved link" : " saved links") + (appliedCount ? " · " + appliedCount + " applied" : "");
+  const appliedCount = allOpportunities.filter((o) => o.state === "applied").length;
+  const savedCount = active.length - appliedCount;
+  if (count) renderOpportunitySummary(count, savedCount, appliedCount);
   const shown = showDismissedOpportunities ? allOpportunities : active;
   if (empty) empty.hidden = shown.length > 0;
   const toggle = document.getElementById("opportunity-show-dismissed");

@@ -1,4 +1,43 @@
 /* My Opportunities (C-52): layout for the saved-links card. Class names are specific to this card. */
+
+/* Visual treatment: clear spacing between the summary, the primary action and the list. */
+#opportunities-card > .hint {
+  margin: 0.35rem 0 0.9rem;
+}
+#opportunities-card .opportunity-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+.opportunity-chip {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.opportunity-chip-saved {
+  background: #e8eefb;
+  color: #003395;
+}
+.opportunity-chip-applied {
+  background: #fff1c2;
+  color: #5b4300;
+}
+#opportunities-card #opportunities-add-toggle {
+  margin: 0 0 1rem;
+}
+#opportunities-card .opportunity-list-tools {
+  margin: 0.75rem 0 0.5rem;
+}
+#opportunities-card .opportunity-item {
+  padding: 1.1rem 0;
+}
+#opportunities-card #opportunity-list {
+  margin-top: 0.5rem;
+}
 .opportunity-item {
   border-top: 1px solid currentColor;
   padding: 0.75rem 0;
