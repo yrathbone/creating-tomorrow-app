@@ -88,6 +88,7 @@ async function authedFetch(path, options = {}) {
   try {
     token = (await getValidSession()).getAccessToken().getJwtToken();
   } catch (err) {
+    if (isAuthUnavailable(err)) throw new Error(AUTH_UNAVAILABLE_MESSAGE); // the configuration did not load: the session may be fine, keep it
     if (!isTransientAuthError(err)) endSessionAndShowLogin();
     throw new Error(isTransientAuthError(err) ? "Couldn’t reach the sign-in service. Please try again." : SESSION_ENDED_MESSAGE);
   }
@@ -101,6 +102,7 @@ async function authedFetch(path, options = {}) {
     try {
       retryToken = (await forceRefreshSession()).getAccessToken().getJwtToken();
     } catch (err) {
+      if (isAuthUnavailable(err)) throw new Error(AUTH_UNAVAILABLE_MESSAGE);
       if (isTransientAuthError(err)) throw new Error("Couldn’t reach the sign-in service. Please try again.");
     }
     if (!retryToken) {
@@ -772,6 +774,30 @@ document.getElementById("nav-signout").addEventListener("click", async (e) => {
   }
 });
 
+// "Sign-in is unavailable" recovery: the Try again button asks the server for the configuration again, then
+// checks for a saved session as usual.
+function showAuthRetry(show) {
+  const box = document.getElementById("auth-retry");
+  if (box) box.hidden = !show;
+}
+const authRetryBtn = document.getElementById("auth-retry-btn");
+if (authRetryBtn) {
+  authRetryBtn.addEventListener("click", () => {
+    authRetryBtn.disabled = true;
+    retryAuthConfig().then(() => {
+      authRetryBtn.disabled = false;
+      showAuthRetry(false);
+      loginError.hidden = true;
+      restoreSession();
+    }, () => {
+      authRetryBtn.disabled = false;
+      showAuthRetry(true);
+      loginError.textContent = AUTH_UNAVAILABLE_MESSAGE;
+      loginError.hidden = false;
+    });
+  });
+}
+
 function showLoginForm(message) {
   document.body.classList.remove("dashboard-v4");
   document.getElementById("session-check").hidden = true;
@@ -794,6 +820,14 @@ async function restoreSession() {
     window.sessionStorage.removeItem(AUTH_NOTICE_KEY);
   } catch (e) { /* no notice */ }
 
+  // The sign-in configuration must load before a saved session can be checked. If it cannot, say so and let the person retry.
+  try {
+    await ensureAuthReady();
+  } catch (err) {
+    showLoginForm(AUTH_UNAVAILABLE_MESSAGE);
+    showAuthRetry(true);
+    return;
+  }
   if (!hasStoredSessionKeys()) {
     showLoginForm(notice);
     return;
@@ -814,7 +848,7 @@ async function restoreSession() {
 }
 
 // While a saved session is being checked, keep the login form from flashing.
-if (hasStoredSessionKeys()) {
+if (looksLikeStoredSession()) {
   document.body.classList.add("dashboard-v4");
   document.getElementById("step-login").hidden = true;
   document.getElementById("page-header").hidden = true;
@@ -829,7 +863,7 @@ if (document.readyState === "loading") {
 
 // Back/forward can bring back an in-memory copy of the dashboard from before Sign Out.
 window.addEventListener("pageshow", (e) => {
-  if (e.persisted && !hasStoredSessionKeys()) window.location.reload();
+  if (e.persisted && !looksLikeStoredSession()) window.location.reload();
 });
 
 // Everything that happens once there is a valid access token (a normal sign-in, or the first sign-in of an invited person).
@@ -873,6 +907,7 @@ function passwordResetMessage(err) {
 // Pure (unit-tested): what to tell the person when sign-in fails. An expired invitation gets a plain next step;
 // anything else keeps the service text.
 function signInProblem(err) {
+  if (isAuthUnavailable(err)) return AUTH_UNAVAILABLE_MESSAGE;
   const code = err && err.code;
   const message = (err && err.message) || "";
   if (code === "NotAuthorizedException" && /expired/i.test(message)) {
@@ -901,6 +936,7 @@ loginForm.addEventListener("submit", async (e) => {
     await finishSignIn(result.accessToken);
   } catch (err) {
     loginError.textContent = signInProblem(err);
+    if (isAuthUnavailable(err)) showAuthRetry(true);
     loginError.hidden = false;
   } finally {
     loginBtn.disabled = false;

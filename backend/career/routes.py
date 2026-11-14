@@ -103,6 +103,27 @@ def require_profile(
 AI_ROUTE_GUARDS = [Depends(user_ai_guard), Depends(require_profile)]
 
 
+_COGNITO_REGION_RE = re.compile(r"^[a-z]{2}(?:-[a-z]+)+-\d$")
+_COGNITO_POOL_RE = re.compile(r"^([a-z]{2}(?:-[a-z]+)+-\d)_[A-Za-z0-9]{1,40}$")
+_COGNITO_CLIENT_RE = re.compile(r"^[A-Za-z0-9]{10,64}$")
+
+
+@router.get("/auth-config")
+async def auth_config(response: Response):
+    """Public and read-only: the three non-secret Cognito values the sign-in page needs (the same values the frontend
+    used to hard-code). Nothing else is returned: no secret, no account data. Answers 503 when the server's
+    configuration is missing or malformed, so the page can say sign-in is unavailable instead of guessing."""
+    import auth.dependencies as deps
+    response.headers["Cache-Control"] = "no-store"
+    region = deps.COGNITO_REGION or ""
+    pool = deps.COGNITO_USER_POOL_ID or ""
+    client = deps.COGNITO_APP_CLIENT_ID or ""
+    pool_match = _COGNITO_POOL_RE.match(pool)
+    if not (_COGNITO_REGION_RE.match(region) and pool_match and pool_match.group(1) == region and _COGNITO_CLIENT_RE.match(client)):
+        raise HTTPException(status_code=503, detail="Sign-in is not configured on this server.")
+    return {"region": region, "user_pool_id": pool, "app_client_id": client}
+
+
 @router.get("/me")
 async def career_me(current_user: User = Depends(get_current_user)):
     return {

@@ -121,6 +121,8 @@ function loadAuth(fakeUserBehaviour) {
       CognitoUserAttribute: class {},
     },
     session,
+    // auth.js loads its configuration from the server first; this stub answers with a well-formed test configuration.
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ region: "us-east-2", user_pool_id: "us-east-2_TESTPOOL1", app_client_id: "testclient123456" }) }),
   };
   vm.createContext(sandbox);
   vm.runInContext(read("career", "js", "auth.js"), sandbox);
@@ -252,6 +254,8 @@ test("keyboard order inside the sign-in card, from the document: email, password
     const href = (m[2].match(/\bhref="([^"]+)"/) || [])[1];
     return id || (href ? (href.startsWith("mailto:") ? "mailto" : href) : m[1]);
   });
-  assert.deepStrictEqual(order, ["login-email", "login-password", "login-btn", "forgot-open-btn", "mailto", "register.html"]);
+  // The "Try again" control appears only when the sign-in configuration cannot load. It starts hidden, so it is not in the order.
+  assert.ok(/<div id="auth-retry" hidden>/.test(card), "the Try again control starts hidden");
+  assert.deepStrictEqual(order.filter((id) => id !== "auth-retry-btn"), ["login-email", "login-password", "login-btn", "forgot-open-btn", "mailto", "register.html"]);
   assert.ok(!/tabindex=/.test(card), "no custom tab order inside the card");
 });

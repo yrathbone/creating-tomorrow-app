@@ -148,13 +148,20 @@ class OwnershipTestCase(unittest.TestCase):
         return ids
 
 
+# Career routes that are PUBLIC on purpose. Each one must answer without a token and must hold no account data.
+#   /auth-config: the three non-secret Cognito values the sign-in page needs before anyone can sign in (career/routes.py).
+PUBLIC_CAREER_ROUTES = {"/auth-config"}
+
+
 class TokenVerification(OwnershipTestCase):
     def test_every_career_route_rejects_a_request_with_no_token(self):
         routes = [r for r in router.routes if isinstance(r, APIRoute)]
         # 43 routes through Phase 2A + 4 language routes + 2 profile routes (GET/PUT /profile) in Phase 2B = 49, + 2 resume-layout routes (GET/PUT /resume-layout, migration 0009) = 51
-        self.assertEqual(len(routes), 58, "a route was added or removed: update this guard on purpose")  # 58 = 51 + POST /account/delete + GET /export/readable + POST skip/unskip on a scan + GET suggestions, POST suggestions/apply and /undo on a resume version
+        self.assertEqual(len(routes), 59, "a route was added or removed: update this guard on purpose")  # 59 = 58 + GET /auth-config (public, see PUBLIC_CAREER_ROUTES); 58 = 51 + POST /account/delete + GET /export/readable + POST skip/unskip on a scan + GET suggestions, POST suggestions/apply and /undo on a resume version
         offenders = []
         for r in routes:
+            if r.path in PUBLIC_CAREER_ROUTES:
+                continue
             method = sorted(r.methods - {"HEAD", "OPTIONS"})[0]
             path = r.path.replace("{experience_id}", "1").replace("{education_id}", "1").replace("{certification_id}", "1") \
                 .replace("{skill_id}", "1").replace("{scan_history_id}", "1").replace("{resume_version_id}", "1").replace("{application_id}", "1").replace("{language_id}", "1")
@@ -167,6 +174,8 @@ class TokenVerification(OwnershipTestCase):
         routes = [r for r in router.routes if isinstance(r, APIRoute)]
         offenders = []
         for r in routes:
+            if r.path in PUBLIC_CAREER_ROUTES:
+                continue
             method = sorted(r.methods - {"HEAD", "OPTIONS"})[0]
             path = r.path.replace("{experience_id}", "1").replace("{education_id}", "1").replace("{certification_id}", "1") \
                 .replace("{skill_id}", "1").replace("{scan_history_id}", "1").replace("{resume_version_id}", "1").replace("{application_id}", "1").replace("{language_id}", "1")

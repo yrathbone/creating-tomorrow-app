@@ -38,6 +38,8 @@ function loadAuth(behaviour) {
   const sandbox = {
     window: { localStorage: { length: 0, key: () => null, removeItem() {} }, sessionStorage: { setItem() {}, removeItem() {}, getItem: () => null, length: 0, key: () => null } },
     AmazonCognitoIdentity: { CognitoUserPool: class {}, CognitoUser: FakeUser, AuthenticationDetails: class {}, CognitoUserAttribute: class {} },
+    // auth.js loads its configuration from the server first; this stub answers with a well-formed test configuration.
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ region: "us-east-2", user_pool_id: "us-east-2_TESTPOOL1", app_client_id: "testclient123456" }) }),
   };
   vm.createContext(sandbox);
   vm.runInContext(read("career", "js", "auth.js"), sandbox);
@@ -144,7 +146,12 @@ test("the address used for feedback and help is the one on the Contact page", ()
 });
 
 test("signInProblem: an expired invitation gets a plain next step; other errors keep the service text", () => {
-  const ctx = runSlice("function signInProblem", "loginForm.addEventListener");
+  const ctx = runSlice("function signInProblem", "loginForm.addEventListener", {
+    // login.js uses these two helpers from auth.js; stubs with the same behaviour are enough for this slice.
+    isAuthUnavailable: (err) => !!err && err.code === "AuthUnavailable",
+    AUTH_UNAVAILABLE_MESSAGE: "Sign-in is unavailable right now. Check your connection and try again.",
+  });
+  assert.equal(ctx.signInProblem({ code: "AuthUnavailable", message: "x" }), "Sign-in is unavailable right now. Check your connection and try again.");
   const expired = ctx.signInProblem({ code: "NotAuthorizedException", message: "Temporary password has expired and must be reset by an administrator" });
   assert.match(expired, /has expired/);
   assert.match(expired, /email us/i);
