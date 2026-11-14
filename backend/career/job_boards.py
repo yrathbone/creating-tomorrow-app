@@ -231,7 +231,7 @@ def apply_board_records(db, board: dict, records: list[dict], malformed: int, no
     now = as_utc(now)
     today = now.date()
     counts = {"added": 0, "updated": 0, "duplicate_skipped": 0, "closed": 0, "missing_once": 0, "close_held": "",
-              "cap_held": "", "cap_blocked": 0}
+              "cap_held": "", "cap_blocked": 0, "held_rows_untouched": 0}
     existing = {p.source_job_id: p for p in db.query(JobPosting).filter_by(source=board["source"], board_token=board["board_token"]).all()}
     open_before = sum(1 for p in existing.values() if p.closed_on is None)
     total = len(records) + malformed
@@ -262,6 +262,10 @@ def apply_board_records(db, board: dict, records: list[dict], malformed: int, no
             ))
             counts["added"] += 1
         else:
+            if counts["close_held"]:
+                # A whole-run hold may not change an existing row at all: no mark set or cleared, no closed_on, no dates.
+                counts["held_rows_untouched"] += 1
+                continue
             row.title, row.company, row.location_text = rec["title"], rec["company"], rec["location_text"]
             row.work_arrangement, row.employment_type = rec["work_arrangement"], rec["employment_type"]
             row.job_url, row.url_hash = rec["job_url"], rec["url_hash"]

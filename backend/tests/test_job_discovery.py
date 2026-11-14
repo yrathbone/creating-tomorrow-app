@@ -506,6 +506,61 @@ class ClosingCap(DiscoveryBase):
         self.assertEqual(board["closed"], 1)
 
 
+class WholeRunHoldsKeepState(DiscoveryBase):
+    """A whole-run hold (malformed, sharp drop, empty) may not set or clear missing_since or change closed_on or any row date."""
+    T0 = datetime(2026, 11, 12, 12, 0, tzinfo=UTC)
+
+    def _run(self, items, now):
+        db = self.Session()
+        report = run_sync(db, now, registry=[BOARD_A], opener=FakeOpener({"sample-a": {"jobs": items}}))
+        return db, report["boards"][0]
+
+    def _seed_ten_and_mark_nine_and_ten(self):
+        self._run([gh_job(i) for i in range(1, 11)], self.T0 - timedelta(days=1))
+        db, board = self._run([gh_job(i) for i in range(1, 9)], self.T0)     # 9 and 10 marked at T0
+        self.assertEqual(board["result"], "ok")
+        return db
+
+    def _assert_state_kept(self, db, mark_time):
+        from career.job_boards import as_utc
+        for job_id in ("9", "10"):
+            row = db.query(JobPosting).filter_by(source_job_id=job_id).one()
+            self.assertEqual(as_utc(row.missing_since), mark_time)  # mark not cleared, not reset
+            self.assertIsNone(row.closed_on)                        # nothing closed
+        self.assertEqual(db.query(JobPosting).filter(JobPosting.closed_on.is_not(None)).count(), 0)
+
+    def test_malformed_hold_keeps_marks_and_closing_state(self):
+        self._seed_ten_and_mark_nine_and_ten()
+        # 10 is listed in the held response, 9 is not and is mature (20 h old). Two of three entries are malformed: held.
+        db, board = self._run([gh_job(10), {"bad": 1}, {"bad": 2}], self.T0 + timedelta(hours=20))
+        self.assertIn("malformed", board["close_held"])
+        self.assertEqual(board["held_rows_untouched"], 1)       # the listed row was left alone
+        self.assertEqual(board["closed"], 0)
+        self._assert_state_kept(db, self.T0)
+        # The marks survived the hold: a later complete run closes the unlisted posting (9), as its mark is mature.
+        db, board = self._run([gh_job(i) for i in range(1, 9)], self.T0 + timedelta(hours=21))
+        self.assertEqual(board["closed"], 2)                     # 9 and 10 both mature, E = 2 <= cap 2 (10 open // 5)
+
+    def test_sharp_drop_hold_keeps_marks_and_closing_state(self):
+        self._seed_ten_and_mark_nine_and_ten()
+        # One of ten open postings listed: a sharp drop (1 < 2). 10 is listed; 9 is not and is mature.
+        db, board = self._run([gh_job(10)], self.T0 + timedelta(hours=20))
+        self.assertIn("sharp drop", board["close_held"])
+        self.assertEqual(board["held_rows_untouched"], 1)
+        self.assertEqual(board["closed"], 0)
+        self._assert_state_kept(db, self.T0)
+        # A later complete run (9 and 10 both missing, both mature, E = 2 <= cap 2) closes both.
+        db, board = self._run([gh_job(i) for i in range(1, 9)], self.T0 + timedelta(hours=21))
+        self.assertEqual(board["closed"], 2)
+
+    def test_held_run_adds_new_postings_but_changes_no_existing_row(self):
+        self._seed_ten_and_mark_nine_and_ten()
+        db, board = self._run([gh_job(10), gh_job(11), {"bad": 1}, {"bad": 2}], self.T0 + timedelta(hours=20))
+        self.assertEqual(board["added"], 1)                      # additions still recorded (no closing effect)
+        self.assertEqual(board["held_rows_untouched"], 1)
+        self._assert_state_kept(db, self.T0)
+
+
 class SyncRules(DiscoveryBase):
     def _run(self, bodies, registry=(BOARD_A,), today=TODAY):
         db = self.Session()
