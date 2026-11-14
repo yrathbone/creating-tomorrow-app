@@ -125,6 +125,12 @@ async function addApplication(payload) {
   await loadApplications();
 }
 
+// Whether an application was recorded from a saved job (C-52). Ids are compared as numbers.
+function isRecordedFromSavedJob(applicationId) {
+  if (typeof window === "undefined" || !window.recordedFromSavedJobIds) return false;
+  return window.recordedFromSavedJobIds.has(Number(applicationId));
+}
+
 function renderApplications() {
   const list = document.getElementById("application-list");
   const summary = document.getElementById("application-summary");
@@ -164,7 +170,7 @@ function renderApplications() {
   grid.className = "vis-grid";
   for (const entry of allApplications) {
     const card = buildApplicationCard(entry);
-    if (typeof window !== "undefined" && window.recordedFromSavedJobIds && window.recordedFromSavedJobIds.has(entry.id)) {
+    if (isRecordedFromSavedJob(entry.id)) {
       const note = document.createElement("p");
       note.className = "hint";
       note.textContent = "Recorded from a saved job. It keeps the résumé you approved for that job.";
@@ -236,7 +242,20 @@ function buildApplicationCard(entry) {
     footerText: "Applied " + (shortDate(entry.applied_on + "T00:00:00") || entry.applied_on),
     actions: [visualButton("Delete", "entry-remove-btn", async () => {
       if (!window.confirm("Remove this application from your tracker?")) return;
-      await authedFetch("/api/career/applications/" + entry.id, { method: "DELETE" });
+      let res;
+      try {
+        res = await authedFetch("/api/career/applications/" + entry.id, { method: "DELETE" });
+      } catch (err) {
+        window.alert("Couldn’t remove that application. Check your connection and try again.");
+        return; // nothing removed: the marker stays
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        window.alert(formatErrorDetail(body.detail, "Couldn’t remove that application."));
+        return; // the server refused: the marker stays
+      }
+      if (typeof window !== "undefined" && window.recordedFromSavedJobIds) window.recordedFromSavedJobIds.delete(Number(entry.id));
+      if (typeof loadOpportunities === "function") await loadOpportunities(); // the server clears the saved link's application
       await loadApplications();
     })],
   });

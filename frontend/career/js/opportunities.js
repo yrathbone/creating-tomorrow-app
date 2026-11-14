@@ -115,6 +115,13 @@ function setOpportunityStatus(text) {
 }
 
 // Shows the card only when the server answers. A switched-off feature answers 404 and stays hidden.
+// Ids are stored as numbers, so 5 and "5" match. A failed or unknown load marks nothing, so a stale marker is never shown.
+function setRecordedFromSavedJobIds(applicationIds) {
+  if (typeof window === "undefined") return;
+  window.recordedFromSavedJobIds = new Set(applicationIds.map(Number));
+  if (typeof renderApplications === "function") renderApplications(); // redraws from the tracker's own data; no request
+}
+
 async function loadOpportunities() {
   const card = document.getElementById("opportunities-card");
   if (!card) return;
@@ -123,19 +130,17 @@ async function loadOpportunities() {
     res = await authedFetch("/api/career/opportunities");
   } catch (err) {
     card.hidden = true;
+    setRecordedFromSavedJobIds([]);
     return;
   }
   if (!res.ok) {
     card.hidden = true;
+    setRecordedFromSavedJobIds([]);
     return;
   }
   allOpportunities = await res.json();
   // Saved links whose application is still on record (C-52). The Applications tracker marks these.
-  if (typeof window !== "undefined") {
-    window.recordedFromSavedJobIds = new Set(
-      allOpportunities.filter((o) => o.state === "applied" && !o.application_removed && o.application_id != null).map((o) => o.application_id)
-    );
-  }
+  setRecordedFromSavedJobIds(allOpportunities.filter((o) => o.state === "applied" && !o.application_removed && o.application_id != null).map((o) => o.application_id));
   card.hidden = false;
   renderOpportunities();
 }
@@ -381,6 +386,9 @@ function canRecordApplication(item) {
   return item.state === "saved" && !!item.approval && item.approval.status === "current";
 }
 
+// Saved-link ids with a recording request in flight. A link is recorded at most once per request.
+const recordingIds = new Set();
+
 function buildRecordControls(item) {
   const wrap = document.createElement("div");
   wrap.className = "opportunity-record";
@@ -388,7 +396,19 @@ function buildRecordControls(item) {
   dateInput.type = "date";
   dateInput.name = "applied-on";
   wrap.appendChild(makeLabelled("Date you applied (optional)", dateInput));
-  wrap.appendChild(makeButton("Record application", () => recordApplication(item, dateInput.value)));
+  const btn = makeButton("Record application", () => {
+    if (recordingIds.has(item.id)) return; // a request is already pending for this link
+    recordingIds.add(item.id);
+    btn.disabled = true;
+    recordApplication(item, dateInput.value)
+      .catch(() => null)
+      .finally(() => {
+        recordingIds.delete(item.id);
+        renderOpportunities(); // redraws the controls: re-enabled after a failure, gone after a success
+      });
+  });
+  btn.disabled = recordingIds.has(item.id);
+  wrap.appendChild(btn);
   return wrap;
 }
 
