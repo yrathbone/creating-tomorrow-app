@@ -153,7 +153,7 @@ function renderOpportunities() {
   list.textContent = "";
   const active = allOpportunities.filter((o) => o.state !== "dismissed");
   const dismissed = allOpportunities.filter((o) => o.state === "dismissed");
-  if (count) count.textContent = active.length + (active.length === 1 ? " saved link" : " saved links");
+  const appliedCount = allOpportunities.filter((o) => o.state === "applied").length; const savedCount = active.length - appliedCount; if (count) count.textContent = savedCount + (savedCount === 1 ? " saved link" : " saved links") + (appliedCount ? " · " + appliedCount + " applied" : "");
   const shown = showDismissedOpportunities ? allOpportunities : active;
   if (empty) empty.hidden = shown.length > 0;
   const toggle = document.getElementById("opportunity-show-dismissed");
