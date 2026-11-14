@@ -264,8 +264,90 @@ test("the job card has the saved-link context and the approval control, both hid
   assert.ok(approvalAt > doneAt, "approval control sits in the finished-resume step");
 });
 
-test("the module never builds markup from strings and never calls the approval or application routes", () => {
-  for (const banned of ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "record-application", "/resume-versions", "/suggestions"]) {
+test("the module never builds markup from strings and never calls the resume-version or suggestion routes", () => {
+  for (const banned of ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "/resume-versions", "/suggestions"]) {
     assert.strictEqual(source.includes(banned), false, banned);
   }
+  // C-52 Record application (reviewed 2026-11-14): the module calls the record route exactly once, from recordApplication().
+  assert.strictEqual(source.split("/record-application").length - 1, 1, "record route appears once");
+});
+
+// --- Record application (C-52): the control, the request, and the tracker marker -------------------------------
+
+const approved = (over = {}) => item({ id: 11, approval: { version_id: 41, status: "current" }, approved_document: null, ...over });
+
+test("Record application is offered only for a saved link whose approved résumé is current", async () => {
+  const cases = [
+    [approved(), true],
+    [approved({ approval: null }), false],
+    [approved({ approval: { version_id: 41, status: "changed" } }), false],
+    [approved({ state: "dismissed", dismiss_reason: "wrong_location" }), false],
+    [approved({ state: "applied", application_id: 5 }), false],
+  ];
+  for (const [entry, shown] of cases) {
+    const { sandbox, els } = load({ "/api/career/opportunities": ok([entry]) });
+    await sandbox.loadOpportunities();
+    const btns = find(els["opportunity-list"], (el) => el.tagName === "button" && el.textContent === "Record application");
+    assert.strictEqual(btns.length === 1, shown, JSON.stringify({ state: entry.state, approval: entry.approval }));
+  }
+});
+
+test("Record application sends the optional date to the existing route, then refreshes the saved list", async () => {
+  const { sandbox, calls, els } = load({
+    "/api/career/opportunities": ok([approved()]),
+    "POST /api/career/opportunities/11/record-application": ok({ already_recorded: false, opportunity: approved({ state: "applied", application_id: 5 }), application: { id: 5 } }),
+  });
+  await sandbox.loadOpportunities();
+  const dateInput = find(els["opportunity-list"], (el) => el.name === "applied-on")[0];
+  assert.ok(dateInput, "date input present");
+  dateInput.value = "2026-11-10";
+  const btn = find(els["opportunity-list"], (el) => el.tagName === "button" && el.textContent === "Record application")[0];
+  btn.listeners.click[0]();
+  await new Promise((r) => setImmediate(r));
+  const post = calls.find((c) => c.method === "POST");
+  assert.ok(post, "a POST was sent");
+  assert.strictEqual(post.url, "/api/career/opportunities/11/record-application");
+  assert.deepStrictEqual(post.body, { applied_on: "2026-11-10" });
+  assert.ok(calls.filter((c) => c.url === "/api/career/opportunities").length >= 2, "the saved list is reloaded");
+  assert.ok(els["opportunities-status"] && /recorded/i.test(els["opportunities-status"].textContent || ""), "success message shown");
+});
+
+test("when the server refuses a recording (409), its reason is shown and the saved list reloads", async () => {
+  const reason = "Approve a résumé for this saved job before recording the application.";
+  const { sandbox, calls, els } = load({
+    "/api/career/opportunities": ok([approved()]),
+    "POST /api/career/opportunities/11/record-application": bad(409, reason),
+  });
+  await sandbox.loadOpportunities();
+  const btn = find(els["opportunity-list"], (el) => el.tagName === "button" && el.textContent === "Record application")[0];
+  btn.listeners.click[0]();
+  await new Promise((r) => setImmediate(r));
+  assert.strictEqual((els["opportunities-status"] || {}).textContent, reason);
+  assert.ok(calls.filter((c) => c.method === "GET").length >= 2, "the latest details are fetched again");
+});
+
+test("another member's link (404) is not recorded and the message does not reveal the link", async () => {
+  const { sandbox, calls, els } = load({
+    "/api/career/opportunities": ok([approved()]),
+    "POST /api/career/opportunities/11/record-application": bad(404, "Not found."),
+  });
+  await sandbox.loadOpportunities();
+  const btn = find(els["opportunity-list"], (el) => el.tagName === "button" && el.textContent === "Record application")[0];
+  btn.listeners.click[0]();
+  await new Promise((r) => setImmediate(r));
+  assert.strictEqual(calls.filter((c) => c.method === "POST").length, 1, "exactly one attempt, no retry loop");
+  assert.ok(!/application recorded/i.test((els["opportunities-status"] || {}).textContent || ""), "no success message");
+});
+
+test("the Applications tracker can mark applications recorded from a saved job, and not removed ones", async () => {
+  const { sandbox } = load({
+    "/api/career/opportunities": ok([
+      approved({ id: 1, state: "applied", application_id: 5 }),
+      approved({ id: 2, state: "applied", application_id: 6, application_removed: true }),
+      approved({ id: 3, state: "saved", application_id: null }),
+    ]),
+  });
+  await sandbox.loadOpportunities();
+  const ids = [...sandbox.window.recordedFromSavedJobIds].sort();
+  assert.deepStrictEqual(ids, [5]);
 });
