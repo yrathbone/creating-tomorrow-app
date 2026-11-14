@@ -49,9 +49,14 @@ function fakeSession(access = "ACCESS-TOKEN") {
 function loadAuth(opts = {}) {
   const pools = [];
   const users = [];
+  const forgotCalls = [];
   class CognitoUserPool {
     constructor(o) { pools.push(o); this.o = o; }
-    getCurrentUser() { return opts.currentUser === undefined ? null : opts.currentUser; }
+    // Like the real SDK: there is a current user only while this tab still holds this client's sign-in marker.
+    getCurrentUser() {
+      const marker = storage.getItem("CognitoIdentityServiceProvider." + this.o.ClientId + ".LastAuthUser");
+      return marker === null || opts.currentUser === undefined ? null : opts.currentUser;
+    }
     signUp(email, pw, attrs, _x, cb) { cb(null, { user: email }); }
   }
   class CognitoUser {
@@ -61,6 +66,7 @@ function loadAuth(opts = {}) {
     signOut(cb) { cb(); }
     refreshSession(rt, cb) { cb(null, fakeSession("REFRESHED-TOKEN")); }
     deleteUser(cb) { cb(null); }
+    forgotPassword(cbs) { forgotCalls.push(this.o.Username); return cbs.inputVerificationCode ? cbs.inputVerificationCode() : cbs.onSuccess(); }
   }
   const storage = fakeStorage(opts.sessionItems || {});
   const local = fakeStorage(opts.localItems || {});
@@ -76,7 +82,7 @@ function loadAuth(opts = {}) {
   };
   vm.createContext(sandbox);
   vm.runInContext(AUTH_SOURCE, sandbox);
-  return { sandbox, pools, users, storage, local, fetchCalls };
+  return { sandbox, pools, users, storage, local, fetchCalls, forgotCalls };
 }
 
 const okConfig = () => (url) => Promise.resolve(jsonResponse(200, GOOD));
@@ -174,13 +180,32 @@ test("an action started before the configuration loads waits for it, then runs",
   assert.strictEqual(w.pools[0].UserPoolId, "us-east-2_TESTPOOL1");
 });
 
-test("sign-up and password reset also wait for the configuration", async () => {
+test("sign-up waits for the configuration, then builds the pool and succeeds", async () => {
   const w = loadAuth({ fetch: okConfig() });
-  await w.sandbox.requestPasswordReset ? null : null;
   const result = await w.sandbox.signUp("new@example.com", "pw");
   assert.deepStrictEqual(result, { user: "new@example.com" });
   assert.strictEqual(w.pools.length, 1, "sign-up built the pool from the loaded configuration");
   assert.strictEqual(w.fetchCalls.length, 1);
+});
+
+test("requestPasswordReset waits for the configuration, then asks Cognito for the code", async () => {
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const w = loadAuth({ fetch: () => gate.then(() => jsonResponse(200, GOOD)) });
+  const pending = w.sandbox.requestPasswordReset("member@example.invalid");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.strictEqual(w.forgotCalls.length, 0, "no reset is requested while the configuration is still loading");
+  assert.strictEqual(w.pools.length, 0, "no pool is built while the configuration is still loading");
+  release();
+  await pending;  // resolves once Cognito reports that the code was sent
+  assert.deepStrictEqual(w.forgotCalls, ["member@example.invalid"], "the reset was requested for the address given");
+  assert.strictEqual(w.pools[0].UserPoolId, "us-east-2_TESTPOOL1", "the pool used is the configured one");
+});
+
+test("requestPasswordReset during a configuration outage rejects as unavailable and requests nothing", async () => {
+  const w = loadAuth({ fetch: unavailable503() });
+  await assert.rejects(w.sandbox.requestPasswordReset("member@example.invalid"), (err) => err.code === "AuthUnavailable");
+  assert.deepStrictEqual(w.forgotCalls, [], "no reset code is requested without a configuration");
 });
 
 // 5. Existing session handling
@@ -202,8 +227,7 @@ test("an existing session is NOT signed out when the configuration cannot load",
   const key = "CognitoIdentityServiceProvider." + CLIENT + ".LastAuthUser";
   const w = loadAuth({ fetch: unavailable503(), currentUser: fakeCurrentUser(fakeSession()), sessionItems: { [key]: "member@example.invalid", [`CognitoIdentityServiceProvider.${CLIENT}.idToken`]: "x" } });
   await assert.rejects(w.sandbox.getValidSession(), (err) => err.code === "AuthUnavailable");
-  await w.sandbox.signOutCurrentUser();   // no pool to ask: local keys are left as they are
-  w.sandbox.clearCognitoSessionKeys();    // the prefix is unknown until the configuration loads: nothing is removed
+  w.sandbox.clearCognitoSessionKeys();    // the automatic path never clears: the prefix is unknown until the configuration loads
   assert.ok(w.storage._data[key], "the stored sign-in marker must survive a failed configuration load");
   assert.ok(w.storage._data[`CognitoIdentityServiceProvider.${CLIENT}.idToken`], "the stored token must survive too");
 });
@@ -215,6 +239,65 @@ test("sign-out after the configuration loads clears this client's SDK keys and l
   await w.sandbox.signOutCurrentUser();
   assert.strictEqual(w.storage._data[key], undefined);
   assert.strictEqual(w.storage._data.other, "keep");
+});
+
+// 6. Explicit sign-out during a configuration outage
+test("explicit sign-out during an outage clears the SDK keys at once, without waiting for the network, and keeps unrelated storage", async () => {
+  const sdk = "CognitoIdentityServiceProvider.";
+  const w = loadAuth({
+    fetch: () => new Promise(() => {}),   // the configuration request never answers
+    currentUser: fakeCurrentUser(fakeSession()),
+    sessionItems: {
+      [sdk + CLIENT + ".LastAuthUser"]: "member@example.invalid",
+      [sdk + CLIENT + ".idToken"]: "id",
+      [sdk + "otherclient0000000.LastAuthUser"]: "someone-else",
+      "ct.auth-notice": "Your session has ended.",
+      "ct.unrelated": "keep",
+    },
+    localItems: { [sdk + CLIENT + ".LastAuthUser"]: "old", unrelated: "keep" },
+  });
+  const done = w.sandbox.signOutCurrentUser();          // not awaited: the keys must already be gone
+  assert.strictEqual(w.storage._data[sdk + CLIENT + ".LastAuthUser"], undefined, "this client's marker is removed now");
+  assert.strictEqual(w.storage._data[sdk + CLIENT + ".idToken"], undefined, "this client's tokens are removed now");
+  assert.strictEqual(w.storage._data[sdk + "otherclient0000000.LastAuthUser"], undefined, "any other SDK key in this tab is removed too");
+  assert.strictEqual(w.storage._data["ct.auth-notice"], "Your session has ended.", "the sign-in notice stays");
+  assert.strictEqual(w.storage._data["ct.unrelated"], "keep", "unrelated session storage stays");
+  assert.strictEqual(w.local._data[sdk + CLIENT + ".LastAuthUser"], undefined, "a leftover local copy is removed");
+  assert.strictEqual(w.local._data.unrelated, "keep", "unrelated local storage stays");
+  await done;                                           // resolves without the network
+  assert.strictEqual(w.pools.length, 0, "no pool was built without a configuration");
+});
+
+test("explicit sign-out during an outage stays in force after the configuration recovers: the old session is not restored", async () => {
+  const key = "CognitoIdentityServiceProvider." + CLIENT + ".LastAuthUser";
+  let attempt = 0;
+  const w = loadAuth({
+    fetch: () => { attempt += 1; return attempt === 1 ? Promise.resolve(jsonResponse(503, {})) : Promise.resolve(jsonResponse(200, GOOD)); },
+    currentUser: fakeCurrentUser(fakeSession("OLD-SESSION-TOKEN")),
+    sessionItems: { [key]: "member@example.invalid", [`CognitoIdentityServiceProvider.${CLIENT}.idToken`]: "id" },
+  });
+  await assert.rejects(w.sandbox.ensureAuthReady(), (err) => err.code === "AuthUnavailable");   // the outage
+  await w.sandbox.signOutCurrentUser();                                                            // explicit sign-out during the outage
+  assert.strictEqual(await w.sandbox.retryAuthConfig(), true, "the configuration recovers");     // recovery
+  assert.strictEqual(w.sandbox.hasStoredSessionKeys(), false, "the saved sign-in marker is gone, so nothing is restored");
+  await assert.rejects(w.sandbox.getValidSession(), /No saved session/, "the old session cannot be restored after recovery");
+  assert.strictEqual(w.storage._data[key], undefined);
+  assert.strictEqual(w.storage._data[`CognitoIdentityServiceProvider.${CLIENT}.idToken`], undefined);
+});
+
+test("automatic configuration failures remain non-destructive: a failed restore keeps the saved session for a later retry", async () => {
+  const key = "CognitoIdentityServiceProvider." + CLIENT + ".LastAuthUser";
+  let attempt = 0;
+  const w = loadAuth({
+    fetch: () => { attempt += 1; return attempt === 1 ? Promise.resolve(jsonResponse(503, {})) : Promise.resolve(jsonResponse(200, GOOD)); },
+    currentUser: fakeCurrentUser(fakeSession("STILL-VALID")),
+    sessionItems: { [key]: "member@example.invalid" },
+  });
+  await assert.rejects(w.sandbox.getValidSession(), (err) => err.code === "AuthUnavailable");   // automatic restore, outage
+  assert.strictEqual(w.storage._data[key], "member@example.invalid", "the saved session is not removed by a failed automatic restore");
+  await w.sandbox.retryAuthConfig();                                                             // recovery
+  const restored = await w.sandbox.getValidSession();
+  assert.strictEqual(restored.getAccessToken().getJwtToken(), "STILL-VALID", "the same session is restored after recovery");
 });
 
 test("a leftover localStorage session for this client is removed; other localStorage keys are kept", async () => {

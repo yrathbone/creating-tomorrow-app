@@ -23,6 +23,8 @@ accepted by the backend until it expires (the backend does not check revocation)
 */
 const AUTH_CONFIG_URL = "/api/career/auth-config";
 const AUTH_UNAVAILABLE_MESSAGE = "Sign-in is unavailable right now. Check your connection and try again.";
+// Every key the Cognito SDK writes, for any app client. Used only to clear them; never to decide anything else.
+const COGNITO_SDK_KEY_PREFIX = "CognitoIdentityServiceProvider.";
 
 // Set once the configuration has loaded and passed the checks below. Nothing here is a default.
 let cognitoConfig = null;
@@ -210,20 +212,47 @@ function forceRefreshSession() {
   }));
 }
 
-// Sign Out: the SDK's signOut(callback) clears this user's keys and asks Cognito to
-// revoke this device's refresh token (if that fails, e.g. offline, we carry on);
-// then every remaining SDK key for this app client is removed too.
-// If the configuration cannot be loaded there is no pool to ask: local keys are left as they are.
+// Removes every Cognito SDK key from this tab (session storage, and any leftover in local storage), for any app client.
+// Needs no configuration and no network. Keys that are not the SDK's are never touched: the notice, the Career
+// Profile draft and every other key stay as they are.
+function clearAllCognitoKeysInTab() {
+  const stores = [];
+  try { stores.push(window.sessionStorage); } catch (e) { /* unavailable: nothing to clear there */ }
+  if (cognitoSessionStorage && stores.indexOf(cognitoSessionStorage) < 0) stores.push(cognitoSessionStorage);
+  try { stores.push(window.localStorage); } catch (e) { /* unavailable: nothing to clear there */ }
+  stores.forEach((store) => {
+    try {
+      const mine = [];
+      for (let i = 0; i < store.length; i++) {
+        const key = store.key(i);
+        if (key && key.indexOf(COGNITO_SDK_KEY_PREFIX) === 0) mine.push(key);
+      }
+      mine.forEach((key) => store.removeItem(key));
+    } catch (e) {
+      // This store cannot be read: there is nothing this code can clear in it.
+    }
+  });
+}
+
+// Sign Out. Two cases:
+// - The configuration is loaded: the SDK's signOut asks Cognito to revoke this device's refresh token (if that fails,
+//   e.g. offline, we carry on); then the local keys are removed.
+// - The configuration is NOT loaded (an outage, or not yet tried): there is no pool to ask, so the local keys are
+//   removed at once, without waiting for the network. The device's refresh token is then not revoked at Cognito by this
+//   action; it is no longer usable from this tab.
+// Either way, nothing unrelated in storage is touched (the sign-in notice, for example, stays).
 function signOutCurrentUser() {
-  return ensureAuthReady().then(() => {
+  if (cognitoConfig) {
     const cognitoUser = userPool.getCurrentUser();
     const revoked = new Promise((resolve) => {
       if (!cognitoUser) return resolve();
       const giveUp = setTimeout(resolve, 4000);
       cognitoUser.signOut(() => { clearTimeout(giveUp); resolve(); });
     });
-    return revoked.then(clearCognitoSessionKeys, clearCognitoSessionKeys);
-  }, () => undefined);
+    return revoked.then(clearAllCognitoKeysInTab, clearAllCognitoKeysInTab);
+  }
+  clearAllCognitoKeysInTab();
+  return Promise.resolve();
 }
 
 // Permanently removes the signed-in person's own sign-in account from Cognito (the SDK's deleteUser, which
