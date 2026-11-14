@@ -81,3 +81,127 @@ test("the dashboard page has the List / Board switch, hidden until there is some
   assert.match(html, /id="application-view-board"/);
   assert.match(html, /id="application-list"/); // existing hook kept
 });
+
+// --- C-52 review fixes: the tracker's marker helper and the delete path --------------------------------------------
+
+test("the tracker marks an application recorded from a saved job, comparing ids as numbers", () => {
+  const { sandbox } = load([]);
+  sandbox.window.recordedFromSavedJobIds = new Set([5]);
+  assert.strictEqual(sandbox.isRecordedFromSavedJob(5), true);
+  assert.strictEqual(sandbox.isRecordedFromSavedJob("5"), true);
+  assert.strictEqual(sandbox.isRecordedFromSavedJob(6), false);
+});
+
+test("with no saved-link data loaded, nothing is marked", () => {
+  const { sandbox } = load([]);
+  assert.strictEqual(sandbox.isRecordedFromSavedJob(5), false);
+});
+
+// Delete (C-52 review correction): the marker and the saved-link refresh happen only after the server says yes.
+// The card is built and its Delete button is pressed in this VM, so the behaviour is tested, not the source text.
+const VISUAL_CARDS = fs.readFileSync(path.join(FRONTEND, "js", "visualCards.js"), "utf8");
+
+function makeEl(tag) {
+  let text = "";
+  const el = {
+    tagName: tag, children: [], className: "", hidden: false, disabled: false, value: "", type: "",
+    dataset: {}, style: {}, listeners: {}, attrs: {},
+    appendChild(child) { this.children.push(child); return child; },
+    addEventListener(type, fn) { (this.listeners[type] = this.listeners[type] || []).push(fn); },
+    setAttribute(k, v) { this.attrs[k] = String(v); },
+    classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+    focus() {}, select() {}, reset() {},
+  };
+  Object.defineProperty(el, "textContent", {
+    get() { return text; },
+    set(v) { text = v; if (v === "") this.children = []; },
+  });
+  return el;
+}
+
+function loadTracker({ entries, deleteResult, marker }) {
+  const calls = [];
+  const alerts = [];
+  const opp = { loads: 0 };
+  const els = {};
+  const getEl = (id) => (els[id] = els[id] || makeEl(id));
+  const sandbox = {
+    document: {
+      getElementById: (id) => (id === "application-list" || id === "application-summary" ? getEl(id) : null),
+      createElement: makeEl,
+      createTextNode: (t) => ({ textNode: t, children: [] }),
+    },
+    window: { alert: (m) => alerts.push(m), confirm: () => true, recordedFromSavedJobIds: new Set(marker) },
+    authedFetch: async (url, opts = {}) => {
+      const method = opts.method || "GET";
+      calls.push({ url, method });
+      if (method === "DELETE") {
+        if (deleteResult instanceof Error) throw deleteResult;
+        return deleteResult;
+      }
+      return { ok: true, status: 200, json: async () => entries };
+    },
+    formatErrorDetail: (detail, fallback) => (typeof detail === "string" ? detail : fallback),
+    loadOpportunities: async () => { opp.loads += 1; },
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(VISUAL_CARDS, sandbox);
+  vm.runInContext(source, sandbox);
+  return { sandbox, calls, alerts, opp, els };
+}
+
+function deleteButton(t) {
+  const found = [];
+  const walk = (el) => { if (el.className === "entry-remove-btn") found.push(el); el.children.forEach(walk); };
+  walk(t.els["application-list"]);
+  assert.strictEqual(found.length, 1, "one Delete button on the card");
+  return found[0];
+}
+
+const deleted = { ok: true, status: 204, json: async () => ({}) };
+
+test("a successful delete removes the marker and refreshes the saved links, with no alert", async () => {
+  const t = loadTracker({ entries: [app(5, "applied", "2026-10-01")], deleteResult: deleted, marker: [5] });
+  await t.sandbox.loadApplications();
+  await deleteButton(t).listeners.click[0]();
+  assert.strictEqual(t.sandbox.window.recordedFromSavedJobIds.has(5), false, "marker removed");
+  assert.strictEqual(t.opp.loads, 1, "saved links refreshed once");
+  assert.deepStrictEqual(t.alerts, []);
+  assert.deepStrictEqual(t.calls.map((c) => c.method), ["GET", "DELETE", "GET"]);
+});
+
+test("a refused delete (HTTP error) keeps the marker, shows the server's reason, and does not refresh", async () => {
+  const reason = "This application can't be removed right now.";
+  const t = loadTracker({
+    entries: [app(5, "applied", "2026-10-01")],
+    deleteResult: { ok: false, status: 409, json: async () => ({ detail: reason }) },
+    marker: [5],
+  });
+  await t.sandbox.loadApplications();
+  await deleteButton(t).listeners.click[0]();
+  assert.strictEqual(t.sandbox.window.recordedFromSavedJobIds.has(5), true, "marker kept");
+  assert.strictEqual(t.opp.loads, 0, "no saved-link refresh");
+  assert.deepStrictEqual(t.alerts, [reason]);
+  assert.deepStrictEqual(t.calls.map((c) => c.method), ["GET", "DELETE"], "no list reload after a refusal");
+});
+
+test("a failed delete with no readable reason still keeps the marker and shows a plain message", async () => {
+  const t = loadTracker({
+    entries: [app(5, "applied", "2026-10-01")],
+    deleteResult: { ok: false, status: 500, json: async () => { throw new Error("not json"); } },
+    marker: [5],
+  });
+  await t.sandbox.loadApplications();
+  await deleteButton(t).listeners.click[0]();
+  assert.strictEqual(t.sandbox.window.recordedFromSavedJobIds.has(5), true, "marker kept");
+  assert.deepStrictEqual(t.alerts, ["Couldn’t remove that application."]);
+});
+
+test("a network error during delete keeps the marker and shows a connection message", async () => {
+  const t = loadTracker({ entries: [app(5, "applied", "2026-10-01")], deleteResult: new Error("Failed to fetch"), marker: [5] });
+  await t.sandbox.loadApplications();
+  await deleteButton(t).listeners.click[0]();
+  assert.strictEqual(t.sandbox.window.recordedFromSavedJobIds.has(5), true, "marker kept");
+  assert.strictEqual(t.opp.loads, 0);
+  assert.deepStrictEqual(t.alerts, ["Couldn’t remove that application. Check your connection and try again."]);
+});

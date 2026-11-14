@@ -351,3 +351,67 @@ test("the Applications tracker can mark applications recorded from a saved job, 
   const ids = [...sandbox.window.recordedFromSavedJobIds].sort();
   assert.deepStrictEqual(ids, [5]);
 });
+
+// --- C-52 review fixes (2026-11-14): pending guard and tracker-marker freshness ------------------------------------
+
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+
+const recordButton = (els) => find(els["opportunity-list"], (el) => el.tagName === "button" && el.textContent === "Record application")[0];
+
+test("a second click while a recording is pending sends no second request; the button is disabled, then re-enabled after a refusal", async () => {
+  const pending = deferred();
+  const { sandbox, calls, els } = load({
+    "/api/career/opportunities": ok([approved()]),
+    "POST /api/career/opportunities/11/record-application": pending.promise,
+  });
+  await sandbox.loadOpportunities();
+  recordButton(els).listeners.click[0]();
+  recordButton(els).listeners.click[0]();
+  assert.strictEqual(recordButton(els).disabled, true, "disabled while pending");
+  assert.strictEqual(calls.filter((c) => c.method === "POST").length, 1, "one request only");
+  pending.resolve(bad(409, "Approve it again, then record the application."));
+  await new Promise((r) => setImmediate(r));
+  assert.strictEqual(calls.filter((c) => c.method === "POST").length, 1, "still one request");
+  assert.strictEqual(recordButton(els).disabled, false, "re-enabled after the refusal");
+});
+
+test("a control drawn while a recording is pending starts disabled, and a network failure re-enables it", async () => {
+  const pending = deferred();
+  const { sandbox, els } = load({
+    "/api/career/opportunities": ok([approved()]),
+    "POST /api/career/opportunities/11/record-application": pending.promise,
+  });
+  await sandbox.loadOpportunities();
+  recordButton(els).listeners.click[0]();
+  await sandbox.loadOpportunities(); // a redraw while the request is still in flight
+  assert.strictEqual(recordButton(els).disabled, true, "a redrawn control is disabled too");
+  pending.reject(new Error("offline"));
+  await new Promise((r) => setImmediate(r));
+  assert.strictEqual(recordButton(els).disabled, false, "re-enabled after the failure");
+  assert.ok(/could not be recorded/i.test((els["opportunities-status"] || {}).textContent || ""), "failure message shown");
+});
+
+test("the tracker marker is cleared when the saved links cannot be loaded, so a stale marker is never shown", async () => {
+  const routes = { "/api/career/opportunities": ok([approved({ id: 1, state: "applied", application_id: 5 })]) };
+  const { sandbox } = load(routes);
+  await sandbox.loadOpportunities();
+  assert.deepStrictEqual([...sandbox.window.recordedFromSavedJobIds], [5]);
+  routes["/api/career/opportunities"] = bad(500, "Server error.");
+  await sandbox.loadOpportunities();
+  assert.strictEqual(sandbox.window.recordedFromSavedJobIds.size, 0);
+});
+
+test("loading the saved links redraws the tracker from its own data, with no extra request; ids compare as numbers", async () => {
+  const { sandbox, calls } = load({ "/api/career/opportunities": ok([approved({ id: 1, state: "applied", application_id: "5" })]) });
+  let redraws = 0;
+  sandbox.renderApplications = () => { redraws += 1; };
+  await sandbox.loadOpportunities();
+  assert.strictEqual(redraws, 1);
+  assert.deepStrictEqual(calls.map((c) => c.url), ["/api/career/opportunities"]);
+  assert.deepStrictEqual([...sandbox.window.recordedFromSavedJobIds], [5]);
+});
