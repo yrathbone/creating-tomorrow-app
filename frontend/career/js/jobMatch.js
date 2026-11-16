@@ -2,7 +2,7 @@
 // whole Career Profile -> gap interview (mirrors resumeReview.js's
 // question-batch pattern, itself mirroring elevate.js) -> build a tailored
 // resume from real profile evidence -> download via the existing
-// /api/generate endpoint (unchanged). Relies on authedFetch()/escapeHtml()/
+// stored-version download (owner-scoped). Relies on authedFetch()/escapeHtml()/
 // makeTextField() from login.js/resumeReview.js and
 // startProcessingState()/stopProcessingState() from loading.js, all loaded
 // before this file.
@@ -477,6 +477,8 @@ document.getElementById("job-build-btn").addEventListener("click", async () => {
     const data = await res.json();
     jobState.tailoredResumeData = data.resume_data;
     jobState.resumeVersionId = data.resume_version_id || null;
+    jobState.truthGate = data.truth_gate || "off";
+    if (jobState.truthGate === "on") jobReview.start(jobState.resumeVersionId); else jobReview.hide();
     resetAppliedBlock();
     renderRoleSelection(data.role_selection || []);
     renderTermReport(data.term_report || []);
@@ -1065,6 +1067,7 @@ function suggestionCard(s) {
       }
       const data = await res.json();
       jobState.tailoredResumeData = data.resume_data;
+      if (jobState.truthGate === "on") jobReview.refresh();
       renderTermReport(data.resume_data.term_report || []);
       await loadSuggestions("Added “" + s.term + "” wording under " + s.role + ". Your saved roles and skills were not changed.");
       announceJob("Added to this resume.");
@@ -1266,6 +1269,12 @@ document.getElementById("job-applied-save-btn").addEventListener("click", async 
   }
 });
 
+// The job-targeted review (switch ON): the same component as the general resume, with its own element ids.
+// If the review component is not loaded, nothing can be signed, so a signed download is refused (it fails closed).
+const jobReview = typeof createMemberReview === "function"
+  ? createMemberReview({ prefix: "job-review", downloadId: "job-download-btn", recheck: true })
+  : { start() {}, hide() {}, refresh() {}, isSigned: () => false, download: async () => {} };
+
 document.getElementById("job-download-btn").addEventListener("click", async () => {
   const button = document.getElementById("job-download-btn");
   const messageEl = document.getElementById("job-download-msg");
@@ -1274,13 +1283,28 @@ document.getElementById("job-download-btn").addEventListener("click", async () =
     showResumeDownloadMessage(messageEl, RESUME_NOT_READY_MESSAGE);
     return;
   }
+  if (jobState.truthGate === "on") {
+    // Only a signed resume is downloaded: the server renders it from the stored, signed version.
+    button.disabled = true;
+    try {
+      if (!jobReview.isSigned()) throw new Error("Sign off this resume before you download it.");
+      await jobReview.download(resumeFileName(jobState.tailoredResumeData.name, jobState.jobTitle));
+    } catch (err) {
+      showResumeDownloadMessage(messageEl, resumeDownloadErrorText(err));
+    } finally {
+      button.disabled = false;
+    }
+    return;
+  }
+  if (!jobState.resumeVersionId) {
+    showResumeDownloadMessage(messageEl, RESUME_NOT_READY_MESSAGE);
+    return;
+  }
   button.disabled = true;
   try {
-    const res = await authedFetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_data: jobState.tailoredResumeData, ats_mode: false, template: document.getElementById("job-resume-template").value }),
-    });
+    // The server renders the stored version for its owner; the browser does not send résumé content back.
+    const template = encodeURIComponent(document.getElementById("job-resume-template").value);
+    const res = await authedFetch("/api/career/resume-versions/" + encodeURIComponent(jobState.resumeVersionId) + "/download?ats_mode=false&template=" + template);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
@@ -1295,6 +1319,7 @@ document.getElementById("job-download-btn").addEventListener("click", async () =
 });
 
 function resetJobTarget() {
+  jobReview.hide();
   jobState.jobDescription = "";
   jobState.categories = [];
   jobState.history = [];

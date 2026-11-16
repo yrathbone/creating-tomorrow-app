@@ -31,8 +31,8 @@ test("the dashboard's two download screens have a layout menu and send it", () =
   assert.deepStrictEqual(optionValues(html, "general-resume-template"), LAYOUTS);
   assert.ok(html.indexOf('id="job-resume-template"') < html.indexOf('id="job-download-btn"'));
   assert.ok(html.indexOf('id="general-resume-template"') < html.indexOf('id="general-resume-download-btn"'));
-  assert.match(read("career", "js", "jobMatch.js"), /template: document\.getElementById\("job-resume-template"\)\.value/);
-  assert.match(read("career", "js", "generalResume.js"), /template: document\.getElementById\("general-resume-template"\)\.value/);
+  assert.match(read("career", "js", "jobMatch.js"), /template=" \+ template/); // sent with the stored-version download
+  assert.match(read("career", "js", "generalResume.js"), /template=" \+ template/);
 });
 
 test("old resumes can be downloaded again in any layout (a menu on each Resumes Built card)", () => {

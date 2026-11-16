@@ -414,6 +414,41 @@
             </label>
             <button type="button" class="btn-secondary resume-layout-default" data-layout-default="job-resume-template" data-layout-msg="job-layout-msg">Make this my default</button>
             <span class="hint resume-layout-msg" id="job-layout-msg" role="status" hidden></span>
+            <section id="job-review" class="truth-review" aria-labelledby="job-review-heading" hidden>
+              <h3 id="job-review-heading" tabindex="-1">Check your resume before you sign it off</h3>
+              <p class="hint">Each statement is compared with the information you saved. Nothing is confirmed for you: you decide each one. Remove applies only to this statement. Other mentions remain unless you review and remove them separately.</p>
+              <p id="job-review-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+              <p id="job-review-error" class="truth-error" role="status" aria-live="assertive" hidden></p>
+              <h4 id="job-review-supported-h">Supported by your saved information</h4>
+              <ul id="job-review-supported" class="truth-list" aria-labelledby="job-review-supported-h"></ul>
+              <h4 id="job-review-derived-h">Skills drawn from your experience</h4>
+              <ul id="job-review-derived" class="truth-list" aria-labelledby="job-review-derived-h"></ul>
+              <h4 id="job-review-uncertain-h">Wording to check</h4>
+              <p class="hint">This wording was written by the AI and is not an exact match to your saved information.</p>
+              <ul id="job-review-uncertain" class="truth-list" aria-labelledby="job-review-uncertain-h"></ul>
+              <p id="job-review-uncertain-empty" class="hint" hidden>Nothing needs your decision.</p>
+              <h4 id="job-review-changed-h">Changed since the last check</h4>
+              <ul id="job-review-changed" class="truth-list" aria-labelledby="job-review-changed-h" hidden></ul>
+              <h4 id="job-review-removed-h">Removed from your resume <span id="job-review-removed-count" class="hint">(0)</span></h4>
+              <button type="button" id="job-review-removed-toggle" class="btn-secondary truth-removed-toggle" aria-expanded="false" aria-controls="job-review-removed-panel" hidden>Expand removed statements</button>
+              <div id="job-review-removed-panel" class="truth-removed-panel" role="region" aria-labelledby="job-review-removed-h" hidden>
+                <p class="hint">These were not supported by your saved information, so they are not in the resume. Their explanations are kept here for your records; they are never included in the preview or the downloaded resume.</p>
+                <ul id="job-review-removed" class="truth-list"></ul>
+              </div>
+              <button type="button" id="job-review-preview-btn" class="btn-secondary">Preview the whole resume</button>
+              <section id="job-review-preview" aria-labelledby="job-review-preview-h" hidden>
+                <h4 id="job-review-preview-h" tabindex="-1">Preview of your resume</h4>
+                <div id="job-review-preview-text"></div>
+                <label class="field truth-signoff">
+                  <input type="checkbox" id="job-review-signoff-check" />
+                  <span>I have read the whole resume. Everything in it is true for me, and I approve it as my resume.</span>
+                </label>
+                <button type="button" id="job-review-signoff-btn" disabled>Sign off this resume</button>
+                <p id="job-review-signoff-why" class="hint" hidden></p>
+              </section>
+              <button type="button" id="job-review-recheck-btn" class="btn-secondary" hidden>Check this resume against my saved information</button>
+              <p id="job-review-signed" class="success" tabindex="-1" hidden>You signed off this resume. You can download it now.</p>
+            </section>
             <button type="button" id="job-download-btn">Download resume (.docx)</button>
             <p class="error resume-download-msg" id="job-download-msg" role="alert" hidden></p>
             <button type="button" id="job-start-over-btn" class="btn-secondary">Compare another job</button>
@@ -538,6 +573,40 @@
             </label>
             <button type="button" class="btn-secondary resume-layout-default" data-layout-default="general-resume-template" data-layout-msg="general-layout-msg">Make this my default</button>
             <span class="hint resume-layout-msg" id="general-layout-msg" role="status" hidden></span>
+            <section id="general-review" class="truth-review" aria-labelledby="general-review-heading" hidden>
+              <h3 id="general-review-heading" tabindex="-1">Check your resume before you sign it off</h3>
+              <p class="hint">Each statement is compared with the information you saved. Nothing is confirmed for you: you decide each one. Remove applies only to this statement. Other mentions remain unless you review and remove them separately.</p>
+              <p id="general-review-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+              <p id="general-review-error" class="truth-error" role="status" aria-live="assertive" hidden></p>
+              <h4 id="general-review-supported-h">Supported by your saved information</h4>
+              <ul id="general-review-supported" class="truth-list" aria-labelledby="general-review-supported-h"></ul>
+              <h4 id="general-review-derived-h">Skills drawn from your experience</h4>
+              <ul id="general-review-derived" class="truth-list" aria-labelledby="general-review-derived-h"></ul>
+              <h4 id="general-review-uncertain-h">Wording to check</h4>
+              <p class="hint">This wording was written by the AI and is not an exact match to your saved information.</p>
+              <ul id="general-review-uncertain" class="truth-list" aria-labelledby="general-review-uncertain-h"></ul>
+              <p id="general-review-uncertain-empty" class="hint" hidden>Nothing needs your decision.</p>
+              <h4 id="general-review-changed-h">Changed since the last check</h4>
+              <ul id="general-review-changed" class="truth-list" aria-labelledby="general-review-changed-h" hidden></ul>
+              <h4 id="general-review-removed-h">Removed from your resume <span id="general-review-removed-count" class="hint">(0)</span></h4>
+              <button type="button" id="general-review-removed-toggle" class="btn-secondary truth-removed-toggle" aria-expanded="false" aria-controls="general-review-removed-panel" hidden>Expand removed statements</button>
+              <div id="general-review-removed-panel" class="truth-removed-panel" role="region" aria-labelledby="general-review-removed-h" hidden>
+                <p class="hint">These were not supported by your saved information, so they are not in the resume. Their explanations are kept here for your records; they are never included in the preview or the downloaded resume.</p>
+                <ul id="general-review-removed" class="truth-list"></ul>
+              </div>
+              <button type="button" id="general-review-preview-btn" class="btn-secondary">Preview the whole resume</button>
+              <section id="general-review-preview" aria-labelledby="general-review-preview-h" hidden>
+                <h4 id="general-review-preview-h" tabindex="-1">Preview of your resume</h4>
+                <div id="general-review-preview-text"></div>
+                <label class="field truth-signoff">
+                  <input type="checkbox" id="general-review-signoff-check" />
+                  <span>I have read the whole resume. Everything in it is true for me, and I approve it as my resume.</span>
+                </label>
+                <button type="button" id="general-review-signoff-btn" disabled>Sign off this resume</button>
+                <p id="general-review-signoff-why" class="hint" hidden></p>
+              </section>
+              <p id="general-review-signed" class="success" tabindex="-1" hidden>You signed off this resume. You can download it now.</p>
+            </section>
             <button type="button" id="general-resume-download-btn">Download resume (.docx)</button>
             <p class="error resume-download-msg" id="general-download-msg" role="alert" hidden></p>
             <button type="button" id="general-resume-again-btn" class="btn-secondary">Build again</button>
@@ -1027,6 +1096,8 @@
   <script src="js/dashboardVisuals.js"></script>
   <script src="js/resumeReview.js"></script>
   <script src="js/evidenceView.js"></script>
+  <script src="js/resumeTruthModel.js"></script>
+  <script src="js/generalResumeReview.js"></script>
   <script src="js/jobMatch.js"></script>
   <script src="js/skillScan.js"></script>
   <script src="js/skillTidy.js"></script>

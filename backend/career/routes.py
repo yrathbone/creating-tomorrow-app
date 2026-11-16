@@ -36,6 +36,8 @@ from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
 from career.resume_quality import candidate_answers_text, denials_from_history, drop_unsourced_bullets
 from career import suggestions
+from career import member_review as mr
+from career import review_gate as rg
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check_with_plan, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
@@ -1240,6 +1242,8 @@ async def job_build_resume(
             **({"provenance": result["provenance"]} if (result.get("provenance") or {}).get("count") else {}),
         },
     }
+    if rg.gate_mode() != "off":   # the member review of this job-targeted résumé, from the pipeline's own records (no AI call)
+        final_resume = mr.with_review(final_resume, rg.job_review(final_resume, result, rg.build_facts(db, profile)))
     version = ResumeVersion(
         career_profile_id=profile.id,
         scan_history_id=scan.id if scan else None,
@@ -1251,7 +1255,7 @@ async def job_build_resume(
     db.commit()
     db.refresh(version)
 
-    return {**result, "resume_data": final_resume, "resume_version_id": version.id}
+    return {**result, "resume_data": final_resume, "resume_version_id": version.id, "truth_gate": rg.gate_mode()}
 
 
 class GeneralResumeRequest(BaseModel):
@@ -1284,16 +1288,21 @@ async def build_general_resume_route(
     result["resume_data"], emptied = drop_unsourced_bullets(result["resume_data"], bullet_sources)
     if emptied:
         logger.warning("general resume: dropped bullets written for roles with no description: %s", emptied)
+    stored = result["resume_data"]
+    mode = rg.gate_mode()
+    if mode != "off":   # C-52 Step B: server-side review before save; the client never supplies review state
+        draft, review = rg.review_at_save(result["resume_data"], rg.build_facts(db, profile), mode)
+        result["resume_data"], stored = draft, mr.with_review(draft, review)
     version = ResumeVersion(
         career_profile_id=profile.id,
         scan_history_id=None,
-        resume_data=result["resume_data"],
+        resume_data=stored,
     )
     db.add(version)
     db.commit()
     db.refresh(version)
 
-    return {**result, "resume_version_id": version.id}
+    return {**result, "resume_version_id": version.id, "truth_gate": rg.gate_mode()}
 
 
 # --- Skill scan: review the WHOLE Career Profile against what's standard
@@ -1643,6 +1652,23 @@ async def download_resume_version(
 ):
     profile = get_career_profile_or_404(db, current_user)
     entry = _get_resume_version_or_404(db, profile, resume_version_id)
+
+    kind = _resume_kind(entry.resume_data)
+    if rg.gate_on() and kind in ("general_review", "job"):
+        # A résumé under review (general, or job-targeted once its member review exists): the only download is the signed one,
+        # with the same checks as /document. A job-targeted résumé with no member review yet is refused by the same checks.
+        if ats_mode:
+            raise HTTPException(status_code=409, detail="The signed résumé is downloaded in the standard layout, not in ATS mode.")
+        docx_bytes = _signed_document_bytes(db, profile, entry)
+        return Response(
+            content=docx_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers=attachment_headers(entry.resume_data.get("name"), "_Resume.docx"),
+        )
+    if rg.gate_on() and kind == "general_legacy":
+        # Saved before the truth check: it has never been reviewed, so the switch being on refuses it. Job-targeted versions
+        # ("job") keep their existing stored-version download; their own review is a separate planned change.
+        raise HTTPException(status_code=409, detail="This résumé was saved before the truth check, so it cannot be downloaded. Build it again to check it and sign it off.")
 
     try:
         docx_bytes = build_resume_bytes(entry.resume_data, ats_mode=ats_mode, template=template or _preferred_layout(db, profile))
@@ -2153,3 +2179,287 @@ async def delete_my_account(
     db.expunge_all()
     logger.info("Account and saved data deleted by their owner (internal id %s): %s", user_id, counts)
     return {"deleted": True, "counts": counts}
+
+
+# --- C-52 Step B: owner-only review endpoints for general résumé versions (career/review_gate.py holds the rules) -------------
+# Authentication and ownership are enforced here in every switch state. The switch only decides whether review is stored and gated.
+
+class DecisionIn(BaseModel):
+    item_id: str = Field(min_length=1, max_length=64)
+    decision: str = Field(min_length=1, max_length=16)
+    acknowledge: bool = False
+    text: str | None = Field(default=None, max_length=600)   # the member's own wording, used only by decision "edit"
+
+
+class SignoffIn(BaseModel):
+    finalized_hash: str = Field(min_length=64, max_length=64)
+
+
+def _version_for_owner(db: Session, profile: CareerProfile, version_id: int, lock: bool = False) -> ResumeVersion:
+    query = db.query(ResumeVersion).filter_by(id=version_id, career_profile_id=profile.id)
+    if lock:
+        query = query.with_for_update()
+    version = query.one_or_none()
+    if version is None:
+        raise HTTPException(status_code=404, detail="That résumé was not found.")
+    return version
+
+
+def _review_state(db: Session, profile: CareerProfile, version: ResumeVersion):
+    """(state, review, draft, facts). state is 'legacy' (never checked), 'stale' (content or saved facts changed) or 'current'."""
+    data = version.resume_data or {}
+    review = mr.review_of(data)
+    draft = rg.draft_of(data)
+    facts = rg.build_facts(db, profile)
+    if review is None:
+        return "legacy", None, draft, facts
+    if rg.content_hash(draft) != review.get("content_hash") or rg.facts_hash(facts) != review.get("facts_hash"):
+        return "stale", review, draft, facts
+    return "current", review, draft, facts
+
+
+def _require_gate_on() -> None:
+    """Decisions, preview, sign-off and the signed download exist only while the switch is ON. Ownership is checked first."""
+    if not rg.gate_on():
+        raise HTTPException(status_code=409, detail="The résumé truth check is not switched on, so this step is not available.")
+
+
+def _kind_arg(version: ResumeVersion) -> str:
+    """The review rules that apply to this version: 'job' or 'general'."""
+    return "job" if mr.kind_of(version.resume_data) == "job" else "general"
+
+
+def _evidence_for(version: ResumeVersion, review: dict, draft: dict, facts: dict) -> dict:
+    """What the saved information supports, for the review screen. A job's evidence is the job pipeline's own record."""
+    if _kind_arg(version) == "job":
+        return {"supported": review.get("supported") or [], "derived": review.get("derived") or []}
+    return rg.evidence(draft, facts)
+
+
+def _require_mutable(db: Session, profile: CareerProfile, version: ResumeVersion) -> None:
+    """A résumé that a recorded application was made from is historical evidence: its content and review do not change."""
+    from models import Application
+    if db.query(Application.id).filter_by(resume_version_id=version.id, career_profile_id=profile.id).first() is not None:
+        raise HTTPException(status_code=409, detail="An application was recorded from this résumé, so it cannot be changed. The record stays as it was.")
+
+
+def _store_review(version: ResumeVersion, draft: dict, review: dict, signoff=None) -> None:
+    stored = mr.with_review(draft, review)
+    if signoff is not None:
+        stored = mr.with_signoff(stored, signoff)
+    elif mr.signoff_of(version.resume_data) is not None:
+        stored = mr.with_signoff(stored, mr.signoff_of(version.resume_data))
+    version.resume_data = stored
+
+
+@router.get("/resume-versions/{resume_version_id}/review")
+async def get_resume_review(resume_version_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    profile = get_career_profile_or_404(db, current_user)
+    version = _version_for_owner(db, profile, resume_version_id)
+    state, review, draft, facts = _review_state(db, profile, version)
+    if state == "legacy":
+        raise HTTPException(status_code=409, detail="This résumé was saved before the truth check and has not been checked. Check it before approving.")
+    if state == "stale":
+        raise HTTPException(status_code=409, detail="Your saved information changed after this résumé was checked. Check it again.")
+    blocking, undecided = rg.pending(review, draft, facts, _kind_arg(version))
+    status = "blocked" if blocking else ("needs_review" if undecided else "ready")
+    return {"status": status, "mode": review.get("mode"), "items": review.get("items", []), "removed": review.get("removed", []),
+            "edits": review.get("edits", []), "changes": review.get("changes", []), "blocking_count": len(blocking), "undecided_count": len(undecided),
+            **_evidence_for(version, review, draft, facts)}
+
+
+@router.post("/resume-versions/{resume_version_id}/decisions")
+async def post_resume_decision(resume_version_id: int, req: DecisionIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    profile = get_career_profile_or_404(db, current_user)
+    try:
+        version = _version_for_owner(db, profile, resume_version_id, lock=True)
+        _require_gate_on()
+        _require_mutable(db, profile, version)
+        state, review, draft, facts = _review_state(db, profile, version)
+        if state == "legacy":
+            raise HTTPException(status_code=409, detail="This résumé has not been checked. Check it before making decisions.")
+        if state == "stale":
+            raise HTTPException(status_code=409, detail="Your saved information changed after this résumé was checked. Check it again.")
+        if req.decision == "edit":
+            new_draft, new_review, code, message = rg.apply_edit(draft, facts, review, req.item_id, req.text, current_user.id,
+                                                                 kind=_kind_arg(version))
+            if code:
+                raise HTTPException(status_code=code, detail=message)
+            # The edited résumé replaces the stored content and drops the earlier sign-off: it must be checked and signed again.
+            version.resume_data = mr.with_signoff(mr.with_review(new_draft, new_review), None)
+            db.commit()
+            return {"edited": True, "items": new_review["items"]}
+        code, message = rg.validate_decision(review, req.item_id, req.decision, req.acknowledge)
+        if code:
+            raise HTTPException(status_code=code, detail=message)
+        new_review = rg.record_decision(review, req.item_id, req.decision, req.acknowledge, current_user.id)
+        _store_review(version, draft, new_review)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return next(i for i in new_review["items"] if i["id"] == req.item_id)
+
+
+@router.get("/resume-versions/{resume_version_id}/preview")
+async def get_resume_preview(resume_version_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    """The complete content the member would sign off, with its rendered text. Records a preview receipt for these exact hashes."""
+    from resume_builder import build_resume_bytes
+    profile = get_career_profile_or_404(db, current_user)
+    # Phase 1 (no row lock): read the reviewed state and render the complete content.
+    version = _version_for_owner(db, profile, resume_version_id)
+    _require_gate_on()
+    state, review, draft, facts = _review_state(db, profile, version)
+    if state == "legacy":
+        raise HTTPException(status_code=409, detail="This résumé has not been checked. Check it before previewing it for sign-off.")
+    if state == "stale":
+        raise HTTPException(status_code=409, detail="Your saved information changed after this résumé was checked. Check it again.")
+    token = rg.gate_token(draft, review, facts)
+    finalized = rg.finalize(draft, review)
+    layout = _preferred_layout(db, profile)
+    finalized_hash = rg.content_hash(finalized)
+    rendered = build_resume_bytes(finalized, ats_mode=False, template=layout)
+    blocking, undecided = rg.pending(review, draft, facts, _kind_arg(version))
+    # Phase 2 (short): lock, confirm nothing changed since the snapshot, then record the receipt.
+    try:
+        version = _version_for_owner(db, profile, resume_version_id, lock=True)
+        state2, review2, draft2, facts2 = _review_state(db, profile, version)
+        if state2 != "current" or rg.gate_token(draft2, review2, facts2) != token:
+            raise HTTPException(status_code=409, detail="Your saved information or decisions changed while this preview was prepared. Preview again.")
+        receipts = list(review2.get("receipts") or [])
+        receipts.append({"finalized_hash": finalized_hash, "facts_hash": review2["facts_hash"], "layout": layout,
+                         "at": datetime.now(timezone.utc).isoformat()})
+        _store_review(version, draft2, {**review2, "receipts": receipts[-10:]})
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return {"finalized": finalized, "finalized_hash": finalized_hash, "facts_hash": review["facts_hash"], "layout": layout,
+            "rendered_text": rg.docx_text(rendered), "rendered_text_hash": rg.rendered_hash(rendered),
+            "blocking_count": len(blocking), "undecided_count": len(undecided),
+            "can_sign_off": not blocking and not undecided}
+
+
+@router.post("/resume-versions/{resume_version_id}/signoff")
+async def post_resume_signoff(resume_version_id: int, req: SignoffIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    """Final member sign-off for exactly the previewed content, facts and layout. Separate from each claim decision."""
+    from resume_builder import build_resume_bytes
+    profile = get_career_profile_or_404(db, current_user)
+    # Phase 1 (no row lock): every check, and the signed values.
+    version = _version_for_owner(db, profile, resume_version_id)
+    _require_gate_on()
+    _require_mutable(db, profile, version)
+    state, review, draft, facts = _review_state(db, profile, version)
+    if state == "legacy":
+        raise HTTPException(status_code=409, detail="This résumé has not been checked. Check it before signing off.")
+    if state == "stale":
+        raise HTTPException(status_code=409, detail="Your saved information changed after this résumé was checked. Check it again.")
+    blocking, undecided = rg.pending(review, draft, facts, _kind_arg(version))
+    if blocking:
+        raise HTTPException(status_code=409, detail="Some statements are not supported by your saved information. Correct your saved information first.")
+    if undecided:
+        raise HTTPException(status_code=409, detail="Decide on every statement marked for your review before signing off.")
+    token = rg.gate_token(draft, review, facts)
+    finalized = rg.finalize(draft, review)
+    layout = _preferred_layout(db, profile)
+    finalized_hash = rg.content_hash(finalized)
+    if finalized_hash != req.finalized_hash:
+        raise HTTPException(status_code=409, detail="The content changed. Preview it again before signing off.")
+
+    def _previewed(r: dict) -> bool:
+        return any(x.get("finalized_hash") == finalized_hash and x.get("facts_hash") == r["facts_hash"] and x.get("layout") == layout
+                   for x in r.get("receipts") or [])
+    if not _previewed(review):
+        raise HTTPException(status_code=409, detail="Preview this exact content before signing off.")
+    rendered = build_resume_bytes(finalized, ats_mode=False, template=layout)
+    signoff = {"finalized_hash": finalized_hash, "facts_hash": review["facts_hash"], "layout": layout,
+               "rendered_text_hash": rg.rendered_hash(rendered), "checker_version": rg.CHECKER_VERSION,
+               "user_id": current_user.id, "signed_at": datetime.now(timezone.utc).isoformat()}
+    # Phase 2 (short): lock, confirm the same state and a receipt for it, then store the sign-off.
+    try:
+        version = _version_for_owner(db, profile, resume_version_id, lock=True)
+        state2, review2, draft2, facts2 = _review_state(db, profile, version)
+        if state2 != "current" or rg.gate_token(draft2, review2, facts2) != token or not _previewed(review2):
+            raise HTTPException(status_code=409, detail="Your saved information or decisions changed before you signed off. Preview and sign off again.")
+        _store_review(version, draft2, review2, signoff=signoff)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return {"status": "signed", "finalized_hash": finalized_hash, "rendered_text_hash": signoff["rendered_text_hash"]}
+
+
+def _resume_kind(data) -> str:
+    """'general_review' | 'job' | 'general_legacy' (see career/member_review.py)."""
+    return mr.kind_of(data)
+
+
+def _signed_document_bytes(db: Session, profile: CareerProfile, version: ResumeVersion) -> bytes:
+    """The DOCX of the member's signed résumé, rendered from the stored version. Refuses unless the review is current, the content
+    and saved facts still match the sign-off, the layout is the signed one and the rendered text matches what was signed."""
+    from resume_builder import build_resume_bytes
+    state, review, draft, facts = _review_state(db, profile, version)
+    if state == "legacy":
+        raise HTTPException(status_code=409, detail="This résumé has not been checked. Check it and sign it off before downloading it.")
+    if state == "stale":
+        raise HTTPException(status_code=409, detail="Your saved information changed after this résumé was checked. Check it again.")
+    signoff = mr.signoff_of(version.resume_data)
+    if not signoff:
+        raise HTTPException(status_code=409, detail="Sign off this résumé before downloading it.")
+    finalized = rg.finalize(draft, review)
+    layout = _preferred_layout(db, profile)
+    if (rg.content_hash(finalized) != signoff["finalized_hash"] or rg.facts_hash(facts) != signoff["facts_hash"]
+            or layout != signoff["layout"]):
+        raise HTTPException(status_code=409, detail="This résumé changed after you signed it off. Preview and sign off again.")
+    rendered = build_resume_bytes(finalized, ats_mode=False, template=layout)
+    if rg.rendered_hash(rendered) != signoff["rendered_text_hash"]:
+        raise HTTPException(status_code=409, detail="The document no longer matches what you signed off. Preview and sign off again.")
+    return rendered
+
+
+@router.post("/resume-versions/{resume_version_id}/member-recheck")
+async def post_member_recheck(resume_version_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    """Owner-initiated check of an older job-targeted résumé, from the job pipeline's own saved evidence (its term report, claim and verb
+    review, struck claims, removed skills and held lines), with no AI call. It never changes the résumé text and never touches the job's
+    own truth_review. The previous member review is kept in the history, and the response lists what changed and why. A recorded
+    résumé is never checked (its record is historical evidence), and only its owner can check it."""
+    profile = get_career_profile_or_404(db, current_user)
+    try:
+        version = _version_for_owner(db, profile, resume_version_id, lock=True)
+        _require_gate_on()
+        data = version.resume_data or {}
+        if mr.kind_of(data) != "job":
+            raise HTTPException(status_code=409, detail="Only a job-targeted résumé is checked this way. A general résumé saved before the truth check must be built again.")
+        _require_mutable(db, profile, version)     # F5: a recorded application is named first, whatever the check state
+        state, previous, draft, facts = _review_state(db, profile, version)
+        if state == "current":
+            raise HTTPException(status_code=409, detail="This résumé has already been checked.")
+        job_record = {**(data.get("truth_review") or {}), "term_report": data.get("term_report") or []}
+        review = rg.job_review(draft, job_record, rg.build_facts(db, profile))
+        changes = rg.review_changes(previous, review)
+        review["changes"] = changes
+        history = list(data.get("member_review_history") or [])
+        if previous is not None:
+            history.append({"at": review["created_at"], "review": previous})
+        stored = mr.with_signoff(mr.with_review(draft, review), None)     # the content is unchanged; any earlier sign-off is cleared
+        stored["member_review_history"] = history[-5:]
+        version.resume_data = stored
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return {"status": "checked", "items": review["items"], "removed": review["removed"], "supported": review.get("supported", []),
+            "changes": changes}
+
+
+@router.get("/resume-versions/{resume_version_id}/document")
+async def get_resume_document(resume_version_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_session)):
+    """The member's own signed résumé as DOCX, rendered from the stored version. Never from client-supplied content."""
+    from download_names import attachment_headers
+    profile = get_career_profile_or_404(db, current_user)
+    version = _version_for_owner(db, profile, resume_version_id)
+    _require_gate_on()
+    rendered = _signed_document_bytes(db, profile, version)
+    return Response(content=rendered,
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers=attachment_headers((version.resume_data or {}).get("name"), "_Resume.docx"))

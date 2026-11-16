@@ -14,20 +14,29 @@ authentication, authorization, or permission to see anything: the Cognito librar
 hint is stale, the link simply lands on the normal login form.
 */
 (function () {
-  var prefix = "CognitoIdentityServiceProvider.5rfhr0o7799aa41a5odrt9i9hd.";
+  // The Cognito SDK namespace. The app client id is read from the stored key names at run time, never written here (F9).
+  var namespace = "CognitoIdentityServiceProvider.";
+  var lastUser = /^CognitoIdentityServiceProvider\.([^.]+)\.LastAuthUser$/;
 
   try {
     var stale = [];
     for (var i = 0; i < window.localStorage.length; i++) {
       var key = window.localStorage.key(i);
-      if (key && key.indexOf(prefix) === 0) stale.push(key);
+      if (key && key.indexOf(namespace) === 0) stale.push(key);
     }
     stale.forEach(function (k) { window.localStorage.removeItem(k); });
   } catch (e) { /* localStorage unavailable */ }
 
   try {
-    var user = window.sessionStorage.getItem(prefix + "LastAuthUser");
-    if (user && window.sessionStorage.getItem(prefix + user + ".refreshToken")) {
+    var signedIn = false;
+    for (var s = 0; s < window.sessionStorage.length && !signedIn; s++) {
+      var match = lastUser.exec(window.sessionStorage.key(s) || "");
+      if (!match) continue;
+      var clientPrefix = namespace + match[1] + ".";
+      var user = window.sessionStorage.getItem(clientPrefix + "LastAuthUser");
+      if (user && window.sessionStorage.getItem(clientPrefix + user + ".refreshToken")) signedIn = true;
+    }
+    if (signedIn) {
       var links = document.querySelectorAll("a.nav-account");
       for (var j = 0; j < links.length; j++) links[j].textContent = "My Career";
       // The homepage's secondary "Already have an account? Sign in" prompt is redundant

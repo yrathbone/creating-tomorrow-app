@@ -6,6 +6,8 @@
 
 const generalResumeState = {
   resumeData: null,
+  versionId: null,   // the stored version this resume was saved as (the download reads it from the server)
+  truthGate: "off",  // "on" when the member review applies to this resume (the server says so in the build response)
 };
 
 const generalResumeEmpty = document.getElementById("general-resume-empty");
@@ -89,10 +91,20 @@ document.getElementById("general-resume-build-btn").addEventListener("click", as
     }
     const data = await res.json();
     generalResumeState.resumeData = data.resume_data;
+    generalResumeState.versionId = data.resume_version_id || null;
+    generalResumeState.truthGate = data.truth_gate || "off";
 
     stopProcessingState(generalResumeLoading);
     hideAllGeneralResumeStates();
     generalResumeDone.hidden = false;
+    if (generalResumeState.truthGate === "on") {
+      // Review first: the Download button appears only after the member has signed off the reviewed resume.
+      document.getElementById("general-resume-download-btn").hidden = true;
+      startGeneralReview(generalResumeState.versionId);
+    } else {
+      hideGeneralReview();
+      document.getElementById("general-resume-download-btn").hidden = false;
+    }
     carryLayoutChoice("general-build-layout", "general-resume-template");
     if (typeof loadResumeVersions === "function") loadResumeVersions();
     announceGeneralResume("Your general resume is ready.");
@@ -117,16 +129,21 @@ document.getElementById("general-resume-download-btn").addEventListener("click",
   }
   button.disabled = true;
   try {
-    const res = await authedFetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_data: generalResumeState.resumeData, ats_mode: false, template: document.getElementById("general-resume-template").value }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
+    const fileName = resumeFileName(generalResumeState.resumeData.name, "");
+    if (generalResumeState.truthGate === "on") {
+      // Only a signed resume is downloaded, and the server renders it from the stored, signed version.
+      if (!generalReview.isSigned()) throw new Error("Sign off this resume before you download it.");
+      await downloadSignedGeneralResume(fileName);
+    } else {
+      // Switch OFF: the stored version, rendered by the server for its owner. Never a copy of client-held content.
+      const template = encodeURIComponent(document.getElementById("general-resume-template").value);
+      const res = await authedFetch("/api/career/resume-versions/" + encodeURIComponent(generalResumeState.versionId) + "/download?ats_mode=false&template=" + template);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(formatErrorDetail(err.detail, `Request failed (${res.status})`));
+      }
+      saveResumeBlob(await res.blob(), fileName);
     }
-    saveResumeBlob(await res.blob(), resumeFileName(generalResumeState.resumeData.name, ""));
   } catch (err) {
     showResumeDownloadMessage(messageEl, resumeDownloadErrorText(err));
   } finally {
@@ -136,6 +153,9 @@ document.getElementById("general-resume-download-btn").addEventListener("click",
 
 document.getElementById("general-resume-again-btn").addEventListener("click", () => {
   generalResumeState.resumeData = null;
+  generalResumeState.versionId = null;
+  generalResumeState.truthGate = "off";
+  hideGeneralReview();
   document.getElementById("general-resume-name").value = "";
   document.getElementById("general-resume-contact").value = "";
   hideAllGeneralResumeStates();

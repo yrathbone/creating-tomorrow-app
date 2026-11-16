@@ -177,3 +177,27 @@ body.chrome-v6.dashboard-v4 .evidence-chip-question { border: 2px solid var(--c6
 body.chrome-v6.dashboard-v4 .evidence-chip-none { border-color: currentColor; color: var(--muted, inherit); }
 body.chrome-v6.dashboard-v4 .evidence-group { margin: 1rem 0; }
 body.chrome-v6.dashboard-v4 .evidence-group-heading { margin: 0 0 0.25rem; font-size: 1.05rem; color: var(--c6-blue); }
+
+
+/* Member resume review (general resume, switch ON). */
+/* Member resume review (general resume, switch ON). Palette tokens only; plain, keyboard-friendly layout. */
+body.chrome-v6.dashboard-v4 .truth-review { margin-top: 1rem; border-top: 1px solid var(--v4-blue-ring); padding-top: 0.75rem; }
+body.chrome-v6.dashboard-v4 .truth-review h4 { margin: 1rem 0 0.25rem; font-size: 1rem; }
+body.chrome-v6.dashboard-v4 .truth-list { margin: 0 0 0.5rem 1.25rem; padding: 0; }
+body.chrome-v6.dashboard-v4 .truth-list > li { margin-bottom: 0.9rem; }
+body.chrome-v6.dashboard-v4 .truth-item-text { font-weight: 600; margin: 0 0 0.2rem; }
+body.chrome-v6.dashboard-v4 .truth-item .hint { margin: 0.1rem 0; }
+body.chrome-v6.dashboard-v4 .truth-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.4rem; }
+body.chrome-v6.dashboard-v4 .truth-ack { display: flex; align-items: flex-start; gap: 0.4rem; flex-basis: 100%; }
+body.chrome-v6.dashboard-v4 .truth-ack input { margin-top: 0.2rem; }
+/* F6: the whole label is the target, at least 44px tall; the checkbox itself is 24px. */
+body.chrome-v6.dashboard-v4 .truth-ack { min-height: 44px; align-items: center; padding: 0.4rem 0.25rem; cursor: pointer; }
+body.chrome-v6.dashboard-v4 .truth-ack input[type="checkbox"] { width: 24px; height: 24px; margin: 0; flex: 0 0 auto; }
+body.chrome-v6.dashboard-v4 .truth-editor { flex-basis: 100%; }
+body.chrome-v6.dashboard-v4 .truth-editor textarea { width: 100%; max-width: 40rem; }
+body.chrome-v6.dashboard-v4 .truth-signoff { display: flex; align-items: flex-start; gap: 0.5rem; margin: 0.75rem 0; }
+body.chrome-v6.dashboard-v4 .truth-preview-line { margin: 0.2rem 0; }
+body.chrome-v6.dashboard-v4 .truth-error { color: var(--v4-blue-deep); font-weight: 600; }
+/* F10: the removed section is collapsed by default; the toggle is a 44px target. */
+body.chrome-v6.dashboard-v4 .truth-removed-toggle { min-height: 44px; margin: 0.4rem 0; }
+body.chrome-v6.dashboard-v4 .truth-removed-panel { margin-top: 0.4rem; }

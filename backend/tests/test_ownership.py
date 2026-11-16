@@ -157,7 +157,7 @@ class TokenVerification(OwnershipTestCase):
     def test_every_career_route_rejects_a_request_with_no_token(self):
         routes = [r for r in router.routes if isinstance(r, APIRoute)]
         # 43 routes through Phase 2A + 4 language routes + 2 profile routes (GET/PUT /profile) in Phase 2B = 49, + 2 resume-layout routes (GET/PUT /resume-layout, migration 0009) = 51
-        self.assertEqual(len(routes), 59, "a route was added or removed: update this guard on purpose")  # 59 = 58 + GET /auth-config (public, see PUBLIC_CAREER_ROUTES); 58 = 51 + POST /account/delete + GET /export/readable + POST skip/unskip on a scan + GET suggestions, POST suggestions/apply and /undo on a resume version
+        self.assertEqual(len(routes), 65, "a route was added or removed: update this guard on purpose")  # 65 = 64 + C-52 round 7 owner-only POST member-recheck (job-targeted, deterministic, no AI call)  # 64 = 59 + C-52 Step B owner-only review routes: GET review, POST decisions, GET preview, POST signoff, GET document (all require a token); 59 = 58 + GET /auth-config (public, see PUBLIC_CAREER_ROUTES); 58 = 51 + POST /account/delete + GET /export/readable + POST skip/unskip on a scan + GET suggestions, POST suggestions/apply and /undo on a resume version
         offenders = []
         for r in routes:
             if r.path in PUBLIC_CAREER_ROUTES:

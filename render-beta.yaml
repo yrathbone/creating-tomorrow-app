@@ -1,0 +1,42 @@
+# DRAFT — Founder beta Blueprint. NOT committed, NOT deployed, NOT approved for creation.
+# Use this file ONLY for the isolated beta. Never point render.yaml (production) at these values, and never use render.yaml here.
+# Every secret-like value is set in the Render dashboard for the beta service, never in this file.
+
+databases:
+  - name: creating-tomorrow-beta-db
+    plan: basic-256mb        # verify current plan name and price on render.com/pricing before creating
+    databaseName: ct_c52_beta_test
+    user: ct_beta
+
+services:
+  - type: web
+    name: creating-tomorrow-beta
+    runtime: python
+    plan: starter            # verify current price before creating
+    autoDeployTrigger: "off" # manual deploys only; a person deploys a reviewed commit from the dashboard
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: DATABASE_URL
+        fromDatabase:
+          name: creating-tomorrow-beta-db
+          property: connectionString
+      # Beta identity: a SEPARATE Cognito development pool. Values are entered in the dashboard after the pool is approved and created.
+      - key: COGNITO_REGION
+        value: us-east-2
+      - key: COGNITO_USER_POOL_ID
+        sync: false          # DEV pool ID only, set in dashboard. Must not be us-east-2_uLhNvjpep (production).
+      - key: COGNITO_APP_CLIENT_ID
+        sync: false          # DEV client ID only, set in dashboard. Must not be 5rfhr0o7799aa41a5odrt9i9hd (production).
+      # C-52 switch: ON only in the beta.
+      - key: CT_GENERAL_RESUME_TRUTH_GATE
+        value: "on"
+      # AI and external calls: left UNSET on the beta so no paid call or outbound AI request is possible.
+      # ANTHROPIC_API_KEY — intentionally absent.
+      # TURNSTILE_SECRET_KEY / TURNSTILE_SITE_KEY — intentionally absent (bot check off for the private beta).
+      # CT_JOB_DISCOVERY_ENABLED / CT_OPPORTUNITIES_ENABLED — intentionally absent (off).
+      - key: CT_ENV
+        value: beta

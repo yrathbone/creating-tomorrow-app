@@ -53,7 +53,7 @@ function world({ buildFails = false } = {}) {
     },
   };
   vm.createContext(sandbox);
-  vm.runInContext(read("js", "resumeDownload.js") + "\n" + read("js", "generalResume.js"), sandbox);
+  vm.runInContext(["resumeDownload.js", "resumeTruthModel.js", "generalResumeReview.js", "generalResume.js"].map((f) => read("js", f)).join("\n"), sandbox);
   return { els, log, builds: () => builds };
 }
 const focused = (w) => w.log.focus.map((f) => f.id);

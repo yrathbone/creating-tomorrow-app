@@ -64,6 +64,8 @@ TRACKING = re.compile(r"^(utm_.*|fbclid|gclid|trk.*|trackingid)$", re.IGNORECASE
 UNSUPPORTED_ADDRESS = "This web address isn’t supported yet. Please enter a standard HTTPS job link."
 # Bumped by hand whenever backend/resume_builder.py changes how a résumé is drawn. The approval fingerprint includes it, so a
 # renderer change cannot leave an old approval reading "current". Not automatic: maintainers must bump it with such a change.
+from career import member_review as mr
+
 RENDER_FINGERPRINT = "resume-builder-2026-11-11"
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 NUMERIC_LABEL = re.compile(r"^(0[xX][0-9a-fA-F]*|[0-9]+)$")   # decimal, octal or hex label: an IPv4 part in another notation
@@ -195,7 +197,8 @@ def _output_fingerprint(db: Session, v: ResumeVersion) -> str:
     layout = _preferred_layout(db, profile) if profile is not None else "classic"
     # Approved rendering = the visual (not ATS) document in the saved layout. The mode and template are stated here so that a
     # change to either is part of the approval. An ATS-mode or other-template download is a different file and is not approved.
-    payload = {"resume_data": v.resume_data or {}, "layout": layout, "template": layout, "ats_mode": False, "renderer": RENDER_FINGERPRINT}
+    content = {k: x for k, x in (v.resume_data or {}).items() if k not in ("truth_review", "final_signoff", "member_review", "member_signoff")}  # review state is not content
+    payload = {"resume_data": content, "layout": layout, "template": layout, "ats_mode": False, "renderer": RENDER_FINGERPRINT}
     data = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
@@ -408,21 +411,6 @@ async def update_opportunity(opportunity_id: int, req: OpportunityIn, current_us
     return _to_dict(db, o)
 
 
-def _freeze_approved_document(db: Session, profile: CareerProfile, o: Opportunity, v: ResumeVersion) -> None:
-    """Stores the exact DOCX the member is approving: the visual rendering in the saved layout. Replaces any earlier one."""
-    layout = _preferred_layout(db, profile)
-    try:
-        docx = build_resume_bytes(v.resume_data or {}, ats_mode=False, template=layout)
-    except Exception:
-        raise _bad("The résumé could not be prepared for approval. Please try again, or build the résumé again.")
-    db.query(OpportunityDocument).filter_by(opportunity_id=o.id).delete(synchronize_session=False)
-    db.add(OpportunityDocument(
-        opportunity_id=o.id, career_profile_id=profile.id, resume_version_id=v.id,
-        resume_snapshot=json.loads(json.dumps(v.resume_data or {})), layout=layout, template=layout, ats_mode=False,
-        renderer=RENDER_FINGERPRINT, content_sha256=hashlib.sha256(docx).hexdigest(), docx=docx,
-    ))
-
-
 def _drop_approved_documents(db: Session, opportunity_ids) -> None:
     ids = list(opportunity_ids)
     if ids:
@@ -438,34 +426,109 @@ async def set_approval(opportunity_id: int, req: ApprovalIn, current_user: User 
     """Changes only the approved résumé version of one saved link. Every other field is left exactly as stored, so a
     client holding an old copy of the link cannot overwrite newer details. Refused once an application is recorded."""
     profile = get_career_profile_or_404(db, current_user)
+    prep = _prepare_approval(db, profile, opportunity_id, req)     # no row lock is held while the document is rendered
     try:
-        o = _owned(db, profile, opportunity_id, lock=True)   # serialised with record-application and other edits
-        if req.approved_resume_version_id is None and o.approved_resume_version_id is None:
-            db.rollback()                                    # nothing to change; releases the lock
-            return _to_dict(db, o)
-        if req.approved_resume_version_id == o.approved_resume_version_id and o.approved_resume_version_id is not None:
-            same = db.query(ResumeVersion).filter_by(id=o.approved_resume_version_id, career_profile_id=profile.id).one_or_none()
-            if same is not None and _output_fingerprint(db, same) == o.approved_resume_hash:
-                db.rollback()                                # still current: nothing to change; releases the lock
-                return _to_dict(db, o)
-            # same version, but the approval is stale (content or layout changed): approving again refreshes it
-        if _application_still_linked(db, profile, o):
-            raise HTTPException(status_code=409, detail="An application is already recorded for this job, so its résumé approval cannot change. The application keeps the résumé it was recorded with.")
-        if req.approved_resume_version_id is None:
-            o.approved_resume_version_id, o.approved_resume_hash = None, None
-            _drop_approved_documents(db, [o.id])
-        else:
-            v = db.query(ResumeVersion).filter_by(id=req.approved_resume_version_id, career_profile_id=profile.id).one_or_none()
-            if v is None:
-                raise _bad("That résumé no longer exists.")
-            o.approved_resume_version_id, o.approved_resume_hash = v.id, _output_fingerprint(db, v)
-            _freeze_approved_document(db, profile, o, v)
-        db.commit()
+        _commit_approval(db, profile, opportunity_id, req, prep)   # one short transaction: lock, re-check the link state, write
     except Exception:
         db.rollback()
         raise
+    o = _owned(db, profile, opportunity_id)
     db.refresh(o)
     return _to_dict(db, o)
+
+
+_STALE_APPROVAL = "This résumé or its saved information changed while you were approving it. Review it again, then approve."
+_LINKED_APPROVAL = "An application is already recorded for this job, so its résumé approval cannot change. The application keeps the résumé it was recorded with."
+
+
+def _approval_token(db: Session, profile: CareerProfile, v: ResumeVersion) -> str:
+    """Everything an approval depends on, as one hash: rendering fingerprint (content and layout), saved facts, claim decisions, sign-off."""
+    from career import review_gate as rg
+    data = v.resume_data or {}
+    review = mr.review_of(data) or {}
+    facts = rg.build_facts(db, profile) if review else {}
+    payload = {"fingerprint": _output_fingerprint(db, v), "gate": rg.gate_token(rg.strip_review(data), review, facts) if review else "",
+               "signoff": mr.signoff_of(data)}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")).hexdigest()
+
+
+def _prepare_approval(db: Session, profile: CareerProfile, opportunity_id: int, req: ApprovalIn) -> dict:
+    """Phase 1, without a row lock: validate, take the snapshot and render the DOCX from it. Every result records the link
+    state it was decided against (base); the commit phase refuses if that state has changed since."""
+    from career import review_gate as rg
+    o = _owned(db, profile, opportunity_id)
+    base = (o.approved_resume_version_id, o.approved_resume_hash)
+    if req.approved_resume_version_id is None and o.approved_resume_version_id is None:
+        return {"action": "noop", "base": base}
+    if req.approved_resume_version_id == o.approved_resume_version_id and o.approved_resume_version_id is not None:
+        same = db.query(ResumeVersion).filter_by(id=o.approved_resume_version_id, career_profile_id=profile.id).one_or_none()
+        if same is not None and _output_fingerprint(db, same) == o.approved_resume_hash:
+            return {"action": "noop", "base": base}
+    if _application_still_linked(db, profile, o):
+        raise HTTPException(status_code=409, detail=_LINKED_APPROVAL)
+    if req.approved_resume_version_id is None:
+        return {"action": "clear", "base": base}
+    v = db.query(ResumeVersion).filter_by(id=req.approved_resume_version_id, career_profile_id=profile.id).one_or_none()
+    if v is None:
+        raise _bad("That résumé no longer exists.")
+    layout = _preferred_layout(db, profile)
+    data = v.resume_data or {}
+    signoff = None
+    if rg.gate_mode() == "on":
+        review, signoff = mr.review_of(data), mr.signoff_of(data)
+        if review is None:
+            raise HTTPException(status_code=409, detail="This résumé has not been checked against your saved information. Check it and sign it off before approving.")
+        draft, facts = rg.strip_review(data), rg.build_facts(db, profile)
+        if rg.content_hash(draft) != review.get("content_hash") or rg.facts_hash(facts) != review.get("facts_hash"):
+            raise HTTPException(status_code=409, detail="Your saved information changed after this résumé was checked. Check it again before approving.")
+        if not signoff:
+            raise HTTPException(status_code=409, detail="Sign off this résumé after reviewing it, then approve it.")
+        snapshot = rg.finalize(draft, review)
+        if (rg.content_hash(snapshot) != signoff.get("finalized_hash") or rg.facts_hash(facts) != signoff.get("facts_hash")
+                or layout != signoff.get("layout")):
+            raise HTTPException(status_code=409, detail="This résumé changed after you signed it off. Preview and sign off again.")
+    else:
+        snapshot = rg.strip_review(json.loads(json.dumps(data)))     # OFF and SHADOW: the content as generated, review keys excluded
+    try:
+        docx = build_resume_bytes(snapshot, ats_mode=False, template=layout)
+    except Exception:
+        raise _bad("The résumé could not be prepared for approval. Please try again, or build the résumé again.")
+    if signoff is not None and rg.rendered_hash(docx) != signoff.get("rendered_text_hash"):
+        raise HTTPException(status_code=409, detail="The document no longer matches what you signed off. Preview and sign off again.")
+    return {"action": "approve", "base": base, "vid": v.id, "fingerprint": _output_fingerprint(db, v),
+            "token": _approval_token(db, profile, v), "snapshot": snapshot, "layout": layout, "docx": docx}
+
+
+def _commit_approval(db: Session, profile: CareerProfile, opportunity_id: int, req: ApprovalIn, prep: dict) -> None:
+    """Phase 2: a short transaction. Locks the link and the version, re-checks everything the snapshot depended on, then writes the
+    approval and its frozen document together. Any difference refuses the approval and writes nothing."""
+    o = _owned(db, profile, opportunity_id, lock=True)     # serialised with record-application and other edits
+    # Whatever the request was decided against must still be the stored link state. A newer approval (or a clear) made
+    # after the snapshot is never overwritten or erased by this request, including for no-op and clear requests.
+    if (o.approved_resume_version_id, o.approved_resume_hash) != tuple(prep["base"]):
+        raise HTTPException(status_code=409, detail=_STALE_APPROVAL)
+    if prep["action"] == "noop":
+        db.commit()     # an unchanged approval is answered as before, even after an application is recorded; nothing is written
+        return
+    if _application_still_linked(db, profile, o):
+        raise HTTPException(status_code=409, detail=_LINKED_APPROVAL)
+    if prep["action"] == "clear":
+        o.approved_resume_version_id, o.approved_resume_hash = None, None
+        _drop_approved_documents(db, [o.id])
+        db.commit()
+        return
+    v = db.query(ResumeVersion).filter_by(id=prep["vid"], career_profile_id=profile.id).with_for_update().one_or_none()
+    if v is None or _approval_token(db, profile, v) != prep["token"]:
+        raise HTTPException(status_code=409, detail=_STALE_APPROVAL)
+    db.query(OpportunityDocument).filter_by(opportunity_id=o.id).delete(synchronize_session=False)
+    db.add(OpportunityDocument(
+        opportunity_id=o.id, career_profile_id=profile.id, resume_version_id=v.id,
+        resume_snapshot=json.loads(json.dumps(prep["snapshot"])), layout=prep["layout"], template=prep["layout"], ats_mode=False,
+        renderer=RENDER_FINGERPRINT, content_sha256=hashlib.sha256(prep["docx"]).hexdigest(), docx=prep["docx"],
+    ))
+    o.approved_resume_version_id, o.approved_resume_hash = v.id, prep["fingerprint"]
+    db.commit()
+
 
 
 @router.delete("/opportunities/{opportunity_id}")

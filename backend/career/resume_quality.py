@@ -16,6 +16,7 @@ Readability checks (limits a person can feel when reading):
   - two or more dashes in one sentence (the "- from discovery through implementation -" run-on pattern);
   - the same long word three times in one sentence.
 """
+import copy
 import datetime
 import re
 
@@ -512,3 +513,661 @@ def resolve_verb_upgrades(resume_data: dict, trusted_evidence: str) -> tuple[dic
         experience.append({**job, "bullets": bullets})
     out["experience"] = experience
     return out, restored, held
+
+
+# ---------------------------------------------------------------------------------------------------------------------------------
+# General-profile truthfulness checker (C-52 Step A; revised 2026-11-14 after Data's independent review).
+# Deterministic: no AI, no paid call, no database. It never modifies its input. It is NOT wired into generation, download or approval.
+#
+# Classifications, each with a location, a source reference where one exists, and an explanation:
+#   SUPPORTED   established by saved member information (saved skill, held title, saved employer, dates, school, credential)
+#   DERIVED     supported by a specific source sentence through an explicit rule (DERIVATION_RULES, TITLE_FORMS)
+#   UNSUPPORTED insufficient evidence: must not appear as an established fact, qualification, amount or scope
+#   UNCERTAIN   partly supported, or a precision the saved data does not give (e.g. a month when only a year is saved): suggest it
+#               to the member for confirmation; never insert it automatically
+#
+# Limits: word lists and token matching are deterministic signals, not semantic truth. Every UNCERTAIN and UNSUPPORTED finding must be
+# resolved by the member (confirm, edit or remove) before approval or download (see Step C design). Absence of a finding is not proof.
+#
+# Facts (plain data built by the caller from saved career data):
+#   {"roles": [{"id", "title", "organization", "years": [int],
+#               "start": (year, month|None) and "end": (year, month|None) or "present"   (optional; month only if saved),
+#               "text": "description, bullets and tied skills for the role"}],
+#    "education": [{"school", "degree", "text"}],
+#    "skills": [str]}
+# Without start/end, only years are known: a generated month is then UNCERTAIN, never assumed or accepted.
+# ---------------------------------------------------------------------------------------------------------------------------------
+
+SUPPORTED = "SUPPORTED"
+DERIVED = "DERIVED"
+UNSUPPORTED = "UNSUPPORTED"
+UNCERTAIN = "UNCERTAIN"
+_RANK = {SUPPORTED: 0, DERIVED: 0, UNCERTAIN: 1, UNSUPPORTED: 2}
+
+# Explicit derivation rule: a skill label is DERIVED only if one source sentence has a verb stem AND a process-object stem.
+DERIVATION_RULES = [
+    {"label": "Process Improvement", "verbs": ("improv", "streamlin", "refin", "enhanc"),
+     "objects": ("checklist", "process", "procedure", "workflow", "template", "tracker", "documentation", "routine", "practice", "system")},
+    # Approved 2026-11-15 (Data). The verb and object must be in the same saved statement. A statement that is hypothetical,
+    # negated or planned never supports the skill. This is DERIVED, never SUPPORTED, and it promotes no title or credential.
+    {"label": "Scheduling", "verbs": ("schedul",), "objects": ("rota", "shift", "roster", "timetabl"), "unit": "statement",
+     "reject": ("not", "no", "never", "didn", "don", "without", "cannot", "unable", "nor", "would", "could", "might", "may", "will",
+                "should", "plan", "planned", "planning", "hope", "hoping", "aim", "aiming", "want", "wanted", "if", "seeking",
+                "learn", "learning")},
+]
+# A held title "X Coordinator" supports the skill "X Coordination": the same activity, named as a skill.
+TITLE_FORMS = {"coordinator": "coordination", "manager": "management", "administrator": "administration", "analyst": "analysis"}
+
+ROLE_NOUNS = {"coordinator", "manager", "analyst", "specialist", "director", "engineer", "officer", "lead", "assistant",
+              "administrator", "representative", "supervisor", "consultant", "technician", "associate", "developer", "advisor", "chief"}
+CREDENTIAL_UPGRADES = ("certified", "licensed", "accredited")
+CREDENTIAL_TYPES = ("certificate", "certification", "diploma", "degree", "associate", "bachelor", "master", "doctorate")
+SCOPE_WORDS = ("administrative", "operations", "leadership", "managed", "led", "oversaw", "supervised", "directed")
+BULLET_SCOPE_WORDS = SCOPE_WORDS + ("budget", "owned", "owner", "headcount")
+SOFT_CLAIM_PATTERNS = (r"dependable", r"reliable", r"fast-paced", r"detail-driven", r"results-driven", r"hard-working",
+                       r"highly motivated", r"track record", r"proven", r"passionate", r"dynamic")
+_STOP = {"a", "an", "the", "and", "of", "for", "to", "in", "with", "on", "at", "by", "from", "or", "as", "is", "was", "be", "that",
+         "this", "it", "its", "their", "his", "her", "who", "while", "across", "through", "into", "over", "per", "about", "such",
+         "professional", "experience", "skilled", "known", "experienced", "background", "role", "roles", "work",
+         "working", "service", "oriented", "focused", "driven", "fast", "paced", "detail", "detailed", "track", "record"}
+_MONTH_NAMES = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6, "jul": 7, "aug": 8, "sep": 9, "sept": 9, "oct": 10,
+                "nov": 11, "dec": 12, "january": 1, "february": 2, "march": 3, "april": 4, "june": 6, "july": 7, "august": 8,
+                "september": 9, "october": 10, "november": 11, "december": 12}
+_NUMBER_WORDS = {w: str(i) for i, w in enumerate(
+    ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen",
+     "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"])}
+_SCALES = {"million": "million", "billion": "billion", "thousand": "thousand", "k": "thousand", "m": "million",
+           "percent": "%", "%": "%"}
+_AMOUNT = re.compile(r"(?<![A-Za-z0-9])\$?(\d[\d,]*(?:\.\d+)?)\s*(million|billion|thousand|percent|%|k\b|m\b)?", re.I)
+_MM_YY = re.compile(r"\b(\d{1,2})/(\d{2})\b")
+_MON_YYYY = re.compile(r"\b([A-Za-z]{3,9})\.?\s+(\d{4})\b")
+_YYYY = re.compile(r"\b(19\d{2}|20\d{2})\b")
+_CAP_WORD = re.compile(r"[A-Za-z][A-Za-z0-9&.\-]*")
+
+
+def _content_stems(text: str) -> set[str]:
+    return {_stem(w) for w in _TOKEN.findall(text or "") if w.lower() not in _STOP and len(w) > 2}
+
+
+def _covered(stems: set[str], evidence: set[str]) -> set[str]:
+    """Stems the evidence supports: equal, or sharing a prefix of at least 5 letters up to 7 (coordination ~ coordinator)."""
+    out = set()
+    for s in stems:
+        for e in evidence:
+            if s == e:
+                out.add(s)
+                break
+            n = min(len(s), len(e), 7)
+            if n >= 5 and s[:n] == e[:n]:
+                out.add(s)
+                break
+    return out
+
+
+def _amounts(text: str) -> set[tuple[str, str]]:
+    """(number, scale) pairs: '$10 million' -> ('10', 'million'); 'six' -> ('6', ''); '40%' -> ('40', '%')."""
+    out = set()
+    for m in _AMOUNT.finditer(text or ""):
+        out.add((_number_key(m.group(1)), _SCALES.get((m.group(2) or "").lower(), "")))
+    for w in _TOKEN.findall(text or ""):
+        if w.lower() in _NUMBER_WORDS:
+            out.add((_NUMBER_WORDS[w.lower()], ""))
+    return out
+
+
+def _fmt(amount: tuple[str, str]) -> str:
+    num, scale = amount
+    return f"{num} {scale}".strip()
+
+
+def _proper_names(sentence: str) -> list[str]:
+    """Capitalised or acronym words that are not the first word of the sentence (a named tool, employer or product)."""
+    names = []
+    for i, m in enumerate(_CAP_WORD.finditer(sentence or "")):
+        w = m.group(0).strip(".-&")
+        if i == 0 or len(w) < 2 or w.lower() in _STOP or w.lower() in _MONTH_NAMES or w.lower() == "i":
+            continue
+        if w[:1].isupper():
+            names.append(w)
+    return names
+
+
+def _years_in(text: str) -> set[int]:
+    years = {int(y) for y in _YYYY.findall(text or "")}
+    for _month, yy in _MM_YY.findall(text or ""):
+        years.add(2000 + int(yy))
+    return years
+
+
+def _parse_point(part: str):
+    part = part.strip()
+    if re.search(r"\b(present|current|now)\b", part, re.I):
+        return "present"
+    m = _MM_YY.search(part)
+    if m and 1 <= int(m.group(1)) <= 12:
+        return (2000 + int(m.group(2)), int(m.group(1)))
+    m = _MON_YYYY.search(part)
+    if m and m.group(1).lower() in _MONTH_NAMES:
+        return (int(m.group(2)), _MONTH_NAMES[m.group(1).lower()])
+    m = _YYYY.search(part)
+    if m:
+        return (int(m.group(1)), None)
+    return None
+
+
+def _parse_range(entry: str, organization: str = ""):
+    """(start, end) parsed from an experience subtitle, or None if no dates. The employer name is removed first."""
+    body = entry or ""
+    if organization:
+        body = re.sub(re.escape(organization), " ", body, flags=re.I)
+    points = [p for p in (_parse_point(x) for x in re.split(r"\s*(?:–|—|-|\bto\b)\s*", body) if x.strip()) if p is not None]
+    if not points:
+        return None
+    return (points[0] if points[0] != "present" else None), (points[1] if len(points) > 1 else None)
+
+
+def _source_range(role: dict):
+    """Saved (start, end). Month is used only where saved; years alone give year-level dates."""
+    if role.get("start") is not None or role.get("end") is not None:
+        return role.get("start"), role.get("end")
+    years = sorted({int(y) for y in role.get("years") or []})
+    if not years:
+        return None, None
+    if len(years) == 1:
+        return (years[0], None), None
+    return (years[0], None), (years[-1], None)
+
+
+def _compare_point(gen, src, label: str):
+    """Classify one generated date against one saved date. Never assumes a month the saved data does not contain."""
+    if src is None:
+        return UNCERTAIN, f"{label}: no saved {label} date to compare; confirm with the member."
+    if gen == "present":
+        return (UNSUPPORTED, f"{label}: states an ongoing role; saved data has an end date.") if src != "present" else (SUPPORTED, f"{label} matches.")
+    gy, gm = gen
+    sy, sm = src
+    if gy != sy:
+        return UNSUPPORTED, f"{label} year {gy} differs from the saved {sy}."
+    if gm is None:
+        return SUPPORTED, f"{label} year matches the saved data."
+    if sm is None:
+        return UNCERTAIN, f"{label} month is not in the saved data (only the year is saved). No month is assumed; confirm with the member."
+    if gm != sm:
+        return UNSUPPORTED, f"{label} month differs from the saved data."
+    return SUPPORTED, f"{label} month and year match the saved data."
+
+
+def _role_ref(role: dict) -> str:
+    return f"role {role.get('id', '?')} ({role.get('title', '')}, {role.get('organization', '')})"
+
+
+def _match_role(job: dict, roles: list[dict]):
+    """Match a generated experience entry to one saved role by title AND employer, then by dates if the same title and employer repeat.
+    Returns (role, None) or (None, reason) with reason in {title, employer, ambiguous}."""
+    title = (job.get("title") or "").strip()
+    subtitle = job.get("subtitle") or ""
+    same_title = [r for r in roles if (r.get("title") or "").strip() == title]
+    if not same_title:
+        return None, "title"
+    same_org = [r for r in same_title if (r.get("organization") or "").strip() and r["organization"].lower() in subtitle.lower()]
+    if not same_org:
+        return None, "employer"
+    if len(same_org) == 1:
+        return same_org[0], None
+    parsed = _parse_range(subtitle, "")
+    if parsed and parsed[0]:
+        by_year = [r for r in same_org if _source_range(r)[0] and _source_range(r)[0][0] == parsed[0][0]]
+        if len(by_year) == 1:
+            return by_year[0], None
+    return None, "ambiguous"
+
+
+def _check_roles(resume: dict, facts: dict) -> list[dict]:
+    """Title, employer and dates of each generated experience entry against its matched saved role (exact where saved)."""
+    findings = []
+    roles = facts.get("roles") or []
+    for j_i, job in enumerate(resume.get("experience") or []):
+        where = f"experience[{j_i}]"
+        title = (job.get("title") or "").strip()
+        subtitle = job.get("subtitle") or ""
+        role, reason = _match_role(job, roles)
+        if role is None:
+            text = {"title": "Job title does not match any saved role; titles must be exact.",
+                    "employer": "No saved role with this title is at the employer named in the entry.",
+                    "ambiguous": "Matches more than one saved role (same title and employer); the member must choose the correct one."}[reason]
+            cls = UNCERTAIN if reason == "ambiguous" else UNSUPPORTED
+            findings.append(_finding(where, title, cls, None, text))
+            continue
+        ref = _role_ref(role)
+        worst, notes = SUPPORTED, []
+        src_start, src_end = _source_range(role)
+        parsed = _parse_range(subtitle, role.get("organization", ""))
+        if parsed is None or (parsed[0] is None and parsed[1] is None):
+            # Absent or unreadable dates can never be verified: the member must confirm them (no month is ever invented).
+            worst = UNCERTAIN
+            notes.append("The entry has no readable employment dates, so they cannot be verified. The member must confirm them.")
+        else:
+            gen_start, gen_end = parsed
+            if gen_start is not None:
+                cls, msg = _compare_point(gen_start, src_start, "start")
+                notes.append(msg)
+                worst = max(worst, cls, key=_RANK.get)
+            elif src_start is not None:
+                worst = max(worst, UNCERTAIN, key=_RANK.get)
+                notes.append("Start date is missing from the entry; the member must confirm it.")
+            if gen_end is not None:
+                cls, msg = _compare_point(gen_end, src_end, "end")
+                notes.append(msg)
+                worst = max(worst, cls, key=_RANK.get)
+            elif src_end is not None:
+                worst = max(worst, UNCERTAIN, key=_RANK.get)
+                notes.append("End date is missing from the entry; the member must confirm it.")
+        if worst == SUPPORTED:
+            notes.insert(0, "Title and employer match the saved role.")
+        findings.append(_finding(where, subtitle or title, worst, ref, " ".join(notes)))
+    return findings
+
+
+def _ordered_stems(text: str) -> list[str]:
+    """Content stems in their original order, with number words written as digits ('six' and '6' compare equal)."""
+    out = []
+    for w in _TOKEN.findall(text or ""):
+        low = w.lower()
+        if low in _NUMBER_WORDS:
+            out.append(_NUMBER_WORDS[low])
+        elif low not in _STOP and len(low) > 2:
+            out.append(_stem(low))
+    return out
+
+
+def _norm_text(text: str) -> str:
+    return " ".join(_TOKEN.findall((text or "").lower()))
+
+
+# Words whose deletion can reverse or materially change a claim: negation, and qualifiers of responsibility, assistance, limits and scope.
+_NEGATION_TOKENS = {"not", "no", "never", "without", "nor", "none", "neither", "cannot", "unable", "didn", "don", "doesn", "isn",
+                    "wasn", "weren", "won", "couldn", "wouldn", "shouldn", "t"}
+_QUALIFIER_TOKENS = {"assist", "assisted", "assisting", "assistance", "help", "helped", "helping", "support", "supported",
+                     "supporting", "contribute", "contributed", "contributing", "only", "limited", "limit", "partial", "partially",
+                     "partly", "part", "some", "minor", "occasional", "occasionally", "shared", "alongside", "supervised",
+                     "supervision", "under", "deputy", "backup", "behalf"}
+
+
+def _tokens(text: str) -> set[str]:
+    return {w.lower() for w in _TOKEN.findall(text or "")}
+
+
+def _deletion_changes_meaning(bullet: str, source: str) -> bool:
+    """True if the bullet drops a negation or a meaning-changing qualifier that the saved sentence contains."""
+    return bool(((_tokens(source) & (_NEGATION_TOKENS | _QUALIFIER_TOKENS)) - _tokens(bullet)))
+
+
+def _is_subsequence(needle: list[str], haystack: list[str]) -> bool:
+    it = iter(haystack)
+    return all(any(h == n for h in it) for n in needle)
+
+
+def _evidence_preserving_sentence(bullet: str, sentences: list[str]):
+    """The saved sentence this bullet reproduces exactly, or by deleting words only (same words, same order, nothing added).
+    Anything else, including reordered or substituted words, is not evidence-preserving and returns None."""
+    norm = _norm_text(bullet)
+    for s in sentences:
+        if _norm_text(s) == norm:
+            return s
+    b = _ordered_stems(bullet)
+    if not b:
+        return None
+    for s in sentences:
+        src = _ordered_stems(s)
+        if set(b) <= set(src) and _is_subsequence(b, src) and not _deletion_changes_meaning(bullet, s):
+            return s
+    return None
+
+
+def _narrow_source(bullet: str, kept: str) -> str:
+    """The single saved line within `kept` that the bullet matches under the same rule. Falls back to `kept` when no single line does."""
+    for unit in _statement_units(kept):
+        if unit != kept and _evidence_preserving_sentence(bullet, [unit]) is not None:
+            return unit
+    return kept
+
+
+def _check_bullets(resume: dict, facts: dict) -> list[dict]:
+    """Bullet-level checks for entries matched to a saved role. SUPPORTED only for an exact or evidence-preserving match
+    (words kept, in saved order, nothing added). Word overlap alone is never enough: rearranged or substituted wording is
+    UNCERTAIN for member review. Invented amounts, scope and credentials are UNSUPPORTED. Unrecognised names are UNCERTAIN."""
+    findings = []
+    roles = facts.get("roles") or []
+    for j_i, job in enumerate(resume.get("experience") or []):
+        role, _ = _match_role(job, roles)
+        if role is None:
+            continue  # the entry is already reported by _check_roles
+        src_text = " ".join([role.get("title", ""), role.get("organization", ""), role.get("text", "")])
+        src_stems = _content_stems(src_text)
+        src_amounts = _amounts(src_text)
+        src_low = src_text.lower()
+        sentences = _sentences(role.get("text", ""))
+        for k, bullet in enumerate(job.get("bullets") or []):
+            where = f"experience[{j_i}].bullets[{k}]"
+            text = str(bullet)
+            tokens = {w.lower() for w in _TOKEN.findall(text)}
+            issues = []
+            for amount in sorted(_amounts(text) - src_amounts):
+                issues.append((UNSUPPORTED, f"States the amount '{_fmt(amount)}', which the saved data does not contain."))
+            for scope in BULLET_SCOPE_WORDS:
+                if scope in tokens and _stem(scope) not in src_stems:
+                    issues.append((UNSUPPORTED, f"Claims scope ('{scope}') that the saved data does not describe."))
+            for word in CREDENTIAL_UPGRADES:
+                if word in tokens and word not in src_low:
+                    issues.append((UNSUPPORTED, f"States a '{word}' credential that the saved data does not contain."))
+            added_negation = (tokens & _NEGATION_TOKENS) - _tokens(src_text)
+            if added_negation:
+                issues.append((UNCERTAIN, "Adds a negation (" + ", ".join(sorted(added_negation)) + ") that the saved data does not contain. Confirm the meaning."))
+            for name in _proper_names(text):
+                if not _covered({_stem(name.lower())}, src_stems):
+                    issues.append((UNCERTAIN, f"Names '{name}', which is not in the saved data. Confirm it with the member or remove it."))
+            stems = _content_stems(text)
+            if stems:
+                covered = _covered(stems, src_stems)
+                if not covered:
+                    issues.append((UNSUPPORTED, "None of this bullet's content is in the saved data for this role."))
+                elif covered != stems:
+                    missing = ", ".join(sorted(stems - covered))
+                    issues.append((UNCERTAIN, f"Only part is in the saved data (not found: {missing}). Confirm with the member."))
+            if not issues:
+                kept = _evidence_preserving_sentence(text, sentences)
+                if kept is not None:
+                    # Display only: name the saved line the bullet came from, not the whole role block. The classification above is unchanged.
+                    shown = _narrow_source(text, kept)
+                    findings.append(_finding(where, text, SUPPORTED, f"{_role_ref(role)}: \"{shown}\"",
+                                             "Exact or evidence-preserving match: the saved words, in saved order, with nothing added."))
+                else:
+                    issues.append((UNCERTAIN, "Built from saved words but rearranged or reworded, so the meaning may differ. "
+                                              "Confirm with the member before this is treated as established."))
+            for cls, msg in issues:
+                findings.append(_finding(where, text, cls, _role_ref(role), msg))
+    return findings
+
+
+def _finding(where, text, classification, source, explanation):
+    return {"where": where, "text": text, "classification": classification, "source": source, "explanation": explanation}
+
+
+def _source_refs(facts: dict) -> list[tuple[str, str]]:
+    refs = []
+    for role in facts.get("roles") or []:
+        refs.append((_role_ref(role), role.get("text", "")))
+    for i, edu in enumerate(facts.get("education") or []):
+        refs.append((f"education {i + 1} ({edu.get('school', '')})", edu.get("text", "")))
+    for cert in facts.get("certifications") or []:
+        refs.append((f'certification "{cert.get("name", "")}"', " ".join(x for x in (cert.get("name", ""), cert.get("issuer", "")) if x)))
+    return refs
+
+
+def _sentences(text: str) -> list[str]:
+    return [s.strip() for s in _SENTENCE_SPLIT.split(text or "") if s.strip()]
+
+
+def _statement_units(text: str) -> list[str]:
+    """The sentences of a saved text, and each of its lines: a saved bullet line is a statement of its own. An exact repeat of one of
+    these units is the same wording in the same saved context (its role, education or certification), so it can be SUPPORTED."""
+    units = []
+    for line in str(text or "").splitlines():
+        units.extend(_sentences(line))
+    return units
+
+
+def _all_source_stems(facts: dict) -> set[str]:
+    stems: set[str] = set()
+    for _, text in _source_refs(facts):
+        stems |= _content_stems(text)
+    for skill in facts.get("skills") or []:
+        stems |= _content_stems(skill)
+    for role in facts.get("roles") or []:
+        stems |= _content_stems(role.get("title", "")) | _content_stems(role.get("organization", ""))
+    for edu in facts.get("education") or []:
+        stems |= _content_stems(edu.get("school", "")) | _content_stems(edu.get("degree", ""))
+    return stems
+
+
+def _all_source_amounts(facts: dict) -> set[tuple[str, str]]:
+    amounts: set[tuple[str, str]] = set()
+    for _, text in _source_refs(facts):
+        amounts |= _amounts(text)
+    return amounts
+
+
+def _check_skills(resume: dict, facts: dict) -> list[dict]:
+    findings = []
+    saved = [_content_stems(s) for s in facts.get("skills") or []]
+    roles = facts.get("roles") or []
+    sentences = [(ref, s) for ref, text in _source_refs(facts) for s in _sentences(text)]
+    # A rule marked "unit": "statement" reads each saved line as its own statement, so a saved bullet without a final stop never runs
+    # into the next line. Other rules keep their existing sentence reading.
+    statements_ = [(ref, s) for ref, text in _source_refs(facts) for s in _statement_units(text)]
+    for i, skill in enumerate(resume.get("skills") or []):
+        where, label = f"skills[{i}]", str(skill).strip()
+        stems = _content_stems(label)
+        if stems and any(stems == s for s in saved if s):
+            findings.append(_finding(where, label, SUPPORTED, "saved skill", "Matches a skill the member saved."))
+            continue
+        derived = None
+        for role in roles:
+            tw = (role.get("title") or "").split()
+            if len(tw) >= 2 and tw[-1].lower() in TITLE_FORMS and label.lower() == " ".join(tw[:-1]).lower() + " " + TITLE_FORMS[tw[-1].lower()]:
+                derived = (_role_ref(role) + " title", "Named from a held role title (the same activity, as a skill).")
+                break
+        if derived is None:
+            for rule in DERIVATION_RULES:
+                if label.lower() != rule["label"].lower():
+                    continue
+                for ref, sentence in (statements_ if rule.get("unit") == "statement" else sentences):
+                    toks = _token_set(sentence)
+                    if _rule_rejects(sentence, rule):
+                        continue
+                    if _has_prefix(toks, rule["verbs"]) and _has_prefix(toks, rule["objects"]):
+                        derived = (f"{ref}: \"{sentence}\"", f"Derived by rule '{rule['label']}': a verb and a process object in one source sentence.")
+                        break
+                if derived is None and "reject" not in rule and any(_has_prefix(_token_set(s), rule["verbs"]) for _, s in sentences):
+                    findings.append(_finding(where, label, UNCERTAIN, None,
+                                             "The source describes an improvement but names no clear process. Confirm with the member before listing."))
+                    derived = ("uncertain", "")
+        if derived is None:
+            findings.append(_finding(where, label, UNSUPPORTED, None,
+                                     "No saved skill, held title or source sentence supports this skill. Do not list it as a qualification."))
+        elif derived[0] != "uncertain":
+            findings.append(_finding(where, label, DERIVED, derived[0], derived[1]))
+    return findings
+
+
+def _rule_rejects(sentence: str, rule: dict) -> bool:
+    """True when a derivation rule's own context words (negation, hypothesis, plan) make the statement unfit as evidence."""
+    words = set(re.findall(r"[a-z]+", sentence.lower()))
+    return any(w in words for w in rule.get("reject", ()))
+
+
+def _has_prefix(token_stems: set[str], prefixes) -> bool:
+    return any(t.startswith(p) for t in token_stems for p in prefixes)
+
+
+def _check_headline(resume: dict, facts: dict) -> list[dict]:
+    headline = (resume.get("headline") or "").strip()
+    if not headline:
+        return []
+    held = {(r.get("title") or "").lower(): (r.get("title") or "") for r in facts.get("roles") or []}
+    evidence = _all_source_stems(facts)
+    findings = []
+    for seg_i, seg in enumerate(p.strip() for p in headline.split("|") if p.strip()):
+        where = f"headline[{seg_i}]"
+        words = seg.split()
+        titled = len(words) >= 2 and all(w[:1].isupper() for w in words if w[:1].isalpha())
+        if titled and words[-1].lower() in ROLE_NOUNS:
+            if seg.lower() in held:
+                findings.append(_finding(where, seg, SUPPORTED, f"held title \"{held[seg.lower()]}\"", "Matches a held role title."))
+            else:
+                findings.append(_finding(where, seg, UNSUPPORTED, None,
+                                         "Presented as a held job title, but the saved roles contain no such title. Use a held title or a descriptive phrase."))
+            continue
+        stems = _content_stems(seg)
+        if not stems:
+            continue
+        covered = _covered(stems, evidence)
+        exact_skill = next((sk for sk in (facts.get("skills") or []) if _norm_text(sk) == _norm_text(seg)), None)
+        if seg.lower() in held:
+            findings.append(_finding(where, seg, SUPPORTED, f"held title \"{held[seg.lower()]}\"", "Matches a held role title exactly."))
+        elif exact_skill is not None:
+            # A saved skill does not make the same words true as a headline, which states a professional title or claim (F3).
+            findings.append(_finding(where, seg, UNCERTAIN, None, HEADLINE_SKILL_EXPLANATION))
+        elif not covered:
+            findings.append(_finding(where, seg, UNSUPPORTED, None, "None of this headline's content words are in the member's saved data."))
+        elif covered == stems:
+            # Word overlap alone is never support: the wording is plausible but not an exact saved item, so the member confirms it.
+            findings.append(_finding(where, seg, UNCERTAIN, None,
+                                     "Built from words in your saved data, but not an exact match to it. Confirm it is true for you."))
+        else:
+            missing = ", ".join(sorted(stems - covered))
+            findings.append(_finding(where, seg, UNCERTAIN, None, f"Only part is in the member's saved data (not found: {missing}). Confirm with the member."))
+    return findings
+
+
+HEADLINE_SKILL_EXPLANATION = ("This matches a skill you saved, but a headline states a professional title or claim, not a skill. "
+                              "Confirm it is true for you before it is used.")
+
+_CONNECTORS = {"holds", "has", "a", "an", "the", "earned", "obtained", "completed", "in"}
+
+
+def _exact_saved_statement(sentence: str, saved_sentences: list, saved_facts: list):
+    """The saved source for a sentence that exactly repeats saved information (a saved sentence, or a saved credential or title with
+    only connector words such as 'Holds a'), or None."""
+    norm = _norm_text(sentence)
+    for src in saved_sentences:
+        if _norm_text(src) == norm:
+            return f"saved text: \"{src}\""
+    words = [w for w in norm.split() if w not in _CONNECTORS]
+    for fact in saved_facts:
+        fw = [w for w in _norm_text(fact).split() if w not in _CONNECTORS]
+        if fw and words == fw:
+            return f"saved credential or title: \"{fact}\""
+    return None
+
+
+def _check_summary(resume: dict, facts: dict) -> list[dict]:
+    evidence = _all_source_stems(facts)
+    saved_sentences = [s for _, text in _source_refs(facts) for s in _statement_units(text)]
+    saved_facts = [c.get("name", "") for c in facts.get("certifications") or [] if c.get("name")]
+    saved_facts += [e.get("degree", "") for e in facts.get("education") or [] if e.get("degree")] +                   [r.get("title", "") for r in facts.get("roles") or [] if r.get("title")]
+    evidence_amounts = _all_source_amounts(facts)
+    evidence_text = " ".join(t for _, t in _source_refs(facts)).lower() + " " + " ".join(str(s) for s in facts.get("skills") or []).lower()
+    edu_text = " ".join((e.get("degree", "") + " " + e.get("text", "")) for e in facts.get("education") or []).lower()
+    edu_text += " " + " ".join(str(c.get("name", "")) for c in facts.get("certifications") or []).lower()
+    findings = []
+    for s_i, sentence in enumerate(_sentences(resume.get("summary") or "")):
+        where = f"summary[{s_i}]"
+        low = sentence.lower()
+        tokens = {w.lower() for w in _TOKEN.findall(sentence)}
+        for amount in sorted(_amounts(sentence) - evidence_amounts):
+            findings.append(_finding(where, sentence, UNSUPPORTED, None, f"States the amount '{_fmt(amount)}', which the saved data does not contain."))
+        for word in CREDENTIAL_UPGRADES:
+            if word in tokens and word not in edu_text:
+                findings.append(_finding(where, sentence, UNSUPPORTED, None,
+                                         f"States a '{word}' credential; the saved education is a certificate or degree. Use the credential type as saved."))
+        for pattern in SOFT_CLAIM_PATTERNS:
+            if re.search(pattern, low) and not re.search(pattern, evidence_text):
+                findings.append(_finding(where, sentence, UNSUPPORTED, None,
+                                         f"Personal or performance claim ('{pattern.replace('-', ' ')}') with no source in the member's data."))
+        for scope in SCOPE_WORDS:
+            if scope in tokens and _stem(scope) not in evidence:
+                findings.append(_finding(where, sentence, UNSUPPORTED, None,
+                                         f"Overstates the member's scope ('{scope}') beyond the saved data."))
+        local = []
+        stems = _content_stems(sentence)
+        if stems:
+            covered = _covered(stems, evidence)
+            if not covered:
+                local.append(_finding(where, sentence, UNSUPPORTED, None, "No content of this sentence is in the member's saved data."))
+        if not any(f["classification"] == UNSUPPORTED for f in local) and not any(f["classification"] == UNSUPPORTED for f in findings if f["where"] == where):
+            exact = _exact_saved_statement(sentence, saved_sentences, saved_facts)
+            if exact is not None:
+                local = [_finding(where, sentence, SUPPORTED, exact, "Matches your saved information exactly.")]
+            else:
+                local = [f for f in local if f["classification"] == UNSUPPORTED] or [_finding(where, sentence, UNCERTAIN, None,
+                         "Not an exact match to your saved information. Confirm the statement is true for you before it is used.")]
+        findings.extend(local)
+    return findings
+
+
+def _check_education(resume: dict, facts: dict) -> list[dict]:
+    findings = []
+    edus = facts.get("education") or []
+    for e_i, line in enumerate(resume.get("education") or []):
+        where, text = f"education[{e_i}]", str(line)
+        saved = next((e for e in edus if e.get("school") and e["school"].lower() in text.lower()), None)
+        if saved is None:
+            findings.append(_finding(where, text, UNSUPPORTED, None, "School does not match a saved education entry."))
+            continue
+        saved_text = (saved.get("degree", "") + " " + saved.get("text", "")).lower()
+        bad = next((w for w in CREDENTIAL_TYPES if w in text.lower() and w not in saved_text), None)
+        if bad:
+            findings.append(_finding(where, text, UNSUPPORTED, f"education \"{saved['school']}\"", f"Credential type '{bad}' is not the saved credential type."))
+        else:
+            findings.append(_finding(where, text, SUPPORTED, f"education \"{saved['school']}\"", "School and credential type match saved data."))
+    return findings
+
+
+def _cert_tokens(text: str) -> list[str]:
+    """Words of a certification line in order, lower-cased, with dates removed. Punctuation and spacing are not words."""
+    return [w.lower() for w in _TOKEN.findall(_MM_YY.sub(" ", _YYYY.sub(" ", text or "")))]
+
+
+def _contains_run(tokens: list[str], run: list[str]) -> int:
+    """Index of the first occurrence of run inside tokens, or -1."""
+    n = len(run)
+    for i in range(len(tokens) - n + 1):
+        if tokens[i:i + n] == run:
+            return i
+    return -1
+
+
+def _check_certifications(resume: dict, facts: dict) -> list[dict]:
+    """A certification line is SUPPORTED only when it states the complete saved certification name (formatting differences such as
+    case, punctuation and spacing are ignored), and its issuer and date, if stated, match the saved ones. Anything shorter, any
+    other name, credential type, issuer or date is UNSUPPORTED. Nothing here is UNCERTAIN, so no member decision can confirm it."""
+    saved = [c for c in facts.get("certifications") or [] if c.get("name")]
+    findings = []
+    for c_i, line in enumerate(resume.get("certifications") or []):
+        where, text = f"certifications[{c_i}]", str(line).strip()
+        if not text:
+            continue
+        tokens = _cert_tokens(text)
+        # The saved certification whose complete name appears in the line (the longest such name, if several do).
+        matches = [(len(_cert_tokens(c["name"])), c) for c in saved if _cert_tokens(c["name"])
+                   and _contains_run(tokens, _cert_tokens(c["name"])) >= 0]
+        if not matches:
+            findings.append(_finding(where, text, UNSUPPORTED, None,
+                                     "The complete name of this certification is not in your saved certifications. Remove it, or add it to your saved certifications."))
+            continue
+        _, c = max(matches, key=lambda m: m[0])
+        source = f'certification "{c["name"]}"'
+        name = _cert_tokens(c["name"])
+        at = _contains_run(tokens, name)
+        remainder = tokens[:at] + tokens[at + len(name):]
+        issuer = _cert_tokens(c.get("issuer", ""))
+        if remainder and remainder != issuer:
+            findings.append(_finding(where, text, UNSUPPORTED, source,
+                                     "Adds an issuer or other detail that does not match your saved certification."))
+        elif _years_in(text) - _years_in(c.get("date", "")):
+            findings.append(_finding(where, text, UNSUPPORTED, source,
+                                     "States a date that does not match your saved certification."))
+        else:
+            findings.append(_finding(where, text, SUPPORTED, source, "Matches your saved certification."))
+    return findings
+
+
+def general_truth_findings(resume: dict, facts: dict) -> list[dict]:
+    """Structured truthfulness findings for a general résumé against the member's saved data. Step A: a checker only; it is not wired
+    into generation or download. Each finding: {where, text, classification, source, explanation}. Inputs are never modified."""
+    resume = copy.deepcopy(resume or {})
+    facts = copy.deepcopy(facts or {})
+    return (_check_roles(resume, facts) + _check_bullets(resume, facts) + _check_education(resume, facts)
+            + _check_headline(resume, facts) + _check_summary(resume, facts) + _check_skills(resume, facts)
+            + _check_certifications(resume, facts))

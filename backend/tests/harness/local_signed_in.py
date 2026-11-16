@@ -93,7 +93,7 @@ def seed(db_path: pathlib.Path) -> None:
             con.execute("insert into experiences (career_profile_id, title, organization, start_date, end_date, description, source, verified) "
                         "values (?, ?, ?, ?, ?, ?, ?, ?)",
                         (pid, "Customer Service Lead", "Sample Company", "2022", "2025",
-                         "Led a team of 6 agents handling customer escalations\nReduced average response time by 25% through a new triage process",
+                         "Led a team of 6 agents handling customer escalations\nReduced average response time by 25% through a new triage process\nScheduled weekly shift rotas for six agents",
                          "manual", 1))
             for name in ["Team leadership", "Zendesk", "Excel"]:
                 con.execute("insert into skills (career_profile_id, name, source) values (?, ?, ?)", (pid, name, "manual"))

@@ -21,7 +21,8 @@ SYNTHETIC_PROFILE = {
         "start_date": "2022",
         "end_date": "2025",
         "description": "Led a team of 6 agents handling customer escalations\n"
-                       "Reduced average response time by 25% through a new triage process",
+                       "Reduced average response time by 25% through a new triage process\n"
+                       "Scheduled weekly shift rotas for six agents",
     },
     "skills": ["Team leadership", "Zendesk", "Excel", "Customer escalations"],
     "name": "Synthetic Member A",
@@ -67,6 +68,8 @@ def _term_plan(_prompt):
             {"term": "customer escalations", "importance": "preferred", "kind": "phrase", "support": "literal",
              "evidence": "Customer Service Lead: handling customer escalations"},
             {"term": "Salesforce", "importance": "required", "kind": "skill", "support": "none", "evidence": ""},
+            {"term": "Scheduling", "importance": "preferred", "kind": "skill", "support": "transferable",
+             "evidence": "Customer Service Lead: scheduled weekly shift rotas for six agents"},
         ]
     }
 
@@ -79,7 +82,7 @@ def _resume(_prompt):
             "contact": SYNTHETIC_PROFILE["contact"],
             "headline": "Customer Service Leadership | Team Leadership | Zendesk",
             "summary": "Customer Service Lead who led a team of 6 agents and handled customer escalations on Zendesk.",
-            "skills": ["Team leadership", "Zendesk", "Customer escalations", "Excel"],
+            "skills": ["Team leadership", "Zendesk", "Customer escalations", "Excel", "Scheduling"],
             "experience": [{
                 "title": exp["title"],
                 "subtitle": f"{exp['organization']} · {exp['start_date']} – {exp['end_date']}",
