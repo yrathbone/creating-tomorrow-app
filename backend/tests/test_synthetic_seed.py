@@ -33,7 +33,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 MANIFEST_FILE = BACKEND / "seed" / "synthetic_manifest.json"
 RESERVED = ("@example.com", "@example.invalid", "@example.org")
 URL_ENV = "DISPOSABLE_SEED_DATABASE_URL"
-BLOCKLIST = ("marcus", "bell", "yovana", "rathbone", "gmail", "creatingtomorrow", "jo ")
+BLOCKLIST = ("gmail", "creatingtomorrow")  # generic. The founder keeps a private list of real names and checks locally; none is recorded here.
 
 
 def _ids(table):
@@ -176,12 +176,12 @@ class ManifestAndGuards(unittest.TestCase):
             row_hash("experiences", row)
 
     def test_database_name_guard(self):
-        os.environ["SEED_TEST_URL"] = "postgresql+psycopg://u@127.0.0.1:1/ct_seed_disposable"
+        os.environ["SEED_TEST_URL"] = "postgresql+psycopg://example-user@example-host:1/ct_seed_disposable"
         try:
             self.assertTrue(_url_for("SEED_TEST_URL", "ct_seed_disposable").endswith("/ct_seed_disposable"))
             with self.assertRaises(SystemExit):
                 _url_for("SEED_TEST_URL", "some_other_name")
-            os.environ["SEED_TEST_URL"] = "postgresql+psycopg://u@h/creating-tomorrow-staging-db"
+            os.environ["SEED_TEST_URL"] = "postgresql+psycopg://example-user@example-host/creating-tomorrow-staging-db"
             with self.assertRaises(SystemExit):
                 _url_for("SEED_TEST_URL", "creating-tomorrow-staging-db")
         finally:
