@@ -28,6 +28,12 @@ const AUTH_UNAVAILABLE_MESSAGE = "Sign-in is unavailable right now. Check your c
 // auth-nav.js reads the same key. It is an identifier, not a secret.
 const APP_CLIENT_STORE_KEY = "ct.cognito-app-client";
 const APP_CLIENT_ID_PATTERN = /^[A-Za-z0-9]{10,64}$/;
+// Written by an explicit sign-out that happens while the configuration is NOT loaded. The tab cannot yet name its app client,
+// so the sign-out is remembered here. When the configuration loads, this tab's keys are removed and this marker is removed.
+// While it is present, the saved session is never restored.
+const SIGNED_OUT_PENDING_KEY = "ct.signed-out-pending";
+// Guest (not signed-in) work held in the browser. Nothing is written under this prefix today; sign-out removes it if present.
+const GUEST_DATA_PREFIX = "ct.guest.";
 
 // Set once the configuration has loaded and passed the checks below. Nothing here is a default.
 let cognitoConfig = null;
@@ -105,6 +111,7 @@ function initCognito(config) {
   removeLegacyLocalStorageSession(cognitoKeyPrefix);
   cognitoSessionStorage = pickSessionStorage();
   rememberAppClient(config.app_client_id);
+  finishPendingSignOut(config.app_client_id);
   userPool = new AmazonCognitoIdentity.CognitoUserPool({
     UserPoolId: config.user_pool_id,
     ClientId: config.app_client_id,
@@ -260,6 +267,46 @@ function clearRememberedClientKeys() {
   if (clientId) clearCognitoKeysForClient(clientId);
 }
 
+// The tab's storage for sign-in markers: the SDK's own store when it is in use, otherwise the tab's session storage.
+function signInStore() {
+  try { return cognitoSessionStorage || window.sessionStorage; } catch (e) { return null; }
+}
+
+// Remembers an explicit sign-out made during an outage (see SIGNED_OUT_PENDING_KEY).
+function markSignedOutPending() {
+  try { const s = signInStore(); if (s) s.setItem(SIGNED_OUT_PENDING_KEY, "1"); } catch (e) { /* not saved */ }
+}
+
+// Runs once the configuration has loaded and the app client is known. If a sign-out was made during the outage, this tab's
+// keys for that app client are removed now and the marker is cleared. The saved session is therefore not restored.
+function finishPendingSignOut(clientId) {
+  let pending = false;
+  try { const s = signInStore(); pending = !!(s && s.getItem(SIGNED_OUT_PENDING_KEY)); } catch (e) { pending = false; }
+  if (!pending) return;
+  clearCognitoKeysForClient(clientId);
+  try { const s = signInStore(); if (s) s.removeItem(SIGNED_OUT_PENDING_KEY); } catch (e) { /* nothing to clear */ }
+}
+
+// Guest work is removed on every sign-out. Only keys under GUEST_DATA_PREFIX are touched: signed-in resume history lives on the
+// server (Resumes Built) and is never cleared here, and no other browser key is changed.
+function clearGuestSessionData() {
+  const stores = [];
+  try { stores.push(window.sessionStorage); } catch (e) { /* unavailable */ }
+  try { stores.push(window.localStorage); } catch (e) { /* unavailable */ }
+  stores.forEach((store) => {
+    try {
+      const mine = [];
+      for (let i = 0; i < store.length; i++) {
+        const key = store.key(i);
+        if (key && key.indexOf(GUEST_DATA_PREFIX) === 0) mine.push(key);
+      }
+      mine.forEach((key) => store.removeItem(key));
+    } catch (e) {
+      // unreadable store: nothing to clear
+    }
+  });
+}
+
 // Sign Out. Two cases:
 // - The configuration is loaded: the SDK's signOut asks Cognito to revoke this device's refresh token (if that fails,
 //   e.g. offline, we carry on); then the local keys are removed.
@@ -277,10 +324,12 @@ function signOutCurrentUser() {
       const giveUp = setTimeout(resolve, 4000);
       cognitoUser.signOut(() => { clearTimeout(giveUp); resolve(); });
     });
-    const clear = () => clearCognitoKeysForClient(clientId);
+    const clear = () => { clearCognitoKeysForClient(clientId); clearGuestSessionData(); };
     return revoked.then(clear, clear);
   }
+  markSignedOutPending();          // the configuration is not loaded: remember the sign-out until it is
   clearRememberedClientKeys();
+  clearGuestSessionData();
   return Promise.resolve();
 }
 
