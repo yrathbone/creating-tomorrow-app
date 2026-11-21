@@ -17,8 +17,9 @@ test("Anthropic's own terms govern what it processes and keeps, and the standard
   assert.match(text, /What Anthropic processes and keeps is governed by Anthropic.s own terms\./);
   assert.match(text, /deletes inputs and outputs within 30 days of receipt or generation/);
   assert.match(text, /up to 2 years/);
-  assert.match(text, /\(5 years\)/);
-  assert.match(text, /or when the law requires it/);
+  assert.match(text, /safety classification scores for up to 7 years/);
+  assert.match(text, /keeps the data for that submission for 5 years/);
+  assert.match(text, /or where the law requires it/);
   assert.match(text, /do not allow deletion on request/);
   assert.match(text, /privacy\.claude\.com/);
 });
