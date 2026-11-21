@@ -826,6 +826,9 @@ async function restoreSession() {
   } catch (err) {
     showLoginForm(AUTH_UNAVAILABLE_MESSAGE);
     showAuthRetry(true);
+    // Signing out does not need the configuration, so a tab that holds a saved session can still sign out from this screen.
+    // The header link runs the same Sign Out as the dashboard (an outage sign-out is remembered until the configuration loads).
+    if (looksLikeStoredSession()) document.getElementById("nav-signout").hidden = false;
     return;
   }
   if (!hasStoredSessionKeys()) {
