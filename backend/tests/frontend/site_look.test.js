@@ -94,7 +94,7 @@ test("every footer says Privacy & Terms (two links, one crimson unit), and the f
     if (!m) continue;
     if (name.startsWith("career/")) { assert.match(m[1], /Career Profile is an early, invite-only preview/); continue; }
     assert.match(m[1], /^<span class="h5-nosave">We do not keep your [a-z ]+<\/span>/, name + " opens with the underlined promise");
-    assert.match(m[1], /normally deletes (them|it) within 30 days\.$/, name + " says 'normally', never 'always'");
+    assert.match(m[1], /which under its standard terms deletes (them|it) within 30 days, with exceptions described on our Privacy page\.$/, name + " states the standard terms and points to the exceptions, never 'always'");
     assert.ok(!/typically deleted|don't save/.test(m[1]), name + " no old wording");
   }
 });

@@ -130,7 +130,7 @@
         <li>The Career Profile pilot is for adults. By continuing you confirm that you are 18 or older.</li>
         <li>Read every line of any resume we build before you use it. If something is wrong or missing, tell us in your dashboard under “Tell us how it went”.</li>
         <li>When you build a resume, the career text you provide is sent to our AI provider (Anthropic) to write it. Please don’t enter ID numbers, bank details, or other people’s private information.</li>
-        <li>If you delete your account, we delete your saved information straight away. Our hosting provider does not keep backup copies of your information.</li>
+        <li>If you delete your account, we delete your saved information straight away.</li>
       </ul>
       <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
         <button type="button" id="consent-btn">I understand — create my Career Profile</button>
@@ -895,6 +895,7 @@
       <div id="resume-entry-section" hidden>
         <div id="resume-draft-prompt" hidden>
           <p>You have an unfinished resume review from <strong id="draft-updated-at"></strong>.</p>
+          <p class="hint">Interview drafts are automatically deleted after 30 days without an update.</p>
           <button type="button" id="resume-draft-continue-btn">Continue where I left off</button>
           <button type="button" id="resume-draft-discard-btn" class="btn-secondary">Start over</button>
         </div>
@@ -902,6 +903,7 @@
         <div id="resume-upload-state" hidden>
           <h3 id="resume-upload-heading">Upload your resume</h3>
           <p class="hint">We’ll pull out each role, then ask a few quick questions to surface experience your resume may not fully capture — nothing is added to your profile until you confirm it.</p>
+          <p class="hint" id="resume-draft-retention-notice">Interview drafts are automatically deleted after 30 days without an update.</p>
           <form id="resume-upload-form">
             <label class="field">
               <span>Resume or LinkedIn profile file (.docx, .pdf or .txt)</span>
@@ -1041,7 +1043,7 @@
   <script src="js/deleteAccount.js"></script>
 <section id="privacy-note" class="site-privacy-note" aria-labelledby="privacy-note-title">
   <h2 id="privacy-note-title">Privacy</h2>
-  <p>We keep your information only while your account exists. When you delete your account, we delete it from our database straight away. Our hosting provider does not keep backup copies of your information.</p>
+  <p>We keep your information only while your account exists. When you delete your account, we delete it from our database straight away.</p>
   <p><a href="../privacy.html">Privacy details</a></p>
 </section>
 </body>

@@ -36,6 +36,7 @@ from career.job_fit import compute_job_fit
 from career.linkedin_compare import compare_roles, compare_skills
 from career.resume_quality import candidate_answers_text, denials_from_history, drop_unsourced_bullets
 from career import suggestions
+from career.draft_retention import live_draft
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check_with_plan, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
 from db import get_db_session, release_db_connection
@@ -632,7 +633,7 @@ async def get_resume_draft(
     db: Session = Depends(get_db_session),
 ):
     profile = get_career_profile_or_404(db, current_user)
-    draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
+    draft = live_draft(db, profile.id)  # a draft unchanged for 30 days is deleted here and reported as absent
     return _draft_to_dict(draft) if draft is not None else None
 
 
@@ -681,7 +682,7 @@ async def resume_start(
         raise internal_error(e)
 
     profile = get_career_profile_or_404(db, current_user)
-    draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
+    draft = live_draft(db, profile.id)
     if draft is None:
         draft = ResumeIngestionDraft(career_profile_id=profile.id)
         db.add(draft)
@@ -724,7 +725,15 @@ async def resume_discover(
         raise internal_error(e)
 
     profile = get_career_profile_or_404(db, current_user)
-    draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
+    previous = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
+    draft = live_draft(db, profile.id)  # an expired draft is deleted here; its old answers are gone
+    if draft is None and previous is not None:
+        # The draft expired while this interview was open. Keep the current submission as a fresh draft so the
+        # interview continues and survives a refresh. Only the roles come from this request: the expired draft's
+        # education, certifications and analysis summary were deleted with it. A profile with no draft at all
+        # (for example after a discard) gets no new draft here.
+        draft = ResumeIngestionDraft(career_profile_id=profile.id, roles=req.resume_data.get("roles") or [])
+        db.add(draft)
     if draft is not None:
         draft.history = req.history
         draft.categories = req.categories

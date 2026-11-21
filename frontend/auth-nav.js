@@ -14,7 +14,16 @@ authentication, authorization, or permission to see anything: the Cognito librar
 hint is stale, the link simply lands on the normal login form.
 */
 (function () {
-  var prefix = "CognitoIdentityServiceProvider.5rfhr0o7799aa41a5odrt9i9hd.";
+  // The app client this tab last loaded from the sign-in configuration (auth.js saves it under the same key). The
+  // client is not hard-coded here, so staging and production each use their own. Until this tab has loaded the
+  // configuration, there is no client to tidy for, so nothing is guessed and nothing is removed.
+  var clientId = null;
+  try {
+    var saved = window.sessionStorage.getItem("ct.cognito-app-client");
+    if (saved && /^[A-Za-z0-9]{10,64}$/.test(saved)) clientId = saved;
+  } catch (e) { /* sessionStorage unavailable */ }
+  if (!clientId) return;
+  var prefix = "CognitoIdentityServiceProvider." + clientId + ".";
 
   try {
     var stale = [];

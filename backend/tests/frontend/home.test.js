@@ -35,7 +35,7 @@ test("the shared header, the privacy notice and the legal links are all present"
   assert.match(html, /class="nav-account"/); // auth-nav.js switches this to "My Career"
   assert.match(html, /<script src="auth-nav\.js"><\/script>/);
   for (const label of ["Home", "Learn", "Videos", "About", "Career Tools", "Sign In"]) assert.match(html, new RegExp(`>${label}</a>`), label);
-  assert.match(html, /<span class="h5-nosave">We do not keep your resume<\/span> or job posting\. We send them securely to our AI provider, which normally deletes them within 30 days\./);
+  assert.match(html, /<span class="h5-nosave">We do not keep your resume<\/span> or job posting\. We send them securely to our AI provider \(Anthropic\), which under its standard terms deletes them within 30 days, with exceptions described on our Privacy page\./);
   assert.match(html, /class="footer-links"><a href="privacy\.html">Privacy<\/a> <span class="h5-amp">&amp;<\/span> <a href="terms\.html">Terms<\/a> · <a href="accessibility\.html">Accessibility<\/a> · <a href="contact\.html">Contact<\/a>/);
   assert.match(html, /© 2026 Creating Tomorrow\. All rights reserved\./);
 });

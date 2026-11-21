@@ -23,8 +23,17 @@ accepted by the backend until it expires (the backend does not check revocation)
 */
 const AUTH_CONFIG_URL = "/api/career/auth-config";
 const AUTH_UNAVAILABLE_MESSAGE = "Sign-in is unavailable right now. Check your connection and try again.";
-// Every key the Cognito SDK writes, for any app client. Used only to clear them; never to decide anything else.
-const COGNITO_SDK_KEY_PREFIX = "CognitoIdentityServiceProvider.";
+// The app client this tab signs in with, as last loaded from the server. Saved in the same session storage as the SDK's
+// keys, so it lasts exactly as long as the tab's sign-in does. Outage sign-out uses it to remove only this app client's keys.
+// auth-nav.js reads the same key. It is an identifier, not a secret.
+const APP_CLIENT_STORE_KEY = "ct.cognito-app-client";
+const APP_CLIENT_ID_PATTERN = /^[A-Za-z0-9]{10,64}$/;
+// Written by an explicit sign-out that happens while the configuration is NOT loaded. The tab cannot yet name its app client,
+// so the sign-out is remembered here. When the configuration loads, this tab's keys are removed and this marker is removed.
+// While it is present, the saved session is never restored.
+const SIGNED_OUT_PENDING_KEY = "ct.signed-out-pending";
+// Guest (not signed-in) work held in the browser. Nothing is written under this prefix today; sign-out removes it if present.
+const GUEST_DATA_PREFIX = "ct.guest.";
 
 // Set once the configuration has loaded and passed the checks below. Nothing here is a default.
 let cognitoConfig = null;
@@ -101,6 +110,8 @@ function initCognito(config) {
   cognitoKeyPrefix = "CognitoIdentityServiceProvider." + config.app_client_id + ".";
   removeLegacyLocalStorageSession(cognitoKeyPrefix);
   cognitoSessionStorage = pickSessionStorage();
+  rememberAppClient(config.app_client_id);
+  finishPendingSignOut(config.app_client_id);
   userPool = new AmazonCognitoIdentity.CognitoUserPool({
     UserPoolId: config.user_pool_id,
     ClientId: config.app_client_id,
@@ -215,7 +226,8 @@ function forceRefreshSession() {
 // Removes every Cognito SDK key from this tab (session storage, and any leftover in local storage), for any app client.
 // Needs no configuration and no network. Keys that are not the SDK's are never touched: the notice, the Career
 // Profile draft and every other key stay as they are.
-function clearAllCognitoKeysInTab() {
+function clearCognitoKeysForClient(clientId) {
+  const prefix = "CognitoIdentityServiceProvider." + clientId + ".";
   const stores = [];
   try { stores.push(window.sessionStorage); } catch (e) { /* unavailable: nothing to clear there */ }
   if (cognitoSessionStorage && stores.indexOf(cognitoSessionStorage) < 0) stores.push(cognitoSessionStorage);
@@ -225,7 +237,7 @@ function clearAllCognitoKeysInTab() {
       const mine = [];
       for (let i = 0; i < store.length; i++) {
         const key = store.key(i);
-        if (key && key.indexOf(COGNITO_SDK_KEY_PREFIX) === 0) mine.push(key);
+        if (key && key.indexOf(prefix) === 0) mine.push(key);
       }
       mine.forEach((key) => store.removeItem(key));
     } catch (e) {
@@ -234,24 +246,90 @@ function clearAllCognitoKeysInTab() {
   });
 }
 
+// The app client this tab last loaded (see APP_CLIENT_STORE_KEY). Null when none is remembered.
+function rememberAppClient(clientId) {
+  try { (cognitoSessionStorage || window.sessionStorage).setItem(APP_CLIENT_STORE_KEY, clientId); } catch (e) { /* not saved */ }
+}
+
+function rememberedAppClient() {
+  try {
+    const saved = (cognitoSessionStorage || window.sessionStorage).getItem(APP_CLIENT_STORE_KEY);
+    return saved && APP_CLIENT_ID_PATTERN.test(saved) ? saved : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Explicit sign-out while the configuration is NOT loaded: only the remembered app client's keys are removed. With no
+// remembered client there is nothing this code can tell apart from another app's keys on this origin, so nothing is removed.
+function clearRememberedClientKeys() {
+  const clientId = rememberedAppClient();
+  if (clientId) clearCognitoKeysForClient(clientId);
+}
+
+// The tab's storage for sign-in markers: the SDK's own store when it is in use, otherwise the tab's session storage.
+function signInStore() {
+  try { return cognitoSessionStorage || window.sessionStorage; } catch (e) { return null; }
+}
+
+// Remembers an explicit sign-out made during an outage (see SIGNED_OUT_PENDING_KEY).
+function markSignedOutPending() {
+  try { const s = signInStore(); if (s) s.setItem(SIGNED_OUT_PENDING_KEY, "1"); } catch (e) { /* not saved */ }
+}
+
+// Runs once the configuration has loaded and the app client is known. If a sign-out was made during the outage, this tab's
+// keys for that app client are removed now and the marker is cleared. The saved session is therefore not restored.
+function finishPendingSignOut(clientId) {
+  let pending = false;
+  try { const s = signInStore(); pending = !!(s && s.getItem(SIGNED_OUT_PENDING_KEY)); } catch (e) { pending = false; }
+  if (!pending) return;
+  clearCognitoKeysForClient(clientId);
+  try { const s = signInStore(); if (s) s.removeItem(SIGNED_OUT_PENDING_KEY); } catch (e) { /* nothing to clear */ }
+}
+
+// Guest work is removed on every sign-out. Only keys under GUEST_DATA_PREFIX are touched: signed-in resume history lives on the
+// server (Resumes Built) and is never cleared here, and no other browser key is changed.
+function clearGuestSessionData() {
+  const stores = [];
+  try { stores.push(window.sessionStorage); } catch (e) { /* unavailable */ }
+  try { stores.push(window.localStorage); } catch (e) { /* unavailable */ }
+  stores.forEach((store) => {
+    try {
+      const mine = [];
+      for (let i = 0; i < store.length; i++) {
+        const key = store.key(i);
+        if (key && key.indexOf(GUEST_DATA_PREFIX) === 0) mine.push(key);
+      }
+      mine.forEach((key) => store.removeItem(key));
+    } catch (e) {
+      // unreadable store: nothing to clear
+    }
+  });
+}
+
 // Sign Out. Two cases:
 // - The configuration is loaded: the SDK's signOut asks Cognito to revoke this device's refresh token (if that fails,
 //   e.g. offline, we carry on); then the local keys are removed.
 // - The configuration is NOT loaded (an outage, or not yet tried): there is no pool to ask, so the local keys are
-//   removed at once, without waiting for the network. The device's refresh token is then not revoked at Cognito by this
+//   removed at once for the app client this tab last loaded (remembered in session storage), without waiting for the
+//   network. Other app clients' keys are never touched. The device's refresh token is then not revoked at Cognito by this
 //   action; it is no longer usable from this tab.
 // Either way, nothing unrelated in storage is touched (the sign-in notice, for example, stays).
 function signOutCurrentUser() {
   if (cognitoConfig) {
+    const clientId = cognitoConfig.app_client_id;
     const cognitoUser = userPool.getCurrentUser();
     const revoked = new Promise((resolve) => {
       if (!cognitoUser) return resolve();
       const giveUp = setTimeout(resolve, 4000);
       cognitoUser.signOut(() => { clearTimeout(giveUp); resolve(); });
     });
-    return revoked.then(clearAllCognitoKeysInTab, clearAllCognitoKeysInTab);
+    const clear = () => { clearCognitoKeysForClient(clientId); clearGuestSessionData(); };
+    return revoked.then(clear, clear);
   }
-  clearAllCognitoKeysInTab();
+  markSignedOutPending();          // the configuration is not loaded: remember the sign-out until it is
+  clearRememberedClientKeys();
+  clearGuestSessionData();
   return Promise.resolve();
 }
 

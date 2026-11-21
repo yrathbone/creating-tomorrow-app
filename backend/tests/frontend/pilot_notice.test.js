@@ -21,7 +21,7 @@ test("the consent screen has a pilot notice with the age line, the read-every-li
   assert.match(notice, /Tell us how it went/);
   assert.match(notice, /sent to our AI provider \(Anthropic\)/);
   assert.match(notice, /ID numbers, bank details, or other people’s private information/);
-  assert.match(notice, /Our hosting provider does not keep backup copies of your information\./);
+  assert.doesNotMatch(notice, /backup copies/, "no unverified backup claim on the consent screen");
 });
 
 test("the notice is above the consent button, so it is read before the person agrees", () => {
@@ -39,9 +39,9 @@ test("Privacy and Terms carry the same adults-only rule and the deletion/backup 
   const terms = read("terms.html");
   assert.match(privacy, /you must be 18 or older to create one/);
   assert.match(privacy, /<strong>If you delete your account\.<\/strong>/);
-  assert.match(privacy, /Our hosting provider does not keep backup copies of your information\./);
+  assert.doesNotMatch(privacy, /backup copies/, "no unverified backup claim on Privacy");
   assert.match(terms, /optional and is for people 18 or older/);
-  assert.match(privacy, /Last updated November 11, 2026/);
+  assert.match(privacy, /Last updated November 21, 2026/);
   assert.match(terms, /Last updated November 4, 2026/);
 });
 
