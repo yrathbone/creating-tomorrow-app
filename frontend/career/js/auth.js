@@ -311,8 +311,8 @@ function clearGuestSessionData() {
 // - The configuration is loaded: the SDK's signOut asks Cognito to revoke this device's refresh token (if that fails,
 //   e.g. offline, we carry on); then the local keys are removed.
 // - The configuration is NOT loaded (an outage, or not yet tried): there is no pool to ask, so the local keys are
-//   of this app client (the one remembered in this tab) removed at once, without waiting for the network. Other app
-//   clients' keys are never touched. The device's refresh token is then not revoked at Cognito by this
+//   removed at once for the app client this tab last loaded (remembered in session storage), without waiting for the
+//   network. Other app clients' keys are never touched. The device's refresh token is then not revoked at Cognito by this
 //   action; it is no longer usable from this tab.
 // Either way, nothing unrelated in storage is touched (the sign-in notice, for example, stays).
 function signOutCurrentUser() {
