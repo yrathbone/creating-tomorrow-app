@@ -895,6 +895,7 @@
       <div id="resume-entry-section" hidden>
         <div id="resume-draft-prompt" hidden>
           <p>You have an unfinished resume review from <strong id="draft-updated-at"></strong>.</p>
+          <p class="hint">Interview drafts are automatically deleted after 30 days without an update.</p>
           <button type="button" id="resume-draft-continue-btn">Continue where I left off</button>
           <button type="button" id="resume-draft-discard-btn" class="btn-secondary">Start over</button>
         </div>
@@ -902,6 +903,7 @@
         <div id="resume-upload-state" hidden>
           <h3 id="resume-upload-heading">Upload your resume</h3>
           <p class="hint">We’ll pull out each role, then ask a few quick questions to surface experience your resume may not fully capture — nothing is added to your profile until you confirm it.</p>
+          <p class="hint" id="resume-draft-retention-notice">Interview drafts are automatically deleted after 30 days without an update.</p>
           <form id="resume-upload-form">
             <label class="field">
               <span>Resume or LinkedIn profile file (.docx, .pdf or .txt)</span>
