@@ -242,7 +242,7 @@ test("sign-out after the configuration loads clears this client's SDK keys and l
 });
 
 // 6. Explicit sign-out during a configuration outage
-test("explicit sign-out during an outage clears the SDK keys at once, without waiting for the network, and keeps unrelated storage", async () => {
+test("explicit sign-out during an outage clears this app client's keys at once, without the network, and keeps other clients' and unrelated storage", async () => {
   const sdk = "CognitoIdentityServiceProvider.";
   const w = loadAuth({
     fetch: () => new Promise(() => {}),   // the configuration request never answers
@@ -250,6 +250,7 @@ test("explicit sign-out during an outage clears the SDK keys at once, without wa
     sessionItems: {
       [sdk + CLIENT + ".LastAuthUser"]: "member@example.invalid",
       [sdk + CLIENT + ".idToken"]: "id",
+      "ct.cognito-app-client": CLIENT,   // remembered when this tab last loaded the configuration
       [sdk + "otherclient0000000.LastAuthUser"]: "someone-else",
       "ct.auth-notice": "Your session has ended.",
       "ct.unrelated": "keep",
@@ -259,7 +260,7 @@ test("explicit sign-out during an outage clears the SDK keys at once, without wa
   const done = w.sandbox.signOutCurrentUser();          // not awaited: the keys must already be gone
   assert.strictEqual(w.storage._data[sdk + CLIENT + ".LastAuthUser"], undefined, "this client's marker is removed now");
   assert.strictEqual(w.storage._data[sdk + CLIENT + ".idToken"], undefined, "this client's tokens are removed now");
-  assert.strictEqual(w.storage._data[sdk + "otherclient0000000.LastAuthUser"], undefined, "any other SDK key in this tab is removed too");
+  assert.strictEqual(w.storage._data[sdk + "otherclient0000000.LastAuthUser"], "someone-else", "another app client's key in this tab is kept");
   assert.strictEqual(w.storage._data["ct.auth-notice"], "Your session has ended.", "the sign-in notice stays");
   assert.strictEqual(w.storage._data["ct.unrelated"], "keep", "unrelated session storage stays");
   assert.strictEqual(w.local._data[sdk + CLIENT + ".LastAuthUser"], undefined, "a leftover local copy is removed");
@@ -274,7 +275,7 @@ test("explicit sign-out during an outage stays in force after the configuration 
   const w = loadAuth({
     fetch: () => { attempt += 1; return attempt === 1 ? Promise.resolve(jsonResponse(503, {})) : Promise.resolve(jsonResponse(200, GOOD)); },
     currentUser: fakeCurrentUser(fakeSession("OLD-SESSION-TOKEN")),
-    sessionItems: { [key]: "member@example.invalid", [`CognitoIdentityServiceProvider.${CLIENT}.idToken`]: "id" },
+    sessionItems: { "ct.cognito-app-client": CLIENT, [key]: "member@example.invalid", [`CognitoIdentityServiceProvider.${CLIENT}.idToken`]: "id" },
   });
   await assert.rejects(w.sandbox.ensureAuthReady(), (err) => err.code === "AuthUnavailable");   // the outage
   await w.sandbox.signOutCurrentUser();                                                            // explicit sign-out during the outage
