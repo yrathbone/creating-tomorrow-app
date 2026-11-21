@@ -142,6 +142,44 @@ class DraftRetention(OwnershipTestCase):
         self.assertEqual(self.draft_count(), 1, "A's drafts are gone with the account; only B's draft remains")
         self.assertIsNotNone(self.draft_updated_at(SUB_B))
 
+    def test_discover_on_an_expired_draft_saves_the_submission_as_a_fresh_draft(self):
+        self.build_world()
+        self.add_draft(SUB_A, "OLD-SUMMARY")
+        with self.Session() as s:
+            row = s.query(ResumeIngestionDraft).filter_by(career_profile_id=self.profile_id_for(SUB_A)).one()
+            row.history = [{"q": "OLD-ANSWER"}]
+            row.pending_questions = [{"q": "OLD-QUESTION"}]
+            s.commit()
+        self.age_draft(SUB_A, 31)
+        roles = [{"title": "NEW-ROLE", "organization": "Org"}]
+        history = [{"q": "NEW-QUESTION", "a": "NEW-ANSWER"}]
+        questions = [{"id": "q2", "text": "NEXT-QUESTION"}]
+        body = {"resume_data": {"roles": roles}, "categories": [], "history": history, "force_finish": False, "round_number": 1}
+        with mock.patch("career.routes.discover", return_value={"stage": "questions", "questions": questions}):
+            res = self.call("POST", "/resume-discover", self.a, json=body)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["questions"], questions)
+
+        with self.Session() as s:
+            rows = s.query(ResumeIngestionDraft).filter_by(career_profile_id=self.profile_id_for(SUB_A)).all()
+            self.assertEqual(len(rows), 1, "exactly one current draft")
+            fresh = rows[0]
+            self.assertEqual(fresh.roles, roles)
+            self.assertEqual(fresh.history, history)
+            self.assertEqual(fresh.pending_questions, questions)
+            self.assertEqual(fresh.round_number, 2)
+            self.assertIsNone(fresh.analysis_summary, "the expired draft's summary must not come back")
+            self.assertNotIn("OLD-", repr([fresh.history, fresh.pending_questions, fresh.roles, fresh.analysis_summary]))
+        self.assertIsNotNone(self.draft_updated_at(SUB_A), "the fresh draft is current, not stale")
+
+    def test_discover_without_any_draft_does_not_recreate_one(self):
+        self.build_world()
+        body = {"resume_data": {"roles": []}, "categories": [], "history": [], "force_finish": False, "round_number": 1}
+        with mock.patch("career.routes.discover", return_value={"stage": "questions", "questions": []}):
+            res = self.call("POST", "/resume-discover", self.a, json=body)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(self.draft_count(), 0, "a discarded or never-started draft must not be recreated")
+
 
 if __name__ == "__main__":
     unittest.main()

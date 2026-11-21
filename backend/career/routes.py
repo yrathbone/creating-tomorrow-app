@@ -725,7 +725,15 @@ async def resume_discover(
         raise internal_error(e)
 
     profile = get_career_profile_or_404(db, current_user)
-    draft = live_draft(db, profile.id)  # an expired draft is not updated: its answers are gone
+    previous = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
+    draft = live_draft(db, profile.id)  # an expired draft is deleted here; its old answers are gone
+    if draft is None and previous is not None:
+        # The draft expired while this interview was open. Keep the current submission as a fresh draft so the
+        # interview continues and survives a refresh. Only the roles come from this request: the expired draft's
+        # education, certifications and analysis summary were deleted with it. A profile with no draft at all
+        # (for example after a discard) gets no new draft here.
+        draft = ResumeIngestionDraft(career_profile_id=profile.id, roles=req.resume_data.get("roles") or [])
+        db.add(draft)
     if draft is not None:
         draft.history = req.history
         draft.categories = req.categories
