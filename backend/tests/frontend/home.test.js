@@ -260,15 +260,14 @@ test("accessibility: every tool card has a full spoken name, and the two popup b
   assert.strictEqual((html.match(/aria-haspopup="dialog"/g) || []).length, 2);
 });
 
-test("Home and Learn share the four decorative guide card images in order", () => {
-  const files = ["guide-ats-photo.png", "guide-resume-photo.png", "guide-linkedin.svg", "guide-interview-photo.png"];
+test("Home, Learn, and the articles share the four guide images in order", () => {
+  const files = ["guide-ats-photo.png", "guide-resume-photo.png", "guide-linkedin-digital.webp", "guide-interview-photo.png"];
   for (const page of [html, read("learn.html")]) {
-    const used = [...page.matchAll(/<img src="img\/home\/(guide-[\w-]+\.(?:png|svg))" alt=""/g)].map((m) => m[1]);
+    const used = [...page.matchAll(/<img src="img\/home\/(guide-[\w-]+\.(?:png|webp))" alt=""/g)].map((m) => m[1]);
     assert.deepStrictEqual(used, files);
   }
-  const svg = read("img", "home", "guide-linkedin.svg");
-  assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 360 160"/);
-  assert.ok(!/<script|onload=|onclick=|href=|<image|<foreignObject|<style/i.test(svg), "the LinkedIn art is plain shapes only");
+  const heroes = [...read("article.html").matchAll(/<figure class="ats-hero"><img src="img\/home\/(guide-[\w-]+\.(?:png|webp))"[^>]+ alt="[^"]+"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(heroes, files);
   assert.match(css7, /\.h7-img img \{[^}]*object-fit: cover/);
 });
 
