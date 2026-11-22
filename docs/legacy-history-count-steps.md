@@ -1,64 +1,89 @@
 # Legacy raw-history count: read-only steps (count only, NOT RUN)
 
-Status: NOT RUN. Claude has no database access and has not requested or handled credentials. These steps are for Jo, or for a
-read-only session Jo opens through Jo's own process. Nothing here deletes or updates anything.
+Status: NOT RUN. Claude has no database access and has not requested or handled credentials. These steps are for Jo, to run in Jo's own read-only session. Nothing here deletes or updates anything.
 
 ## Rules for the run
 
-1. Read-only only. Use a read-only role or a session set to read-only (`SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;`).
+1. Read-only only. Start the session as read-only: `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;`
 2. Run only the SELECT statements below. They return counts only.
 3. Do not select answer content, row IDs, names, emails or any other personal data. None of the statements do.
-4. Stop rule: if the "recent" or "not array" counts are above zero, STOP. Report the counts to Jo before any cleanup.
-   A recent draft or scan is treated as possibly active or in progress. An unexpected JSON shape is treated as out of scope.
-5. Record the counts, the date and the database name only. Do not record any row content.
+4. Stop rule: if any "recent" count, any "unknown age" count, or any "not array" count is above zero, STOP and report the counts to Jo before any cleanup.
+   A recent draft or scan may be active or in progress. An unexpected JSON shape is out of scope. A row with no recorded age is not safe to clear.
+5. Record only the counts, the date and the database name. Do not record any row content.
 
-## Step 1: drafts (`resume_ingestion_drafts`)
+## Why these statements are safe with unexpected JSON
+
+Each `json_array_length` call sits inside a `CASE` branch that runs only when `json_typeof` says the value is an array. PostgreSQL evaluates a `CASE` branch only when it is reached, so `json_array_length` is never called on a scalar, null or object. A value that is not an array counts as 0 in the length expression and is caught by the "not array" column instead.
+
+## Step 1: drafts (`resume_ingestion_drafts`, field `history`)
 
 ```sql
 SELECT
-  count(*) FILTER (WHERE json_typeof(history) = 'array' AND json_array_length(history) > 0)                              AS drafts_with_history,
-  count(*) FILTER (WHERE json_typeof(history) = 'array' AND json_array_length(history) > 0
-                     AND updated_at < now() - interval '30 days')                                                        AS drafts_history_inactive_30d,
-  count(*) FILTER (WHERE json_typeof(history) = 'array' AND json_array_length(history) > 0
-                     AND updated_at >= now() - interval '30 days')                                                       AS drafts_history_recent,
-  count(*) FILTER (WHERE json_typeof(history) IS DISTINCT FROM 'array')                                                  AS drafts_history_not_array
+  count(*) FILTER (WHERE CASE WHEN json_typeof(history) = 'array' THEN json_array_length(history) ELSE 0 END > 0)
+    AS drafts_with_history,
+  count(*) FILTER (WHERE CASE WHEN json_typeof(history) = 'array' THEN json_array_length(history) ELSE 0 END > 0
+                     AND updated_at < now() - interval '30 days')
+    AS drafts_history_inactive_30d,
+  count(*) FILTER (WHERE CASE WHEN json_typeof(history) = 'array' THEN json_array_length(history) ELSE 0 END > 0
+                     AND updated_at >= now() - interval '30 days')
+    AS drafts_history_recent,
+  count(*) FILTER (WHERE CASE WHEN json_typeof(history) = 'array' THEN json_array_length(history) ELSE 0 END > 0
+                     AND updated_at IS NULL)
+    AS drafts_history_unknown_age,
+  count(*) FILTER (WHERE json_typeof(history) IS DISTINCT FROM 'array')
+    AS drafts_history_not_array
 FROM resume_ingestion_drafts;
 ```
 
-## Step 2: scans (`scan_histories`, field `result_data`)
+## Step 2: scans (`scan_histories`, field `result_data`, key `qa_history`)
 
 ```sql
 SELECT
   scan_type,
-  count(*) FILTER (WHERE json_typeof(result_data->'qa_history') = 'array'
-                     AND json_array_length(result_data->'qa_history') > 0)                                               AS scans_with_qa,
-  count(*) FILTER (WHERE json_typeof(result_data->'qa_history') = 'array'
-                     AND json_array_length(result_data->'qa_history') > 0
-                     AND created_at < now() - interval '30 days')                                                        AS scans_qa_inactive_30d,
-  count(*) FILTER (WHERE json_typeof(result_data->'qa_history') = 'array'
-                     AND json_array_length(result_data->'qa_history') > 0
-                     AND created_at >= now() - interval '30 days')                                                       AS scans_qa_recent,
-  count(*) FILTER (WHERE result_data->'qa_history' IS NOT NULL
-                     AND json_typeof(result_data->'qa_history') IS DISTINCT FROM 'array')                                AS scans_qa_not_array
+  count(*) FILTER (WHERE CASE WHEN json_typeof(result_data -> 'qa_history') = 'array'
+                              THEN json_array_length(result_data -> 'qa_history') ELSE 0 END > 0)
+    AS scans_with_qa,
+  count(*) FILTER (WHERE CASE WHEN json_typeof(result_data -> 'qa_history') = 'array'
+                              THEN json_array_length(result_data -> 'qa_history') ELSE 0 END > 0
+                     AND created_at < now() - interval '30 days')
+    AS scans_qa_inactive_30d,
+  count(*) FILTER (WHERE CASE WHEN json_typeof(result_data -> 'qa_history') = 'array'
+                              THEN json_array_length(result_data -> 'qa_history') ELSE 0 END > 0
+                     AND created_at >= now() - interval '30 days')
+    AS scans_qa_recent,
+  count(*) FILTER (WHERE CASE WHEN json_typeof(result_data -> 'qa_history') = 'array'
+                              THEN json_array_length(result_data -> 'qa_history') ELSE 0 END > 0
+                     AND created_at IS NULL)
+    AS scans_qa_unknown_age,
+  count(*) FILTER (WHERE result_data -> 'qa_history' IS NOT NULL
+                     AND json_typeof(result_data -> 'qa_history') IS DISTINCT FROM 'array')
+    AS scans_qa_not_array
 FROM scan_histories
 GROUP BY scan_type;
 ```
 
-Note: `created_at` is the scan's creation time. The record has no separate "last activity" field, so the 30-day split uses
-creation time. A scan created within the last 30 days is counted as recent and stops the run.
+Notes:
+- `created_at` is the scan's creation time. Scans have no separate last-activity field, so the 30-day split uses creation time.
+- `updated_at` on drafts is the last change time. Live reads do not change it.
+- If `result_data` itself is not an object, `result_data -> 'qa_history'` returns NULL and the row is not counted as a legacy answer. A scan whose `result_data` is not an object should be reported separately if Jo sees one; the statement above does not list it.
 
 ## Step 3: what to report
 
-Report only these numbers, by table and by age bucket:
-- drafts: `drafts_with_history`, `drafts_history_inactive_30d`, `drafts_history_recent`, `drafts_history_not_array`
-- scans: `scans_with_qa`, `scans_qa_inactive_30d`, `scans_qa_recent`, `scans_qa_not_array`, for each `scan_type`
+Report only these numbers, by table, age bucket and scan type:
+- drafts: `drafts_with_history`, `drafts_history_inactive_30d`, `drafts_history_recent`, `drafts_history_unknown_age`, `drafts_history_not_array`
+- scans: `scans_with_qa`, `scans_qa_inactive_30d`, `scans_qa_recent`, `scans_qa_unknown_age`, `scans_qa_not_array`, for each `scan_type`
 - the date and the database name
 
 ## Decision after the count
 
-- If `drafts_history_recent` = 0, `drafts_history_not_array` = 0, `scans_qa_recent` = 0 and `scans_qa_not_array` = 0:
-  the remaining rows are inactive and in the expected shape. A cleanup could be considered, but it needs separate approval and
-  its own written steps. It is NOT approved by this document.
+- If `drafts_history_recent`, `drafts_history_unknown_age`, `drafts_history_not_array`, `scans_qa_recent`, `scans_qa_unknown_age` and `scans_qa_not_array` are all 0:
+  the remaining raw-history rows are inactive, at least 30 days old and in the expected shape. A cleanup may be considered under the separate, approved scope below.
 - Otherwise: STOP. Report the counts. Do not clean up.
 
-Cleanup is NOT described here. It needs a separate written plan and approval.
+## Approved cleanup scope (not yet run)
+
+Jo's approval (#7074856452): cleanup only after the count is reviewed and only if the stop rule passes. Clear only the raw fields, on records that are clearly inactive and at least 30 days old:
+- `resume_ingestion_drafts.history`
+- `scan_histories.result_data` key `qa_history`
+
+Preserve every row and every other field. Before any change, report the counts and the exact proposed statements, and wait for a separate go-ahead. The cleanup statements are not written here.

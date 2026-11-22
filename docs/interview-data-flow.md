@@ -85,8 +85,8 @@ Profile rows (`Experience`, `Skill`, ...) are written only by `/resume-save`, af
 
 - `/job-discover` (`routes.py` about line 1122) sends the submitted answers to the AI and stores nothing itself. It creates no draft.
 - `/job-build-resume` (`routes.py` about lines 1187-1188) saves the submitted `qa_history` into `ScanHistory.result_data["qa_history"]` before the AI call, so a failed build can be retried. The frontend restores it from the server (`jobMatch.js` about line 1474).
-- CHANGED in `232f81a`: after a successful build, in the same commit as the tailored resume, the `qa_history` key is removed from the scan. The scan row, its other metadata (for example `term_plan` and match details) and the saved resume are kept. A failed build keeps the answers. A later successful build removes them.
-- NOT changed: scan rows created before this change that still hold `qa_history`. A one-off cleanup needs a read-only count first and separate approval (section 9).
+- DECIDED AND IMPLEMENTED in `232f81a`. Jo approved this design in #7074454913: after a successful build, the `qa_history` key is removed from the scan in the same commit as the resume; a failed build keeps the answers for retry. The scan row, its other metadata (for example `term_plan` and match details) and the saved resume are kept.
+- Legacy rows: scan rows created before this change that still hold `qa_history` are not yet cleaned. The count and any cleanup are separate items (section 9).
 
 ## 7. What the current work changes
 
@@ -122,9 +122,9 @@ Pending (not run):
 - Legacy-history cleanup. Requires the count first, a stop-rule check, and separate approval. Nothing is deleted or updated.
 
 Jo actions:
-1. Confirm the workspace-level retention override for the app's API keys, and whether the app's effective retention is 30 days.
-2. If the count is wanted, run the read-only steps in `docs/legacy-history-count-steps.md` yourself, or give Claude a read-only connection through your own process. Do not paste credentials into chat.
+1. Read-only workspace-override check in the Console (steps in docs/jo-manual-steps.md, section A).
+2. If the count is wanted: run the read-only SELECTs in docs/legacy-history-count-steps.md in your own read-only session, and report only the counts.
 3. Decide whether to approve a cleanup after the count, subject to the stop rule.
 4. Decide when the 30-day deletion job should be created in Render (separate approval).
-5. Confirm the job-comparison retention design once the count is known.
+5. (Recorded, not pending) The job-comparison design is approved and implemented in 232f81a. Only the legacy count and any cleanup remain.
 6. Decide when the privacy notice can be published, after browser QA.
