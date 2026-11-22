@@ -429,7 +429,7 @@ function attachVoiceAnswer(card, textarea) {
     }
     if (state === "downloadable") {
       awaitingPackApproval = true;
-      status.textContent = "Speech on this device needs a language pack (about 60 MB). Press Download speech pack to approve it.";
+      status.textContent = "Speech on this device needs a language pack. Press Download speech pack to approve it.";
       micBtn.textContent = "Download speech pack";
       return;
     }

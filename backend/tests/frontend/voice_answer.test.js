@@ -211,6 +211,34 @@ test("the browser-default (remote) setting is never requested: processLocally is
   assert.ok(!/processLocally:\s*false/.test(codeOnly), "no availability check with processLocally false");
 });
 
+test("no unverified size claim: the language-pack text never states a download size", () => {
+  const rr = fs.readFileSync(path.join(ROOT, "frontend", "career", "js", "resumeReview.js"), "utf8");
+  const html = fs.readFileSync(path.join(ROOT, "frontend", "career", "login.html"), "utf8");
+  for (const text of [source, rr, html]) {
+    assert.ok(!/\b\d+\s*MB\b/.test(text), "no megabyte figure");
+  }
+});
+
+test("submit is explicit: Send answers and continue, with the disclosure immediately above it", () => {
+  const html = fs.readFileSync(path.join(ROOT, "frontend", "career", "login.html"), "utf8");
+  const disclosureAt = html.indexOf('id="resume-questions-disclosure"');
+  const submitAt = html.indexOf('id="resume-questions-submit-btn"');
+  assert.ok(disclosureAt > 0 && submitAt > disclosureAt, "disclosure comes before the submit button");
+  const tail = html.slice(html.indexOf("</p>", disclosureAt), html.lastIndexOf("<button", submitAt));
+  assert.ok(/^<\/p>\s*$/.test(tail), "only whitespace sits between the disclosure and the button");
+  assert.match(html, /id="resume-questions-submit-btn">Send answers and continue<\/button>/);
+  const disclosure = html.slice(disclosureAt, html.indexOf("</p>", disclosureAt));
+  assert.match(disclosure, /AI service/);
+  assert.match(disclosure, /spoken transcript/);
+  assert.match(disclosure, /interview draft/);
+  assert.match(disclosure, /discard the draft/);
+});
+
+test("the finish button is still there (it also sends answers, so the same disclosure covers it)", () => {
+  const html = fs.readFileSync(path.join(ROOT, "frontend", "career", "login.html"), "utf8");
+  assert.ok(html.indexOf('id="resume-questions-finish-btn"') > html.indexOf('id="resume-questions-submit-btn"'));
+});
+
 test("wiring: only the detail (free-text) answer gets the mic, and the page loads the module first", () => {
   const rr = fs.readFileSync(path.join(ROOT, "frontend", "career", "js", "resumeReview.js"), "utf8");
   const detailBlock = rr.slice(rr.indexOf('if (q.type === "detail")'), rr.indexOf("} else {", rr.indexOf('if (q.type === "detail")')));

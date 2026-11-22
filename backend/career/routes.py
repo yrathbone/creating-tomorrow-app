@@ -38,6 +38,7 @@ from career.resume_quality import candidate_answers_text, denials_from_history, 
 from career import suggestions
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check_with_plan, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
+from career.draft_retention import live_draft
 from db import get_db_session, release_db_connection
 from extractor import extract_text_async
 from models import Application, CareerProfile, Certification, Education, Experience, Language, Opportunity, OpportunityDocument, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
@@ -611,7 +612,7 @@ async def get_resume_draft(
     db: Session = Depends(get_db_session),
 ):
     profile = get_career_profile_or_404(db, current_user)
-    draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
+    draft = live_draft(db, profile.id)  # an expired draft is deleted here and never returned
     return _draft_to_dict(draft) if draft is not None else None
 
 
@@ -660,7 +661,7 @@ async def resume_start(
         raise internal_error(e)
 
     profile = get_career_profile_or_404(db, current_user)
-    draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
+    draft = live_draft(db, profile.id)
     if draft is None:
         draft = ResumeIngestionDraft(career_profile_id=profile.id)
         db.add(draft)
@@ -703,7 +704,7 @@ async def resume_discover(
         raise internal_error(e)
 
     profile = get_career_profile_or_404(db, current_user)
-    draft = db.query(ResumeIngestionDraft).filter_by(career_profile_id=profile.id).one_or_none()
+    draft = live_draft(db, profile.id)
     if draft is not None:
         draft.history = req.history
         draft.categories = req.categories
