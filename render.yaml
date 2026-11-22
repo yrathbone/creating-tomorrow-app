@@ -41,7 +41,7 @@ services:
       - key: COGNITO_APP_CLIENT_ID
         value: 5rfhr0o7799aa41a5odrt9i9hd
 
-    # Daily sweep that permanently deletes resume-interview drafts with no update for 30 days (backend/career/draft_sweep.py).
+  # Daily sweep that permanently deletes resume-interview drafts with no update for 30 days (backend/career/draft_sweep.py).
   # DRAFT (2026-11-22): not merged and not created in Render. Created only after separate approval. Set DATABASE_URL in the Render dashboard to the
   # creating-tomorrow-db connection string; it is a secret and is never written in this repo.
   - type: cron

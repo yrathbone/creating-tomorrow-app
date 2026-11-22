@@ -1,4 +1,4 @@
-﻿"""Interview-draft retention (Jo direction, 2026-11-22): a resume-interview draft expires DRAFT_RETENTION after its last
+"""Interview-draft retention (Jo direction, 2026-11-22): a resume-interview draft expires DRAFT_RETENTION after its last
 change, and the member can discard it sooner (DELETE /api/career/resume-draft, unchanged).
 
 "Last activity" is ResumeIngestionDraft.updated_at, which the database sets on every write to the draft. Reads do not

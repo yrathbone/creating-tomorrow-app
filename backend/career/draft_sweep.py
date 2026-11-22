@@ -1,4 +1,4 @@
-﻿"""Daily sweep for interview drafts (run by the Render Cron service creating-tomorrow-draft-sweep).
+"""Daily sweep for interview drafts (run by the Render Cron service creating-tomorrow-draft-sweep).
 
 Deletes every resume_ingestion_drafts row with no update for 30 days (career/draft_retention.py). Prints a count only.
 Draft content is never read or printed here.
