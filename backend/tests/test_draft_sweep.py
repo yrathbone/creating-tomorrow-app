@@ -1,4 +1,4 @@
-﻿"""The daily draft sweep job (FOR REVIEW ONLY, 2026-11-22): it deletes expired interview drafts and prints a count only.
+"""The daily draft sweep job (FOR REVIEW ONLY, 2026-11-22): it deletes expired interview drafts and prints a count only.
 
 Run from the backend folder:  python -m unittest tests.test_draft_sweep -v
 Uses the in-memory SQLite test database. Nothing is scheduled or deployed by these tests.
@@ -62,6 +62,22 @@ class DraftSweepJob(OwnershipTestCase):
         self.assertNotIn("postgres://", block)
         self.assertNotIn("postgresql://", block)
 
+
+class NullTimestampIsExpired(unittest.TestCase):
+    """A draft with no recorded last change is treated as expired (defensive). The database column is NOT NULL, so this
+    cannot happen in a stored row; the test covers the code path the sweep relies on."""
+
+    def test_a_draft_with_no_updated_at_is_treated_as_expired(self):
+        from career.draft_retention import _expired
+        now = datetime.now(timezone.utc)
+        no_timestamp = type("Row", (), {"updated_at": None})()
+        self.assertTrue(_expired(no_timestamp, now))
+
+    def test_a_recent_draft_is_not_expired_by_the_same_rule(self):
+        from career.draft_retention import _expired
+        now = datetime.now(timezone.utc)
+        recent = type("Row", (), {"updated_at": now - timedelta(days=1)})()
+        self.assertFalse(_expired(recent, now))
 
 if __name__ == "__main__":
     unittest.main()
