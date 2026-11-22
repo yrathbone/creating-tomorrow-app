@@ -6,7 +6,7 @@
 - Relationship: the previous review point is parent `3c83316`. The current product commit is `232f81a` (job-flow change), pushed for review on top of `3c83316`. This document is committed after `232f81a`.
 - Not merged. Not deployed. No staging, production, database, Render or cron action has been taken.
 - Evidence for `232f81a`: branch `review/issue1-job-disposal-evidence` in `creating-tomorrow-ops`, commit `24784df`. Frontend 384 of 384 pass; backend 922 run, OK, 1 skipped (PostgreSQL modules excluded).
-- Legacy-history count and cleanup: NOT RUN. See `docs/legacy-history-count-steps.md`.
+- Legacy-history count: run by Jo on 2026-11-22 (counts only): job-comparison scans with Q&A = 16 (7 at least 30 days old, 9 newer). STOP condition triggered; legacy cleanup BLOCKED. See docs/legacy-history-count-steps.md and section 9.
 
 ## 1. Summary
 
@@ -55,15 +55,15 @@ What the standard policy says (quoted in substance):
 - Covered Models: the Platform Docs page lists models that require 30-day retention and are not available under zero data retention. The default model in our configuration, `claude-sonnet-5`, is not on that list as read.
 
 Account-specific evidence (supplied by Jo, comments #7074518756 and #7074548479; not from Anthropic's documentation):
-- The viewed organisation's Data retention setting in the Claude Console shows "On · 30 days". That indicates zero data retention is not active for that organisation.
-- The app's API keys are in that workspace.
-- A workspace-level override or the effective retention for the app's keys has NOT been verified. Effective retention for the app is therefore NOT fully confirmed.
+- Jo-reported organization default: Data retention "On · 30 days" (Claude Console). This is recorded from Jo, not independently verified. It does not establish zero data retention (ZDR).
+- API keys are in this organization, per Jo.
+- Workspace override and effective per-key setting: NOT independently verified. The screenshot shown to Claude did not establish a separate workspace override or an effective per-key value.
 - No retention setting was changed.
 
 What our app can and cannot do:
 - We can stop storing answers on our side. This is done for the resume interview and, after a successful build, for the job flow.
 - We cannot delete data already held by the provider. The app has no call that deletes provider-held inputs or outputs.
-- No claim is made that the provider deletes data immediately. Deletion by the provider is governed by the terms above, subject to the exceptions, and by the workspace setting once it is verified.
+- No claim is made that the provider deletes data immediately. Deletion by the provider is governed by the terms above, subject to the exceptions, and by the organization and workspace settings once verified.
 - Our database deletion must not be described as provider deletion.
 
 ## 5. Database (what is stored, and for how long)
@@ -86,7 +86,7 @@ Profile rows (`Experience`, `Skill`, ...) are written only by `/resume-save`, af
 - `/job-discover` (`routes.py` about line 1122) sends the submitted answers to the AI and stores nothing itself. It creates no draft.
 - `/job-build-resume` (`routes.py` about lines 1187-1188) saves the submitted `qa_history` into `ScanHistory.result_data["qa_history"]` before the AI call, so a failed build can be retried. The frontend restores it from the server (`jobMatch.js` about line 1474).
 - DECIDED AND IMPLEMENTED in `232f81a`. Jo approved this design in #7074454913: after a successful build, the `qa_history` key is removed from the scan in the same commit as the resume; a failed build keeps the answers for retry. The scan row, its other metadata (for example `term_plan` and match details) and the saved resume are kept.
-- Legacy rows: scan rows created before this change that still hold `qa_history` are not yet cleaned. The count and any cleanup are separate items (section 9).
+- Legacy rows: scan rows created before this change that still hold `qa_history` are not yet cleaned. Count (Jo, 2026-11-22): 16 with Q&A (7 at least 30 days old, 9 newer). Cleanup is blocked by the stop condition (section 9).
 
 ## 7. What the current work changes
 
@@ -117,13 +117,13 @@ They do NOT prove:
 
 ## 9. Pending and Jo actions
 
-Pending (not run):
-- Legacy-history count (read-only, count-only). Steps are in `docs/legacy-history-count-steps.md`. It needs database access that has not been provided. Claude will not connect or handle credentials.
-- Legacy-history cleanup. Requires the count first, a stop-rule check, and separate approval. Nothing is deleted or updated.
+Status (section 9):
+- Legacy-history count: run by Jo on 2026-11-22 (read-only, counts only). Recorded: 16 job-comparison scans with Q&A; 7 at least 30 days old; 9 newer than 30 days. Stop condition triggered.
+- Legacy-history cleanup: BLOCKED by the stop condition. Needs the stop condition resolved, a fresh count, review of the exact statements, and separate approval. Nothing deleted or updated.
 
 Jo actions:
-1. Read-only workspace-override check in the Console (steps in docs/jo-manual-steps.md, section A).
-2. If the count is wanted: run the read-only SELECTs in docs/legacy-history-count-steps.md in your own read-only session, and report only the counts.
+1. Workspace-override check: organization default reported by Jo (On · 30 days; API keys in this organization per Jo). Workspace override and effective setting not independently verified. See section 4.
+2. Legacy count: done by Jo on 2026-11-22 (counts recorded above). A fresh count is needed before any cleanup decision.
 3. Decide whether to approve a cleanup after the count, subject to the stop rule.
 4. Decide when the 30-day deletion job should be created in Render (separate approval).
 5. (Recorded, not pending) The job-comparison design is approved and implemented in 232f81a. Only the legacy count and any cleanup remain.

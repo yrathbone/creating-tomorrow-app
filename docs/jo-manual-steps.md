@@ -1,9 +1,11 @@
 # Jo's manual steps (not run by Claude)
 
-Claude does not have, and must not receive, console or Render credentials. Nothing below has been done. Do not paste any key,
+Claude does not have, and must not receive, console or Render credentials. Section A (the console check) and the legacy count (section C) were reported by Jo; Claude did not run them. Nothing else below has been done. Do not paste any key,
 password or connection string into GitHub or chat.
 
-## A. Read-only check: is there a workspace retention override? (Anthropic Console)
+## A. Read-only check: workspace retention override (Anthropic Console) - REPORTED BY JO (steps kept as reference)
+
+Status: Jo reported the organization default as Data retention On · 30 days, with API keys in this organization per Jo. Workspace override and effective per-key setting are NOT independently verified. Claude did not run these steps.
 
 Goal: confirm the effective data-retention setting for the workspace that holds the app's API keys. Change nothing.
 
@@ -52,8 +54,8 @@ before creating it.
 
 Do not change the web service, the database, or any other setting while creating this job.
 
-## C. Not yet authorised
+## C. Legacy count and cleanup status
 
-- The legacy-history count: needs your own read-only database session (see docs/legacy-history-count-steps.md). Claude does not run it.
-- The legacy-history cleanup: only after the count passes the stop rule and you approve a written plan.
+- The legacy-history count: run by Jo on 2026-11-22 (read-only, counts only). Recorded: 16 job-comparison scans with Q&A; 7 at least 30 days old; 9 newer than 30 days. Stop condition triggered.
+- The legacy-history cleanup: BLOCKED by the stop condition. Needs the stop condition resolved, a fresh count, review of the exact statements, and separate approval of a written plan.
 - PR #74 stays a draft. No merge, deploy, staging or production change.

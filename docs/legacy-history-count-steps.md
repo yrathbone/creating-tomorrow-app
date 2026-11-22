@@ -1,6 +1,6 @@
-# Legacy raw-history count: read-only steps (count only, NOT RUN)
+# Legacy raw-history count: read-only steps (count only; run by Jo 2026-11-22; stop condition triggered)
 
-Status: NOT RUN. Claude has no database access and has not requested or handled credentials. These steps are for Jo, to run in Jo's own read-only session. Nothing here deletes or updates anything.
+Status: RUN BY JO on 2026-11-22 in a read-only session, counts only (issue #1, comment #7081384509). Claude did not connect to any database and did not run it. Recorded result: job-comparison scans with Q&A = 16; of these, 7 are at least 30 days old and 9 are newer than 30 days. Drafts and skill scans show zero in every bucket. The STOP condition is TRIGGERED, so legacy cleanup is BLOCKED. Nothing was deleted or updated. Claude has no database access and has not requested or handled credentials. These steps are for Jo, to run in Jo's own read-only session.
 
 ## Rules for the run
 
@@ -82,8 +82,9 @@ Report only these numbers, by table, age bucket and scan type:
 - If `drafts_history_recent`, `drafts_history_unknown_age`, `drafts_history_not_array`, `scans_qa_recent`, `scans_qa_unknown_age`, `scans_qa_not_array` and `scans_result_not_object` are all 0:
   the remaining raw-history rows are inactive, at least 30 days old and in the expected shape. A cleanup may be considered under the separate, approved scope below.
 - Otherwise: STOP. Report the counts. Do not clean up.
+- Recorded 2026-11-22: STOP triggered (9 job-comparison scans newer than 30 days). Cleanup stays blocked until that is resolved, a fresh count is taken, and the exact cleanup statements are reviewed and separately approved.
 
-## Approved cleanup scope (not yet run)
+## Approved cleanup scope (BLOCKED by the stop condition; not run)
 
 Jo's approval (#7074856452): cleanup only after the count is reviewed and only if the stop rule passes. Clear only the raw fields, on records that are clearly inactive and at least 30 days old:
 - `resume_ingestion_drafts.history`
