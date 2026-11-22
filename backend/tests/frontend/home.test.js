@@ -168,7 +168,7 @@ test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles
   const titles = [...html.matchAll(/class="h7-guide"[\s\S]*?<b class="h7-title">([^<]+)<\/b>\s*<span class="h7-text">([^<]+)<\/span>/g)].map((m) => [m[1], m[2]]);
   assert.deepStrictEqual(titles, [["ATS Basics", "How resume screening works"], ["Resume Basics", "Create a resume that works"], ["LinkedIn Basics", "Build your professional profile"], ["Interview Basics", "Prepare stories, not scripts"]]);
   assert.strictEqual((html.match(/<span class="h7-link">Read <span aria-hidden="true">→<\/span><\/span>/g) || []).length, 4);
-  assert.match(html, /aria-label="ATS Basics: What Is an ATS, Really\? Read the guide\."/); // the full title stays for screen readers
+  assert.match(html, /aria-label="ATS Basics: How Applicant Tracking Systems Work\. Read the guide\."/); // the full title stays for screen readers
   assert.match(css7, /\.h7-link \{[^}]*text-decoration: none/, "no underline on the links");
 });
 

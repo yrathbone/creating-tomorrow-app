@@ -3431,3 +3431,12 @@ button.link-button {
 }
 button.link-button:hover { opacity: 1; text-decoration-thickness: 2px; }
 button.link-button:focus-visible { outline: 3px solid rgba(10, 53, 168, 0.3); outline-offset: 2px; border-radius: 3px; }
+
+/* Career Basics article update (22 Nov 2026): hero image, workflow figure and quote blocks. */
+.ats-hero, .ats-workflow { margin: 0 0 28px; }
+.ats-hero img, .ats-workflow img { display: block; width: 100%; height: auto; max-width: 100%; border-radius: 12px; border: 1px solid var(--border); }
+.ats-workflow { margin: 20px 0; }
+.ats-workflow figcaption { font-size: .85rem; color: var(--muted); margin-top: 6px; }
+.ats-quote { margin: 18px 0; padding: 12px 16px; border-left: 4px solid var(--gold); background: var(--card-bg); border-radius: 0 8px 8px 0; }
+.ats-quote p { margin: 0 0 6px; }
+.ats-quote cite { display: block; font-style: normal; color: var(--muted); font-size: .9rem; }
