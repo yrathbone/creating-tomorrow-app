@@ -1238,7 +1238,12 @@ async def job_build_resume(
     )
     db.add(version)
 
-    # (The gap-interview Q&A was already saved onto the scan before the AI call, above.)
+    # The gap-interview Q&A was saved onto the scan before the AI call (so a failed build can be retried). Now that the
+    # tailored resume is built, the raw answers are no longer needed: remove only that key, in the same commit as the resume.
+    # Everything else in the scan's result_data (the term plan, the match details) is kept.
+    if scan is not None and "qa_history" in (scan.result_data or {}):
+        scan.result_data = {k: v for k, v in scan.result_data.items() if k != "qa_history"}
+        db.add(scan)
     db.commit()
     db.refresh(version)
 

@@ -231,7 +231,8 @@ test("submit is explicit: Send answers and continue, with the disclosure immedia
   assert.match(disclosure, /AI service/, "answers go to the AI service for analysis");
   assert.match(disclosure, /spoken transcript/, "a spoken transcript is named");
   assert.match(disclosure, /removed from this page/, "answers are removed after analysis");
-  assert.match(disclosure, /suggested skills and experience are kept/, "suggestions are kept for review");
+  assert.match(disclosure, /only those suggestions are kept/, "suggestions are kept for review");
+  assert.match(disclosure, /Earlier questions keep your answers on this page/, "answers stay on the page between rounds");
   assert.match(disclosure, /until you save/, "nothing reaches the profile before Save");
   assert.match(disclosure, /do not control how the AI service keeps data/i, "no provider-deletion promise");
   assert.doesNotMatch(disclosure, /saved in your interview draft/, "old wording is gone");
