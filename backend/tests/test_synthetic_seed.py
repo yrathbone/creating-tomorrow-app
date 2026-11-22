@@ -7,13 +7,14 @@ Run from backend/:
   DISPOSABLE_SEED_DATABASE_URL=postgresql+psycopg://postgres@127.0.0.1:55544/ct_seed_disposable python -m unittest tests.test_synthetic_seed -v
 """
 import hashlib
+import io
 import json
 import os
 import re
 import subprocess
 import sys
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -25,12 +26,13 @@ from extractor import extract_text
 from resume_builder import build_resume_bytes
 import seed.synthetic_seed as seed_mod
 from seed.synthetic_seed import (
+    now_utc,
     FIXTURE_DIR, RESUME_A, RESUME_B, TABLE_ORDER, _url_for, all_columns, build_manifest, full_rows, row_hash,
     seed_database, synthetic_records, verify_database,
 )
 
 BACKEND = Path(__file__).resolve().parents[1]
-MANIFEST_FILE = BACKEND / "seed" / "synthetic_manifest.json"
+MANIFEST_FILE = BACKEND / "seed" / "synthetic_manifest.json"  # must NOT exist: manifests are per run, written outside the repo
 RESERVED = ("@example.com", "@example.invalid", "@example.org")
 URL_ENV = "DISPOSABLE_SEED_DATABASE_URL"
 BLOCKLIST = ("gmail", "creatingtomorrow")  # generic. The founder keeps a private list of real names and checks locally; none is recorded here.
@@ -150,18 +152,40 @@ class DocxFixtures(unittest.TestCase):
             self.assertGreater(docx.stat().st_size, 10_000, f"{docx.name} is too small to be a real document")
 
 
-class ManifestAndGuards(unittest.TestCase):
-    def test_manifest_is_deterministic(self):
-        self.assertEqual(build_manifest(), build_manifest())
+RUN_A = datetime(2026, 11, 21, 9, 0, tzinfo=timezone.utc)
+RUN_B = datetime(2026, 11, 22, 9, 0, tzinfo=timezone.utc)
 
-    def test_stored_manifest_matches_the_generated_one(self):
-        stored = json.loads(MANIFEST_FILE.read_text(encoding="utf-8"))
-        self.assertEqual(stored, build_manifest(), "run: python -m seed.synthetic_seed manifest > seed/synthetic_manifest.json")
+
+class ManifestAndGuards(unittest.TestCase):
+    def test_manifest_is_deterministic_for_one_run_time(self):
+        self.assertEqual(build_manifest(RUN_A), build_manifest(RUN_A))
+
+    def test_verify_refuses_to_run_without_an_explicit_manifest(self):
+        with self.assertRaises(TypeError):
+            verify_database(None, None)
+
+    def test_only_the_draft_hashes_depend_on_the_run_time(self):
+        a, b = build_manifest(RUN_A), build_manifest(RUN_B)
+        self.assertNotEqual(a["run_at"], b["run_at"])
+        for table in TABLE_ORDER:
+            if table == "resume_ingestion_drafts":
+                self.assertNotEqual(a["tables"][table], b["tables"][table])
+            else:
+                self.assertEqual(a["tables"][table], b["tables"][table], f"{table} must not depend on the run time")
+
+    def test_each_draft_carries_the_run_time(self):
+        for row in full_rows(RUN_A)["resume_ingestion_drafts"]:
+            self.assertEqual(row["updated_at"], RUN_A)
 
     def test_manifest_holds_hashes_only(self):
-        for hashes in build_manifest().values():
+        manifest = build_manifest(RUN_A)
+        self.assertEqual(set(manifest), {"run_at", "tables"})
+        for hashes in manifest["tables"].values():
             for h in hashes:
                 self.assertRegex(h, r"^[0-9a-f]{64}$")
+
+    def test_no_stored_fixed_manifest_is_used(self):
+        self.assertFalse(MANIFEST_FILE.exists(), "the per-run manifest replaces the stored fixed manifest")
 
     def test_one_changed_value_changes_the_row_hash(self):
         row = dict(full_rows()["experiences"][0])
@@ -220,7 +244,7 @@ class SeedAgainstDisposableDatabase(unittest.TestCase):
 
     def _seeded(self):
         with Session(self.engine) as s:
-            seed_database(s)
+            _, self.manifest = seed_database(s)
 
     def test_migrations_reach_head_on_an_empty_database(self):
         with self.engine.connect() as conn:
@@ -228,7 +252,7 @@ class SeedAgainstDisposableDatabase(unittest.TestCase):
 
     def test_seed_then_verify_passes_with_zero_mismatches_and_zero_link_problems(self):
         self._seeded()
-        result = verify_database(self.engine)
+        result = verify_database(self.engine, self.manifest)
         self.assertTrue(result["pass"], {k: v for k, v in result.items() if k != "tables"})
         for table, stats in result["tables"].items():
             self.assertEqual((stats["rows_not_in_manifest"], stats["manifest_rows_missing"]), (0, 0), table)
@@ -253,16 +277,284 @@ class SeedAgainstDisposableDatabase(unittest.TestCase):
         self._seeded()
         with self.engine.begin() as conn:
             conn.execute(text("UPDATE experiences SET title = 'Tampered Title' WHERE id = 301"))
-        result = verify_database(self.engine)
+        result = verify_database(self.engine, self.manifest)
         self.assertFalse(result["pass"])
         self.assertEqual(result["tables"]["experiences"]["rows_not_in_manifest"], 1)
         self.assertEqual(result["tables"]["experiences"]["manifest_rows_missing"], 1)
 
+    def test_a_stale_draft_fails_verification_even_when_the_rest_matches(self):
+        with Session(self.engine) as s:
+            _, manifest = seed_database(s)
+        with self.engine.begin() as conn:
+            conn.execute(text("UPDATE resume_ingestion_drafts SET updated_at = updated_at - interval '40 days'"))
+        result = verify_database(self.engine, manifest)
+        self.assertFalse(result["pass"])
+        self.assertFalse(result["draft_timestamps_in_run_window"])
+        self.assertEqual(result["tables"]["users"]["rows_not_in_manifest"], 0)
+
+    def test_a_manifest_from_another_run_does_not_match_these_rows(self):
+        with Session(self.engine) as s:
+            _, first = seed_database(s, RUN_A)
+        self.assertTrue(verify_database(self.engine, first)["pass"])
+        self.assertFalse(verify_database(self.engine, build_manifest(RUN_B))["pass"])
+    def test_a_40_day_old_database_with_its_matching_manifest_is_rejected(self):
+        old_run = now_utc() - timedelta(days=40)
+        with Session(self.engine) as s:
+            _, old_manifest = seed_database(s, old_run)
+        result = verify_database(self.engine, old_manifest)
+        self.assertFalse(result["pass"])
+        self.assertFalse(result["manifest_within_retention_window"])
+        self.assertTrue(result["draft_timestamps_in_run_window"], "the drafts do match their own run")
+        for table, stats in result["tables"].items():
+            self.assertEqual(stats["rows_not_in_manifest"], 0, table)
+            self.assertEqual(stats["manifest_rows_missing"], 0, table)
+
+    def test_a_run_inside_the_window_passes(self):
+        recent_run = now_utc() - timedelta(days=10)
+        with Session(self.engine) as s:
+            _, manifest = seed_database(s, recent_run)
+        result = verify_database(self.engine, manifest)
+        self.assertTrue(result["manifest_within_retention_window"])
+        self.assertTrue(result["pass"], {k: v for k, v in result.items() if k not in ("tables", "relationships")})
+    def _cli_seed(self, out_path):
+        from seed import synthetic_seed as ss
+        os.environ["SEED_TEST_TARGET"] = self.url
+        try:
+            return ss.main(["seed", "--url-env", "SEED_TEST_TARGET", "--expect-db-name", "ct_seed_disposable", "--manifest-out", str(out_path)])
+        finally:
+            del os.environ["SEED_TEST_TARGET"]
+
+    def _user_count(self):
+        with self.engine.connect() as conn:
+            return conn.execute(text("SELECT count(*) FROM users")).scalar_one()
+
+    def test_an_unwritable_manifest_path_fails_before_any_row_is_inserted(self):
+        import tempfile
+        missing = Path(tempfile.gettempdir()) / "ct-no-such-folder-for-seed-test" / "manifest.json"
+        self.assertEqual(self._cli_seed(missing), 2)
+        self.assertEqual(self._user_count(), 0, "no rows may be inserted when the manifest cannot be prepared")
+
+    def test_a_failed_seed_leaves_no_temporary_manifest(self):
+        import tempfile
+        from unittest import mock
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            out = folder / "manifest.json"
+            with mock.patch.object(seed_mod, "_seed_rows", side_effect=RuntimeError("boom")):
+                self.assertEqual(self._cli_seed(out), 2)
+            self.assertFalse(out.exists())
+            self.assertEqual(list(folder.iterdir()), [], "no temporary manifest may be left behind")
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+
+    def test_a_successful_seed_publishes_the_manifest_for_its_own_run(self):
+        import tempfile
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            out = folder / "manifest.json"
+            self.assertEqual(self._cli_seed(out), 0)
+            manifest = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(list(folder.iterdir()), [out], "only the published manifest remains")
+            self.assertTrue(verify_database(self.engine, manifest)["pass"])
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+    def _run_cli(self, out_path, url_env="SEED_TEST_TARGET", db_name="ct_seed_disposable"):
+        from seed import synthetic_seed as ss
+        return ss.main(["seed", "--url-env", url_env, "--expect-db-name", db_name, "--manifest-out", str(out_path)])
+
+    def test_missing_database_url_leaves_no_temp_file_and_no_rows(self):
+        import tempfile
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            os.environ.pop("CT_SEED_NO_SUCH_URL", None)
+            self.assertEqual(self._run_cli(folder / "m.json", url_env="CT_SEED_NO_SUCH_URL"), 2)
+            self.assertEqual(list(folder.iterdir()), [])
+            self.assertEqual(self._user_count(), 0)
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+
+    def test_wrong_database_name_leaves_no_temp_file_and_no_rows(self):
+        import tempfile
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            os.environ["SEED_TEST_TARGET"] = self.url
+            try:
+                self.assertEqual(self._run_cli(folder / "m.json", db_name="some_other_database"), 2)
+            finally:
+                del os.environ["SEED_TEST_TARGET"]
+            self.assertEqual(list(folder.iterdir()), [])
+            self.assertEqual(self._user_count(), 0)
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+
+    def test_connection_failure_after_the_temp_file_is_prepared_leaves_nothing(self):
+        import tempfile
+        from unittest import mock
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            os.environ["SEED_TEST_TARGET"] = self.url
+            try:
+                with mock.patch.object(seed_mod, "Session", side_effect=RuntimeError("connection refused")):
+                    self.assertEqual(self._run_cli(folder / "m.json"), 2)
+            finally:
+                del os.environ["SEED_TEST_TARGET"]
+            self.assertEqual(list(folder.iterdir()), [])
+            self.assertEqual(self._user_count(), 0)
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+
+    def test_a_failed_publish_rolls_back_so_no_seeded_database_lacks_its_manifest(self):
+        import tempfile
+        from unittest import mock
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            out = folder / "manifest.json"
+            os.environ["SEED_TEST_TARGET"] = self.url
+            try:
+                with mock.patch.object(seed_mod.os, "replace", side_effect=OSError("disk full")):
+                    self.assertEqual(self._run_cli(out), 2)
+            finally:
+                del os.environ["SEED_TEST_TARGET"]
+            self.assertFalse(out.exists())
+            self.assertEqual(list(folder.iterdir()), [], "the temporary manifest must be removed")
+            self.assertEqual(self._user_count(), 0, "the rows must be rolled back, never committed")
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+
+    def test_a_commit_exception_with_an_empty_fresh_read_keeps_the_manifest_as_unknown(self):
+        import tempfile
+        from unittest import mock
+        from contextlib import redirect_stdout
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            out = folder / "manifest.json"
+            os.environ["SEED_TEST_TARGET"] = self.url
+            buf = io.StringIO()
+            try:
+                with mock.patch.object(Session, "commit", side_effect=RuntimeError("commit failed")), redirect_stdout(buf):
+                    code = self._run_cli(out)
+            finally:
+                del os.environ["SEED_TEST_TARGET"]
+            self.assertEqual(code, 3)
+            report = json.loads(buf.getvalue().strip().splitlines()[-1])
+            self.assertEqual(report["status"], "commit_outcome_unknown")
+            self.assertIsNone(report["committed"])
+            self.assertTrue(out.exists(), "an empty read does not prove rollback: the manifest must be kept")
+            self.assertEqual(self._user_count(), 0)
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+    def _lost_acknowledgement_commit(self):
+        """A commit that really happens, but whose acknowledgement is lost (the connection drops after the server commits)."""
+        real_commit = Session.commit
+
+        def commit_then_lose_connection(session):
+            real_commit(session)
+            raise RuntimeError("connection lost after the server committed")
+
+        return commit_then_lose_connection
+
+    def test_a_lost_commit_acknowledgement_is_verified_by_a_fresh_connection_and_the_manifest_kept(self):
+        import tempfile
+        from unittest import mock
+        from contextlib import redirect_stdout
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            out = folder / "manifest.json"
+            os.environ["SEED_TEST_TARGET"] = self.url
+            buf = io.StringIO()
+            try:
+                with mock.patch.object(Session, "commit", new=self._lost_acknowledgement_commit()), redirect_stdout(buf):
+                    code = self._run_cli(out)
+            finally:
+                del os.environ["SEED_TEST_TARGET"]
+            self.assertEqual(code, 0)
+            report = json.loads(buf.getvalue().strip().splitlines()[-1])
+            self.assertEqual(report["status"], "commit_verified_by_fresh_connection")
+            self.assertTrue(out.exists(), "the manifest must be kept: the rows are committed")
+            self.assertGreater(self._user_count(), 0)
+            self.assertTrue(verify_database(self.engine, json.loads(out.read_text(encoding="utf-8")))["pass"])
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+
+    def test_an_unknown_commit_outcome_keeps_the_manifest_and_reports_unknown(self):
+        import tempfile
+        from unittest import mock
+        from contextlib import redirect_stdout
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            out = folder / "manifest.json"
+            os.environ["SEED_TEST_TARGET"] = self.url
+            buf = io.StringIO()
+            try:
+                with mock.patch.object(Session, "commit", new=self._lost_acknowledgement_commit()), \
+                        mock.patch.object(seed_mod, "verify_database", return_value={"pass": False}), redirect_stdout(buf):
+                    code = self._run_cli(out)
+            finally:
+                del os.environ["SEED_TEST_TARGET"]
+            self.assertEqual(code, 3)
+            report = json.loads(buf.getvalue().strip().splitlines()[-1])
+            self.assertEqual(report["status"], "commit_outcome_unknown")
+            self.assertIsNone(report["committed"])
+            self.assertTrue(out.exists(), "an unknown outcome keeps the manifest")
+            self.assertIn("verify --url-env", report["verify_later"])
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
+
+    def test_an_unreachable_database_after_an_uncertain_commit_keeps_the_manifest(self):
+        import tempfile
+        from unittest import mock
+        from contextlib import redirect_stdout
+        folder = Path(tempfile.mkdtemp(prefix="ct-seed-test-"))
+        try:
+            out = folder / "manifest.json"
+            os.environ["SEED_TEST_TARGET"] = self.url
+            buf = io.StringIO()
+            real_create = seed_mod.create_engine
+            calls = {"n": 0}
+
+            def create_then_fail(*a, **k):
+                calls["n"] += 1
+                if calls["n"] == 1:
+                    return real_create(*a, **k)
+                raise RuntimeError("cannot reach the database")
+
+            try:
+                with mock.patch.object(Session, "commit", new=self._lost_acknowledgement_commit()), \
+                        mock.patch.object(seed_mod, "create_engine", side_effect=create_then_fail), redirect_stdout(buf):
+                    code = self._run_cli(out)
+            finally:
+                del os.environ["SEED_TEST_TARGET"]
+            self.assertEqual(code, 3)
+            report = json.loads(buf.getvalue().strip().splitlines()[-1])
+            self.assertEqual(report["status"], "commit_outcome_unknown")
+            self.assertTrue(out.exists())
+        finally:
+            for p in folder.iterdir():
+                p.unlink()
+            folder.rmdir()
     def test_a_row_attached_to_the_wrong_profile_is_detected(self):
         self._seeded()
         with self.engine.begin() as conn:
             conn.execute(text("UPDATE experiences SET career_profile_id = 202 WHERE id = 301"))
-        result = verify_database(self.engine)
+        result = verify_database(self.engine, self.manifest)
         self.assertFalse(result["pass"])
         self.assertEqual(result["tables"]["experiences"]["rows_not_in_manifest"], 1)
 
@@ -271,7 +563,7 @@ class SeedAgainstDisposableDatabase(unittest.TestCase):
         with self.engine.begin() as conn:
             # Skill 403 belongs to profile 202; pointing it at experience 301 (profile 201) is a cross-profile link.
             conn.execute(text("UPDATE skills SET experience_id = 301 WHERE id = 403"))
-        result = verify_database(self.engine)
+        result = verify_database(self.engine, self.manifest)
         self.assertFalse(result["pass"])
         self.assertEqual(result["relationships"]["skills.experience_id->experiences.id"]["cross_profile"], 1)
 
@@ -279,7 +571,7 @@ class SeedAgainstDisposableDatabase(unittest.TestCase):
         self._seeded()
         with self.engine.begin() as conn:
             conn.execute(text("UPDATE users SET email = 'not.synthetic@gmail.com' WHERE id = 102"))
-        result = verify_database(self.engine)
+        result = verify_database(self.engine, self.manifest)
         self.assertFalse(result["pass"])
         self.assertEqual(result["tables"]["users"]["rows_not_in_manifest"], 1)
 
@@ -296,14 +588,14 @@ class SeedAgainstDisposableDatabase(unittest.TestCase):
             with self.engine.connect() as conn:
                 return {t: conn.execute(text(f'SELECT count(*) FROM "{t}"')).scalar_one() for t in TABLE_ORDER}
         before = snapshot()
-        verify_database(self.engine)
+        verify_database(self.engine, self.manifest)
         self.assertEqual(snapshot(), before)
 
     def test_verify_output_has_no_row_values(self):
         self._seeded()
         with self.engine.begin() as conn:
             conn.execute(text("UPDATE experiences SET title = 'Tampered Title' WHERE id = 301"))
-        blob = json.dumps(verify_database(self.engine), default=str)
+        blob = json.dumps(verify_database(self.engine, self.manifest), default=str)
         for value in ("Tampered Title", "Operations Analyst", "Example Co", "member@example.invalid", "Sam Example", "SQL"):
             self.assertNotIn(value, blob)
 

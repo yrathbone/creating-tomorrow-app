@@ -20,9 +20,10 @@ import argparse
 import hashlib
 import json
 import os
+import tempfile
 import sys
 from collections import Counter
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -33,7 +34,11 @@ from db import Base
 import models  # noqa: F401  (registers every table on Base.metadata)
 
 FIXTURE_DIR = Path(__file__).with_name("fixtures")
-MANIFEST_PATH = Path(__file__).with_name("synthetic_manifest.json")
+# Interview drafts are the one VARIABLE timestamp: each seed run stamps them with its own run time. The verifier checks
+# that every draft carries the run time of its manifest, within this window. Stale drafts are a retention-test case.
+RUN_TIME_WINDOW = timedelta(minutes=5)
+# The verifier accepts a seed run only while it is inside the same 30-day window the app uses for interview drafts.
+from career.draft_retention import DRAFT_RETENTION  # noqa: E402
 
 # Database names this seed must never write to (the current staging and production databases).
 DENY_DB_NAMES = {"creating-tomorrow-staging-db", "creating-tomorrow-db", "creating-tomorrow-staging", "creating-tomorrow"}
@@ -131,12 +136,13 @@ RESUME_B = {"name": "Riley Sample", "headline": "Project coordinator · Field op
             "lang": "en-US"}
 
 
-def synthetic_records() -> dict[str, list[dict]]:
+def synthetic_records(run_at: datetime | None = None) -> dict[str, list[dict]]:
     """Complete synthetic record set. Each record: {"id": fixed id, "fk": {column: fixed parent id or None},
     "v": {column: value}}. Every column of the table must appear once across "id", "fk" and "v" (tested)."""
     docx_a = _fixture("synthetic_resume_sam_example.docx")
     docx_b = _fixture("synthetic_resume_riley_sample.docx")
     rec = lambda i, fk, v: {"id": i, "fk": fk, "v": v}  # noqa: E731
+    run_at = run_at or now_utc()  # the one variable timestamp: interview drafts, stamped at this run's time
     return {
         "users": [
             rec(101, {}, {"cognito_sub": "synthetic-sub-0001", "email": "member@example.invalid", "consent_given_at": ts(10, 12), "created_at": ts(10, 12), "deleted_at": None}),
@@ -230,10 +236,10 @@ def synthetic_records() -> dict[str, list[dict]]:
             rec(1301, {"career_profile_id": 201},
                 {"analysis_summary": "Synthetic draft summary.", "roles": [{"title": "Support Specialist", "organization": "Sample Services"}],
                  "education": [], "certifications": [], "categories": [], "history": [{"q": "Which tools did you use?", "a": "SQL"}],
-                 "pending_questions": [{"id": "q1", "text": "Describe one result."}], "discovered_facts": [], "round_number": 2, "updated_at": ts(19, 9)}),
+                 "pending_questions": [{"id": "q1", "text": "Describe one result."}], "discovered_facts": [], "round_number": 2, "updated_at": run_at}),
             rec(1302, {"career_profile_id": 202},
                 {"analysis_summary": None, "roles": [], "education": [], "certifications": [], "categories": [], "history": [],
-                 "pending_questions": [], "discovered_facts": [], "round_number": 1, "updated_at": ts(19, 10)}),
+                 "pending_questions": [], "discovered_facts": [], "round_number": 1, "updated_at": run_at}),
         ],
         # Job postings, one row for each status the staging screens display. Status is derived in the comments:
         #   open: closed_on and missing_since are NULL; missing: missing_since set, closed_on NULL;
@@ -271,41 +277,54 @@ def synthetic_records() -> dict[str, list[dict]]:
     }
 
 
-def full_rows() -> dict[str, list[dict]]:
+def now_utc() -> datetime:
+    return datetime.now(UTC).replace(microsecond=0)
+
+
+def full_rows(run_at: datetime | None = None) -> dict[str, list[dict]]:
     """Every record as a complete row: id, foreign keys and values, all columns present."""
     out = {}
-    for table, recs in synthetic_records().items():
+    for table, recs in synthetic_records(run_at).items():
         out[table] = [{"id": r["id"], **r["fk"], **r["v"]} for r in recs]
     return out
 
 
-def build_manifest() -> dict[str, list[str]]:
-    manifest: dict[str, list[str]] = {}
-    for table in TABLE_ORDER:
-        manifest[table] = sorted(row_hash(table, row) for row in full_rows()[table])
-    return manifest
+def build_manifest(run_at: datetime | None = None) -> dict:
+    """The manifest for one seed run: the run time, and for each table the sorted row hashes, computed from the SAME
+    timestamped records that seed_database inserts. Only hashes are stored, never values."""
+    run_at = run_at or now_utc()
+    rows = full_rows(run_at)
+    return {"run_at": run_at.isoformat(), "tables": {t: sorted(row_hash(t, r) for r in rows[t]) for t in TABLE_ORDER}}
 
 
-def seed_database(session: Session) -> dict[str, int]:
-    """Insert the synthetic rows into an EMPTY database, then reset the id sequences past the fixed ids."""
+def seed_database(session: Session, run_at: datetime | None = None) -> tuple[dict[str, int], dict]:
+    """Insert the synthetic rows into an EMPTY database, reset id sequences past the fixed ids, COMMIT, and return
+    (rows per table, the manifest for this run)."""
+    run_at = run_at or now_utc()
+    counts = _seed_rows(session, run_at)
+    session.commit()
+    return counts, build_manifest(run_at)
+
+
+def _seed_rows(session: Session, run_at: datetime) -> dict[str, int]:
+    """Insert the rows and reset the sequences inside the caller's transaction. Does NOT commit: the caller decides."""
     for table in TABLE_ORDER:
         if session.execute(select(func.count()).select_from(Base.metadata.tables[table])).scalar_one():
             raise RuntimeError(f"refusing to seed: table {table} is not empty")
     model_by_table = {m.class_.__tablename__: m.class_ for m in Base.registry.mappers}
+    rows_by_table = full_rows(run_at)
     counts: dict[str, int] = {}
     for table in TABLE_ORDER:
         model = model_by_table[table]
-        rows = full_rows()[table]
-        for row in rows:
+        for row in rows_by_table[table]:
             session.add(model(**row))
         session.flush()
-        counts[table] = len(rows)
+        counts[table] = len(rows_by_table[table])
     for table in TABLE_ORDER:
         session.execute(text(
             f'SELECT setval(pg_get_serial_sequence(\'{table}\', \'id\'), '
             f'(SELECT COALESCE(MAX(id), 1) FROM "{table}"), (SELECT MAX(id) IS NOT NULL FROM "{table}"))'
         ))
-    session.commit()
     return counts
 
 
@@ -338,9 +357,20 @@ def _relationship_counts(conn, present: set[str]) -> dict[str, dict]:
     return out
 
 
-def verify_database(engine, manifest: dict[str, list[str]] | None = None) -> dict:
-    """Read-only comparison with the manifest and relationship checks. Returns counts only: never row values."""
-    expected = manifest if manifest is not None else build_manifest()
+def _aware(value: datetime) -> datetime:
+    return value.replace(tzinfo=UTC) if value.tzinfo is None else value
+
+
+def verify_database(engine, manifest: dict) -> dict:
+    """Read-only comparison with one run's manifest, relationship checks, and two explicit time checks:
+      - each draft's updated_at must carry that run's time (within RUN_TIME_WINDOW);
+      - the manifest's run time must lie inside the draft-retention window (DRAFT_RETENTION, measured from now).
+    A seed run older than the window is rejected even when every hash matches. Returns counts only: never row values."""
+    if manifest is None:
+        raise TypeError("an explicit manifest from one seed run is required")
+    expected = manifest["tables"]
+    run_at = datetime.fromisoformat(manifest["run_at"])
+    age = _aware(now_utc()) - _aware(run_at)
     result: dict = {"tables": {}, "relationships": {}}
     conn = engine.connect().execution_options(postgresql_readonly=True)
     try:
@@ -363,11 +393,21 @@ def verify_database(engine, manifest: dict[str, list[str]] | None = None) -> dic
                 "null_counts": {c: sum(1 for r in rows if r[c] is None) for c in cols},
             }
         result["relationships"] = _relationship_counts(conn, present)
+        draft_times = []
+        if "resume_ingestion_drafts" in present:
+            draft_times = [_aware(v) for v in conn.execute(text('SELECT updated_at FROM "resume_ingestion_drafts"')).scalars()]
+        result["draft_timestamps_in_run_window"] = (
+            len(draft_times) == len(expected.get("resume_ingestion_drafts", []))
+            and all(abs(v - _aware(run_at)) <= RUN_TIME_WINDOW for v in draft_times)
+        )
     finally:
         conn.close()
+    # A run is accepted only inside the draft-retention window, with a small allowance for clock skew in the future.
+    result["manifest_within_retention_window"] = -RUN_TIME_WINDOW <= age <= DRAFT_RETENTION
     rel_ok = all(v["orphans"] == 0 and (v["cross_profile"] in (None, 0)) for v in result["relationships"].values())
     result["pass"] = (
         not result["unexpected_tables"] and not result["missing_tables"] and rel_ok
+        and result["draft_timestamps_in_run_window"] and result["manifest_within_retention_window"]
         and all(t["rows_not_in_manifest"] == 0 and t["manifest_rows_missing"] == 0 for t in result["tables"].values())
     )
     return result
@@ -386,25 +426,128 @@ def _url_for(env_name: str, expect_db_name: str) -> str:
     return raw if raw.startswith("postgresql+psycopg://") else raw.replace("postgresql://", "postgresql+psycopg://", 1)
 
 
+def _prepare_manifest_file(out: Path, manifest: dict) -> Path:
+    """Write the manifest to a temporary file in the target folder and return its path. Raises BEFORE any row is inserted
+    if the folder is missing, the file already exists, or the write fails. The caller publishes it with os.replace."""
+    if not out.parent.is_dir():
+        raise FileNotFoundError("manifest folder does not exist")
+    if out.exists():
+        raise FileExistsError("refusing to overwrite an existing manifest")
+    fd, tmp_name = tempfile.mkstemp(prefix=".manifest-", suffix=".tmp", dir=str(out.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+    except BaseException:
+        Path(tmp_name).unlink(missing_ok=True)
+        raise
+    return Path(tmp_name)
+
+
+def _unknown_commit(url_env: str, out: Path, manifest: dict, error: str, verify_error: str | None = None) -> int:
+    """The database outcome could not be established. The manifest is KEPT, and the operator gets the command to verify later."""
+    print(json.dumps({
+        "error": error,
+        "status": "commit_outcome_unknown",
+        "committed": None,
+        "manifest_kept": str(out),
+        "run_at": manifest["run_at"],
+        "verification_error": verify_error,
+        "verify_later": f"python -m seed.synthetic_seed verify --url-env {url_env} --expect-db-name ct_seed_disposable --manifest \"{out}\"",
+    }, sort_keys=True))
+    return 3
+
+
+def _resolve_uncertain_commit(url: str, url_env: str, out: Path, manifest: dict, error: str) -> int:
+    """The COMMIT raised after the manifest was published. The commit may still be in progress, or may have happened
+    without its acknowledgement, so an exception does not prove rollback, and an empty read does not either (a fresh
+    connection can read before a pending commit becomes visible). The manifest is therefore KEPT unless a fresh
+    read-only verification POSITIVELY passes against it:
+      - the verifier passes: the commit is verified, the manifest is kept, exit 0;
+      - the verifier fails (including empty tables), or the fresh connection cannot be made or used: the outcome is
+        unknown, the manifest is kept, the verify command is printed for later, exit 3.
+    Only failures before the COMMIT call (see _seed_command) remove the manifest."""
+    try:
+        fresh = create_engine(url, pool_pre_ping=True)
+    except Exception as exc:
+        return _unknown_commit(url_env, out, manifest, error, type(exc).__name__)
+    try:
+        result = verify_database(fresh, manifest)
+    except Exception as exc:
+        return _unknown_commit(url_env, out, manifest, error, type(exc).__name__)
+    finally:
+        fresh.dispose()
+    if result["pass"]:
+        print(json.dumps({"error": error, "status": "commit_verified_by_fresh_connection", "committed": True,
+                          "run_at": manifest["run_at"], "manifest_kept": str(out)}, sort_keys=True))
+        return 0
+    return _unknown_commit(url_env, out, manifest, error)
+
+def _seed_command(args) -> int:
+    """Seed an empty database and publish this run's manifest. Order:
+      1. validate the database target and create the engine (no side effects);
+      2. write the manifest to a temporary file beside the output path (no rows yet);
+      3. in ONE transaction: insert the rows, publish the manifest with os.replace, then COMMIT.
+    Failures before the publish: the transaction is rolled back and the temporary file is removed (exit 2).
+    A COMMIT that raises after the publish is an UNCERTAIN outcome: the manifest is kept unless a fresh read-only
+    verification positively passes (see _resolve_uncertain_commit). Exit codes: 0 committed and verified; 2 failed before
+    the publish (rolled back, temporary file removed); 3 outcome unknown, manifest kept."""
+    out = Path(args.manifest_out)
+    engine = None
+    tmp = None
+    published = False
+    url = None
+    manifest = None
+    try:
+        url = _url_for(args.url_env, args.expect_db_name)
+        engine = create_engine(url, pool_pre_ping=True)
+        run_at = now_utc()
+        manifest = build_manifest(run_at)
+        tmp = _prepare_manifest_file(out, manifest)
+        with Session(engine) as session:
+            counts = _seed_rows(session, run_at)
+            if build_manifest(run_at) != manifest:
+                raise RuntimeError("the seeded records do not match the prepared manifest")
+            os.replace(tmp, out)
+            published = True
+            session.commit()
+        print(json.dumps({"seeded_rows_per_table": counts, "run_at": manifest["run_at"], "status": "committed"}, sort_keys=True))
+        return 0
+    except (Exception, SystemExit) as exc:  # report the class only: messages may contain data
+        error = type(exc).__name__
+        if not published:
+            if tmp is not None:
+                Path(tmp).unlink(missing_ok=True)
+            print(json.dumps({"error": error, "status": "rolled_back_before_publish", "committed": False}, sort_keys=True))
+            return 2
+        return _resolve_uncertain_commit(url, args.url_env, out, manifest, error)
+    finally:
+        if engine is not None:
+            engine.dispose()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Synthetic seed for a fresh database (Gate 2b).")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("manifest", help="print the record-hash manifest (no database used)")
-    for name, help_text in (("seed", "seed an EMPTY database"), ("verify", "read-only verification (counts only)")):
-        p = sub.add_parser(name, help=help_text)
-        p.add_argument("--url-env", required=True, help="environment variable holding the connection string")
-        p.add_argument("--expect-db-name", required=True)
+    p_seed = sub.add_parser("seed", help="seed an EMPTY database; writes this run's manifest to --manifest-out")
+    p_seed.add_argument("--url-env", required=True, help="environment variable holding the connection string")
+    p_seed.add_argument("--expect-db-name", required=True)
+    p_seed.add_argument("--manifest-out", required=True, help="where to write this run's manifest (hashes only; keep it local)")
+    p_ver = sub.add_parser("verify", help="read-only verification against one run's manifest (counts only)")
+    p_ver.add_argument("--url-env", required=True, help="environment variable holding the connection string")
+    p_ver.add_argument("--expect-db-name", required=True)
+    p_ver.add_argument("--manifest", required=True, help="the manifest written by the seed run")
     args = parser.parse_args(argv)
     if args.cmd == "manifest":
         print(json.dumps(build_manifest(), indent=1, sort_keys=True))
         return 0
+    if args.cmd == "seed":
+        return _seed_command(args)
     engine = create_engine(_url_for(args.url_env, args.expect_db_name), pool_pre_ping=True)
     try:
-        if args.cmd == "seed":
-            with Session(engine) as session:
-                print(json.dumps({"seeded_rows_per_table": seed_database(session)}, sort_keys=True))
-            return 0
-        result = verify_database(engine)
+        result = verify_database(engine, json.loads(Path(args.manifest).read_text(encoding="utf-8")))
         print(json.dumps(result, indent=1, sort_keys=True))
         return 0 if result["pass"] else 1
     except Exception as exc:  # report the class only: messages may contain data
