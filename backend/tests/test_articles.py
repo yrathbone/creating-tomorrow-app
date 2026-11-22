@@ -16,7 +16,7 @@ with open(os.path.join(FRONTEND, "learn-data.js"), encoding="utf-8") as f:
     LEARN = f.read()
 
 ARTICLES = {
-    "ats-article-main": ("what-is-ats", "What Is an ATS, Really?", "ATS Basics"),
+    "ats-article-main": ("what-is-ats", "How Applicant Tracking Systems Work", "ATS Basics"),
     "calling-card-article-main": ("resume-calling-card", "Your Resume Is Your Calling Card", "Resume Basics"),
     "linkedin-article-main": ("honest-self-marketing", "Your LinkedIn Profile Is Your Professional Story", "LinkedIn Basics"),
     "interview-article-main": ("how-we-grade", "Prepare Stories, Not Perfect Answers", "Interview Basics"),

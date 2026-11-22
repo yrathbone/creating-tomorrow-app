@@ -7,7 +7,7 @@
 const ARTICLES = [
   {
     slug: "what-is-ats",
-    title: "What Is an ATS, Really?",
+    title: "How Applicant Tracking Systems Work",
     summary: "What you need to know about the software behind online job applications, without the myths.",
     category: "ATS Basics",
     video_youtube_id: null,
