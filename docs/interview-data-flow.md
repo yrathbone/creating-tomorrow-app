@@ -6,7 +6,7 @@ server routes that handle its answers. The job-comparison flow is separate (see 
 
 ## 1. Summary
 
-- A typed or spoken answer lives in the browser page until the member saves or leaves the page.
+- A typed or spoken answer lives in the browser page while the interview is in progress. It is removed from the page when the analysis produces suggestions (the review step), or when the member leaves the page, whichever comes first. Answers from earlier rounds stay in the page until the review step so the next round can use them.
 - Each "Send answers and continue" sends all answers so far to our server, which sends them to the AI provider (Anthropic).
 - After the AI analyses them, the server no longer keeps the raw answers. It keeps only the questions still to ask and
   the suggested facts for review (structured). Those are removed when the member saves, discards, or they expire.
@@ -24,7 +24,8 @@ server routes that handle its answers. The job-comparison flow is separate (see 
 | Server stores the result | `routes.py` `resume_discover` (after the AI call): `draft.history = []`; stores `pending_questions`, `discovered_facts`, `round_number`, `categories` | Structured results only | Yes, in the draft row, until save, discard or expiry |
 | Member reviews suggestions | `resumeReview.js` review card (`renderResumeReview`) | The suggested facts | In page memory and the draft |
 | Member presses Save | `resumeReview.js` `resume-save-btn` handler; POST `/api/career/resume-save` | Roles and facts the member approved | Profile rows written; draft deleted |
-| Clear page memory after save | `resumeReview.js` (after save): `resumeState.history = []`, `discoveredFacts = []`, `currentResumeQuestions = []`, answer boxes removed | Nothing | n/a |
+| Review step (analysis returned suggestions, stage confirm) | `resumeReview.js` `submitResumeAnswers` confirm branch: `resumeState.history = []`, `currentResumeQuestions = []`, answer boxes removed; suggestions kept | Suggestions only | Page: suggestions only |
+| Clear page memory after save | `resumeReview.js` save handler (after a successful save): `history`, `discoveredFacts`, `currentResumeQuestions` cleared; answer boxes removed | Nothing | n/a |
 | Resume the draft later | GET `/api/career/resume-draft` returns the draft; `resumeReview.js` line 232 restores `history` (now empty) | Structured results | Same as the draft |
 | Discard | DELETE `/api/career/resume-draft` | | Draft row deleted |
 
@@ -91,8 +92,8 @@ Backend, `backend/tests/test_interview_transcript_disposal.py` (6 tests) and `te
 - Save is the step that writes profile rows, and it clears the draft.
 
 Frontend, `backend/tests/frontend/voice_answer.test.js`:
-- The save handler clears the in-memory history, suggestions, pending questions and answer boxes.
-- `resumeReview.js` and `voiceAnswer.js` use no browser storage for answers.
+- SOURCE-TEXT ASSERTION: the save handler and the review-step branch contain the clearing statements; a failed call's error path does not clear the answers. These are source-text checks, not DOM or browser behaviour tests.
+- SOURCE-TEXT ASSERTION: `resumeReview.js` and `voiceAnswer.js` contain no browser-storage calls (checked in source text only).
 
 They do NOT prove:
 - What the browser's memory or the page's DOM holds after the member leaves the page (not run in a browser).

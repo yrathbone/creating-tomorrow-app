@@ -228,10 +228,14 @@ test("submit is explicit: Send answers and continue, with the disclosure immedia
   assert.ok(/^<\/p>\s*$/.test(tail), "only whitespace sits between the disclosure and the button");
   assert.match(html, /id="resume-questions-submit-btn">Send answers and continue<\/button>/);
   const disclosure = html.slice(disclosureAt, html.indexOf("</p>", disclosureAt));
-  assert.match(disclosure, /AI service/);
-  assert.match(disclosure, /spoken transcript/);
-  assert.match(disclosure, /interview draft/);
-  assert.match(disclosure, /discard the draft/);
+  assert.match(disclosure, /AI service/, "answers go to the AI service for analysis");
+  assert.match(disclosure, /spoken transcript/, "a spoken transcript is named");
+  assert.match(disclosure, /removed from this page/, "answers are removed after analysis");
+  assert.match(disclosure, /suggested skills and experience are kept/, "suggestions are kept for review");
+  assert.match(disclosure, /until you save/, "nothing reaches the profile before Save");
+  assert.match(disclosure, /do not control how the AI service keeps data/i, "no provider-deletion promise");
+  assert.doesNotMatch(disclosure, /saved in your interview draft/, "old wording is gone");
+  assert.match(disclosure, /discard the interview/);
 });
 
 test("after a successful save the in-memory answers and suggestions are cleared, and no browser storage holds interview answers", () => {
