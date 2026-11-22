@@ -14,6 +14,9 @@ with open(os.path.join(FRONTEND, "article.html"), encoding="utf-8") as f:
     PAGE = f.read()
 with open(os.path.join(FRONTEND, "learn-data.js"), encoding="utf-8") as f:
     LEARN = f.read()
+ARCHIVE_PATH = os.path.join(FRONTEND, "..", "docs", "article-archive", "rich-article-blocks-before-2026-11-22.html")
+with open(ARCHIVE_PATH, encoding="utf-8") as f:
+    ARCHIVE = f.read()
 
 ARTICLES = {
     "ats-article-main": ("what-is-ats", "How Applicant Tracking Systems Work", "ATS Basics"),
@@ -26,6 +29,11 @@ ARTICLES = {
 def block(main_id):
     start = PAGE.index(f'<main id="{main_id}"')
     return PAGE[start:PAGE.index("</main>", start)]
+
+
+def archived_block(main_id):
+    start = ARCHIVE.index(f'<main id="{main_id}"')
+    return ARCHIVE[start:ARCHIVE.index("</main>", start)]
 
 
 def reading_text(main_id):
@@ -43,7 +51,11 @@ class GuideStructure(unittest.TestCase):
                 self.assertIn(f"<h1>{title}</h1>", b)
                 self.assertRegex(b, r'<p class="ats-readtime">\d+&ndash;\d+ minute read</p>')
                 self.assertIn(f'slug: "{slug}"', LEARN)
-                self.assertIn("ats-takeaway", b)
+                if main_id == "ats-article-main":
+                    # The approved ATS copy has no takeaway box; it uses a callout for its examples instead.
+                    self.assertIn("ats-callout", b)
+                else:
+                    self.assertIn("ats-takeaway", b)
                 self.assertIn("final-cta", b)
 
     def test_reading_times_match_the_word_count(self):
@@ -84,12 +96,12 @@ class ClaimsWeCouldNotVerifyStayOut(unittest.TestCase):
                 self.assertNotIn(bad, b, f"{main_id} still contains {bad!r}")
 
     def test_the_2025_linkedin_study_has_its_verified_author_list(self):
-        b = block("linkedin-article-main")
+        b = archived_block("linkedin-article-main")
         for name in ("Steinbrecher", "Heinemann", "Pr&uuml;&szlig;meier", "Sch&auml;pers"):
             self.assertIn(name, b)
 
     def test_star_is_attributed_only_to_what_opm_actually_says(self):
-        b = block("interview-article-main")
+        b = archived_block("interview-article-main")
         self.assertIn("recommends it for writing structured interview questions", b)
         self.assertNotIn("federal hiring guidance itself", b)
 
@@ -111,10 +123,10 @@ class SourcesAreRealLinks(unittest.TestCase):
 
     def test_inline_source_notes_name_their_sources(self):
         # every "(Source: ...)" in the text names something, and the research claims that need a citation have one
-        ats = block("ats-article-main")
+        ats = archived_block("ats-article-main")
         for needle in ("Source: <a", "Samadi", "ADA.gov"):
             self.assertIn(needle, ats)
-        resume = block("calling-card-article-main")
+        resume = archived_block("calling-card-article-main")
         for needle in ("Sekeres et al., 2016", "Di Stefano, Gino, Pisano", "Rudolph, Lavigne", "UIUC Career Center", "NACE"):
             self.assertIn(needle, resume)
 
@@ -122,9 +134,10 @@ class SourcesAreRealLinks(unittest.TestCase):
 class LearnPageCards(unittest.TestCase):
     def test_summaries_match_the_guide_subtitles(self):
         subtitles = {
-            "what-is-ats": "What you need to know about the software behind online job applications, without the myths.",
-            "resume-calling-card": "Keep it ready before you need it.",
-            "how-we-grade": "How to prepare for an interview without memorizing a script.",
+            "what-is-ats": "What they do, why it matters, and how to work with them.",
+            "resume-calling-card": "Keep a record of what you’ve done so you’re ready when an opportunity appears.",
+            "honest-self-marketing": "Help people understand what you know, what you’ve done, and how you add value.",
+            "how-we-grade": "Use real examples to prepare for interview questions without memorizing a script.",
         }
         for slug, text in subtitles.items():
             self.assertIn(text, LEARN, slug)
@@ -151,6 +164,14 @@ class OneCopyOfEveryGuide(unittest.TestCase):
         listed = set(re.findall(r'slug:\s*"([a-z0-9-]+)"', LEARN))
         for name in (os.listdir(folder) if os.path.isdir(folder) else []):
             self.assertIn(name[:-3], listed, f"articles/{name} is not in learn-data.js")
+
+
+class ArchivedVersions(unittest.TestCase):
+    """The longer repository versions, kept for reference, still hold every verified citation."""
+
+    def test_all_four_archived_blocks_are_present(self):
+        for main_id in ARTICLES:
+            self.assertIn(f'<main id="{main_id}"', ARCHIVE)
 
 
 if __name__ == "__main__":
