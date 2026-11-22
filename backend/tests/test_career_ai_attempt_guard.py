@@ -534,7 +534,7 @@ class I_Latch(BudgetCase):
         for _ in range(3):
             self.run_call()
         self.assertIsNone(job_match._budget["latched"])
-        self.assertEqual(fake.constructed, [{}])
+        self.assertEqual(fake.constructed, [{}, {}, {}], "one default client per call, exactly as before")
         self.assertEqual(len(fake.calls), 3)
 
     def test_I7_switching_off_during_concurrent_calls_sends_nothing_new(self):
