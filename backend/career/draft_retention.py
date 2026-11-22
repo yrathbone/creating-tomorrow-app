@@ -18,6 +18,10 @@ from models import ResumeIngestionDraft
 
 DRAFT_RETENTION = timedelta(days=30)
 
+# The one response for an interview that has expired, was discarded, or never existed: HTTP 409, nothing sent to the AI,
+# nothing saved to the Career Profile. The member starts the interview again from their resume.
+DRAFT_GONE_MESSAGE = "This interview has expired or was discarded. Start again from your resume."
+
 
 def _utc(dt: datetime | None) -> datetime | None:
     if dt is None:

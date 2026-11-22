@@ -38,7 +38,7 @@ from career.resume_quality import candidate_answers_text, denials_from_history, 
 from career import suggestions
 from career.term_pipeline import build_checked_resume, dedupe_skills, keyword_check_with_plan, suggest_skill_keywords, tidy_candidates
 from career.skill_scan import SkillScanError, start_skill_scan
-from career.draft_retention import live_draft
+from career.draft_retention import DRAFT_GONE_MESSAGE, live_draft
 from db import get_db_session, release_db_connection
 from extractor import extract_text_async
 from models import Application, CareerProfile, Certification, Education, Experience, Language, Opportunity, OpportunityDocument, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
@@ -693,6 +693,11 @@ async def resume_discover(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
 ):
+    # Check the draft BEFORE the AI call: an expired or discarded interview must not send its submitted answers to the AI.
+    profile = get_career_profile_or_404(db, current_user)
+    if live_draft(db, profile.id) is None:
+        raise HTTPException(status_code=409, detail=DRAFT_GONE_MESSAGE)
+
     release_db_connection(db)  # don't hold a database connection during the slow AI call
     try:
         result = await run_in_threadpool(
@@ -703,18 +708,18 @@ async def resume_discover(
     except Exception as e:
         raise internal_error(e)
 
-    profile = get_career_profile_or_404(db, current_user)
-    draft = live_draft(db, profile.id)
-    if draft is not None:
-        draft.history = req.history
-        draft.categories = req.categories
-        if result.get("stage") == "confirm":
-            draft.discovered_facts = result.get("discovered_facts") or []
-            draft.pending_questions = []
-        else:
-            draft.pending_questions = result.get("questions") or []
-            draft.round_number = req.round_number + 1
-        db.commit()
+    draft = live_draft(db, profile.id)  # checked again after the AI call: the draft may have expired while it ran
+    if draft is None:
+        raise HTTPException(status_code=409, detail=DRAFT_GONE_MESSAGE)
+    draft.history = req.history
+    draft.categories = req.categories
+    if result.get("stage") == "confirm":
+        draft.discovered_facts = result.get("discovered_facts") or []
+        draft.pending_questions = []
+    else:
+        draft.pending_questions = result.get("questions") or []
+        draft.round_number = req.round_number + 1
+    db.commit()
 
     return result
 
@@ -738,6 +743,9 @@ async def save_resume_roles(
     db: Session = Depends(get_db_session),
 ):
     profile = get_career_profile_or_404(db, current_user)
+    # Saving interview results needs a live interview draft. An expired or discarded draft saves nothing to the profile.
+    if live_draft(db, profile.id) is None:
+        raise HTTPException(status_code=409, detail=DRAFT_GONE_MESSAGE)
 
     roles = [dict(r) for r in req.roles]
     for fact in req.confirmed_facts:

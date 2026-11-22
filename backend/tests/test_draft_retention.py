@@ -6,8 +6,8 @@ Fresh in-memory SQLite database per test (OwnershipTestCase). No AI call: the AI
 from datetime import datetime, timedelta, timezone
 from unittest import mock
 
-from career.draft_retention import DRAFT_RETENTION, live_draft, sweep_stale_drafts
-from models import ResumeIngestionDraft
+from career.draft_retention import DRAFT_GONE_MESSAGE, DRAFT_RETENTION, live_draft, sweep_stale_drafts
+from models import Experience, ResumeIngestionDraft
 from tests.test_ownership import SUB_A, SUB_B, OwnershipTestCase
 
 NOW = datetime(2026, 11, 22, 12, 0, tzinfo=timezone.utc)
@@ -103,13 +103,63 @@ class DraftRetention(OwnershipTestCase):
         with self.Session() as s:
             self.assertEqual(sweep_stale_drafts(s, now=NOW), 0, "a second sweep changes nothing")
 
-    def test_resume_discover_does_not_resume_an_expired_draft(self):
+    def test_resume_discover_refuses_an_expired_draft_before_any_ai_call(self):
         self.onboard(self.a)
-        self.put_draft(SUB_A, NOW - timedelta(days=31))
-        with mock.patch("career.routes.discover", return_value={"stage": "questions", "questions": []}):
+        self.put_draft(SUB_A, datetime.now(timezone.utc) - timedelta(days=31))
+        with mock.patch("career.routes.discover", return_value={"stage": "questions", "questions": []}) as ai:
             res = self.call("POST", "/resume-discover", self.a, json={"resume_data": {"roles": []}, "history": [{"id": "old", "answer": "stale"}]})
+        self.assertEqual(res.status_code, 409, res.text)
+        self.assertEqual(res.json()["detail"], DRAFT_GONE_MESSAGE)
+        ai.assert_not_called()
+        self.assertEqual(self.draft_rows(), 0)
+
+    def test_resume_discover_refuses_a_discarded_draft_before_any_ai_call(self):
+        self.onboard(self.a)
+        self.put_draft(SUB_A, datetime.now(timezone.utc) - timedelta(days=1))
+        self.assertEqual(self.call("DELETE", "/resume-draft", self.a).status_code, 200)
+        with mock.patch("career.routes.discover", return_value={"stage": "questions", "questions": []}) as ai:
+            res = self.call("POST", "/resume-discover", self.a, json={"resume_data": {"roles": []}, "history": [{"id": "x", "answer": "after discard"}]})
+        self.assertEqual(res.status_code, 409, res.text)
+        ai.assert_not_called()
+
+    def test_resume_discover_with_a_live_draft_still_calls_the_ai_and_keeps_the_answers(self):
+        self.onboard(self.a)
+        self.put_draft(SUB_A, datetime.now(timezone.utc) - timedelta(days=1))
+        history = [{"id": "q1", "answer": "I ran a store"}]
+        with mock.patch("career.routes.discover", return_value={"stage": "questions", "questions": [{"id": "q2"}]}) as ai:
+            res = self.call("POST", "/resume-discover", self.a, json={"resume_data": {"roles": []}, "history": history, "round_number": 1})
         self.assertEqual(res.status_code, 200, res.text)
-        self.assertEqual(self.draft_rows(), 0, "the expired draft (and its old answers) is not written back")
+        ai.assert_called_once()
+        with self.Session() as s:
+            row = s.query(ResumeIngestionDraft).one()
+            self.assertEqual(row.history, history)
+            self.assertEqual(row.round_number, 2)
+
+    def test_resume_save_refuses_an_expired_draft_and_saves_nothing(self):
+        self.onboard(self.a)
+        self.put_draft(SUB_A, datetime.now(timezone.utc) - timedelta(days=31))
+        role = {"title": "Store Manager", "organization": "Corner Shop", "bullets": ["Ran the store"]}
+        res = self.call("POST", "/resume-save", self.a, json={"roles": [role]})
+        self.assertEqual(res.status_code, 409, res.text)
+        self.assertEqual(res.json()["detail"], DRAFT_GONE_MESSAGE)
+        with self.Session() as s:
+            self.assertEqual(s.query(Experience).filter_by(career_profile_id=self.profile_id_for(SUB_A)).count(), 0)
+
+    def test_resume_save_refuses_a_discarded_draft(self):
+        self.onboard(self.a)
+        self.put_draft(SUB_A, datetime.now(timezone.utc) - timedelta(days=1))
+        self.call("DELETE", "/resume-draft", self.a)
+        res = self.call("POST", "/resume-save", self.a, json={"roles": [{"title": "Teacher", "organization": "School", "bullets": []}]})
+        self.assertEqual(res.status_code, 409, res.text)
+
+    def test_resume_save_with_a_live_draft_saves_and_then_clears_the_draft(self):
+        self.onboard(self.a)
+        self.put_draft(SUB_A, datetime.now(timezone.utc) - timedelta(days=1))
+        res = self.call("POST", "/resume-save", self.a, json={"roles": [{"title": "Teacher", "organization": "School", "bullets": ["Taught"]}]})
+        self.assertEqual(res.status_code, 200, res.text)
+        with self.Session() as s:
+            self.assertEqual(s.query(Experience).filter_by(career_profile_id=self.profile_id_for(SUB_A)).count(), 1)
+        self.assertEqual(self.draft_rows(), 0, "the saved draft is cleared, as before")
 
 if __name__ == "__main__":
     import unittest

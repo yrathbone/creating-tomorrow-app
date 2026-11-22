@@ -11,6 +11,7 @@ Run from the backend folder:  py -3.12 -m unittest discover -s tests -t .
 """
 import time
 import unittest
+from datetime import datetime, timezone
 from unittest import mock
 
 from cryptography.hazmat.primitives import serialization
@@ -30,7 +31,7 @@ import auth.dependencies as deps
 from auth.dependencies import get_current_user
 from career.routes import router
 from db import Base, get_db_session
-from models import Application, CareerProfile, Certification, Education, Experience, ResumeVersion, ScanHistory, Skill, User
+from models import Application, CareerProfile, Certification, Education, Experience, ResumeIngestionDraft, ResumeVersion, ScanHistory, Skill, User
 
 REGION, POOL, CLIENT = "us-test-1", "us-test-1_TESTPOOL", "test-app-client-id"
 ISSUER = f"https://cognito-idp.{REGION}.amazonaws.com/{POOL}"
@@ -382,7 +383,10 @@ class Isolation(OwnershipTestCase):
         # building a resume "for" A's scan is refused before any AI call
         res = self.call("POST", "/job-build-resume", self.b, json={"job_description": JOB_TEXT, "name": "B", "contact": "c", "scan_history_id": a["scan"]})
         self.assertEqual(res.status_code, 400, res.text)
-        # resume-save merging into A's role id must NOT touch A's role
+        # resume-save merging into A's role id must NOT touch A's role (it needs B's own live interview draft first)
+        with self.Session() as s:
+            s.add(ResumeIngestionDraft(career_profile_id=self.profile_id_for(SUB_B), roles=[], history=[], updated_at=datetime.now(timezone.utc)))
+            s.commit()
         res = self.call("POST", "/resume-save", self.b, json={"roles": [{"title": "Hijack", "organization": "Org", "bullets": ["added by B"], "existing_id": a["exp"]}]})
         self.assertEqual(res.status_code, 200, res.text)
         with self.Session() as s:
