@@ -68,9 +68,11 @@ Profile rows (`Experience`, `Skill`, ...) are written only by `/resume-save`, af
 
 ## 6. Job-comparison flow (separate)
 
-`/job-discover` (`routes.py` about line 1122) sends the submitted answers to the AI and stores nothing. The code comment
-says the flow is stateless and creates no draft. The 30-day rule does not apply to it. Changing this would need a new
-persistence design and a decision from Jo.
+CORRECTED 2026-11-22 (Data review of 48e1fdf): the job flow DOES persist answers.
+- `/job-discover` (`routes.py` about line 1122) sends the submitted answers to the AI and stores nothing itself, and creates no draft.
+- `/job-build-resume` (`routes.py` about line 1187-1188) saves the submitted `qa_history` into `ScanHistory.result_data["qa_history"]` before the AI call. The frontend restores it from the server (`jobMatch.js` about line 1474).
+- `ScanHistory` rows have no 30-day expiry in this branch. So job-flow answers persist until the row is removed by other means. Their retention is an UNRESOLVED gap, separate from the resume draft rule.
+- Changing this needs a design decision from Jo (what to keep, for how long, and whether to remove answers after the build).
 
 ## 7. What this change does
 

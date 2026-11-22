@@ -497,6 +497,13 @@ async function submitResumeAnswers(forceFinish) {
     resumeLoadingState.hidden = true;
 
     if (data.stage === "confirm") {
+      // Analysis has produced the structured suggestions. The raw answers are no longer needed on this page:
+      // clear them now, while the member reviews the suggestions, so nothing is held in memory or in the answer boxes.
+      // Suggestions and the review screen are kept. A failed call (catch below) keeps the answers so the member can retry.
+      resumeState.history = [];
+      currentResumeQuestions = [];
+      const answerBoxes = document.getElementById("resume-questions-list");
+      if (answerBoxes) answerBoxes.replaceChildren();
       resumeState.discoveredFacts = data.discovered_facts || [];
       renderResumeReview();
       resumeReviewState.hidden = false;

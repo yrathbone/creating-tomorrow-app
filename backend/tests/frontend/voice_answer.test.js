@@ -249,6 +249,24 @@ test("after a successful save the in-memory answers and suggestions are cleared,
   }
 });
 
+test("raw answers are cleared at the analysis-to-review step, keeping the suggestions, and kept on a failed call so a retry is safe", () => {
+  const rr = fs.readFileSync(path.join(ROOT, "frontend", "career", "js", "resumeReview.js"), "utf8");
+  const start = rr.indexOf("async function submitResumeAnswers");
+  const end = rr.indexOf("document.getElementById(\"resume-questions-submit-btn\")", start);
+  const fn = rr.slice(start, end);
+  const confirmAt = fn.indexOf('if (data.stage === "confirm")');
+  const elseAt = fn.indexOf("} else {", confirmAt);
+  const confirmBlock = fn.slice(confirmAt, elseAt);
+  assert.ok(confirmAt > 0, "confirm branch found");
+  assert.match(confirmBlock, /resumeState\.history = \[\];/, "answers cleared when suggestions arrive");
+  assert.match(confirmBlock, /currentResumeQuestions = \[\];/);
+  assert.match(confirmBlock, /replaceChildren\(\)/, "answer boxes removed at review");
+  assert.match(confirmBlock, /resumeState\.discoveredFacts = data\.discovered_facts/, "suggestions kept");
+  const catchAt = fn.indexOf("} catch (err) {");
+  assert.ok(catchAt > 0, "error path found");
+  assert.ok(!/history = \[\]/.test(fn.slice(catchAt)), "a failed call does not clear the answers");
+});
+
 test("the finish button is still there (it also sends answers, so the same disclosure covers it)", () => {
   const html = fs.readFileSync(path.join(ROOT, "frontend", "career", "login.html"), "utf8");
   assert.ok(html.indexOf('id="resume-questions-finish-btn"') > html.indexOf('id="resume-questions-submit-btn"'));
