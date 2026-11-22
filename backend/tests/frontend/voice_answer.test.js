@@ -234,6 +234,21 @@ test("submit is explicit: Send answers and continue, with the disclosure immedia
   assert.match(disclosure, /discard the draft/);
 });
 
+test("after a successful save the in-memory answers and suggestions are cleared, and no browser storage holds interview answers", () => {
+  const rr = fs.readFileSync(path.join(ROOT, "frontend", "career", "js", "resumeReview.js"), "utf8");
+  const saveAt = rr.indexOf('document.getElementById("resume-save-btn").addEventListener');
+  assert.ok(saveAt > 0, "save handler found");
+  const saveBody = rr.slice(saveAt, rr.indexOf("saveBtn.disabled = false;", saveAt));
+  assert.match(saveBody, /resumeState\.history = \[\];/, "answer history cleared after save");
+  assert.match(saveBody, /resumeState\.discoveredFacts = \[\];/, "suggestions cleared after save");
+  assert.match(saveBody, /currentResumeQuestions = \[\];/, "pending questions cleared after save");
+  assert.match(saveBody, /resume-questions-list"\);\s*if \(questionsList\) questionsList\.replaceChildren\(\);/, "answer boxes removed after save");
+  for (const f of ["resumeReview.js", "voiceAnswer.js"]) {
+    const text = fs.readFileSync(path.join(ROOT, "frontend", "career", "js", f), "utf8");
+    assert.ok(!/localStorage|sessionStorage|indexedDB/.test(text), f + " stores no answers in browser storage");
+  }
+});
+
 test("the finish button is still there (it also sends answers, so the same disclosure covers it)", () => {
   const html = fs.readFileSync(path.join(ROOT, "frontend", "career", "login.html"), "utf8");
   assert.ok(html.indexOf('id="resume-questions-finish-btn"') > html.indexOf('id="resume-questions-submit-btn"'));

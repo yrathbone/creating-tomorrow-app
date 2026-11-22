@@ -711,7 +711,10 @@ async def resume_discover(
     draft = live_draft(db, profile.id)  # checked again after the AI call: the draft may have expired while it ran
     if draft is None:
         raise HTTPException(status_code=409, detail=DRAFT_GONE_MESSAGE)
-    draft.history = req.history
+    # The member's raw answers are NOT kept in the saved draft once the AI has analysed them (2026-11-22 direction).
+    # Only structured results are stored: the questions still to ask and the suggested facts for review.
+    # The answers live in the member's own browser page for the duration of the interview and are cleared on save.
+    draft.history = []
     draft.categories = req.categories
     if result.get("stage") == "confirm":
         draft.discovered_facts = result.get("discovered_facts") or []

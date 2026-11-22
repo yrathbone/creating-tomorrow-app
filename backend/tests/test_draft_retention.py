@@ -122,7 +122,7 @@ class DraftRetention(OwnershipTestCase):
         self.assertEqual(res.status_code, 409, res.text)
         ai.assert_not_called()
 
-    def test_resume_discover_with_a_live_draft_still_calls_the_ai_and_keeps_the_answers(self):
+    def test_resume_discover_with_a_live_draft_still_calls_the_ai_and_advances_the_round(self):
         self.onboard(self.a)
         self.put_draft(SUB_A, datetime.now(timezone.utc) - timedelta(days=1))
         history = [{"id": "q1", "answer": "I ran a store"}]
@@ -132,7 +132,7 @@ class DraftRetention(OwnershipTestCase):
         ai.assert_called_once()
         with self.Session() as s:
             row = s.query(ResumeIngestionDraft).one()
-            self.assertEqual(row.history, history)
+            self.assertEqual(row.history, [], "raw answers are not kept after analysis (2026-11-22 direction)")
             self.assertEqual(row.round_number, 2)
 
     def test_resume_save_refuses_an_expired_draft_and_saves_nothing(self):

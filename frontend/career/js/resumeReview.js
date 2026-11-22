@@ -825,6 +825,10 @@ document.getElementById("resume-save-btn").addEventListener("click", async () =>
     resumeState.discoveredFacts = [];
     resumeState.history = [];
     resumeState.roundNumber = 1;
+    // Clear the answer boxes and the pending questions: the typed or spoken answers are no longer needed once saved.
+    currentResumeQuestions = [];
+    const questionsList = document.getElementById("resume-questions-list");
+    if (questionsList) questionsList.replaceChildren();
     currentDraft = null;
 
     const parts = [];
