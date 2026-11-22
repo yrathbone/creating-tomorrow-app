@@ -1,4 +1,4 @@
-// The inner pages match the homepage (batch 3 of the site-wide review, 2026-11-03): the same ten drawings on the Learn and Career Tools cards,
+// The inner pages match the homepage: the same images on the Learn and Career Tools cards,
 // and one type scale (bold blue headings, navy lead text and descriptions, gray only for small print). Static checks only.
 const test = require("node:test");
 const assert = require("node:assert");
@@ -8,10 +8,11 @@ const path = require("node:path");
 const FRONTEND = path.join(__dirname, "..", "..", "..", "frontend");
 const read = (p) => fs.readFileSync(path.join(FRONTEND, p), "utf8");
 
-test("the Learn page shows the four guide drawings, in order, one on each card", () => {
+test("the Learn page shows the four decorative guide images, in order, one on each card", () => {
   const html = read("learn.html");
-  const used = [...html.matchAll(/<img src="img\/home\/(guide-[a-z]+)\.svg" alt="" width="360" height="160" \/>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(used, ["guide-ats", "guide-resume", "guide-linkedin", "guide-interview"]);
+  const used = [...html.matchAll(/<img src="img\/home\/(guide-[\w-]+\.(?:png|svg))" alt=""/g)].map((m) => m[1]);
+  assert.deepStrictEqual(used, ["guide-ats-photo.png", "guide-resume-photo.png", "guide-linkedin.svg", "guide-interview-photo.png"]);
+  for (const file of used) assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", file)), file);
   assert.strictEqual((html.match(/class="pv-img pv-img-guide" aria-hidden="true"/g) || []).length, 4);
   assert.ok(!html.includes("hv-vicon"), "the small icon circles are gone");
   assert.strictEqual((html.match(/href="article\.html\?slug=/g) || []).length, 4, "every card is still a link to its article");
@@ -23,7 +24,7 @@ test("the Career Tools page shows the six tool drawings, in order, and every too
   assert.deepStrictEqual(used, ["tool-create", "tool-improve", "tool-match", "tool-discover", "tool-linkedin", "tool-interview"]);
   assert.ok(!html.slice(0, html.indexOf('id="step-upload"')).includes("hv-vicon"), "the small icon circles are gone from the tool cards");
   for (const id of ['id="mode-refine"', 'id="mode-analyze"', 'data-mode="refine"', 'data-mode="analyze"', 'href="scratch.html"', 'href="elevate.html"', 'href="spotlight.html"', 'href="prepare.html"']) assert.ok(html.includes(id), id);
-  for (const f of ["guide-ats", "guide-resume", "guide-linkedin", "guide-interview", "tool-create", "tool-improve", "tool-match", "tool-discover", "tool-linkedin", "tool-interview"]) assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", f + ".svg")), f);
+  for (const file of used) assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", file + ".svg")), file);
 });
 
 test("one type scale on the public pages: bold blue titles, navy lead text and descriptions, drawings sized by aspect ratio", () => {
