@@ -72,7 +72,7 @@ const MODE_CONFIG = {
 // Only the JS-driven mode buttons (Refine, Right Fit) need this - the
 // Beginning/Elevate buttons are plain <a href> page links and have no
 // data-mode, so selectMode(undefined) would throw on click.
-document.querySelectorAll(".mode-btn[data-mode]").forEach((btn) => {
+document.querySelectorAll(".mode-btn[data-mode], .mode-path[data-mode]").forEach((btn) => {
   btn.addEventListener("click", () => selectMode(btn.dataset.mode));
 });
 
