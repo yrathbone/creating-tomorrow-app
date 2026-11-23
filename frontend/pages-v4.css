@@ -307,3 +307,19 @@ body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header
 /* Improve Your Resume entry page: two labelled choices side by side, one column on phones. */
 body.pages-v4.chrome-v6:not(.dashboard-v4) .improve-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; padding: 0 1.5rem; box-sizing: border-box; }
 @media (max-width: 640px) { body.pages-v4.chrome-v6:not(.dashboard-v4) .improve-choices { grid-template-columns: 1fr; padding: 0; } }
+
+/* Separators between the Learn cards, as on the Home page: amber lines between the two columns and across the gap between the rows (desktop). */
+@media (min-width: 701px) {
+  body.pages-v4 .pv-guides > .hv-guide { position: relative; }
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(even)::before { content: ""; position: absolute; top: -0.625rem; bottom: -0.625rem; left: -0.625rem; width: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(-n+2)::after { content: ""; position: absolute; left: 0; right: 0; bottom: -0.625rem; height: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(1)::after { right: -1.25rem; }
+}
+
+/* Separators between the Career Tools cards, as on the Home page: amber lines between neighbours in each row and across the gap above the bottom row (desktop, 3-2 layout). */
+@media (min-width: 901px) {
+  body.pages-v4 .pv-tools > * { position: relative; }
+  body.pages-v4 .pv-tools > :nth-child(2)::before, body.pages-v4 .pv-tools > :nth-child(3)::before, body.pages-v4 .pv-tools > :nth-child(5)::before { content: ""; position: absolute; top: -0.625rem; bottom: -0.625rem; left: -0.625rem; width: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-tools > :nth-child(-n+3)::after { content: ""; position: absolute; left: 0; right: 0; bottom: -0.625rem; height: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-tools > :nth-child(1)::after { right: -1.25rem; }
+}
