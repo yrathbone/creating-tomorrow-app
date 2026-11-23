@@ -308,18 +308,34 @@ body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header
 body.pages-v4.chrome-v6:not(.dashboard-v4) .improve-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; padding: 0 1.5rem; box-sizing: border-box; }
 @media (max-width: 640px) { body.pages-v4.chrome-v6:not(.dashboard-v4) .improve-choices { grid-template-columns: 1fr; padding: 0; } }
 
-/* Separators between the Learn cards, as on the Home page: amber lines between the two columns and across the gap between the rows (desktop). */
+/* Separators between cards, as on the Home page. Each line starts and ends at the picture edges, and the
+   crossings meet exactly: the gap between cards is 1.25rem, the side padding is 1.4rem, the top padding is
+   1.5rem, the bottom padding is 1.3rem, and each card has a 1px border (positions are measured from the padding box). */
 @media (min-width: 701px) {
   body.pages-v4 .pv-guides > .hv-guide { position: relative; }
-  body.pages-v4 .pv-guides > .hv-guide:nth-child(even)::before { content: ""; position: absolute; top: -0.625rem; bottom: -0.625rem; left: -0.625rem; width: 1.5px; background: var(--gold); }
-  body.pages-v4 .pv-guides > .hv-guide:nth-child(-n+2)::after { content: ""; position: absolute; left: 0; right: 0; bottom: -0.625rem; height: 1.5px; background: var(--gold); }
-  body.pages-v4 .pv-guides > .hv-guide:nth-child(1)::after { right: -1.25rem; }
+  /* Learn: a vertical line between the two columns, running through both rows */
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(2)::before,
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(4)::before { content: ""; position: absolute; left: calc(-0.625rem - 1.75px); width: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(2)::before { top: 1.5rem; bottom: calc(-0.625rem - 1.75px); }
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(4)::before { top: calc(-0.625rem - 1.75px); bottom: 1.3rem; }
+  /* Learn: one horizontal line across the top row, from the first picture edge to the last */
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(1)::after,
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(2)::after { content: ""; position: absolute; left: 1.4rem; bottom: calc(-0.625rem - 1.75px); height: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(1)::after { right: calc(-2.65rem - 2px); }
+  body.pages-v4 .pv-guides > .hv-guide:nth-child(2)::after { right: 1.4rem; }
 }
-
-/* Separators between the Career Tools cards, as on the Home page: amber lines between neighbours in each row and across the gap above the bottom row (desktop, 3-2 layout). */
 @media (min-width: 901px) {
   body.pages-v4 .pv-tools > * { position: relative; }
-  body.pages-v4 .pv-tools > :nth-child(2)::before, body.pages-v4 .pv-tools > :nth-child(3)::before, body.pages-v4 .pv-tools > :nth-child(5)::before { content: ""; position: absolute; top: -0.625rem; bottom: -0.625rem; left: -0.625rem; width: 1.5px; background: var(--gold); }
-  body.pages-v4 .pv-tools > :nth-child(-n+3)::after { content: ""; position: absolute; left: 0; right: 0; bottom: -0.625rem; height: 1.5px; background: var(--gold); }
-  body.pages-v4 .pv-tools > :nth-child(1)::after { right: -1.25rem; }
+  /* Career Tools: vertical lines between neighbours in the top row, and in the bottom row (the middle of the 3-2 layout) */
+  body.pages-v4 .pv-tools > :nth-child(2)::before,
+  body.pages-v4 .pv-tools > :nth-child(3)::before,
+  body.pages-v4 .pv-tools > :nth-child(5)::before { content: ""; position: absolute; left: calc(-0.625rem - 1.75px); width: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-tools > :nth-child(2)::before,
+  body.pages-v4 .pv-tools > :nth-child(3)::before { top: 1.5rem; bottom: calc(-0.625rem - 1.75px); }
+  body.pages-v4 .pv-tools > :nth-child(5)::before { top: calc(-0.625rem - 1.75px); bottom: 1.3rem; }
+  /* Career Tools: one horizontal line under the top row, from the first picture edge to the last */
+  body.pages-v4 .pv-tools > :nth-child(-n+3)::after { content: ""; position: absolute; left: 1.4rem; bottom: calc(-0.625rem - 1.75px); height: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-tools > :nth-child(1)::after,
+  body.pages-v4 .pv-tools > :nth-child(2)::after { right: calc(-2.65rem - 2px); }
+  body.pages-v4 .pv-tools > :nth-child(3)::after { right: 1.4rem; }
 }
