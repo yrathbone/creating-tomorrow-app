@@ -134,7 +134,7 @@ test("Inter is hosted on our own site (no outside fonts) and is the homepage typ
 });
 
 test("the hero: new headline, new line, Career Tools opens the Guide popup, Learn opens the article popup, and both are real links", () => {
-  assert.match(html, /<h1 id="hero-h">Your future is yours to shape\.<\/h1>/);
+  assert.match(html, /<h1 id="hero-h">Shape your future\.<\/h1>/);
   assert.match(html, /<p class="h7-lead">Career tools to build your tomorrow<\/p>/);
   assert.match(html, /<a href="tool\.html" aria-haspopup="dialog" class="h7-btn h7-btn-green" data-guide-open>Career Tools<\/a>/);
   assert.match(html, /<a href="learn\.html" aria-haspopup="dialog" class="h7-btn h7-btn-gold" data-learn-open>Learn<\/a>/);
@@ -311,7 +311,7 @@ test("the trust line, the sunflower mascot, hover lift, an aligned footer, norma
   assert.match(css7, /prefers-reduced-motion: no-preference\) \{[\s\S]*translateY\(-3px\)/);
   assert.match(css7, /body\.home-v7 \.h5-footer \.h5-wrap \{ max-width: 920px/);
   assert.ok(!/\.h7-guide \.h7-title \{[^}]*uppercase/.test(css7), "guide titles are normal case like the tool titles");
-  assert.match(html, /og:image:alt" content="Creating Tomorrow: Your future is yours to shape\."/);
+  assert.match(html, /og:image:alt" content="Creating Tomorrow: Shape your future\."/);
   const og = fs.readFileSync(path.join(FRONTEND, "og-image.png"));
   assert.strictEqual(og.readUInt32BE(16), 1200); assert.strictEqual(og.readUInt32BE(20), 630); // PNG header: 1200 x 630
 });
