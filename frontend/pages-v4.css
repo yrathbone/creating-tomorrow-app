@@ -245,7 +245,7 @@ body.pages-v4.spotlight-page .input-option-toggle strong { color: var(--navy); }
 
 /* ---------- Footer: the homepage's ---------- */
 body.pages-v4 .h5-wrap { width: 100%; max-width: calc(var(--wrap) + 3rem); margin: 0 auto; padding: 0 1.5rem; }
-body.pages-v4 footer.h5-footer { margin-top: 3rem; padding: 2.25rem 0 2.25rem; background: #ffffff; border-top: 1px solid var(--line); text-align: left; color: var(--muted); }
+body.pages-v4 footer.h5-footer { margin-top: 3rem; padding: 1.75rem 0 2.25rem; background: #ffffff; border-top: 1px solid var(--line); text-align: left; color: var(--muted); }
 body.pages-v4 .h5-footer-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem 2.5rem; }
 body.pages-v4 .h5-footer-brand p { margin: 0.35rem 0 0; font-size: 0.9rem; color: var(--muted); text-align: left; max-width: none; }
 body.pages-v4 .h5-footer .nav-logo img { height: 36px; }
