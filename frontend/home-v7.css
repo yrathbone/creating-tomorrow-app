@@ -154,16 +154,29 @@ body.home-v7 .h5-footer .h5-wrap { max-width: 920px; padding-left: 3rem; padding
 /* Public type scale: Home. Matches Learn, Videos and the Career Basics articles. */
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-lead { font-size: 20px; }
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-sub { font-size: 16px; }
-body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-title { font-size: 18px; }
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-title { font-size: 20px; }
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-text,
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-link { font-size: 16px; }
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-free,
-body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-trust { font-size: 14px; }
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-trust { font-size: 16px; }
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool .h7-link { white-space: nowrap; }
 @media (min-width: 641px) {
   body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-h2 { font-size: 28px; }
   body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-closing h2 { font-size: 28px; }
 }
-/* Privacy link directly below the hero: centred, underlined, the word Privacy only. */
-body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy { margin: 0.25rem 0 1rem; text-align: center; font-size: 0.875rem; }
+/* Privacy link below the hero, right-aligned under the photo's corner: underlined, the word Privacy only. */
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy { max-width: 920px; margin: 0.25rem auto 1rem; padding: 0 3rem; box-sizing: border-box; text-align: right; font-size: 1rem; }
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy a { color: var(--royal); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Tool cards on desktop: three on the top row, then Improve Your Resume and Match centred under them (3-2). */
+@media (min-width: 1001px) {
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tools { grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 0.75rem; }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool-row { gap: 0.25rem; }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool { grid-column: span 2; }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool:nth-child(4) { grid-column: 2 / span 2; }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool:nth-child(5) { grid-column: 4 / span 2; }
+}
+/* Phone: the Privacy line keeps the same side gutter as the hero. */
+@media (max-width: 620px) {
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy { padding: 0 1.1rem; }
+}

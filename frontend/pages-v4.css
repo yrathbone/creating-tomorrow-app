@@ -83,6 +83,13 @@ body.pages-v4 .pv-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); gap:
 @media (max-width: 900px) { body.pages-v4 .pv-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); } body.pages-v4 .pv-panel > .pv-band { padding: 2.5rem 1.25rem; } }
 @media (max-width: 700px) { body.pages-v4 .pv-guides { grid-template-columns: 1fr; } }
 @media (max-width: 480px) { body.pages-v4 .pv-tools { grid-template-columns: 1fr; } }
+/* Career Tools on desktop: three cards on the top row, then Improve Your Resume and Match centred under them (3-2). */
+@media (min-width: 901px) {
+  body.pages-v4 .pv-tools { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  body.pages-v4 .pv-tools > * { grid-column: span 2; }
+  body.pages-v4 .pv-tools > :nth-child(4) { grid-column: 2 / span 2; }
+  body.pages-v4 .pv-tools > :nth-child(5) { grid-column: 4 / span 2; }
+}
 
 /* ---------- Cards: white, a hairline, no shadow (guide tiles, tool tiles, the Career Tools buttons) ---------- */
 body.pages-v4 .hv-guide, body.pages-v4 .hv-tool, body.pages-v4 .mode-btn.hv-tool {
