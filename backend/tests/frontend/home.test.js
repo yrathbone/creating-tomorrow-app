@@ -192,7 +192,7 @@ test("five tool cards, each a single Start link: Improve Your Resume opens one e
   const titles = [...section.matchAll(/<b class="h7-title"[^>]*>([^<]+)<\/b>/g)].map((m) => m[1]);
   assert.deepStrictEqual(titles, ["Create", "Improve Your Resume", "Match", "LinkedIn", "Interview"]);
   const phrases = [...section.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(phrases, ["Create your first resume", "Polish your resume or find experience worth adding", "Check your fit", "Showcase your strengths", "Master interview stories"]);
+  assert.deepStrictEqual(phrases, ["Create your first resume", "Polish or find", "Check your fit", "Showcase your strengths", "Master interview stories"]);
   assert.strictEqual((section.match(/<span class="h7-link">Start /g) || []).length, 5, "the same Start line on every card");
   assert.strictEqual((section.match(/class="h7-img h7-img-(blue|gold|green)" aria-hidden="true"/g) || []).length, 5, "an image box on every tool card");
   assert.ok(!section.includes("h7-path"), "no two-path links on the card");
@@ -257,7 +257,7 @@ test("responsive: the hero stacks, the cards go 2-up then 1-up, and motion is li
 test("accessibility: every tool card has a full spoken name, and the two popup buttons announce that they open a dialog", () => {
   const labels = [...html.matchAll(/<a class="h7-tool" href="[^"]+" aria-label="([^"]+)"/g)].map((m) => m[1]);
   assert.deepStrictEqual(labels, [
-    "Create: Create your first resume. Start this tool.", "Improve Your Resume: Polish your resume or find experience worth adding. Start this tool.",
+    "Create: Create your first resume. Start this tool.", "Improve Your Resume: Polish or find. Start this tool.",
     "Match: Check your fit. Start this tool.", "LinkedIn: Showcase your strengths. Start this tool.", "Interview: Master interview stories. Start this tool.",
   ]);
   assert.strictEqual((html.match(/aria-haspopup="dialog"/g) || []).length, 2);

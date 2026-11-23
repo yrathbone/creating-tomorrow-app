@@ -76,7 +76,7 @@ test("results headings on the Prepare page are sentence case, like every other r
 test("the Career Tools page uses the homepage's short phrases, the Learn page says Read, and the 404 page uses the header's names", () => {
   const tool = read("tool.html");
   const phrases = [...tool.matchAll(/<span class="hv-vdesc">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(phrases, ["Create your first resume", "Polish your resume or find experience worth adding", "Check your fit", "Showcase your strengths", "Master interview stories"]);
+  assert.deepStrictEqual(phrases, ["Create your first resume", "Polish or find", "Check your fit", "Showcase your strengths", "Master interview stories"]);
   const home = read("index.html");
   for (const p of phrases) assert.ok(home.includes(`<span class="h7-text">${p}</span>`), `the homepage says "${p}" too`);
   const learn = read("learn.html");
