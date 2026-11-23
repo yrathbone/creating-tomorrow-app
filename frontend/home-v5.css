@@ -202,7 +202,7 @@ body.home-v5 .h5-band-pale { background: var(--pale); }
 .h5-closing p.h5-closing-free { margin: 1.1rem 0 0; font-size: 0.98rem; }
 
 /* ---------- Footer ---------- */
-.h5-footer { padding: 3rem 0 2.25rem; background: var(--white); border-top: 1px solid var(--line); text-align: left; }
+.h5-footer { padding: 2.25rem 0 2.25rem; background: var(--white); border-top: 1px solid var(--line); text-align: left; }
 .h5-footer-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem 2.5rem; }
 .h5-footer-brand p { margin: 0.35rem 0 0 0; font-size: 0.9rem; color: var(--body); text-align: left; }
 .h5-footer .nav-logo img { height: 36px; }

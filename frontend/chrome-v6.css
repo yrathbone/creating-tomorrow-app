@@ -54,8 +54,8 @@ body.chrome-v6:not(.dashboard-v4) .site-nav button:focus-visible { outline: 3px 
 
 /* ---------- footer: layout ---------- */
 body.chrome-v6:not(.dashboard-v4) footer.h5-footer { padding-bottom: 0; border-top: 0; }
-body.chrome-v6:not(.dashboard-v4) footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 2.25rem; background: var(--c6-blue); }
-body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "copy brand" "privacy plink"; align-items: center; column-gap: 2.5rem; row-gap: 1.5rem; }
+body.chrome-v6:not(.dashboard-v4) footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 1.5rem; background: var(--c6-blue); }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "copy brand" "privacy plink"; align-items: center; column-gap: 2.5rem; row-gap: 1rem; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-areas: "nav legal" "copy brand" ". plink"; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-row { display: contents; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-nav { grid-area: nav; }
@@ -78,8 +78,8 @@ body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy .h5-nosave { text-decoratio
 body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-wordmark-title { color: #ffffff; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-wordmark-gold { color: var(--c6-gold); }
 /* only Privacy and Terms (and the & between them) are crimson */
-body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a:nth-of-type(-n+2) { color: var(--c6-crimson); }
-body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a:nth-of-type(-n+2):hover { color: var(--c6-crimson-deep); }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a:nth-of-type(1) { color: var(--c6-crimson); }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links a:nth-of-type(1):hover { color: var(--c6-crimson-deep); }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links .h5-amp { color: var(--c6-crimson); }
 
 /* ---------- phone ---------- */
