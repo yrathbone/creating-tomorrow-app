@@ -62,6 +62,10 @@ body.chrome-v6:not(.dashboard-v4) .h5-footer-nav { grid-area: nav; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links { grid-area: legal; justify-self: end; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-copy { grid-area: copy; margin: 0; max-width: none; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-brand { grid-area: brand; justify-self: end; background: var(--c6-blue); padding: 0.55rem 0.9rem; border-radius: 10px; }
+/* the footer mark matches the header: the same white circle behind the river, so it shows on the navy band */
+body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-logo img { box-sizing: content-box; height: 40px; padding: 5px; background: #ffffff; border-radius: 50%; }
+/* the tagline is white, with "Brighter tomorrow." in gold, like the wordmark */
+body.chrome-v6:not(.dashboard-v4) .h5-footer-brand p { color: #ffffff; }
 /* the privacy sentence uses the full footer width, so on a desktop it stays on one line (on a phone it wraps as it must) */
 body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { grid-area: privacy; justify-self: center; max-width: none; margin: 0.75rem 0 0.25rem; text-align: center; color: #000000; }
 /* free-tools wording: the first words are underlined, which sets that promise apart from the signed-in side, where data is saved */
