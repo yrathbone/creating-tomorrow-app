@@ -193,7 +193,7 @@ test("five tool cards, each a single Start link: Improve Your Resume opens one e
   const titles = [...section.matchAll(/<b class="h7-title"[^>]*>([^<]+)<\/b>/g)].map((m) => m[1]);
   assert.deepStrictEqual(titles, ["Create", "LinkedIn", "Interview", "Improve Your Resume", "Match"]);
   const phrases = [...section.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(phrases, ["Create your first resume", "Showcase your strengths", "Master interview stories", "Polish or find", "Check your fit"]);
+  assert.deepStrictEqual(phrases, ["Create your first resume.", "Showcase your strengths.", "Master interview stories.", "Polish or find.", "Check your fit."]);
   assert.strictEqual((section.match(/<span class="h7-link">Start /g) || []).length, 5, "the same Start line on every card");
   assert.strictEqual((section.match(/class="h7-img h7-img-(blue|gold|green)" aria-hidden="true"/g) || []).length, 5, "an image box on every tool card");
   assert.ok(!section.includes("h7-path"), "no two-path links on the card");
@@ -297,9 +297,8 @@ test("copy and layout polish: card images keep the drawing's shape at every widt
   assert.match(html, /<p class="guide-modal-descriptor">Pick a guide to begin\.<\/p>/);
   const texts = [...html.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
   assert.strictEqual(texts.length, 9);
-  // The four guide descriptions at the top of the page end with a full stop; the tool cards below stay as they are.
-  for (const x of texts.slice(0, 4)) assert.ok(/[.]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": starts with a capital and ends with a full stop`);
-  for (const x of texts.slice(4)) assert.ok(!/[.!?]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": tool card, starts with a capital, no ending period`);
+  // Every card description on the page ends with a full stop: the guides and the tool cards alike.
+  for (const x of texts) assert.ok(/[.]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": starts with a capital and ends with a full stop`);
 });
 
 test("the trust line, the sunflower mascot, hover lift, an aligned footer, normal-case titles and the arrow on Start", () => {
