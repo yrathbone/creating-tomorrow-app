@@ -38,9 +38,9 @@ test("one type scale on the public pages: bold blue titles, navy lead text and d
   assert.ok(!/body\.chrome-v6[^{]*\{[^}]*font-family/.test(block), "this block sets colors and sizes only");
 });
 
-test("the Learn page has one header: the title Learn career basics and the four-lessons line, with no second heading above the cards", () => {
+test("the Learn page has one header: the title Learn Career Basics and the four-lessons line, with no second heading above the cards", () => {
   const html = read("learn.html");
-  assert.match(html, /<header class="pv-head">\s*<h1>Learn career basics<\/h1>\s*<p class="pv-sub">Four simple lessons\. Start anywhere\.<\/p>\s*<\/header>/);
+  assert.match(html, /<header class="pv-head">\s*<h1>Learn Career Basics<\/h1>\s*<p class="pv-sub">Four simple lessons\. Start anywhere\.<\/p>\s*<\/header>/);
   assert.ok(!html.includes("Career basics</h2>"), "the separate Career basics heading is gone");
   assert.strictEqual((html.match(/<h1>/g) || []).length, 1, "one H1 on the page");
 });
