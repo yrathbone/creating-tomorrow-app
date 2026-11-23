@@ -79,16 +79,12 @@ body.pages-v4 .pv-head p { margin: 0 auto; max-width: 40rem; font-size: var(--fs
 body.pages-v4 .pv-sub { margin: 0.1rem 0 1.5rem; color: var(--muted); font-size: 1.05rem; }
 body.pages-v4 .pv-band .hv-h2, body.pages-v4 .pv-band h2 { margin: 0 0 0.4rem; font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 700; color: var(--navy); }
 body.pages-v4 .pv-guides { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; display: grid; }
-body.pages-v4 .pv-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; display: grid; flex-direction: initial; }
-@media (max-width: 900px) { body.pages-v4 .pv-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); } body.pages-v4 .pv-panel > .pv-band { padding: 2.5rem 1.25rem; } }
-@media (max-width: 700px) { body.pages-v4 .pv-guides { grid-template-columns: 1fr; } }
-@media (max-width: 480px) { body.pages-v4 .pv-tools { grid-template-columns: 1fr; } }
-/* Career Tools on desktop: three cards on the top row, then Improve Your Resume and Match centred under them (3-2). */
-@media (min-width: 901px) {
-  body.pages-v4 .pv-tools { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  body.pages-v4 .pv-tools > * { grid-column: span 2; }
-  body.pages-v4 .pv-tools > :nth-child(4) { grid-column: 2 / span 2; }
-  body.pages-v4 .pv-tools > :nth-child(5) { grid-column: 4 / span 2; }
+body.pages-v4 .pv-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; display: grid; flex-direction: initial; }
+@media (max-width: 900px) { body.pages-v4 .pv-panel > .pv-band { padding: 2.5rem 1.25rem; } }
+@media (max-width: 700px) { body.pages-v4 .pv-guides, body.pages-v4 .pv-tools { grid-template-columns: 1fr; } }
+/* Career Tools, as on Learn: two columns, with the fifth tool centred under them (the same grid and gaps as Learn). */
+@media (min-width: 701px) {
+  body.pages-v4 .pv-tools > :nth-child(5) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 0.625rem); }
 }
 
 /* ---------- Cards: white, a hairline, no shadow (guide tiles, tool tiles, the Career Tools buttons) ---------- */
@@ -235,6 +231,7 @@ body.pages-v4 .about-hero h1 { font-size: var(--fs-h2); max-width: 24em; margin-
 body.pages-v4 { overflow-x: clip; }
 body.pages-v4 #step-mode.pv-panel { position: relative; left: 50%; transform: translateX(-50%); width: min(var(--wrap), 100vw); max-width: none; background: none; border: 0; padding: 0; margin-top: 0; }
 body.pages-v4 #step-mode.pv-panel > .mode-choices, body.pages-v4 #step-mode .pv-tools { padding: 0 1.5rem; box-sizing: border-box; }
+@media (max-width: 900px) { body.pages-v4 #step-mode.pv-panel > .mode-choices, body.pages-v4 #step-mode .pv-tools { padding: 0 1.25rem; } }
 body.pages-v4 #step-mode.pv-panel .pv-tools { margin-top: 0.5rem; }
 
 /* the small icon chip beside a section heading belongs to the old homepage look */
@@ -324,29 +321,32 @@ body.pages-v4.chrome-v6:not(.dashboard-v4) .improve-choices { display: grid; gri
   body.pages-v4 .pv-guides > .hv-guide:nth-child(1)::after { right: calc(-2.65rem - 2px); }
   body.pages-v4 .pv-guides > .hv-guide:nth-child(2)::after { right: 1.4rem; }
 }
-@media (min-width: 901px) {
+@media (min-width: 701px) {
   body.pages-v4 .pv-tools > * { position: relative; }
-  /* Career Tools: vertical lines between neighbours in the top row, and in the bottom row (the middle of the 3-2 layout) */
+  /* Career Tools, as on Learn: a vertical line between the two columns, through both rows and into the gap below the second row */
   body.pages-v4 .pv-tools > :nth-child(2)::before,
-  body.pages-v4 .pv-tools > :nth-child(3)::before,
-  body.pages-v4 .pv-tools > :nth-child(5)::before { content: ""; position: absolute; left: calc(-0.625rem - 1.75px); width: 1.5px; background: var(--gold); }
-  body.pages-v4 .pv-tools > :nth-child(2)::before,
-  body.pages-v4 .pv-tools > :nth-child(3)::before { top: 1.5rem; bottom: calc(-0.625rem - 1.75px); }
-  body.pages-v4 .pv-tools > :nth-child(5)::before { top: calc(-0.625rem - 1.75px); bottom: 1.3rem; }
-  /* Career Tools: one horizontal line under the top row, from the first picture edge to the last */
-  body.pages-v4 .pv-tools > :nth-child(-n+3)::after { content: ""; position: absolute; left: 1.4rem; bottom: calc(-0.625rem - 1.75px); height: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-tools > :nth-child(4)::before { content: ""; position: absolute; left: calc(-0.625rem - 1.75px); width: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-tools > :nth-child(2)::before { top: 1.5rem; bottom: calc(-0.625rem - 1.75px); }
+  body.pages-v4 .pv-tools > :nth-child(4)::before { top: calc(-0.625rem - 1.75px); bottom: calc(-0.625rem - 1.75px); }
+  /* One horizontal line in each gap between rows, from the first picture edge to the last */
   body.pages-v4 .pv-tools > :nth-child(1)::after,
-  body.pages-v4 .pv-tools > :nth-child(2)::after { right: calc(-2.65rem - 2px); }
-  body.pages-v4 .pv-tools > :nth-child(3)::after { right: 1.4rem; }
+  body.pages-v4 .pv-tools > :nth-child(2)::after,
+  body.pages-v4 .pv-tools > :nth-child(3)::after,
+  body.pages-v4 .pv-tools > :nth-child(4)::after { content: ""; position: absolute; left: 1.4rem; bottom: calc(-0.625rem - 1.75px); height: 1.5px; background: var(--gold); }
+  body.pages-v4 .pv-tools > :nth-child(1)::after,
+  body.pages-v4 .pv-tools > :nth-child(3)::after { right: calc(-2.65rem - 2px); }
+  body.pages-v4 .pv-tools > :nth-child(2)::after,
+  body.pages-v4 .pv-tools > :nth-child(4)::after { right: 1.4rem; }
 }
 
 /* Desktop page rhythm: a tighter header and band, so the whole page reads at a glance. */
 @media (min-width: 901px) {
   body.pages-v4 .pv-head { padding: 2rem 1.5rem 1.25rem; }
   body.pages-v4 .pv-panel > .pv-band { padding: 2rem 1.5rem 2.25rem; }
-  body.pages-v4 #step-mode.pv-panel .pv-tools { margin-top: 0.25rem; }
+  body.pages-v4 #step-mode.pv-panel .pv-tools { margin-top: 2rem; }
+  body.pages-v4 #step-mode.pv-panel { padding-bottom: 1rem; }
   body.pages-v4 .page-header { padding: 2rem 1.25rem 1.25rem; }
-  body.pages-v4 main:has(> #step-mode) { padding-top: 1rem; }
+  body.pages-v4 main:has(> #step-mode) { padding-top: 0; }
   body.pages-v4 main.pv-main, body.pages-v4 main:has(> #step-mode) { padding-bottom: 1rem; }
   body.pages-v4 .pv-panel > .pv-band { padding-bottom: 1rem; }
   body.pages-v4 main.pv-main + footer.h5-footer, body.pages-v4 main:has(> #step-mode) + footer.h5-footer { margin-top: 1rem; }
@@ -355,6 +355,6 @@ body.pages-v4.chrome-v6:not(.dashboard-v4) .improve-choices { display: grid; gri
 @media (min-width: 701px) {
   body.pages-v4 .pv-guides::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--c6-blue); }
 }
-@media (min-width: 901px) {
+@media (min-width: 701px) {
   body.pages-v4 #step-mode .pv-tools::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--c6-blue); }
 }

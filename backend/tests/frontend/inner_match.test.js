@@ -33,7 +33,7 @@ test("one type scale on the public pages: bold blue titles, navy lead text and d
   assert.match(block, /\.pv-head p,[\s\S]*?\.page-header \.tagline,[\s\S]*?\.pv-sub,[\s\S]*?span\.hv-vdesc \{ color: #0b1f4d; \}/);
   assert.match(block, /\.pv-band \.hv-h2,[\s\S]*?\.hv-guide b,[\s\S]*?\.hv-tool b,[\s\S]*?span\.hv-vtype \{ color: var\(--c6-blue\); \}/);
   assert.match(block, /\.pv-img-guide \{ aspect-ratio: 360 \/ 160; \}/);
-  assert.match(block, /\.pv-img-tool \{ aspect-ratio: 400 \/ 150; \}/);
+  assert.match(block, /\.pv-img-tool \{ aspect-ratio: 360 \/ 160; \}/);
   assert.match(block, /\.pv-img img \{[^}]*object-fit: cover/);
   assert.ok(!/body\.chrome-v6[^{]*\{[^}]*font-family/.test(block), "this block sets colors and sizes only");
 });

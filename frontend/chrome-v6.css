@@ -164,7 +164,7 @@ body.chrome-v6.pages-v4:not(.dashboard-v4) span.hv-vtype { color: var(--c6-blue)
 /* the drawings on the Learn and Career Tools cards (the same ten drawings as the homepage) */
 body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img { display: block; width: 100%; overflow: hidden; border-radius: 8px; margin-bottom: 0.75rem; }
 body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img-guide { aspect-ratio: 360 / 160; }
-body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img-tool { aspect-ratio: 400 / 150; }
+body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img-tool { aspect-ratio: 360 / 160; }
 body.chrome-v6.pages-v4:not(.dashboard-v4) .pv-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 /* ---------- no bold on the public pages ----------
