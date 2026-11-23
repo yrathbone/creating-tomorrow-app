@@ -2016,6 +2016,14 @@ footer.site-footer-v2 {
   .ats-article { padding: 2rem 1.25rem 1.5rem; }
 }
 
+/* Article step row (replaces the old SVG flow diagrams; text stays readable at phone width) */
+.ats-steps { list-style: none; margin: 20px 0 6px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.ats-steps li { display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #eef4ff; border: 1px solid #cfe0fb; border-radius: 12px; font-size: 16px; line-height: 1.4; color: #0b1f4d; }
+.ats-step-n { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #0847c7; color: #fff; font-size: 13px; font-weight: 700; }
+.ats-steps-note { font-size: 0.85rem; color: #5b6472; margin: 8px 0 24px; }
+.ats-takeaway-art { margin: 0 0 24px; }
+.ats-takeaway-art img, .ats-takeaway-art svg { display: block; width: 100%; max-width: 360px; height: auto; margin: 0 auto; border-radius: 14px; }
+
 /* ===== Additional shared components (used by the calling-card article) ===== */
 
 /* Reflection mini-prompts - light editorial layout, no cards */
