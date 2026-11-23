@@ -104,8 +104,9 @@ test("the chrome rules hold their contrast and layout: cobalt header, gold butto
   assert.match(css, /--c6-blue: #003395;/);
   assert.match(css, /\.site-nav \{ background: var\(--c6-blue\); border-bottom: 0; \}/);
   assert.match(css, /\.nav-links a\.nav-account \{ background: var\(--c6-gold\); border-color: var\(--c6-gold\); color: #071c42; \}/);
-  assert.match(css, /grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
-  assert.match(css, /\.h5-footer-privacy \{ grid-area: privacy; justify-self: center; max-width: none;/);
+  assert.match(css, /grid-template-areas: "nav legal" "copy brand" "privacy plink";/);
+  assert.match(css, /\.h5-footer-privacy \{ grid-area: privacy; justify-self: start; max-width: none;/);
+  assert.match(css, /\.h5-footer-privacy-link \{ grid-area: plink; justify-self: end;/);
   assert.match(css, /\.h5-footer-brand \{ grid-area: brand; justify-self: end; background: var\(--c6-blue\); padding: 0\.55rem 0\.9rem; border-radius: 10px; \}/); // F-12: wordmark sits on the navy band
   assert.match(css, /\.h5-footer \.nav-wordmark-gold \{ color: var\(--c6-gold\); \}/); // F-12: header gold on the navy band
   assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem;/);

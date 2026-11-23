@@ -40,7 +40,8 @@ test("the shared header, the privacy notice and the legal links are all present"
   assert.match(html, /© 2026 Creating Tomorrow\. All rights reserved\./);
   for (const page of [html, read("learn.html")]) {
     assert.doesNotMatch(page, /class="privacy-mark"/);
-    assert.match(page, /<\/footer>[\s\S]*<section id="privacy-note"[^>]*>[\s\S]*href="privacy\.html"/);
+    assert.match(page, /<p class="h5-footer-privacy-link" id="privacy-note"><a href="privacy\.html">Privacy<\/a><\/p>/);
+    assert.doesNotMatch(page, /<section id="privacy-note"/);
   }
 });
 
