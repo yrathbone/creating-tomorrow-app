@@ -200,7 +200,7 @@ test("five tool cards, each a single Start link: Improve Your Resume opens one e
 
 test("the section headings, ids and closing line", () => {
   assert.match(html, /<h2 id="basics-h" class="h7-h2">Start with the basics\.<\/h2>\s*<p class="h7-sub">Learn how careers, resumes, and interviews work\.<\/p>/);
-  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career tools<\/h2>\s*<p class="h7-sub">Build your tomorrow\.<\/p>/);
+  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career basics<\/h2>\s*<p class="h7-sub">Build your tomorrow\.<\/p>/);
   for (const id of ["basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
   assert.match(html, /<h2 id="close-h">We don’t invent your value\. We help you see it\.<\/h2>/);
   assert.match(html, /href="tool\.html" class="h7-btn h7-btn-gold">Get started today/);
