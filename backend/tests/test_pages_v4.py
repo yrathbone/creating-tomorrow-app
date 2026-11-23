@@ -69,15 +69,13 @@ class InnerPagesUseTheNewLook(unittest.TestCase):
 class CareerToolsHub(unittest.TestCase):
     def test_hub_keeps_the_hooks_app_js_needs(self):
         h = read("tool.html")
-        # Create, Right Fit, LinkedIn and Interview are the single-link tiles; Improve Your Resume is one card with two paths
-        self.assertEqual(len(re.findall(r'class="mode-btn hv-tool', h)), 4)
-        self.assertRegex(h, r'<button type="button" class="mode-path" id="mode-refine" data-mode="refine">')
+        # Create, Improve Your Resume, Right Fit, LinkedIn and Interview are the five tiles; Improve opens its entry page
+        self.assertEqual(len(re.findall(r'class="mode-btn hv-tool', h)), 5)
         self.assertRegex(h, r'<button type="button" class="mode-btn hv-tool [^"]+" id="mode-analyze" data-mode="analyze">')
-        for link in ("scratch.html", "spotlight.html", "prepare.html"):
+        for link in ("scratch.html", "spotlight.html", "prepare.html", "improve.html"):
             self.assertRegex(h, rf'<a class="mode-btn hv-tool [^"]+" href="{link}">')
-        self.assertRegex(h, r'<a class="mode-path" href="elevate\.html">')
         self.assertIn('id="step-mode"', h)
-        self.assertIn('.mode-btn[data-mode], .mode-path[data-mode]', read("app.js"))
+        self.assertIn('.mode-btn[data-mode]', read("app.js"))
 
     def test_hub_tiles_have_a_picture_a_name_a_description_and_a_start_line(self):
         h = read("tool.html")
@@ -86,8 +84,7 @@ class CareerToolsHub(unittest.TestCase):
         self.assertEqual(block.count("hv-vtype"), 5)
         self.assertEqual(len(re.findall(r"<b[ >]", block)), 5)
         self.assertEqual(block.count("hv-vdesc"), 5)
-        self.assertEqual(block.count("hv-vfoot"), 4, "the Improve card has two paths in place of a Start line")
-        self.assertEqual(block.count('class="mode-paths"'), 1)
+        self.assertEqual(block.count("hv-vfoot"), 5)
 
 class LearnPage(unittest.TestCase):
     def test_learn_lists_every_guide_with_a_real_link(self):

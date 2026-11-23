@@ -185,19 +185,17 @@ test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles
   assert.match(css7, /\.h7-link \{[^}]*text-decoration: none/, "no underline on the links");
 });
 
-test("five tool cards: Improve Your Resume is one card with two labelled paths, every Guide route is reachable from Home, and each card has a short phrase, an image box and a plain Start link", () => {
-  const guideHrefs = [...new Set([...guide.matchAll(/toolHref: "([^"]+)"/g)].map((m) => m[1]))].sort();
+test("five tool cards, each a single Start link: Improve Your Resume opens one entry page, and each card has a short phrase and an image box", () => {
   const section = html.slice(html.indexOf('id="tools"'), html.indexOf("</section>", html.indexOf('id="tools"')));
-  const hrefs = [...section.matchAll(/<a class="h7-(?:tool|path)" href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepStrictEqual([...new Set(hrefs)].sort(), guideHrefs, "every Guide route is a card or a path");
-  assert.strictEqual((section.match(/<a class="h7-tool"/g) || []).length, 4, "four single-link cards");
-  assert.strictEqual((section.match(/<div class="h7-tool h7-tool-two"/g) || []).length, 1, "one Improve Your Resume card");
+  const hrefs = [...section.matchAll(/<a class="h7-tool" href="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(hrefs, ["scratch.html", "improve.html", "tool.html?mode=analyze", "spotlight.html", "prepare.html"]);
   const titles = [...section.matchAll(/<b class="h7-title"[^>]*>([^<]+)<\/b>/g)].map((m) => m[1]);
   assert.deepStrictEqual(titles, ["Create", "Improve Your Resume", "Match", "LinkedIn", "Interview"]);
   const phrases = [...section.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
   assert.deepStrictEqual(phrases, ["Create your first resume", "Polish your resume or find experience worth adding", "Check your fit", "Showcase your strengths", "Master interview stories"]);
-  assert.strictEqual((section.match(/<span class="h7-link">Start /g) || []).length, 4, "a plain Start link on each single-link card");
+  assert.strictEqual((section.match(/<span class="h7-link">Start /g) || []).length, 5, "the same Start line on every card");
   assert.strictEqual((section.match(/class="h7-img h7-img-(blue|gold|green)" aria-hidden="true"/g) || []).length, 5, "an image box on every tool card");
+  assert.ok(!section.includes("h7-path"), "no two-path links on the card");
 });
 
 test("the section headings, ids and closing line", () => {
@@ -256,16 +254,12 @@ test("responsive: the hero stacks, the cards go 2-up then 1-up, and motion is li
   assert.ok(!/transition|(?<!-)transform\s*:/.test(outsideMotionQuery), "movement lives only inside the no-preference media query");
 });
 
-test("accessibility: every single-link tool card has a full spoken name; Improve Your Resume is a labelled group with two named paths; the two popup buttons announce that they open a dialog", () => {
+test("accessibility: every tool card has a full spoken name, and the two popup buttons announce that they open a dialog", () => {
   const labels = [...html.matchAll(/<a class="h7-tool" href="[^"]+" aria-label="([^"]+)"/g)].map((m) => m[1]);
   assert.deepStrictEqual(labels, [
-    "Create: Create your first resume. Start this tool.", "Match: Check your fit. Start this tool.",
-    "LinkedIn: Showcase your strengths. Start this tool.", "Interview: Master interview stories. Start this tool.",
+    "Create: Create your first resume. Start this tool.", "Improve: Polish your resume or find experience worth adding. Start this tool.",
+    "Match: Check your fit. Start this tool.", "LinkedIn: Showcase your strengths. Start this tool.", "Interview: Master interview stories. Start this tool.",
   ]);
-  assert.match(html, /<div class="h7-tool h7-tool-two" role="group" aria-labelledby="improve-title">/);
-  assert.match(html, /<b class="h7-title" id="improve-title">Improve Your Resume<\/b>/);
-  assert.match(html, /<a class="h7-path" href="tool\.html\?mode=refine">Polish what&rsquo;s already there/);
-  assert.match(html, /<a class="h7-path" href="elevate\.html">Find experience I left out/);
   assert.strictEqual((html.match(/aria-haspopup="dialog"/g) || []).length, 2);
 });
 
