@@ -18,10 +18,10 @@ test("the Learn page shows the four decorative guide images, in order, one on ea
   assert.strictEqual((html.match(/href="article\.html\?slug=/g) || []).length, 4, "every card is still a link to its article");
 });
 
-test("the Career Tools page shows the six tool drawings, in order, and every tool still works", () => {
+test("the Career Tools page shows the five tool drawings, in order, and every tool still works", () => {
   const html = read("tool.html");
   const used = [...html.matchAll(/<img src="img\/home\/((?:career-)?tool-[a-z]+(?:-result)?)\.(?:svg|webp|png)" alt="" width="\d+" height="\d+" \/>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(used, ["career-tool-create", "career-tool-improve-result", "career-tool-match-result", "tool-discover", "career-tool-linkedin", "career-tool-interview"]);
+  assert.deepStrictEqual(used, ["career-tool-create", "career-tool-improve-result", "career-tool-match-result", "career-tool-linkedin", "career-tool-interview"]);
   assert.ok(!html.slice(0, html.indexOf('id="step-upload"')).includes("hv-vicon"), "the small icon circles are gone from the tool cards");
   for (const id of ['id="mode-refine"', 'id="mode-analyze"', 'data-mode="refine"', 'data-mode="analyze"', 'href="scratch.html"', 'href="elevate.html"', 'href="spotlight.html"', 'href="prepare.html"']) assert.ok(html.includes(id), id);
   for (const file of used) { const ext = file.endsWith("-result") ? ".png" : file.startsWith("career-") ? ".webp" : ".svg"; assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", file + ext)), file); }

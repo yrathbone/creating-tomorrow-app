@@ -167,3 +167,7 @@ body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool .h7-link { white-space: 
 /* Privacy link directly below the hero: centred, underlined, the word Privacy only. */
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy { margin: 0.25rem 0 1rem; text-align: center; font-size: 0.875rem; }
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy a { color: var(--royal); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Improve Your Resume: one card with two labelled paths (Polish what's already there, Find experience I left out). */
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-paths { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.6rem; }
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-path { font-size: 16px; color: var(--royal); text-decoration: underline; text-underline-offset: 3px; }

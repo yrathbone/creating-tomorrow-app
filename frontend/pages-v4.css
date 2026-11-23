@@ -295,3 +295,8 @@ body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) #video
 }
 /* Videos: the privacy link under the page title is centred and underlined, with the word Privacy only. */
 body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header.page-header .privacy-under-hero { display: block; text-align: center; font-size: 0.875rem; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Career Tools: the Improve Your Resume card with its two labelled paths. */
+body.pages-v4.chrome-v6:not(.dashboard-v4) .mode-paths { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.6rem; }
+body.pages-v4.chrome-v6:not(.dashboard-v4) .mode-path { appearance: none; background: none; border: 0; padding: 0; font: inherit; font-size: 1rem; color: var(--royal, #003395); text-align: left; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+body.pages-v4.chrome-v6:not(.dashboard-v4) .mode-path:focus-visible { outline: 3px solid rgba(10, 53, 168, 0.28); outline-offset: 2px; }
