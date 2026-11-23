@@ -272,10 +272,11 @@ test("Home, Learn, and the articles share the four guide images in order", () =>
 });
 
 test("the six tool cards carry their own drawings (page being started, before and after, match meter, magnifier, profile card, interview), decorative and safe SVG", () => {
-  const files = ["tool-create", "tool-improve", "tool-match", "tool-discover", "tool-linkedin", "tool-interview"];
-  const used = [...html.matchAll(/<img src="img\/home\/(tool-[a-z]+)\.svg" alt="" width="400" height="150" \/>/g)].map((m) => m[1]);
+  const files = ["career-tool-create", "career-tool-improve", "career-tool-match", "tool-discover", "career-tool-linkedin", "career-tool-interview"];
+  const used = [...html.matchAll(/<img src="img\/home\/((?:career-)?tool-[a-z]+)\.(?:svg|webp)" alt="" width="\d+" height="\d+" \/>/g)].map((m) => m[1]);
   assert.deepStrictEqual(used, files, "each tool card shows its own drawing, in order, with empty alt text (decorative)");
   for (const f of files) {
+    if (f.startsWith("career-")) { assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", `${f}.webp`)), `${f}.webp exists`); continue; }
     const svg = read("img", "home", `${f}.svg`);
     assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 400 150"/);
     assert.ok(!/<script|onload=|onclick=|href=|<image|<foreignObject|<style/i.test(svg), `${f}.svg is plain shapes only`);
