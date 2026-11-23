@@ -268,3 +268,28 @@ body.pages-v4 .ats-compare-clear { background: var(--tint-gold); }
 @media (prefers-reduced-motion: reduce) {
   body:where(.pages-v4) button, body.pages-v4 .hv-guide, body.pages-v4 .hv-tool { transition: none; }
 }
+
+/* Public type scale: Learn, Videos and the Career Basics articles. Matches Home. Scoped to the chrome-v6 public pages. */
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-head p { font-size: 20px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-sub { font-size: 16px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .hv-guide b { font-size: 18px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .hv-vdesc,
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .hv-vfoot { font-size: 16px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .hv-vtype { font-size: 14px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.ats-article .ats-subtitle { font-size: 20px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header.page-header .tagline { font-size: 20px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) #video-list strong { font-size: 18px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) #video-list span { font-size: 16px; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) #video-list span.coming-soon { font-size: 14px; }
+@media (min-width: 641px) {
+  body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-head h1 { font-size: 36px; }
+  body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-band .hv-h2 { font-size: 28px; }
+  body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header.page-header h1 { font-size: 36px; }
+  body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.ats-article h1 { font-size: 36px; }
+  body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.ats-article h2 { font-size: 28px; }
+}
+@media (max-width: 640px) {
+  body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-head h1 { font-size: 30px; }
+  body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header.page-header h1 { font-size: 30px; }
+  body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.ats-article h1 { font-size: 30px; }
+}

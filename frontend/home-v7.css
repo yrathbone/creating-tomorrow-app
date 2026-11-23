@@ -150,3 +150,17 @@ body.home-v7 .h5-footer .h5-wrap { max-width: 920px; padding-left: 3rem; padding
   .h7-guides, .h7-tools { grid-template-columns: 1fr; }
   .h7-closing .h7-btn { display: flex; width: 100%; }
 }
+
+/* Public type scale: Home. Matches Learn, Videos and the Career Basics articles. */
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-lead { font-size: 20px; }
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-sub { font-size: 16px; }
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-title { font-size: 18px; }
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-text,
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-link { font-size: 16px; }
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-free,
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-trust { font-size: 14px; }
+body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool .h7-link { white-space: nowrap; }
+@media (min-width: 641px) {
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-h2 { font-size: 28px; }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-closing h2 { font-size: 28px; }
+}

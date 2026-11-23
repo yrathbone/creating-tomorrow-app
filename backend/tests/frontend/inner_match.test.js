@@ -11,7 +11,7 @@ const read = (p) => fs.readFileSync(path.join(FRONTEND, p), "utf8");
 test("the Learn page shows the four decorative guide images, in order, one on each card", () => {
   const html = read("learn.html");
   const used = [...html.matchAll(/<img src="img\/home\/(guide-[\w-]+\.(?:png|webp))" alt=""/g)].map((m) => m[1]);
-  assert.deepStrictEqual(used, ["guide-ats-photo.png", "guide-resume-photo.png", "guide-linkedin-digital.webp", "guide-interview-photo.png"]);
+  assert.deepStrictEqual(used, ["guide-ats-code.webp", "guide-resume-photo.png", "guide-linkedin-profile.webp", "guide-interview-photo.png"]);
   for (const file of used) assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", file)), file);
   assert.strictEqual((html.match(/class="pv-img pv-img-guide" aria-hidden="true"/g) || []).length, 4);
   assert.ok(!html.includes("hv-vicon"), "the small icon circles are gone");
