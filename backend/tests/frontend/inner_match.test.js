@@ -20,11 +20,11 @@ test("the Learn page shows the four decorative guide images, in order, one on ea
 
 test("the Career Tools page shows the six tool drawings, in order, and every tool still works", () => {
   const html = read("tool.html");
-  const used = [...html.matchAll(/<img src="img\/home\/(tool-[a-z]+)\.svg" alt="" width="400" height="150" \/>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(used, ["tool-create", "tool-improve", "tool-match", "tool-discover", "tool-linkedin", "tool-interview"]);
+  const used = [...html.matchAll(/<img src="img\/home\/((?:career-)?tool-[a-z]+(?:-result)?)\.(?:svg|webp|png)" alt="" width="\d+" height="\d+" \/>/g)].map((m) => m[1]);
+  assert.deepStrictEqual(used, ["career-tool-create", "career-tool-improve-result", "career-tool-match-result", "tool-discover", "career-tool-linkedin", "career-tool-interview"]);
   assert.ok(!html.slice(0, html.indexOf('id="step-upload"')).includes("hv-vicon"), "the small icon circles are gone from the tool cards");
   for (const id of ['id="mode-refine"', 'id="mode-analyze"', 'data-mode="refine"', 'data-mode="analyze"', 'href="scratch.html"', 'href="elevate.html"', 'href="spotlight.html"', 'href="prepare.html"']) assert.ok(html.includes(id), id);
-  for (const file of used) assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", file + ".svg")), file);
+  for (const file of used) { const ext = file.endsWith("-result") ? ".png" : file.startsWith("career-") ? ".webp" : ".svg"; assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", file + ext)), file); }
 });
 
 test("one type scale on the public pages: bold blue titles, navy lead text and descriptions, drawings sized by aspect ratio", () => {

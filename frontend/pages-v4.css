@@ -293,3 +293,5 @@ body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) #video-list spa
   body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header.page-header h1 { font-size: 30px; }
   body.chrome-v6:not(.dashboard-v4):not(.home-v7) main.ats-article h1 { font-size: 30px; }
 }
+/* Videos: the privacy link under the page title is centred and underlined, with the word Privacy only. */
+body.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header.page-header .privacy-under-hero { display: block; text-align: center; font-size: 0.875rem; text-decoration: underline; text-underline-offset: 3px; }
