@@ -84,17 +84,19 @@ test("chrome-v6.css is scoped to the public pages, never the signed-in dashboard
   assert.ok(!read("career/dashboard-v4.css").includes("chrome-v6"));
 });
 
-test("every footer says Privacy & Terms (two links, one crimson unit), and the free-tools line uses the new wording", () => {
+test("every footer has Terms first in its legal row, one Privacy link under the logo, and the new sentence", () => {
   for (const name of PUBLIC) {
     const html = read(name + ".html");
     const prefix = name.startsWith("career/") ? "../" : name === "not-found" ? "/" : "";
-    assert.ok(html.includes(`<a href="${prefix}privacy.html">Privacy</a> <span class="h5-amp">&amp;</span> <a href="${prefix}terms.html">Terms</a>`), name + " footer pair");
-    assert.ok(!/Privacy<\/a>\s*·\s*<a href="[^"]*terms\.html">/.test(html), name + " has no dotted Privacy · Terms left");
+    assert.ok(html.includes(`<p class="footer-links"><a href="${prefix}terms.html">Terms</a> · `), name + " legal row starts with Terms");
+    assert.ok(html.includes(`<p class="h5-footer-privacy-link" id="privacy-note"><a href="${prefix}privacy.html">Privacy</a></p>`), name + " one Privacy link, under the logo");
+    assert.ok(!html.includes(`<p class="footer-links"><a href="${prefix}privacy.html">`), name + " no second Privacy link in the legal row");
     const m = html.match(/<p class="h5-footer-privacy">([\s\S]*?)<\/p>/);
     if (!m) continue;
     if (name.startsWith("career/")) { assert.match(m[1], /Career Profile is an early, invite-only preview/); continue; }
     assert.match(m[1], /^<span class="h5-nosave">(?:We (?:don’t store|do not keep) your [a-z ]+|Our free tools (?:don’t keep|do not keep) your [a-z ]+)<\/span>/, name + " opens with the underlined promise");
-    assert.match(m[1], /normally deletes (them|it) within 30 days\.$/, name + " says 'normally', never 'always'");
+    assert.match(m[1], /deletes (them|it) within 30 days\.$/, name + " says when the provider deletes it");
+    assert.ok(!/always/.test(m[1]), name + " never says 'always'");
     assert.ok(!/typically deleted|don't save/.test(m[1]), name + " no old wording");
   }
 });
