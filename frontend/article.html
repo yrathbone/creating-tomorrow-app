@@ -24,6 +24,7 @@
   <meta name="theme-color" content="#ffffff" />
   <link rel="stylesheet" href="privacy-note.css">
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="article-motion.css" />
   <link rel="stylesheet" href="home-v4.css" />
   <link rel="stylesheet" href="pages-v4.css" />
   <link rel="stylesheet" href="chrome-v6.css" />
@@ -60,7 +61,7 @@
       <span class="ats-header-accent"></span>
       <h1>How Applicant Tracking Systems Work</h1>
       <p class="ats-subtitle">What they do, why it matters, and how to work with them.</p>
-      <p class="ats-readtime">3&ndash;4 minute read</p>
+      <p class="ats-readtime">2&ndash;3 minute read</p>
     </header>
 
     <figure class="ats-hero"><img src="img/home/guide-ats-code.webp" width="1774" height="887" alt="Close-up of computer code on a dark screen."></figure>
@@ -71,19 +72,85 @@
       <p>An ATS is an employer’s hiring workspace. It keeps applications together and can help move them through hiring stages. Some systems also include tools for reading resume details, searching candidate records, or supporting screening.</p>
       <h2>Why it matters</h2>
       <p>Employers may use filters or requirements to narrow a large pool. A resume that is hard to read, or an application answer that misses a stated requirement, can make relevant experience harder to find. The impact varies—and a parsing problem alone does not explain why an employer made a decision.</p>
-      <blockquote class="ats-quote"><p>“Half the companies in the United States have a filter to exclude applicants who have not been employed in the last six months, or if there’s a gap in their work history of more than six months.”</p><cite>— Joseph B. Fuller, Harvard Gazette, September 15, 2021</cite></blockquote>
+      <blockquote class="ats-quote"><p>“Half the companies in the United States have a filter to exclude applicants who have not been employed in the last six months or if there’s a gap in their work history of more than six months.”</p><cite>— Joseph B. Fuller, <a href="https://news.harvard.edu/gazette/story/2021/09/new-study-says-hidden-workers-are-being-excluded/" target="_blank" rel="noopener">Harvard Gazette, September 15, 2021</a></cite></blockquote>
       <p>Filters like this can hide qualified people when employers use a work gap or a narrow resume signal as a shortcut for assessing ability.</p>
-      <h2>How it works</h2>
-      <figure class="ats-workflow"><img src="img/learn/what-is-ats-workflow.png" width="1800" height="430" loading="lazy" alt="Simplified workflow: apply, read details, organize records, employer decision."><figcaption>Simplified workflow. Not every employer uses every feature.</figcaption></figure>
+      <h2 id="ats-preview-workflow">How it works</h2>
+      <figure class="ct-ats-demo" aria-labelledby="ats-preview-workflow">
+  <div class="ct-demo-stage">
+    <div class="ct-demo-copy" aria-live="polite" aria-atomic="true">
+      <p class="ct-demo-kicker">1 of 4 · Apply</p>
+      <h3>A resume arrives</h3>
+      <p class="ct-demo-description">You submit a resume and application answers. The employer’s system receives them.</p>
+    </div>
+    <div class="ct-demo-art" aria-hidden="true">
+      <div class="ct-demo-scene ct-demo-apply">
+        <div class="ct-demo-doc ct-demo-incoming"><span>RESUME</span><strong>Alex Morgan</strong><i></i><i></i><i></i></div>
+        <span class="ct-demo-arrow ct-demo-send">→</span>
+        <div class="ct-demo-station">
+          <div class="ct-demo-bot"><div class="ct-demo-bot-face"><i></i><i></i></div></div>
+          <span class="ct-demo-art-label">ATS inbox</span>
+        </div>
+      </div>
+      <div class="ct-demo-scene ct-demo-parse" hidden>
+        <div class="ct-demo-scan-wrap">
+          <div class="ct-demo-doc"><span>RESUME</span><strong>Alex Morgan</strong><em>Project coordinator</em><em>Reporting</em></div>
+          <div class="ct-demo-scan-line"></div>
+        </div>
+        <div class="ct-demo-station">
+          <div class="ct-demo-bot"><div class="ct-demo-bot-face"><i></i><i></i></div></div>
+          <span class="ct-demo-art-label">Reads details</span>
+        </div>
+        <div class="ct-demo-fields"><div><small>ROLE</small><strong>Project coordinator</strong></div><div><small>SKILL</small><strong>Reporting</strong></div></div>
+      </div>
+      <div class="ct-demo-scene ct-demo-organize" hidden>
+        <div class="ct-demo-fields"><div><small>ROLE</small><strong>Project coordinator</strong></div><div><small>SKILL</small><strong>Reporting</strong></div></div>
+        <span class="ct-demo-arrow">→</span>
+        <div class="ct-demo-record">
+          <span>SEARCHABLE RECORD</span><strong>Alex Morgan</strong><p>Project coordinator</p><small>Reporting</small>
+        </div>
+      </div>
+      <div class="ct-demo-scene ct-demo-review" hidden>
+        <div class="ct-demo-record"><span>CANDIDATE RECORD</span><strong>Alex Morgan</strong><p>Project coordinator</p><small>Reporting</small></div>
+        <span class="ct-demo-arrow">→</span>
+        <div class="ct-demo-station">
+          <div class="ct-demo-person"><i></i><i></i></div>
+          <span class="ct-demo-art-label">Employer review</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ct-demo-controls" hidden>
+    <button type="button" class="ct-demo-play"><span aria-hidden="true">▶</span> Play animation</button>
+    <ol class="ct-demo-steps" aria-label="Jump to a workflow step" role="list">
+      <li><button type="button" data-scene="0" aria-current="step"><span>1</span> Apply</button></li>
+      <li><button type="button" data-scene="1"><span>2</span> Read details</button></li>
+      <li><button type="button" data-scene="2"><span>3</span> Organize records</button></li>
+      <li><button type="button" data-scene="3"><span>4</span> Employer decision</button></li>
+    </ol>
+  </div>
+  <figcaption>Simplified workflow. Not every employer uses every feature.</figcaption>
+</figure>
       <p>An ATS can collect applications, parse resumes, organize candidate data, and make it searchable. Employers decide which features to use and how to review the results.</p>
       <p><strong>Workflow:</strong> Apply → Read details → Organize records → Employer decision. A simplified workflow. Not every employer uses every feature.</p>
       <h3>Review what the application fills in</h3>
-      <blockquote class="ats-quote"><p>“Resume parsing is designed to save time, but can make mistakes.”</p><cite>— Greenhouse, MyGreenhouse FAQ for Candidates</cite></blockquote>
+      <blockquote class="ats-quote"><p>“Resume parsing is designed to save time, but can make mistakes.”</p><cite>— <a href="https://support.greenhouse.io/hc/en-us/articles/43418495049499-MyGreenhouse-FAQ-for-Candidates" target="_blank" rel="noopener">Greenhouse, MyGreenhouse FAQ for Candidates</a></cite></blockquote>
       <h2>How to work with it</h2>
       <p>You do not need hidden keywords or a resume designed to trick software. Make your real qualifications easy for both a system and a person to understand:</p>
       <ul><li>Use clear headings such as Experience, Education, and Skills. Keep dates and job titles easy to find.</li><li>Use terms from the job posting when they accurately describe your skills and experience.</li><li>Keep important details in selectable text and use a straightforward reading order. Follow the employer’s file instructions. Even a clear layout can be parsed incorrectly.</li><li>Review the information the application fills in for you and correct errors before submitting.</li></ul>
-      <h2>A clearer description</h2>
-      <div class="ats-callout"><ul><li><strong>VAGUE</strong> — “Helped with reports.”</li><li><strong>SPECIFIC</strong> — “Prepared monthly financial reports for senior management.”</li></ul></div>
+      <h2 id="ats-preview-example">A clearer description</h2>
+      <div class="ct-ats-comparison">
+        <div class="ct-ats-examples">
+          <div class="ct-ats-example ct-ats-vague">
+            <span class="ct-ats-status" aria-hidden="true">×</span>
+            <div><h3>Vague</h3><p>“Helped with reports.”</p></div>
+          </div>
+          <div class="ct-ats-example ct-ats-specific">
+            <span class="ct-ats-status" aria-hidden="true">✓</span>
+            <div><h3>Specific</h3><p>“Prepared <mark class="ct-ats-detail">monthly</mark> <mark class="ct-ats-detail">financial reports</mark> for <mark class="ct-ats-detail">senior management</mark>.”</p></div>
+          </div>
+        </div>
+        <button type="button" class="ct-ats-replay" hidden><span aria-hidden="true">↻</span> Replay example</button>
+      </div>
       <p>Use the specific version only if it accurately describes your work.</p>
       <p>The EEOC has said that employers’ use of artificial intelligence tools can violate the Americans with Disabilities Act. It also says employers should have a process in place to provide reasonable accommodations when they use algorithmic tools.</p>
 
@@ -138,9 +205,23 @@
       <p>An opportunity can show up before you have time to update your resume. When that happens, it is easy to forget the projects, skills, and results that would help most. A short private record solves that before the next opportunity arrives.</p>
       <h2>Your resume is a snapshot</h2>
       <p>A resume records your experience at one point in time. Your work keeps growing after you save it: a new system you learned, a customer problem you solved, a colleague you trained. Each of these is evidence you can use later, but only if you write it down.</p>
-      <p>The University of Illinois Urbana-Champaign Career Center describes a resume as a document that outlines your professional, academic, and extracurricular experiences.</p>
-      <ol class="ats-steps"><li><span class="ats-step-n">1</span><strong>Capture your work</strong>Write down what you did.</li><li><span class="ats-step-n">2</span><strong>Review the results</strong>Identify what changed.</li><li><span class="ats-step-n">3</span><strong>Refresh your resume</strong>Add the experience that matters.</li></ol>
-      <p class="ats-steps-note">Take these steps after a project or a milestone.</p>
+      <div class="ct-resume-motion ct-resume-flow" aria-label="Capture your work, review the results, and refresh your resume">
+  <ol class="ct-resume-steps" role="list">
+    <li class="ct-resume-step">
+      <span class="ct-resume-number" aria-hidden="true">1</span>
+      <div><strong>Capture your work</strong><p>Write down what you did.</p></div>
+    </li>
+    <li class="ct-resume-step">
+      <span class="ct-resume-number" aria-hidden="true">2</span>
+      <div><strong>Review the results</strong><p>Identify what changed.</p></div>
+    </li>
+    <li class="ct-resume-step">
+      <span class="ct-resume-number" aria-hidden="true">3</span>
+      <div><strong>Refresh your resume</strong><p>Add the experience that matters.</p></div>
+    </li>
+  </ol>
+  <button type="button" class="ct-resume-replay" hidden><span aria-hidden="true">▶</span> Play the steps</button>
+</div>
       <p>A phone note, a notebook, or a private document all work. Take a few minutes while the details are still easy to recall.</p>
       <div class="ats-callout"><p><strong>Start today</strong> — Choose one recent project. Write down your role, the skill you used, and what changed because of your work.</p></div>
       <h2>Capture the work behind each bullet</h2>
@@ -148,13 +229,41 @@
       <ul><li><strong>What happened?</strong> Record the task, challenge, or project.</li><li><strong>What did you do?</strong> Name your own contribution and the tools you used.</li><li><strong>What changed?</strong> Record the outcome. Include a number only if you can verify it.</li></ul>
       <p>Santa Clara University’s Career Center prompts writers to describe the result and to quantify it if possible.</p>
       <h2>A clearer description</h2>
-      <div class="ats-callout"><ul><li><strong>VAGUE</strong> — “Helped with client projects.”</li><li><strong>SPECIFIC</strong> — “Coordinated onboarding for three client projects with internal teams, and wrote the steps so new accounts could be set up faster.”</li></ul></div>
+      <div class="ct-resume-motion ct-resume-compare">
+  <div class="ct-resume-examples">
+    <div class="ct-resume-example ct-resume-vague">
+      <span class="ct-resume-status" aria-hidden="true">×</span>
+      <div><h3>Vague</h3><p>“Helped with client projects.”</p></div>
+    </div>
+    <div class="ct-resume-example ct-resume-specific">
+      <span class="ct-resume-status" aria-hidden="true">✓</span>
+      <div><h3>Specific</h3><p>“Coordinated onboarding for <mark>three client projects</mark> with internal teams, and <mark>wrote the steps</mark> so <mark>new accounts could be set up faster</mark>.”</p></div>
+    </div>
+  </div>
+  <button type="button" class="ct-resume-replay" hidden><span aria-hidden="true">↻</span> Replay the highlights</button>
+</div>
       <p>Use the specific version only if it reflects your work. If an outcome belonged to a team, be clear about the part you handled.</p>
       <h2>Protect confidential details</h2>
       <p>Keep client names, employee records, internal pricing, and restricted documents out of your career record unless you are permitted to keep them. If a number is confidential, describe your contribution without it.</p>
       <h2>Keep a master record</h2>
-      <p>Your private record can hold more detail than the resume you send. Before you apply, the Career Center advises you to “Review the job description and consider the responsibilities for each position you apply to.” Choose the roles, skills, and results that show your fit, and keep the rest for later. NACE’s career readiness framework also includes a career and self-development competency, which describes “continual personal and professional learning.”</p>
-      <ol class="ats-steps"><li><span class="ats-step-n">1</span><strong>Career record</strong>Keep verified experience and achievements.</li><li><span class="ats-step-n">2</span><strong>Selected evidence</strong>Choose details relevant to the opportunity.</li><li><span class="ats-step-n">3</span><strong>Application resume</strong>Share a focused version.</li></ol>
+      <p>Your private record can hold more detail than the resume you send. Before you apply, choose the roles, skills, and results that show your fit, and keep the rest for later.</p>
+      <div class="ct-resume-master" role="group" aria-label="Example for a project coordinator application">
+  <p class="ct-resume-master-caption">Example for a project coordinator application</p>
+  <div class="ct-resume-master-pair">
+    <div class="ct-resume-master-card">
+      <h3>In your master record</h3>
+      <p>Coordinated a team rollout, wrote the setup checklist, trained four teammates, and tracked questions after launch.</p>
+    </div>
+    <div class="ct-resume-master-card ct-resume-master-tailored">
+      <h3>On this resume</h3>
+      <p>“Coordinated a team rollout and trained four teammates using a new setup checklist.”</p>
+    </div>
+  </div>
+</div>
+      <p>Before you apply, the University of Illinois Career Center advises you to read the posting closely:</p>
+      <blockquote class="ats-quote"><p>“Review the job description and consider the responsibilities for each position you apply to.”</p><cite>— <a href="https://www.careercenter.illinois.edu/howtoresume" target="_blank" rel="noopener">University of Illinois Urbana-Champaign Career Center, How to Write a Resume</a></cite></blockquote>
+      <p>NACE, the National Association of Colleges and Employers, includes continual learning in its career readiness competencies:</p>
+      <blockquote class="ats-quote"><p>“…through continual personal and professional learning.”</p><cite>— <a href="https://www.naceweb.org/career-readiness/competencies/career-readiness-defined" target="_blank" rel="noopener">National Association of Colleges and Employers (NACE), Career &amp; Self-Development competency</a></cite></blockquote>
       <div class="ats-takeaway"><figure class="ats-takeaway-art"><img src="img/home/career-tool-improve-3d.png" width="2048" height="768" alt="A blue pencil writing on a sheet of paper, with a gold sparkle."></figure><p><strong>The takeaway</strong> — Capture your work as it happens. Choose what to show for each opportunity.</p></div>
 
     </div>
@@ -183,7 +292,7 @@
           <svg class="ats-chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </summary>
         <div class="ats-sources-body">
-          <ul><li><a href="https://www.careercenter.illinois.edu/howtoresume" target="_blank" rel="noopener">University of Illinois Urbana-Champaign Career Center · How to Write a Resume</a></li><li><a href="https://www.scu.edu/careercenter/toolkit/resumes/accomplishment-statements/" target="_blank" rel="noopener">Santa Clara University Career Center · Accomplishment Statements</a></li><li><a href="https://www.naceweb.org/career-readiness/competencies/career-readiness-defined" target="_blank" rel="noopener">National Association of Colleges and Employers (NACE) · What Is Career Readiness?</a></li></ul>
+          <ul><li><a href="https://www.careercenter.illinois.edu/howtoresume" target="_blank" rel="noopener">University of Illinois Urbana-Champaign Career Center · How to Write a Resume</a></li><li><a href="https://www.naceweb.org/career-readiness/competencies/career-readiness-defined" target="_blank" rel="noopener">National Association of Colleges and Employers (NACE) · What Is Career Readiness?</a></li><li><a href="https://www.scu.edu/careercenter/toolkit/resumes/accomplishment-statements/" target="_blank" rel="noopener">Santa Clara University Career Center · Accomplishment Statements</a></li></ul>
         </div>
       </details>
     </div>
@@ -207,16 +316,38 @@
     <div class="ats-body">
       <p>A resume is usually written for one role. Your LinkedIn profile is a broader introduction. It can show your experience, your skills, and the kind of work you want next, to people who may never see your resume.</p>
       <h2>Start with a clear headline</h2>
-      <p>A useful headline tells a reader what you do, what you know, or where you add value. Use plain words a stranger would understand, and avoid labels you cannot back up with an example. LinkedIn’s help center describes the headline as the text below your name in your profile’s introduction section.</p>
+      <p>A useful headline tells a reader what you do, what you know, or where you add value. Use plain words a stranger would understand, and avoid labels you cannot back up with an example.</p>
+      <blockquote class="ats-quote"><p>“Your professional headline is the text below your name in the introduction section on your profile.”</p><cite>— <a href="https://www.linkedin.com/help/linkedin/answer/a542926/edit-your-headline?lang=en" target="_blank" rel="noopener">LinkedIn Help, Edit Your Headline</a></cite></blockquote>
       <div class="ats-callout"><p><strong>Example headline</strong> — Customer operations specialist | Onboarding and process improvement</p></div>
       <h2>Tell a short professional story</h2>
-      <p>The About section explains the kind of work you do, the strengths you use, and the problems you like to solve. LinkedIn’s help center describes it as the place to express your mission, motivation, and skills. Write in your own voice, and include one specific example.</p>
+      <p>The About section explains the kind of work you do, the strengths you use, and the problems you like to solve. Write in your own voice, and include one specific example.</p>
+      <blockquote class="ats-quote"><p>“…where you can express your mission, motivation, and skills to people who view your profile.”</p><cite>— <a href="https://www.linkedin.com/help/linkedin/answer/a553140" target="_blank" rel="noopener">LinkedIn Help, Edit the About Section on Your Profile</a></cite></blockquote>
       <div class="ats-callout"><p><strong>Example opening</strong> — I help teams make onboarding simple. I like finding the step that confuses new people, then fixing it.</p></div>
       <h2>Support your claims with evidence</h2>
       <p>Use the Experience section to show what you did and how your work helped. LinkedIn lets you add, change, or remove each job, internship, or contract position there. Pick one example you could explain comfortably in a conversation.</p>
-      <div class="ats-callout"><ul><li><strong>VAGUE</strong> — “Works on reports.”</li><li><strong>SPECIFIC</strong> — “Prepared monthly reports for senior management and explained the changes behind each month’s numbers.”</li></ul></div>
+      <div class="ct-linkedin-motion ct-linkedin-compare">
+  <div class="ct-linkedin-examples">
+    <div class="ct-linkedin-example ct-linkedin-vague">
+      <span class="ct-linkedin-status" aria-hidden="true">×</span>
+      <div><h3>Vague</h3><p>“Works on reports.”</p></div>
+    </div>
+    <div class="ct-linkedin-example ct-linkedin-specific">
+      <span class="ct-linkedin-status" aria-hidden="true">✓</span>
+      <div><h3>Specific</h3><p>“Prepared <mark>monthly reports</mark> for <mark>senior management</mark> and <mark>explained the changes</mark> behind each month’s numbers.”</p></div>
+    </div>
+  </div>
+  <button type="button" class="ct-linkedin-replay" hidden><span aria-hidden="true">↻</span> Replay the highlights</button>
+</div>
       <h2>Build the profile in a practical order</h2>
-      <ol class="ats-steps"><li><span class="ats-step-n">1</span><strong>Headline and About</strong>Explain your role and what you know.</li><li><span class="ats-step-n">2</span><strong>Experience</strong>Add examples that support what you say.</li><li><span class="ats-step-n">3</span><strong>Skills and learning</strong>List skills you can explain through real examples.</li><li><span class="ats-step-n">4</span><strong>Photo and recommendations</strong>Add them if they serve your goals.</li></ol>
+      <div class="ct-linkedin-motion ct-linkedin-flow">
+  <ol class="ct-linkedin-steps" role="list">
+    <li class="ct-linkedin-step"><span class="ct-linkedin-number" aria-hidden="true">1</span><div><strong>Headline and About</strong><p>Explain your role and what you know.</p></div></li>
+    <li class="ct-linkedin-step"><span class="ct-linkedin-number" aria-hidden="true">2</span><div><strong>Experience</strong><p>Add examples that support what you say.</p></div></li>
+    <li class="ct-linkedin-step"><span class="ct-linkedin-number" aria-hidden="true">3</span><div><strong>Skills and learning</strong><p>List skills you can explain through real examples.</p></div></li>
+    <li class="ct-linkedin-step"><span class="ct-linkedin-number" aria-hidden="true">4</span><div><strong>Photo and recommendations</strong><p>Add them if they serve your goals.</p></div></li>
+  </ol>
+  <button type="button" class="ct-linkedin-replay" hidden><span aria-hidden="true">▶</span> Play the profile steps</button>
+</div>
       <p>Projects, volunteer work, and certifications add context when they help a reader understand your experience.</p>
       <h2>Check who can see your information</h2>
       <p>Review your public profile settings and choose what to share. LinkedIn lets you control which sections of your profile can be displayed to people who are not signed in. Leave out confidential customer data, internal financial details, and anything your employer restricts.</p>
@@ -274,12 +405,34 @@
     <div class="ats-body">
       <p>You can solve problems every day and still find it hard to explain what you did in an interview. A few prepared examples, told in your own words, work better than a memorized script.</p>
       <h2>What is an interviewer listening for?</h2>
-      <p>A question about a difficult customer or a missed deadline usually asks for evidence: how you solve problems, how you communicate, and how you make decisions. Some employers use structured interviews. The U.S. Office of Personnel Management describes them as interviews that use rules for eliciting, observing, and evaluating responses. For the research behind these methods, see the 2014 review by Levashina and colleagues in <em>Personnel Psychology</em>.</p>
+      <p>A question about a difficult customer or a missed deadline usually asks for evidence: how you solve problems, how you communicate, and how you make decisions.</p>
+      <blockquote class="ats-quote"><p>“…ask applicants to describe a past behavior demonstrated in a situation relevant to the competency of interest.”</p><cite>— <a href="https://www.opm.gov/policy-data-oversight/assessment-and-selection/other-assessment-methods/structured-interviews/" target="_blank" rel="noopener">U.S. Office of Personnel Management, Structured Interviews</a></cite></blockquote>
+      <p>Some employers use structured interviews. For the research behind these methods, see the 2014 review by Levashina and colleagues in <em>Personnel Psychology</em>.</p>
       <h2>Give each story four parts</h2>
-      <ol class="ats-steps"><li><span class="ats-step-n">1</span><strong>Situation</strong>What was happening?</li><li><span class="ats-step-n">2</span><strong>Task</strong>What needed to happen?</li><li><span class="ats-step-n">3</span><strong>Action</strong>What did you do?</li><li><span class="ats-step-n">4</span><strong>Result</strong>What changed?</li></ol>
+      <div class="ct-interview-motion ct-interview-flow">
+  <ol class="ct-interview-steps" role="list">
+    <li class="ct-interview-step"><span class="ct-interview-number" aria-hidden="true">1</span><div><strong>Situation</strong><p>What was happening?</p></div></li>
+    <li class="ct-interview-step"><span class="ct-interview-number" aria-hidden="true">2</span><div><strong>Task</strong><p>What needed to happen?</p></div></li>
+    <li class="ct-interview-step"><span class="ct-interview-number" aria-hidden="true">3</span><div><strong>Action</strong><p>What did you do?</p></div></li>
+    <li class="ct-interview-step"><span class="ct-interview-number" aria-hidden="true">4</span><div><strong>Result</strong><p>What changed?</p></div></li>
+  </ol>
+  <button type="button" class="ct-interview-replay" hidden><span aria-hidden="true">▶</span> Play the STAR steps</button>
+</div>
       <p>These four parts make up the STAR framework. Give enough context for the story to make sense, then spend most of your answer on what you did and what changed.</p>
       <h2>What a clearer answer sounds like</h2>
-      <div class="ats-callout"><ul><li><strong>VAGUE</strong> — “We had an upset customer, and our team solved it.”</li><li><strong>SPECIFIC</strong> — “A client’s account issue delayed a payment. I traced where the transaction stopped, worked with operations, and updated the client. The issue was resolved that afternoon.” <em>(An example with made-up details.)</em></li></ul></div>
+      <div class="ct-interview-motion ct-interview-compare">
+  <div class="ct-interview-examples">
+    <div class="ct-interview-example ct-interview-vague">
+      <span class="ct-interview-status" aria-hidden="true">×</span>
+      <div><h3>Vague</h3><p>“We had an upset customer, and our team solved it.”</p></div>
+    </div>
+    <div class="ct-interview-example ct-interview-specific">
+      <span class="ct-interview-status" aria-hidden="true">✓</span>
+      <div><h3>Specific</h3><p>“A client’s account issue delayed a payment. I <mark>traced where the transaction stopped</mark>, <mark>worked with operations</mark>, and updated the client. The issue was <mark>resolved that afternoon</mark>.” <em>(An example with made-up details.)</em></p></div>
+    </div>
+  </div>
+  <button type="button" class="ct-interview-replay" hidden><span aria-hidden="true">↻</span> Replay the highlights</button>
+</div>
       <p>Choose a real result you can support, even if you do not have a number.</p>
       <h2>Build a six-story bank</h2>
       <ul><li>A problem you solved</li><li>A time you worked with others</li><li>A difficult situation you handled</li><li>Something you improved</li><li>A mistake or setback you learned from</li><li>A time you took the initiative</li></ul>
@@ -289,7 +442,8 @@
       <h3>Pause and clarify when you need to</h3>
       <p>Take a moment if a question surprises you. If you have not done exactly what they ask about, explain the closest relevant experience you have.</p>
       <h2>If you need an accommodation</h2>
-      <p>Employers generally cannot ask disability-related questions before a conditional job offer. If you need an accommodation for the application or interview, you can ask the employer for one.</p>
+      <blockquote class="ats-quote"><p>“Under the law, employers generally cannot ask disability-related questions or require medical examinations …”</p><cite>— <a href="https://www.eeoc.gov/pre-employment-inquiries-and-disability" target="_blank" rel="noopener">U.S. Equal Employment Opportunity Commission, Pre-Employment Inquiries and Disability</a></cite></blockquote>
+      <p>If you need an accommodation for the application or interview, you can ask the employer for one.</p>
       <div class="ats-takeaway"><figure class="ats-takeaway-art"><svg viewBox="0 0 480 220" role="img" aria-label="Illustration of two speech bubbles, one blue and one gold with a star."><rect width="480" height="220" rx="16" fill="#eef4ff"/><rect x="56" y="48" width="184" height="92" rx="18" fill="#0847c7"/><polygon points="86,140 110,140 92,164" fill="#0847c7"/><rect x="80" y="74" width="136" height="10" rx="5" fill="#ffffff"/><rect x="80" y="94" width="104" height="10" rx="5" fill="#ffffff" opacity="0.75"/><rect x="80" y="114" width="120" height="10" rx="5" fill="#ffffff" opacity="0.55"/><rect x="240" y="78" width="184" height="92" rx="18" fill="#e2a126"/><polygon points="370,170 394,170 384,194" fill="#e2a126"/><polygon points="332,104 338,120 354,121 341,131 346,147 332,137 318,147 323,131 310,121 326,120" fill="#0b1f4d"/></svg></figure><p><strong>The takeaway</strong> — Prepare a few real stories, and practice telling them clearly in your own words.</p></div>
 
     </div>
@@ -342,6 +496,7 @@
     </div>
   </footer>
 
+  <script src="article-motion.js" defer></script>
   <script src="learn-data.js"></script>
   <script src="markdown.js"></script>
   <script>

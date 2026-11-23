@@ -52,8 +52,8 @@ class GuideStructure(unittest.TestCase):
                 self.assertRegex(b, r'<p class="ats-readtime">\d+&ndash;\d+ minute read</p>')
                 self.assertIn(f'slug: "{slug}"', LEARN)
                 if main_id == "ats-article-main":
-                    # The approved ATS copy has no takeaway box; it uses a callout for its examples instead.
-                    self.assertIn("ats-callout", b)
+                    # The approved ATS copy has no takeaway box; its examples are the approved comparison instead.
+                    self.assertIn("ct-ats-comparison", b)
                 else:
                     self.assertIn("ats-takeaway", b)
                 self.assertIn("final-cta", b)

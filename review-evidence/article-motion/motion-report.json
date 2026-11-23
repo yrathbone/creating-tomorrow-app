@@ -1,0 +1,214 @@
+{
+  "motion-on": {
+    "desktop-what-is-ats": {
+      "slug": "what-is-ats",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://news.harvard.edu/gazette/story/2021/09/new-study-says-hidden-workers-are",
+        "https://support.greenhouse.io/hc/en-us/articles/43418495049499-MyGreenhouse-FAQ-"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 2,
+      "demoStageVisible": true,
+      "scrollW": 1265,
+      "innerW": 1280
+    },
+    "desktop-resume-calling-card": {
+      "slug": "resume-calling-card",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.careercenter.illinois.edu/howtoresume",
+        "https://www.naceweb.org/career-readiness/competencies/career-readiness-defined"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 2,
+      "demoStageVisible": false,
+      "scrollW": 1265,
+      "innerW": 1280
+    },
+    "desktop-honest-self-marketing": {
+      "slug": "honest-self-marketing",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.linkedin.com/help/linkedin/answer/a542926/edit-your-headline?lang=en",
+        "https://www.linkedin.com/help/linkedin/answer/a553140"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 2,
+      "demoStageVisible": false,
+      "scrollW": 1265,
+      "innerW": 1280
+    },
+    "desktop-how-we-grade": {
+      "slug": "how-we-grade",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.opm.gov/policy-data-oversight/assessment-and-selection/other-assessm",
+        "https://www.eeoc.gov/pre-employment-inquiries-and-disability"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 2,
+      "demoStageVisible": false,
+      "scrollW": 1265,
+      "innerW": 1280
+    },
+    "phone-what-is-ats": {
+      "slug": "what-is-ats",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://news.harvard.edu/gazette/story/2021/09/new-study-says-hidden-workers-are",
+        "https://support.greenhouse.io/hc/en-us/articles/43418495049499-MyGreenhouse-FAQ-"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 2,
+      "demoStageVisible": true,
+      "scrollW": 390,
+      "innerW": 390
+    },
+    "phone-resume-calling-card": {
+      "slug": "resume-calling-card",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.careercenter.illinois.edu/howtoresume",
+        "https://www.naceweb.org/career-readiness/competencies/career-readiness-defined"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 2,
+      "demoStageVisible": false,
+      "scrollW": 390,
+      "innerW": 390
+    },
+    "phone-honest-self-marketing": {
+      "slug": "honest-self-marketing",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.linkedin.com/help/linkedin/answer/a542926/edit-your-headline?lang=en",
+        "https://www.linkedin.com/help/linkedin/answer/a553140"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 2,
+      "demoStageVisible": false,
+      "scrollW": 390,
+      "innerW": 390
+    },
+    "phone-how-we-grade": {
+      "slug": "how-we-grade",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.opm.gov/policy-data-oversight/assessment-and-selection/other-assessm",
+        "https://www.eeoc.gov/pre-employment-inquiries-and-disability"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 2,
+      "demoStageVisible": false,
+      "scrollW": 390,
+      "innerW": 390
+    }
+  },
+  "reduced-motion": {
+    "desktop-what-is-ats": {
+      "slug": "what-is-ats",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://news.harvard.edu/gazette/story/2021/09/new-study-says-hidden-workers-are",
+        "https://support.greenhouse.io/hc/en-us/articles/43418495049499-MyGreenhouse-FAQ-"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 0,
+      "demoStageVisible": true,
+      "scrollW": 1265,
+      "innerW": 1280
+    },
+    "desktop-resume-calling-card": {
+      "slug": "resume-calling-card",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.careercenter.illinois.edu/howtoresume",
+        "https://www.naceweb.org/career-readiness/competencies/career-readiness-defined"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 0,
+      "demoStageVisible": false,
+      "scrollW": 1265,
+      "innerW": 1280
+    },
+    "desktop-honest-self-marketing": {
+      "slug": "honest-self-marketing",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.linkedin.com/help/linkedin/answer/a542926/edit-your-headline?lang=en",
+        "https://www.linkedin.com/help/linkedin/answer/a553140"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 0,
+      "demoStageVisible": false,
+      "scrollW": 1265,
+      "innerW": 1280
+    },
+    "desktop-how-we-grade": {
+      "slug": "how-we-grade",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.opm.gov/policy-data-oversight/assessment-and-selection/other-assessm",
+        "https://www.eeoc.gov/pre-employment-inquiries-and-disability"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 0,
+      "demoStageVisible": false,
+      "scrollW": 1265,
+      "innerW": 1280
+    },
+    "phone-what-is-ats": {
+      "slug": "what-is-ats",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://news.harvard.edu/gazette/story/2021/09/new-study-says-hidden-workers-are",
+        "https://support.greenhouse.io/hc/en-us/articles/43418495049499-MyGreenhouse-FAQ-"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 0,
+      "demoStageVisible": true,
+      "scrollW": 390,
+      "innerW": 390
+    },
+    "phone-resume-calling-card": {
+      "slug": "resume-calling-card",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.careercenter.illinois.edu/howtoresume",
+        "https://www.naceweb.org/career-readiness/competencies/career-readiness-defined"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 0,
+      "demoStageVisible": false,
+      "scrollW": 390,
+      "innerW": 390
+    },
+    "phone-honest-self-marketing": {
+      "slug": "honest-self-marketing",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.linkedin.com/help/linkedin/answer/a542926/edit-your-headline?lang=en",
+        "https://www.linkedin.com/help/linkedin/answer/a553140"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 0,
+      "demoStageVisible": false,
+      "scrollW": 390,
+      "innerW": 390
+    },
+    "phone-how-we-grade": {
+      "slug": "how-we-grade",
+      "quotes": 2,
+      "quoteLinks": [
+        "https://www.opm.gov/policy-data-oversight/assessment-and-selection/other-assessm",
+        "https://www.eeoc.gov/pre-employment-inquiries-and-disability"
+      ],
+      "controlsTotal": 2,
+      "controlsVisible": 0,
+      "demoStageVisible": false,
+      "scrollW": 390,
+      "innerW": 390
+    }
+  }
+}
