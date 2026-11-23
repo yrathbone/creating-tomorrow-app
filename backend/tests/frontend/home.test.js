@@ -38,6 +38,10 @@ test("the shared header, the privacy notice and the legal links are all present"
   assert.match(html, /<span class="h5-nosave">We do not keep your resume<\/span> or job posting\. We send them securely to our AI provider, which normally deletes them within 30 days\./);
   assert.match(html, /class="footer-links"><a href="privacy\.html">Privacy<\/a> <span class="h5-amp">&amp;<\/span> <a href="terms\.html">Terms<\/a> · <a href="accessibility\.html">Accessibility<\/a> · <a href="contact\.html">Contact<\/a>/);
   assert.match(html, /© 2026 Creating Tomorrow\. All rights reserved\./);
+  for (const page of [html, read("learn.html")]) {
+    assert.doesNotMatch(page, /class="privacy-mark"/);
+    assert.match(page, /<\/footer>[\s\S]*<section id="privacy-note"[^>]*>[\s\S]*href="privacy\.html"/);
+  }
 });
 
 test("every referenced image exists and there are no broken relative paths", () => {
@@ -166,7 +170,16 @@ test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles
   const data = read("learn-data.js");
   for (const slug of slugs) assert.ok(data.includes(slug), `article ${slug} is not in learn-data.js`);
   const titles = [...html.matchAll(/class="h7-guide"[\s\S]*?<b class="h7-title">([^<]+)<\/b>\s*<span class="h7-text">([^<]+)<\/span>/g)].map((m) => [m[1], m[2]]);
-  assert.deepStrictEqual(titles, [["ATS Basics", "How resume screening works"], ["Resume Basics", "Create a resume that works"], ["LinkedIn Basics", "Build your professional profile"], ["Interview Basics", "Prepare stories, not scripts"]]);
+  assert.deepStrictEqual(titles, [
+    ["ATS Basics", "How Applicant Tracking Systems Work"],
+    ["Resume Basics", "Your Resume Is Your Calling Card"],
+    ["LinkedIn Basics", "Your LinkedIn Profile Is Your Professional Story"],
+    ["Interview Basics", "Prepare Stories, Not Perfect Answers"],
+  ]);
+  const learn = read("learn.html");
+  for (const [, title] of titles) {
+    assert.ok(learn.includes(`<b>${title}</b>`), `Learn is missing ${title}`);
+  }
   assert.strictEqual((html.match(/<span class="h7-link">Read <span aria-hidden="true">→<\/span><\/span>/g) || []).length, 4);
   assert.match(html, /aria-label="ATS Basics: How Applicant Tracking Systems Work\. Read the guide\."/); // the full title stays for screen readers
   assert.match(css7, /\.h7-link \{[^}]*text-decoration: none/, "no underline on the links");
@@ -247,23 +260,23 @@ test("accessibility: every tool card has a full spoken name, and the two popup b
   assert.strictEqual((html.match(/aria-haspopup="dialog"/g) || []).length, 2);
 });
 
-test("the four guide cards carry their own drawings (code, resume with red pen, LinkedIn, interview): real files, decorative, and safe SVG", () => {
-  const files = ["guide-ats", "guide-resume", "guide-linkedin", "guide-interview"];
-  const used = [...html.matchAll(/<img src="img\/home\/(guide-[a-z]+)\.svg" alt="" width="360" height="160" \/>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(used, files, "each guide card shows its own drawing, in order, with empty alt text (decorative)");
-  for (const f of files) {
-    const svg = read("img", "home", `${f}.svg`);
-    assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 360 160"/);
-    assert.ok(!/<script|onload=|onclick=|href=|<image|<foreignObject|<style/i.test(svg), `${f}.svg is plain shapes only`);
+test("Home, Learn, and the articles share the four guide images in order", () => {
+  const files = ["guide-ats-code.webp", "guide-resume-photo.png", "guide-linkedin-profile.webp", "guide-interview-photo.png"];
+  for (const page of [html, read("learn.html")]) {
+    const used = [...page.matchAll(/<img src="img\/home\/(guide-[\w-]+\.(?:png|webp))" alt=""/g)].map((m) => m[1]);
+    assert.deepStrictEqual(used, files);
   }
+  const heroes = [...read("article.html").matchAll(/<figure class="ats-hero"><img src="img\/home\/(guide-[\w-]+\.(?:png|webp))"[^>]+ alt="[^"]+"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(heroes, files);
   assert.match(css7, /\.h7-img img \{[^}]*object-fit: cover/);
 });
 
 test("the six tool cards carry their own drawings (page being started, before and after, match meter, magnifier, profile card, interview), decorative and safe SVG", () => {
-  const files = ["tool-create", "tool-improve", "tool-match", "tool-discover", "tool-linkedin", "tool-interview"];
-  const used = [...html.matchAll(/<img src="img\/home\/(tool-[a-z]+)\.svg" alt="" width="400" height="150" \/>/g)].map((m) => m[1]);
+  const files = ["career-tool-create", "career-tool-improve-result", "career-tool-match-result", "tool-discover", "career-tool-linkedin", "career-tool-interview"];
+  const used = [...html.matchAll(/<img src="img\/home\/((?:career-)?tool-[a-z]+(?:-result)?)\.(?:svg|webp|png)" alt="" width="\d+" height="\d+" \/>/g)].map((m) => m[1]);
   assert.deepStrictEqual(used, files, "each tool card shows its own drawing, in order, with empty alt text (decorative)");
   for (const f of files) {
+    if (f.startsWith("career-")) { const ext = f.endsWith("-result") ? "png" : "webp"; assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", `${f}.${ext}`)), `${f}.${ext} exists`); continue; }
     const svg = read("img", "home", `${f}.svg`);
     assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 400 150"/);
     assert.ok(!/<script|onload=|onclick=|href=|<image|<foreignObject|<style/i.test(svg), `${f}.svg is plain shapes only`);
