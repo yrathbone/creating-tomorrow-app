@@ -134,8 +134,8 @@ test("Inter is hosted on our own site (no outside fonts) and is the homepage typ
 });
 
 test("the hero: new headline, new line, Career Tools opens the Guide popup, Learn opens the article popup, and both are real links", () => {
-  assert.match(html, /<h1 id="hero-h">Shape your future\.<\/h1>/);
-  assert.match(html, /<p class="h7-lead">Career tools to build your tomorrow<\/p>/);
+  assert.match(html, /<h1 id="hero-h">Shape Your Future\.<\/h1>/);
+  assert.match(html, /<p class="h7-lead">Career tools to build your tomorrow\.<\/p>/);
   assert.match(html, /<a href="tool\.html" aria-haspopup="dialog" class="h7-btn h7-btn-green" data-guide-open>Career Tools<\/a>/);
   assert.match(html, /<a href="learn\.html" aria-haspopup="dialog" class="h7-btn h7-btn-gold" data-learn-open>Learn<\/a>/);
   assert.match(html, /<span>No cost\. No barriers\.<\/span>/);
@@ -171,13 +171,14 @@ test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles
   for (const slug of slugs) assert.ok(data.includes(slug), `article ${slug} is not in learn-data.js`);
   const titles = [...html.matchAll(/class="h7-guide"[\s\S]*?<b class="h7-title">([^<]+)<\/b>\s*<span class="h7-text">([^<]+)<\/span>/g)].map((m) => [m[1], m[2]]);
   assert.deepStrictEqual(titles, [
-    ["ATS Basics", "How Applicant Tracking Systems Work"],
-    ["Resume Basics", "Your Resume Is Your Calling Card"],
-    ["LinkedIn Basics", "Your LinkedIn Profile Is Your Professional Story"],
-    ["Interview Basics", "Prepare Stories, Not Perfect Answers"],
+    ["ATS Basics", "How Applicant Tracking Systems Work."],
+    ["Resume Basics", "Your Resume Calling Card."],
+    ["LinkedIn Basics", "Your LinkedIn Professional Story."],
+    ["Interview Basics", "Prepare Great Stories."],
   ]);
   const learn = read("learn.html");
-  for (const [, title] of titles) {
+  // The Learn cards keep the full article titles, so check those (not the shorter Home phrases).
+  for (const title of ["How Applicant Tracking Systems Work", "Your Resume Is Your Calling Card", "Your LinkedIn Profile Is Your Professional Story", "Prepare Stories, Not Perfect Answers"]) {
     assert.ok(learn.includes(`<b>${title}</b>`), `Learn is missing ${title}`);
   }
   assert.strictEqual((html.match(/<span class="h7-link">Read <span aria-hidden="true">→<\/span><\/span>/g) || []).length, 4);
@@ -199,7 +200,7 @@ test("five tool cards, each a single Start link: Improve Your Resume opens one e
 });
 
 test("the section headings, ids and closing line", () => {
-  assert.match(html, /<h2 id="basics-h" class="h7-h2">Start with the basics\.<\/h2>\s*<p class="h7-sub">Learn how careers, resumes, and interviews work\.<\/p>/);
+  assert.match(html, /<h2 id="basics-h" class="h7-h2">Start With The Basics\.<\/h2>\s*<p class="h7-sub">Learn how careers, resumes, and interviews work\.<\/p>/);
   assert.match(html, /<h2 id="tools-h" class="h7-h2">Career basics<\/h2>\s*<p class="h7-sub">Build your tomorrow\.<\/p>/);
   for (const id of ["basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
   assert.match(html, /<h2 id="close-h">We don’t invent your value\. We help you see it\.<\/h2>/);
@@ -296,7 +297,9 @@ test("copy and layout polish: card images keep the drawing's shape at every widt
   assert.match(html, /<p class="guide-modal-descriptor">Pick a guide to begin\.<\/p>/);
   const texts = [...html.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
   assert.strictEqual(texts.length, 9);
-  for (const x of texts) assert.ok(!/[.!?]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": starts with a capital, no ending period`);
+  // The four guide descriptions at the top of the page end with a full stop; the tool cards below stay as they are.
+  for (const x of texts.slice(0, 4)) assert.ok(/[.]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": starts with a capital and ends with a full stop`);
+  for (const x of texts.slice(4)) assert.ok(!/[.!?]$/.test(x) && /^[A-Z][a-z]/.test(x), `"${x}": tool card, starts with a capital, no ending period`);
 });
 
 test("the trust line, the sunflower mascot, hover lift, an aligned footer, normal-case titles and the arrow on Start", () => {
@@ -311,7 +314,7 @@ test("the trust line, the sunflower mascot, hover lift, an aligned footer, norma
   assert.match(css7, /prefers-reduced-motion: no-preference\) \{[\s\S]*translateY\(-3px\)/);
   assert.match(css7, /body\.home-v7 \.h5-footer \.h5-wrap \{ max-width: 920px/);
   assert.ok(!/\.h7-guide \.h7-title \{[^}]*uppercase/.test(css7), "guide titles are normal case like the tool titles");
-  assert.match(html, /og:image:alt" content="Creating Tomorrow: Shape your future\."/);
+  assert.match(html, /og:image:alt" content="Creating Tomorrow: Shape Your Future\."/);
   const og = fs.readFileSync(path.join(FRONTEND, "og-image.png"));
   assert.strictEqual(og.readUInt32BE(16), 1200); assert.strictEqual(og.readUInt32BE(20), 630); // PNG header: 1200 x 630
 });
