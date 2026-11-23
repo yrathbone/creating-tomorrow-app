@@ -358,3 +358,14 @@ body.pages-v4.chrome-v6:not(.dashboard-v4) .improve-choices { display: grid; gri
 @media (min-width: 701px) {
   body.pages-v4 #step-mode .pv-tools::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--c6-blue); }
 }
+
+/* Videos on the Learn grid: the same picture box as the guides, with a play mark until the video is ready */
+body.pages-v4.chrome-v6:not(.dashboard-v4) .pv-img.pv-img-video { display: flex; align-items: center; justify-content: center; background: var(--tint-blue); color: var(--blue); }
+body.pages-v4 .pv-img-video .pv-play { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #ffffff; box-shadow: 0 6px 18px -8px rgba(11, 36, 84, 0.35); }
+body.pages-v4 .pv-img-video iframe { width: 100%; height: 100%; border: 0; display: block; }
+body.pages-v4 #video-list .hv-guide { cursor: default; }
+
+/* The About heading is the same size as the Learn and Home headings on desktop */
+@media (min-width: 641px) {
+  body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) .about-hero h1 { font-size: 36px; }
+}

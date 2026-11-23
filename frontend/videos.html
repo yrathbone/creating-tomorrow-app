@@ -50,9 +50,9 @@
     <p class="tagline">Quick explainers, for when reading isn’t the easiest way in.</p>
   </header>
 
-  <main>
+  <main class="pv-main">
     <section class="card pv-panel pv-band">
-      <div id="video-list" class="article-list"></div>
+      <div id="video-list" class="hv-guides pv-guides"></div>
     </section>
   </main>
 
@@ -77,20 +77,21 @@
     const list = document.getElementById("video-list");
     VIDEOS.forEach((v) => {
       const card = document.createElement("div");
-      card.className = "article-card video-card";
+      card.className = "hv-guide";
 
       if (v.youtube_id) {
         card.innerHTML = `
-          <strong>${v.title}</strong>
-          <span>${v.summary}</span>
-          <div class="video-embed">
-            <iframe src="https://www.youtube.com/embed/${v.youtube_id}"
-                    title="${v.title}" allowfullscreen></iframe>
-          </div>`;
+          <span class="pv-img pv-img-guide"><iframe src="https://www.youtube.com/embed/${v.youtube_id}"
+                  title="${v.title}" allowfullscreen></iframe></span>
+          <b>${v.title}</b>
+          <span class="hv-vdesc">${v.summary}</span>`;
       } else {
         card.innerHTML = `
-          <strong>${v.title} <span class="coming-soon">Coming soon</span></strong>
-          <span>${v.summary} (${v.duration})</span>`;
+          <span class="pv-img pv-img-guide pv-img-video" aria-hidden="true"><span class="pv-play"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" fill="currentColor"/></svg></span></span>
+          <span class="hv-vtop"><span class="hv-vtype">Video · ${v.duration}</span></span>
+          <b>${v.title}</b>
+          <span class="hv-vdesc">${v.summary}</span>
+          <span class="hv-vfoot">Coming soon</span>`;
       }
       list.appendChild(card);
     });
