@@ -53,8 +53,8 @@ body.chrome-v6:not(.dashboard-v4) .site-nav a:focus-visible,
 body.chrome-v6:not(.dashboard-v4) .site-nav button:focus-visible { outline: 3px solid #ffffff; outline-offset: 3px; }
 
 /* ---------- footer: layout ---------- */
-body.chrome-v6:not(.dashboard-v4) footer.h5-footer { padding-bottom: 0; border-top: 0; }
-body.chrome-v6:not(.dashboard-v4) footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 1.5rem; background: var(--c6-blue); }
+body.chrome-v6:not(.dashboard-v4) footer.h5-footer { padding-top: 1.35rem; padding-bottom: 0; border-top: 0; }
+body.chrome-v6:not(.dashboard-v4) footer.h5-footer::after { content: ""; display: block; height: 2.75rem; margin-top: 1.25rem; background: var(--c6-blue); }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "copy brand" "privacy plink"; align-items: center; column-gap: 2.5rem; row-gap: 1rem; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-areas: "nav legal" "copy brand" ". plink"; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-row { display: contents; }
@@ -84,11 +84,11 @@ body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links .h5-amp { color: var(
 
 /* ---------- phone ---------- */
 @media (max-width: 1000px) {
-  body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "copy" "privacy" "plink"; row-gap: 1.1rem; }
+  body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "copy" "privacy" "plink"; row-gap: 0.8rem; }
   body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-areas: "brand" "nav" "legal" "copy" "plink"; }
   body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links,
   body.chrome-v6:not(.dashboard-v4) .h5-footer-brand { justify-self: start; }
-  body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { justify-self: start; text-align: left; margin: 0.5rem 0 0; }
+  body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { justify-self: start; text-align: left; margin: 0.35rem 0 0; }
   body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy-link { justify-self: start; }
 }
 
