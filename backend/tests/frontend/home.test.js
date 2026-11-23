@@ -257,7 +257,7 @@ test("responsive: the hero stacks, the cards go 2-up then 1-up, and motion is li
 test("accessibility: every tool card has a full spoken name, and the two popup buttons announce that they open a dialog", () => {
   const labels = [...html.matchAll(/<a class="h7-tool" href="[^"]+" aria-label="([^"]+)"/g)].map((m) => m[1]);
   assert.deepStrictEqual(labels, [
-    "Create: Create your first resume. Start this tool.", "Improve: Polish your resume or find experience worth adding. Start this tool.",
+    "Create: Create your first resume. Start this tool.", "Improve Your Resume: Polish your resume or find experience worth adding. Start this tool.",
     "Match: Check your fit. Start this tool.", "LinkedIn: Showcase your strengths. Start this tool.", "Interview: Master interview stories. Start this tool.",
   ]);
   assert.strictEqual((html.match(/aria-haspopup="dialog"/g) || []).length, 2);
@@ -275,11 +275,11 @@ test("Home, Learn, and the articles share the four guide images in order", () =>
 });
 
 test("the five tool cards carry their own drawings (page being started, match meter, profile card, interview), with empty alt text (decorative)", () => {
-  const files = ["career-tool-create", "career-tool-improve-result", "career-tool-match-result", "career-tool-linkedin", "career-tool-interview"];
-  const used = [...html.matchAll(/<img src="img\/home\/((?:career-)?tool-[a-z]+(?:-result)?)\.(?:svg|webp|png)" alt="" width="\d+" height="\d+" \/>/g)].map((m) => m[1]);
+  const files = ["career-tool-create", "career-tool-improve-3d", "career-tool-match-3d", "career-tool-linkedin", "career-tool-interview"];
+  const used = [...html.matchAll(/<img src="img\/home\/((?:career-)?tool-[a-z]+(?:-result|-3d)?)\.(?:svg|webp|png)" alt="" width="\d+" height="\d+" \/>/g)].map((m) => m[1]);
   assert.deepStrictEqual(used, files, "each tool card shows its own drawing, in order, with empty alt text (decorative)");
   for (const f of files) {
-    const ext = f.endsWith("-result") ? "png" : "webp";
+    const ext = /-(result|3d)$/.test(f) ? "png" : "webp";
     assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", `${f}.${ext}`)), `${f}.${ext} exists`);
   }
   assert.ok(!/class="h7-img[^"]*" aria-hidden="true"><\/span>/.test(html), "no empty placeholder box is left on the homepage");
