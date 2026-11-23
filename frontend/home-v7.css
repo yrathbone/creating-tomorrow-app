@@ -107,8 +107,9 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 
 .h7-tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem 1.75rem; }
 .h7-tool { display: flex; flex-direction: column; text-align: left; text-decoration: none; color: inherit; }
-.h7-tool .h7-img { aspect-ratio: 400 / 150; }
-.h7-tool-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.75rem; }
+.h7-tool .h7-img { aspect-ratio: 3 / 1; }
+.h7-tool-row { display: flex; flex-direction: column; gap: 0; margin-top: 0.75rem; }
+.h7-tool .h7-link { padding-top: 0.75rem; }
 .h7-tool-body { min-width: 0; }
 .h7-tool .h7-title { margin: 0 0 0.25rem; }
 
@@ -170,15 +171,14 @@ body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy a { color: var(--roya
 
 /* Tool cards on desktop: three on the top row, then Improve Your Resume and Match centred under them (3-2). */
 @media (min-width: 1001px) {
-  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tools { grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 0.75rem; row-gap: 1.25rem; }
-  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool-row { gap: 0.25rem; }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tools { grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 2.2rem; row-gap: 2.2rem; }
   body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool { grid-column: span 2; position: relative; }
   body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool:nth-child(4) { grid-column: 2 / span 2; }
   body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool:nth-child(5) { grid-column: 4 / span 2; }
   /* Amber dividers between neighbours in each row, as in Start with the basics. */
   body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool:nth-child(2)::before,
   body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool:nth-child(3)::before,
-  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool:nth-child(5)::before { content: ""; position: absolute; top: 0; bottom: 0; left: -0.375rem; width: 1.5px; background: var(--amber); }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-tool:nth-child(5)::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1.1rem; width: 1.5px; background: var(--amber); }
 }
 /* Phone: the Privacy line keeps the same side gutter as the hero. */
 @media (max-width: 620px) {
