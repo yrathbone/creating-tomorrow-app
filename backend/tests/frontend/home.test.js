@@ -188,11 +188,11 @@ test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles
 test("five tool cards, each a single Start link: Improve Your Resume opens one entry page, and each card has a short phrase and an image box", () => {
   const section = html.slice(html.indexOf('id="tools"'), html.indexOf("</section>", html.indexOf('id="tools"')));
   const hrefs = [...section.matchAll(/<a class="h7-tool" href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepStrictEqual(hrefs, ["scratch.html", "improve.html", "tool.html?mode=analyze", "spotlight.html", "prepare.html"]);
+  assert.deepStrictEqual(hrefs, ["scratch.html", "spotlight.html", "prepare.html", "improve.html", "tool.html?mode=analyze"]);
   const titles = [...section.matchAll(/<b class="h7-title"[^>]*>([^<]+)<\/b>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(titles, ["Create", "Improve Your Resume", "Match", "LinkedIn", "Interview"]);
+  assert.deepStrictEqual(titles, ["Create", "LinkedIn", "Interview", "Improve Your Resume", "Match"]);
   const phrases = [...section.matchAll(/<span class="h7-text">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(phrases, ["Create your first resume", "Polish or find", "Check your fit", "Showcase your strengths", "Master interview stories"]);
+  assert.deepStrictEqual(phrases, ["Create your first resume", "Showcase your strengths", "Master interview stories", "Polish or find", "Check your fit"]);
   assert.strictEqual((section.match(/<span class="h7-link">Start /g) || []).length, 5, "the same Start line on every card");
   assert.strictEqual((section.match(/class="h7-img h7-img-(blue|gold|green)" aria-hidden="true"/g) || []).length, 5, "an image box on every tool card");
   assert.ok(!section.includes("h7-path"), "no two-path links on the card");
@@ -257,8 +257,9 @@ test("responsive: the hero stacks, the cards go 2-up then 1-up, and motion is li
 test("accessibility: every tool card has a full spoken name, and the two popup buttons announce that they open a dialog", () => {
   const labels = [...html.matchAll(/<a class="h7-tool" href="[^"]+" aria-label="([^"]+)"/g)].map((m) => m[1]);
   assert.deepStrictEqual(labels, [
-    "Create: Create your first resume. Start this tool.", "Improve Your Resume: Polish or find. Start this tool.",
-    "Match: Check your fit. Start this tool.", "LinkedIn: Showcase your strengths. Start this tool.", "Interview: Master interview stories. Start this tool.",
+    "Create: Create your first resume. Start this tool.", "LinkedIn: Showcase your strengths. Start this tool.",
+    "Interview: Master interview stories. Start this tool.", "Improve Your Resume: Polish or find. Start this tool.",
+    "Match: Check your fit. Start this tool.",
   ]);
   assert.strictEqual((html.match(/aria-haspopup="dialog"/g) || []).length, 2);
 });
@@ -275,7 +276,7 @@ test("Home, Learn, and the articles share the four guide images in order", () =>
 });
 
 test("the five tool cards carry their own drawings (page being started, match meter, profile card, interview), with empty alt text (decorative)", () => {
-  const files = ["career-tool-create", "career-tool-improve-3d", "career-tool-match-3d", "career-tool-linkedin", "career-tool-interview"];
+  const files = ["career-tool-create", "career-tool-linkedin", "career-tool-interview", "career-tool-improve-3d", "career-tool-match-3d"];
   const used = [...html.matchAll(/<img src="img\/home\/((?:career-)?tool-[a-z]+(?:-result|-3d)?)\.(?:svg|webp|png)" alt="" width="\d+" height="\d+" \/>/g)].map((m) => m[1]);
   assert.deepStrictEqual(used, files, "each tool card shows its own drawing, in order, with empty alt text (decorative)");
   for (const f of files) {

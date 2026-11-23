@@ -21,7 +21,7 @@ test("the Learn page shows the four decorative guide images, in order, one on ea
 test("the Career Tools page shows the five tool drawings, in order, and every tool still works", () => {
   const html = read("tool.html");
   const used = [...html.matchAll(/<img src="img\/home\/((?:career-)?tool-[a-z]+(?:-result|-3d)?)\.(?:svg|webp|png)" alt="" width="\d+" height="\d+" \/>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(used, ["career-tool-create", "career-tool-improve-3d", "career-tool-match-3d", "career-tool-linkedin", "career-tool-interview"]);
+  assert.deepStrictEqual(used, ["career-tool-create", "career-tool-linkedin", "career-tool-interview", "career-tool-improve-3d", "career-tool-match-3d"]);
   assert.ok(!html.slice(0, html.indexOf('id="step-upload"')).includes("hv-vicon"), "the small icon circles are gone from the tool cards");
   for (const id of ['id="mode-analyze"', 'data-mode="analyze"', 'href="scratch.html"', 'href="improve.html"', 'href="spotlight.html"', 'href="prepare.html"']) assert.ok(html.includes(id), id);
   for (const file of used) { const ext = /-(result|3d)$/.test(file) ? ".png" : file.startsWith("career-") ? ".webp" : ".svg"; assert.ok(fs.existsSync(path.join(FRONTEND, "img", "home", file + ext)), file); }
