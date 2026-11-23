@@ -264,12 +264,12 @@ test("accessibility: every tool card has a full spoken name, and the two popup b
 });
 
 test("Home, Learn, and the articles share the four guide images in order", () => {
-  const files = ["guide-ats-code.webp", "guide-resume-photo.png", "guide-linkedin-profile.webp", "guide-interview-photo.png"];
+  const files = ["guide-ats-code.webp", "guide-resume-photo.jpg", "guide-linkedin-profile.webp", "guide-interview-photo.jpg"];
   for (const page of [html, read("learn.html")]) {
-    const used = [...page.matchAll(/<img src="img\/home\/(guide-[\w-]+\.(?:png|webp))" alt=""/g)].map((m) => m[1]);
+    const used = [...page.matchAll(/<img src="img\/home\/(guide-[\w-]+\.(?:png|webp|jpg))" alt=""/g)].map((m) => m[1]);
     assert.deepStrictEqual(used, files);
   }
-  const heroes = [...read("article.html").matchAll(/<figure class="ats-hero"><img src="img\/home\/(guide-[\w-]+\.(?:png|webp))"[^>]+ alt="[^"]+"/g)].map((m) => m[1]);
+  const heroes = [...read("article.html").matchAll(/<figure class="ats-hero"><img src="img\/home\/(guide-[\w-]+\.(?:png|webp|jpg))"[^>]+ alt="[^"]+"/g)].map((m) => m[1]);
   assert.deepStrictEqual(heroes, files);
   assert.match(css7, /\.h7-img img \{[^}]*object-fit: cover/);
 });
