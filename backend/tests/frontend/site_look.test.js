@@ -109,9 +109,10 @@ test("the chrome rules hold their contrast and layout: cobalt header, gold butto
   assert.match(css, /grid-template-areas: "nav legal" "copy brand" "privacy plink";/);
   assert.match(css, /\.h5-footer-privacy \{ grid-area: privacy; justify-self: start; max-width: none;/);
   assert.match(css, /\.h5-footer-privacy-link \{ grid-area: plink; justify-self: end;/);
-  assert.match(css, /\.h5-footer-brand \{ grid-area: brand; justify-self: end; background: var\(--c6-blue\); padding: 0\.55rem 0\.9rem; border-radius: 10px; \}/); // F-12: wordmark sits on the navy band
+  assert.match(css, /\.h5-footer-brand \{ grid-area: brand; justify-self: end; background: none; padding: 0; border-radius: 0; \}/); // the sun mark alone in the bottom-right corner, no navy panel
+  assert.match(css, /\.h5-footer-brand \.nav-wordmark \{ position: absolute; width: 1px; height: 1px; overflow: hidden;/); // wordmark kept for screen readers
   assert.match(css, /\.h5-footer \.nav-wordmark-gold \{ color: var\(--c6-gold\); \}/); // F-12: header gold on the navy band
-  assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 2\.75rem;/);
+  assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 2\.5rem;/);
   const hex = (n) => parseInt(n, 16) / 255;
   const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
   const lum = (h) => 0.2126 * lin(hex(h.slice(0, 2))) + 0.7152 * lin(hex(h.slice(2, 4))) + 0.0722 * lin(hex(h.slice(4, 6)));
