@@ -15,7 +15,7 @@ test("improve.html offers the two labelled choices, each going to its existing f
   assert.match(html, /<a class="mode-btn hv-tool hv-t-mint" href="elevate\.html">/, "Find goes to the Elevate flow");
   assert.match(html, /<b>Polish what&rsquo;s already there<\/b>/);
   assert.match(html, /<b>Find experience I left out<\/b>/);
-  assert.match(html, /<section id="privacy-note"/);
+  assert.match(html, /<p class="h5-footer-privacy-link" id="privacy-note">/);
   assert.ok(!html.includes('class="privacy-mark"'), "no privacy line under the title");
 });
 
@@ -24,5 +24,5 @@ test("Home and Career Tools link the Improve Your Resume card to the entry page;
   const tool = read("tool.html");
   assert.match(tool, /<a class="mode-btn hv-tool hv-t-butter" href="improve\.html">/);
   assert.ok(!tool.includes('class="privacy-mark"'), "the top privacy line is gone; the note stays at the bottom");
-  assert.match(tool, /<section id="privacy-note"/);
+  assert.match(tool, /<p class="h5-footer-privacy-link" id="privacy-note">/);
 });

@@ -93,7 +93,7 @@ test("every footer says Privacy & Terms (two links, one crimson unit), and the f
     const m = html.match(/<p class="h5-footer-privacy">([\s\S]*?)<\/p>/);
     if (!m) continue;
     if (name.startsWith("career/")) { assert.match(m[1], /Career Profile is an early, invite-only preview/); continue; }
-    assert.match(m[1], /^<span class="h5-nosave">We (?:don’t store|do not keep) your [a-z ]+<\/span>/, name + " opens with the underlined promise");
+    assert.match(m[1], /^<span class="h5-nosave">(?:We (?:don’t store|do not keep) your [a-z ]+|Our free tools (?:don’t keep|do not keep) your [a-z ]+)<\/span>/, name + " opens with the underlined promise");
     assert.match(m[1], /normally deletes (them|it) within 30 days\.$/, name + " says 'normally', never 'always'");
     assert.ok(!/typically deleted|don't save/.test(m[1]), name + " no old wording");
   }
@@ -104,8 +104,9 @@ test("the chrome rules hold their contrast and layout: cobalt header, gold butto
   assert.match(css, /--c6-blue: #003395;/);
   assert.match(css, /\.site-nav \{ background: var\(--c6-blue\); border-bottom: 0; \}/);
   assert.match(css, /\.nav-links a\.nav-account \{ background: var\(--c6-gold\); border-color: var\(--c6-gold\); color: #071c42; \}/);
-  assert.match(css, /grid-template-areas: "nav legal" "privacy privacy" "copy brand";/);
-  assert.match(css, /\.h5-footer-privacy \{ grid-area: privacy; justify-self: center; max-width: none;/);
+  assert.match(css, /grid-template-areas: "nav legal" "copy brand" "privacy plink";/);
+  assert.match(css, /\.h5-footer-privacy \{ grid-area: privacy; justify-self: start; max-width: none;/);
+  assert.match(css, /\.h5-footer-privacy-link \{ grid-area: plink; justify-self: end;/);
   assert.match(css, /\.h5-footer-brand \{ grid-area: brand; justify-self: end; background: var\(--c6-blue\); padding: 0\.55rem 0\.9rem; border-radius: 10px; \}/); // F-12: wordmark sits on the navy band
   assert.match(css, /\.h5-footer \.nav-wordmark-gold \{ color: var\(--c6-gold\); \}/); // F-12: header gold on the navy band
   assert.match(css, /footer\.h5-footer::after \{ content: ""; display: block; height: 3\.25rem;/);

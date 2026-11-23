@@ -35,12 +35,13 @@ test("the shared header, the privacy notice and the legal links are all present"
   assert.match(html, /class="nav-account"/); // auth-nav.js switches this to "My Career"
   assert.match(html, /<script src="auth-nav\.js"><\/script>/);
   for (const label of ["Home", "Learn", "Videos", "About", "Career Tools", "Sign In"]) assert.match(html, new RegExp(`>${label}</a>`), label);
-  assert.match(html, /<span class="h5-nosave">We don’t store your resume<\/span> or job posting\. Our AI provider normally deletes them within 30 days\./);
+  assert.match(html, /<span class="h5-nosave">Our free tools don’t keep your resume<\/span> or job posting\. Our AI provider normally deletes them within 30 days\./);
   assert.match(html, /class="footer-links"><a href="privacy\.html">Privacy<\/a> <span class="h5-amp">&amp;<\/span> <a href="terms\.html">Terms<\/a> · <a href="accessibility\.html">Accessibility<\/a> · <a href="contact\.html">Contact<\/a>/);
   assert.match(html, /© 2026 Creating Tomorrow\. All rights reserved\./);
   for (const page of [html, read("learn.html")]) {
     assert.doesNotMatch(page, /class="privacy-mark"/);
-    assert.match(page, /<\/footer>[\s\S]*<section id="privacy-note"[^>]*>[\s\S]*href="privacy\.html"/);
+    assert.match(page, /<p class="h5-footer-privacy-link" id="privacy-note"><a href="privacy\.html">Privacy<\/a><\/p>/);
+    assert.doesNotMatch(page, /<section id="privacy-note"/);
   }
 });
 
@@ -302,7 +303,7 @@ test("copy and layout polish: card images keep the drawing's shape at every widt
 });
 
 test("the trust line, the sunflower mascot, hover lift, an aligned footer, normal-case titles and the arrow on Start", () => {
-  assert.match(html, /<p class="h7-trust"><svg[^>]*aria-hidden="true">[\s\S]*?<\/svg><span>We don’t store your resume or job posting\.<\/span><\/p>/);
+  assert.match(html, /<p class="h7-trust"><svg[^>]*aria-hidden="true">[\s\S]*?<\/svg><span>Our free tools don’t keep your resume or job posting\.<\/span><\/p>/);
   assert.ok(html.indexOf("h7-free") < html.indexOf("h7-trust"), "the trust line sits under the no-cost line");
   assert.match(html, /<img class="h7-mascot" src="mascot-welcome\.png" alt="" width="245" height="291" \/>/);
   assert.ok(fs.existsSync(path.join(FRONTEND, "mascot-welcome.png")));

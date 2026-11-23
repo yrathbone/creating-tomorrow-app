@@ -55,8 +55,8 @@ body.chrome-v6:not(.dashboard-v4) .site-nav button:focus-visible { outline: 3px 
 /* ---------- footer: layout ---------- */
 body.chrome-v6:not(.dashboard-v4) footer.h5-footer { padding-bottom: 0; border-top: 0; }
 body.chrome-v6:not(.dashboard-v4) footer.h5-footer::after { content: ""; display: block; height: 3.25rem; margin-top: 2.25rem; background: var(--c6-blue); }
-body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "privacy privacy" "copy brand"; align-items: center; column-gap: 2.5rem; row-gap: 1.5rem; }
-body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-areas: "nav legal" "copy brand"; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nav legal" "copy brand" "privacy plink"; align-items: center; column-gap: 2.5rem; row-gap: 1.5rem; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-areas: "nav legal" "copy brand" ". plink"; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-row { display: contents; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer-nav { grid-area: nav; }
 body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links { grid-area: legal; justify-self: end; }
@@ -66,8 +66,10 @@ body.chrome-v6:not(.dashboard-v4) .h5-footer-brand { grid-area: brand; justify-s
 body.chrome-v6:not(.dashboard-v4) .h5-footer .nav-logo img { box-sizing: content-box; height: 40px; padding: 5px; background: #ffffff; border-radius: 50%; }
 /* the tagline is white, with "Brighter tomorrow." in gold, like the wordmark */
 body.chrome-v6:not(.dashboard-v4) .h5-footer-brand p { color: #ffffff; }
-/* the privacy sentence uses the full footer width, so on a desktop it stays on one line (on a phone it wraps as it must) */
-body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { grid-area: privacy; justify-self: center; max-width: none; margin: 0.75rem 0 0.25rem; text-align: center; color: #000000; }
+/* the privacy sentence sits under the copyright, on the left; the Privacy link sits under the footer logo, on the right */
+body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { grid-area: privacy; justify-self: start; max-width: none; margin: 0.25rem 0 0; text-align: left; color: #000000; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy-link { grid-area: plink; justify-self: end; margin: 0; }
+body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy-link a { color: var(--c6-blue); text-decoration: underline; text-underline-offset: 3px; }
 /* free-tools wording: the first words are underlined, which sets that promise apart from the signed-in side, where data is saved */
 body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy .h5-nosave { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
@@ -82,11 +84,12 @@ body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links .h5-amp { color: var(
 
 /* ---------- phone ---------- */
 @media (max-width: 1000px) {
-  body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap,
-  body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "privacy" "copy"; row-gap: 1.1rem; }
+  body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap { grid-template-columns: 1fr; grid-template-areas: "brand" "nav" "legal" "copy" "privacy" "plink"; row-gap: 1.1rem; }
+  body.chrome-v6:not(.dashboard-v4) .h5-footer .h5-wrap:not(:has(.h5-footer-privacy)) { grid-template-areas: "brand" "nav" "legal" "copy" "plink"; }
   body.chrome-v6:not(.dashboard-v4) .h5-footer .footer-links,
   body.chrome-v6:not(.dashboard-v4) .h5-footer-brand { justify-self: start; }
   body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy { justify-self: start; text-align: left; margin: 0.5rem 0 0; }
+  body.chrome-v6:not(.dashboard-v4) .h5-footer-privacy-link { justify-self: start; }
 }
 
 /* ---------- inner pages: a white page ---------- */
