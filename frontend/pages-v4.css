@@ -272,6 +272,7 @@ body.pages-v4 .ats-compare-clear { background: var(--tint-gold); }
 /* Public type scale: Learn, Videos and the Career Basics articles. Matches Home. Scoped to the chrome-v6 public pages. */
 body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-head p { font-size: 20px; }
 body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-sub { font-size: 16px; }
+body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-head .pv-sub { font-size: 16px; margin: 0.75rem auto 0; }
 body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .hv-guide b { font-size: 18px; }
 body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .hv-vdesc,
 body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .hv-vfoot { font-size: 16px; }
