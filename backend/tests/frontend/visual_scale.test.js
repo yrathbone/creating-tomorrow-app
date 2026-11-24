@@ -37,7 +37,7 @@ test("the older per-page title sizes are still in pages-v4.css, but one standard
   const pages = read("pages-v4.css");
   assert.match(pages, /body\.pages-v4\.spotlight-page \.page-header h1 \{ font-size: var\(--fs-h2\); \}/); // superseded, not removed
   const block = chrome.slice(chrome.indexOf("one standard size scale on every inner page"), chrome.indexOf("one type scale on the public pages"));
-  assert.match(block, /--c6-title: clamp\(1\.75rem, 1\.3rem \+ 1\.6vw, 2\.5rem\)/);
+  assert.match(block, /--c6-title: clamp\(1\.75rem, 1\.3rem \+ 1\.6vw, 2\.25rem\)/);
   for (const sel of [".page-header h1", ".pv-head h1", ".doc-hero h1", ".about-hero h1", ".ats-header h1", ".h5-notfound h1"]) {
     assert.ok(block.includes("body.chrome-v6:not(.dashboard-v4):not(.home-v7) " + sel), sel + " uses the standard title");
   }
