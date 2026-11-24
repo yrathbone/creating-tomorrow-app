@@ -141,7 +141,6 @@
 
   // Shared replay pattern for the three other guides: the step lift and the highlight replay.
   const sections = [
-    ["calling-card-article-main", "resume-calling-card", "ct-resume"],
     ["linkedin-article-main", "honest-self-marketing", "ct-linkedin"],
     ["interview-article-main", "how-we-grade", "ct-interview"]
   ];
