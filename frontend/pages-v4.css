@@ -262,7 +262,7 @@ body.pages-v4 .h5-footer-copy { margin: 0.6rem 0 0; max-width: none; font-size: 
 /* ---------- Guide articles (article.html rich templates): v5 colours ---------- */
 body.pages-v4 .ats-back-link, body.pages-v4 .ats-category, body.pages-v4 .ats-compare-clear .ats-compare-label { color: var(--blue); }
 body.pages-v4 .ats-header-accent { background: var(--gold); }
-body.pages-v4 .ats-header h1, body.pages-v4 .ats-body h2 { color: var(--navy); }
+body.pages-v4 .ats-header h1, body.pages-v4 .ats-body h2 { color: #003395; }
 body.pages-v4 .ats-subtitle, body.pages-v4 .ats-readtime { color: var(--muted); }
 body.pages-v4 .ats-callout { background: var(--pale); border: 1px solid var(--line); border-radius: 14px; box-shadow: none; }
 body.pages-v4 .ats-callout-summary { background: var(--tint-blue); border-color: #cfe0fb; }
@@ -291,7 +291,7 @@ body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) #video
   body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-band .hv-h2 { font-size: 28px; }
   body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7):has(#video-list) header.page-header h1 { font-size: 36px; }
   body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.ats-article h1 { font-size: 36px; }
-  body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.ats-article h2 { font-size: 28px; }
+  body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.ats-article h2 { font-size: 24px; }
 }
 @media (max-width: 640px) {
   body.pages-v4.chrome-v6:not(.dashboard-v4):not(.home-v7) main.pv-main .pv-head h1 { font-size: 30px; }

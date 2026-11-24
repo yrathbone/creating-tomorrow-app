@@ -124,7 +124,7 @@ body.chrome-v6.pages-v4:not(.dashboard-v4) .about-note { background: #fff5dd; }
    Page titles were three sizes (48, 36 and 33px), section headings four (19 to 33px) and body text five (14 to 17px). Now: one page title
    (40px on a desktop, easing down to 28px on a phone), one section heading (24px) and one body size (16px). The homepage keeps its own hero size, and
    the signed-in dashboard keeps its own type. No colours or font families are added here. */
-body.chrome-v6:not(.dashboard-v4):not(.home-v7) { --c6-title: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem); --c6-section: 1.5rem; --c6-body: 1rem; }
+body.chrome-v6:not(.dashboard-v4):not(.home-v7) { --c6-title: clamp(1.75rem, 1.3rem + 1.6vw, 2.25rem); --c6-section: 1.5rem; --c6-body: 1rem; }
 body.chrome-v6:not(.dashboard-v4):not(.home-v7) .page-header h1,
 body.chrome-v6:not(.dashboard-v4):not(.home-v7) .pv-head h1,
 body.chrome-v6:not(.dashboard-v4):not(.home-v7) .doc-hero h1,
