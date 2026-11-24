@@ -614,37 +614,12 @@
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-.ct-linkedin-replay {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 15px;
-  min-height: 36px;
-  padding: 7px 11px;
-  border: 1px solid #aabfe5;
-  border-radius: 7px;
-  background: #fff;
-  color: #003395;
-  font: 600 .8125rem/1.3 Inter,"Segoe UI",Arial,sans-serif;
-  cursor: pointer;
-}
-.ct-linkedin-replay[hidden] { display: none; }
-.ct-linkedin-replay:hover { background: #eff5ff; }
-.ct-linkedin-replay:focus-visible { outline: 2px solid #003395; outline-offset: 3px; }
-@keyframes ct-linkedin-lift { 45% { transform: translateY(-4px); box-shadow: 0 5px 0 var(--depth),0 8px 16px #071c4221; } }
-@keyframes ct-linkedin-mark { from { background: transparent; } 60% { background: #ade1b9; } to { background: #daefdf; } }
-.ct-linkedin-flow[data-playing] .ct-linkedin-step > div { animation: ct-linkedin-lift .65s ease-out var(--delay); }
-.ct-linkedin-compare[data-playing] .ct-linkedin-example mark { animation: ct-linkedin-mark .55s ease-out var(--delay,0s) both; }
-.ct-linkedin-example mark:nth-of-type(2) { --delay:.3s; }
-.ct-linkedin-example mark:nth-of-type(3) { --delay:.6s; }
+
 @media(max-width:550px) {
   #linkedin-article-main .ct-linkedin-steps { grid-template-columns: minmax(0,1fr); gap: 11px; }
   .ct-linkedin-steps::before { inset: 15px auto 18px 14px; width: 2px; height: auto; }
   #linkedin-article-main .ct-linkedin-step { grid-template-columns: 30px minmax(0,1fr); grid-template-rows: auto; align-items: center; }
   #linkedin-article-main .ct-linkedin-motion { padding: 12px; }
-}
-@media(prefers-reduced-motion:reduce) {
-  .ct-linkedin-flow[data-playing] .ct-linkedin-step > div,.ct-linkedin-compare[data-playing] .ct-linkedin-example mark { animation: none; }
 }
 
 #linkedin-article-main .ct-linkedin-step:nth-child(4) {
@@ -777,37 +752,12 @@
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-.ct-interview-replay {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 15px;
-  min-height: 36px;
-  padding: 7px 11px;
-  border: 1px solid #aabfe5;
-  border-radius: 7px;
-  background: #fff;
-  color: #003395;
-  font: 600 .8125rem/1.3 Inter,"Segoe UI",Arial,sans-serif;
-  cursor: pointer;
-}
-.ct-interview-replay[hidden] { display: none; }
-.ct-interview-replay:hover { background: #eff5ff; }
-.ct-interview-replay:focus-visible { outline: 2px solid #003395; outline-offset: 3px; }
-@keyframes ct-interview-lift { 45% { transform: translateY(-4px); box-shadow: 0 5px 0 var(--depth),0 8px 16px #071c4221; } }
-@keyframes ct-interview-mark { from { background: transparent; } 60% { background: #ade1b9; } to { background: #daefdf; } }
-.ct-interview-flow[data-playing] .ct-interview-step > div { animation: ct-interview-lift .65s ease-out var(--delay); }
-.ct-interview-compare[data-playing] .ct-interview-example mark { animation: ct-interview-mark .55s ease-out var(--delay,0s) both; }
-.ct-interview-example mark:nth-of-type(2) { --delay:.3s; }
-.ct-interview-example mark:nth-of-type(3) { --delay:.6s; }
+
 @media(max-width:550px) {
   #interview-article-main .ct-interview-steps { grid-template-columns: minmax(0,1fr); gap: 11px; }
   .ct-interview-steps::before { inset: 15px auto 18px 14px; width: 2px; height: auto; }
   #interview-article-main .ct-interview-step { grid-template-columns: 30px minmax(0,1fr); grid-template-rows: auto; align-items: center; }
   #interview-article-main .ct-interview-motion { padding: 12px; }
-}
-@media(prefers-reduced-motion:reduce) {
-  .ct-interview-flow[data-playing] .ct-interview-step > div,.ct-interview-compare[data-playing] .ct-interview-example mark { animation: none; }
 }
 
 #interview-article-main .ct-interview-step:nth-child(4) {
