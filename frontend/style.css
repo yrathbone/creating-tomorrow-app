@@ -3449,3 +3449,7 @@ button.link-button:focus-visible { outline: 3px solid rgba(10, 53, 168, 0.3); ou
 .ats-quote { margin: 32px 0; padding: 22px 0; border: 0; border-top: 1px solid #f1d68a; border-bottom: 1px solid #f1d68a; background: none; border-radius: 0; text-align: center; }
 .ats-quote p { margin: 0 0 8px; font-size: 1.0625rem; font-style: italic; color: var(--muted); }
 .ats-quote cite { display: block; font-style: normal; color: var(--muted); font-size: .9rem; }
+/* the resume and LinkedIn guides: source quotes get more air above and below, so they stand apart from the text */
+#linkedin-article-main .ats-quote, #calling-card-article-main .ats-quote { margin: 52px 0; padding: 30px 0; }
+/* the resume guide's closing box has no tinted background, like the rest of the site */
+#calling-card-article-main .ats-final-cta .final-cta-inner { background: none; }
