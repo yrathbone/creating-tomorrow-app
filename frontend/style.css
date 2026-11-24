@@ -1999,6 +1999,8 @@ footer.site-footer-v2 {
   margin: 0 auto 2.5rem;
   padding: 0 1.5rem;
 }
+/* the approved ATS guide: the closing box has no tinted background, like the rest of the site */
+#ats-article-main .ats-final-cta .final-cta-inner { background: none; }
 
 .ats-next-link {
   display: block;
