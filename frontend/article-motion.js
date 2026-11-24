@@ -7,27 +7,6 @@
   // ATS Basics: the vague-to-specific highlights and the resume-parsing demo.
   if (slug === "what-is-ats") {
     (() => {
-      const comparison = document.querySelector(".ct-ats-comparison");
-      const replay = comparison.querySelector(".ct-ats-replay");
-      const examples = comparison.querySelector(".ct-ats-examples");
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-      function updateReplayControl() {
-        replay.hidden = reduceMotion.matches;
-        if (reduceMotion.matches) examples.classList.remove("ct-ats-playing");
-      }
-
-      replay.addEventListener("click", () => {
-        examples.classList.remove("ct-ats-playing");
-        void examples.offsetWidth;
-        examples.classList.add("ct-ats-playing");
-      });
-
-      reduceMotion.addEventListener("change", updateReplayControl);
-      updateReplayControl();
-    })();
-
-    (() => {
       const demo = document.querySelector(".ct-ats-demo");
       const controls = demo.querySelector(".ct-demo-controls");
       const play = demo.querySelector(".ct-demo-play");
