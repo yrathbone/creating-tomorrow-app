@@ -3455,3 +3455,6 @@ button.link-button:focus-visible { outline: 3px solid rgba(10, 53, 168, 0.3); ou
 #linkedin-article-main .ats-quote, #calling-card-article-main .ats-quote { margin: 52px 0; padding: 30px 0; }
 /* the resume guide's closing box has no tinted background, like the rest of the site */
 #calling-card-article-main .ats-final-cta .final-cta-inner { background: none; }
+/* all four guides: the takeaway and closing boxes sit on the page background, like the rest of the site */
+.ats-article .ats-takeaway { background: none; }
+.ats-article .final-cta-inner { background: none; }

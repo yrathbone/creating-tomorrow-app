@@ -118,28 +118,4 @@
     })();
   }
 
-  // Shared replay pattern for the three other guides: the step lift and the highlight replay.
-  const sections = [
-    ["linkedin-article-main", "honest-self-marketing", "ct-linkedin"],
-    ["interview-article-main", "how-we-grade", "ct-interview"]
-  ];
-  for (const [, guideSlug, prefix] of sections) {
-    if (slug !== guideSlug) continue;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    for (const section of document.querySelectorAll("." + prefix + "-motion")) {
-      const replay = section.querySelector("." + prefix + "-replay");
-      const updateControl = () => {
-        replay.hidden = reduceMotion.matches;
-        if (reduceMotion.matches) section.removeAttribute("data-playing");
-      };
-      replay.addEventListener("click", () => {
-        if (reduceMotion.matches) return;
-        section.removeAttribute("data-playing");
-        void section.offsetWidth;
-        section.setAttribute("data-playing", "");
-      });
-      reduceMotion.addEventListener("change", updateControl);
-      updateControl();
-    }
-  }
 })();
