@@ -346,6 +346,7 @@ function renderResumeQuestionsBatch(questions) {
       textarea.placeholder = "Your answer, in your own words...";
       label.appendChild(textarea);
       card.appendChild(label);
+      attachVoiceAnswer(card, textarea);
     } else {
       const options = document.createElement("div");
       options.className = "question-options";
@@ -358,6 +359,82 @@ function renderResumeQuestionsBatch(questions) {
     }
 
     container.appendChild(card);
+  });
+}
+
+// Optional "Speak my answer" for a detail answer. Offered only when the browser has the on-device speech API.
+// The typed box stays the answer; the transcript is appended to it and is sent only by the existing Continue button.
+// See js/voiceAnswer.js for the rules and sources. No audio is recorded or stored.
+function attachVoiceAnswer(card, textarea) {
+  const VA = window.VoiceAnswer;
+  const SR = VA && VA.getRecognitionCtor(window);
+  if (!SR) return; // typed answer only
+
+  const lang = document.documentElement.lang || VA.DEFAULT_LANG;
+  const row = document.createElement("div");
+  row.className = "voice-row";
+  const micBtn = document.createElement("button");
+  micBtn.type = "button";
+  micBtn.className = "secondary-btn voice-mic-btn";
+  micBtn.textContent = "Speak my answer";
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "secondary-btn voice-cancel-btn";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.hidden = true;
+  const status = document.createElement("p");
+  status.className = "voice-status";
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
+  row.append(micBtn, cancelBtn, status);
+  card.appendChild(row);
+
+  let controller = null;
+  const show = (state, message) => {
+    status.textContent = message || "";
+    const listening = state === "listening";
+    micBtn.textContent = listening ? "Stop" : "Speak my answer";
+    cancelBtn.hidden = !listening;
+  };
+  controller = VA.createVoiceInput({
+    SR,
+    lang,
+    onState: show,
+    onFinal: (heard) => {
+      textarea.value = VA.appendTranscript(textarea.value, heard);
+    },
+  });
+
+  cancelBtn.addEventListener("click", () => controller.cancel());
+
+  let awaitingPackApproval = false;
+  micBtn.addEventListener("click", async () => {
+    if (controller.isListening()) { controller.stop(); return; }
+    if (awaitingPackApproval) {
+      // Second click = the member's explicit approval of the language-pack download. Nothing downloads before this.
+      awaitingPackApproval = false;
+      micBtn.disabled = true;
+      const ok = await VA.installPack(SR, lang);
+      micBtn.disabled = false;
+      micBtn.textContent = "Speak my answer";
+      status.textContent = ok
+        ? "Speech pack installed. Press Speak my answer to start."
+        : "The speech pack could not be installed. You can type your answer instead.";
+      return;
+    }
+    const state = await VA.checkOnDevice(SR, lang);
+    if (state === "available") {
+      controller.start();
+      return;
+    }
+    if (state === "downloadable") {
+      awaitingPackApproval = true;
+      status.textContent = "Speech on this device needs a language pack. Press Download speech pack to approve it.";
+      micBtn.textContent = "Download speech pack";
+      return;
+    }
+    status.textContent = "Speech on this device is not available here. You can type your answer instead.";
+    micBtn.disabled = true;
   });
 }
 
@@ -420,6 +497,13 @@ async function submitResumeAnswers(forceFinish) {
     resumeLoadingState.hidden = true;
 
     if (data.stage === "confirm") {
+      // Analysis has produced the structured suggestions. The raw answers are no longer needed on this page:
+      // clear them now, while the member reviews the suggestions, so nothing is held in memory or in the answer boxes.
+      // Suggestions and the review screen are kept. A failed call (catch below) keeps the answers so the member can retry.
+      resumeState.history = [];
+      currentResumeQuestions = [];
+      const answerBoxes = document.getElementById("resume-questions-list");
+      if (answerBoxes) answerBoxes.replaceChildren();
       resumeState.discoveredFacts = data.discovered_facts || [];
       renderResumeReview();
       resumeReviewState.hidden = false;
@@ -748,6 +832,10 @@ document.getElementById("resume-save-btn").addEventListener("click", async () =>
     resumeState.discoveredFacts = [];
     resumeState.history = [];
     resumeState.roundNumber = 1;
+    // Clear the answer boxes and the pending questions: the typed or spoken answers are no longer needed once saved.
+    currentResumeQuestions = [];
+    const questionsList = document.getElementById("resume-questions-list");
+    if (questionsList) questionsList.replaceChildren();
     currentDraft = null;
 
     const parts = [];
