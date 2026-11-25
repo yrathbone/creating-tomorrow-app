@@ -151,6 +151,17 @@ body.home-v7 .h5-footer .h5-wrap { max-width: 920px; padding-left: 3rem; padding
   .h7-guides, .h7-tools { grid-template-columns: 1fr; }
   .h7-closing .h7-btn { display: flex; width: 100%; }
 }
+/* Phone (620px and under): the stacked tool and guide cards get the same gold separators and blue closing line as Career Tools and Learn. */
+@media (max-width: 620px) {
+  .h7-tools { row-gap: 2rem; }
+  .h7-guides { row-gap: 1.75rem; }
+  .h7-tool, .h7-guide { position: relative; }
+  .h7-tools > .h7-tool + .h7-tool::after,
+  .h7-guides > .h7-guide + .h7-guide::after { content: ""; position: absolute; left: 0; right: 0; height: 1.5px; background: var(--amber); }
+  .h7-tools > .h7-tool + .h7-tool::after { top: calc(-1rem - 0.75px); }
+  .h7-guides > .h7-guide + .h7-guide::after { top: calc(-0.875rem - 0.75px); }
+  .h7-tools::after, .h7-guides::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--royal); }
+}
 
 /* Public type scale: Home. Matches Learn, Videos and the Career Basics articles. */
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-lead { font-size: 20px; }
