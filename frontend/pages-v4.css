@@ -89,7 +89,8 @@ body.pages-v4 .pv-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap:
   body.pages-v4 .pv-guides > .hv-guide, body.pages-v4 .pv-tools > * { position: relative; }
   body.pages-v4 .pv-guides > .hv-guide + .hv-guide::before,
   body.pages-v4 .pv-tools > * + *::before { content: ""; position: absolute; left: 0; right: 0; top: calc(-0.625rem - 0.75px); height: 1.5px; background: var(--gold); }
-  body.pages-v4 .pv-guides::after, body.pages-v4 #step-mode .pv-tools::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--c6-blue); }
+  body.pages-v4 .pv-guides::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--c6-blue); }
+  body.pages-v4 #step-mode .pv-tools::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--gold); }
 }
 /* Career Tools, as on Learn: two columns, with the fifth tool centred under them (the same grid and gaps as Learn). */
 @media (min-width: 701px) {
@@ -365,7 +366,11 @@ body.pages-v4.chrome-v6:not(.dashboard-v4) .improve-choices { display: grid; gri
   body.pages-v4 .pv-guides::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--c6-blue); }
 }
 @media (min-width: 701px) {
-  body.pages-v4 #step-mode .pv-tools::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--c6-blue); }
+  body.pages-v4 #step-mode .pv-tools::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--gold); }
+}
+/* Career Tools page: every line gold, and a gold line between the header and the tools (phone). */
+@media (max-width: 700px) {
+  body.pages-v4 .tools-header::after { content: ""; display: block; height: 1.5px; margin-top: 1.25rem; background: var(--gold); }
 }
 
 /* Videos on the Learn grid: the same picture box as the guides, with a play mark until the video is ready */
