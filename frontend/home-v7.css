@@ -80,7 +80,8 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 .h7-statement figcaption { margin-top: 0.5rem; text-align: center; font-size: 0.875rem; color: var(--ink); }
 /* The Alan Kay quote: on phones only, a gold line under it, before Career Basics. Desktop has no line. */
 @media (max-width: 620px) {
-  .h7-statement-kay { padding-bottom: 3.25rem; }
+  /* Phone: its own break after Privacy, with the same space above as the Einstein quote gets from the band above it. */
+  .h7-statement-kay { padding-top: 3rem; padding-bottom: 3.25rem; }
   .h7-statement-kay::after { content: ""; display: block; height: 1.5px; margin-bottom: 2.5rem; background: var(--amber); }
 }
 
