@@ -178,10 +178,11 @@ test("four guide cards (ATS, Resume, LinkedIn, Interview) open the real articles
     ["Interview Basics", "Prepare Great Stories."],
   ]);
   const learn = read("learn.html");
-  // The Learn cards keep the full article titles, so check those (not the shorter Home phrases).
-  for (const title of ["How Applicant Tracking Systems Work", "Your Resume Is Your Calling Card", "Your LinkedIn Profile Is Your Professional Story", "Prepare Stories, Not Perfect Answers"]) {
+  // The Learn cards use the same wording as Home (one short line, no extra description).
+  for (const title of ["How Applicant Tracking Systems Work.", "Your Resume Calling Card.", "Your LinkedIn Professional Story.", "Prepare Great Stories."]) {
     assert.ok(learn.includes(`<b>${title}</b>`), `Learn is missing ${title}`);
   }
+  assert.ok(!learn.includes("hv-vdesc"), "Learn cards have no extra description line");
   assert.strictEqual((html.match(/<span class="h7-link">Read <span aria-hidden="true">→<\/span><\/span>/g) || []).length, 4);
   assert.match(html, /aria-label="ATS Basics: How Applicant Tracking Systems Work\. Read the guide\."/); // the full title stays for screen readers
   assert.match(css7, /\.h7-link \{[^}]*text-decoration: none/, "no underline on the links");

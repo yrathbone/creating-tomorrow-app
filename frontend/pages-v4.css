@@ -82,6 +82,8 @@ body.pages-v4 .pv-guides { grid-template-columns: repeat(2, minmax(0, 1fr)); gap
 body.pages-v4 .pv-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; display: grid; flex-direction: initial; }
 @media (max-width: 900px) { body.pages-v4 .pv-panel > .pv-band { padding: 2.5rem 1.25rem; } }
 @media (max-width: 700px) { body.pages-v4 .pv-guides, body.pages-v4 .pv-tools { grid-template-columns: 1fr; } }
+/* Phone: a gold line between the Learn header and the first lesson picture. */
+@media (max-width: 700px) { body.pages-v4 .pv-head-learn::after { content: ""; display: block; height: 1.5px; margin-top: 1.25rem; background: var(--gold); } }
 /* Phone (700px and under): the stacked cards get the same gold separators and blue closing line as the desktop grid. */
 @media (max-width: 700px) {
   body.pages-v4 .pv-guides > .hv-guide, body.pages-v4 .pv-tools > * { position: relative; }
