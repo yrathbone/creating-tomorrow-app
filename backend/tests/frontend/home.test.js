@@ -203,7 +203,7 @@ test("five tool cards, each a single Start link: Improve Your Resume opens one e
 
 test("the section headings, ids and closing line", () => {
   assert.match(html, /<h2 id="basics-h" class="h7-h2">Start With The Basics\.<\/h2>\s*<p class="h7-sub">Learn how careers, resumes, and interviews work\.<\/p>/);
-  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career Basics\.<\/h2>\s*<p class="h7-sub">Build your tomorrow\.<\/p>/);
+  assert.match(html, /<h2 id="tools-h" class="h7-h2">Career Tools\.<\/h2>\s*<p class="h7-sub">Build your tomorrow\.<\/p>/);
   for (const id of ["basics", "tools"]) assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
   assert.ok(html.indexOf('id="tools"') < html.indexOf('Imagination is more important') && html.indexOf('Imagination is more important') < html.indexOf('id="basics"'), "the Einstein quote sits between the tools and the basics");
   assert.ok(html.indexOf('id="basics"') < html.indexOf('id="close-h"'), "the closing section follows the basics");
