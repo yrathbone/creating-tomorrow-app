@@ -8,7 +8,7 @@ python-docx==1.2.0
 pypdf==6.21.4
 ftfy==6.3.1
 anthropic==1.12.1
-pydantic==2.14.0
+pydantic==2.14.2
 
 # Career Profile (docs/CAREER_PROFILE_ARCHITECTURE_AUDIT.md)
 sqlalchemy==2.1.3
