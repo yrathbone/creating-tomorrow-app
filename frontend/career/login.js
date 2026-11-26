@@ -570,7 +570,11 @@ function openSnapshotPanel(key, toggle) {
   activeSnapshotPanel = toggle && activeSnapshotPanel === key ? null : key;
   document.querySelectorAll(".snapshot-panel").forEach((p) => { p.hidden = p.id !== "panel-" + activeSnapshotPanel; });
   document.querySelectorAll(".stat-row [data-panel]").forEach((b) => b.classList.toggle("active", b.dataset.panel === activeSnapshotPanel));
-  if (activeSnapshotPanel) document.getElementById("panel-" + activeSnapshotPanel).scrollIntoView({ behavior: "smooth", block: "nearest" });
+  if (activeSnapshotPanel) {
+    // On a phone the opened list starts at the top of the screen, so the tapped tile's list is easy to find.
+    const onPhone = window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+    document.getElementById("panel-" + activeSnapshotPanel).scrollIntoView({ behavior: "smooth", block: onPhone ? "start" : "nearest" });
+  }
 }
 
 // Both tile rows (Your Career Profile and Your Activity) open their panels the same way.
