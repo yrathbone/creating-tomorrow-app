@@ -172,6 +172,14 @@ body.home-v7 .h5-footer .h5-wrap { max-width: 920px; padding-left: 3rem; padding
   body.home-v7.chrome-v6:not(.dashboard-v4) main #basics::before { content: ""; display: block; height: 1.5px; margin: 0 0 2rem; background: var(--amber); }
 }
 
+/* Tablet (621px to 1000px, such as an iPad): the same section gold lines as the phone, above the hero photo, above Start With The Basics, under each card grid, and under the Alan Kay quote. Cards sit two to a row here, so the card-to-card lines are not used. */
+@media (min-width: 621px) and (max-width: 1000px) {
+  .h7-statement-kay::after { content: ""; display: block; height: 1.5px; margin-top: 2.5rem; margin-bottom: 2.5rem; background: var(--amber); }
+  .h7-hero-copy::after { content: ""; display: block; height: 1.5px; margin-top: 2rem; background: var(--amber); }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main #basics::before { content: ""; display: block; height: 1.5px; margin: 0 0 2rem; background: var(--amber); }
+  .h7-tools::after, .h7-guides::after { content: ""; grid-column: 1 / -1; height: 1.5px; margin-top: 1.5rem; background: var(--amber); }
+}
+
 /* Public type scale: Home. Matches Learn, Videos and the Career Basics articles. */
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-lead { font-size: 20px; }
 body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-sub { font-size: 16px; }
