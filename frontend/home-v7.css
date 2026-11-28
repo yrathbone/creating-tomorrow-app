@@ -82,7 +82,7 @@ body.home-v7 main { max-width: none; margin: 0; padding: 0; }
 @media (max-width: 620px) {
   /* Phone: its own break after Privacy, with the same space above as the Einstein quote gets from the band above it. */
   .h7-statement-kay { padding-top: 3rem; padding-bottom: 3.25rem; }
-  .h7-statement-kay::after { content: ""; display: block; height: 1.5px; margin-bottom: 2.5rem; background: var(--amber); }
+  .h7-statement-kay::after { content: ""; display: block; height: 1.5px; margin-top: 2.5rem; margin-bottom: 2.5rem; background: var(--amber); }
 }
 
 /* ---------- hover and keyboard focus: a soft shadow; the small lift only when the visitor has not asked for less motion ---------- */
