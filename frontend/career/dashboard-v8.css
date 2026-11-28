@@ -213,3 +213,12 @@ body.chrome-v6.dashboard-v4 .dashboard-grid > .card .dashboard-card-header h2 { 
 @media (max-width: 620px) {
   body.chrome-v6.dashboard-v4 .dashboard-hero h1 { font-size: 30px; }
 }
+
+/* ---------- gold: the dashboard's gold accents use the site's gold (the same amber as the public pages) on phones, iPads and laptops ---------- */
+body.chrome-v6.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-certifications,
+body.chrome-v6.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-languages,
+body.chrome-v6.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-resumes,
+body.chrome-v6.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-linkedin { --edge: var(--c6-gold); }
+body.chrome-v6.dashboard-v4 .mc-progress-bar span.done { background: linear-gradient(90deg, var(--c6-gold), var(--c6-gold-hover)); }
+body.chrome-v6.dashboard-v4 .mc-progress.complete .mc-progress-bar span.done { background: linear-gradient(90deg, var(--c6-gold), var(--c6-gold-hover)); }
+body.chrome-v6.dashboard-v4 .skill-tone-1 { --tone: var(--c6-gold-hover); }
