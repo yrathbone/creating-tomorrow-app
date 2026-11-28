@@ -227,3 +227,6 @@ body.chrome-v6.dashboard-v4 .skill-tone-1 { --tone: var(--c6-gold-hover); }
 body.chrome-v6.dashboard-v4 .dashboard-grid > .card { border-top: 1.5px solid var(--c6-gold); }
 body.chrome-v6.dashboard-v4 .dashboard-grid > .card#general-resume-card { border-top-color: var(--c6-gold); }
 body.chrome-v6.dashboard-v4 .next-step { border-top: 1.5px solid var(--c6-gold); border-bottom: 1.5px solid var(--c6-gold); }
+
+/* ---------- the privacy link sits under the hero on the right, with the same space the home page gives its Privacy line ---------- */
+body.chrome-v6.dashboard-v4 .dash-panel > .privacy-mark { display: block; text-align: right; margin: 0.5rem 0 1.25rem; padding: 0 0.5rem; font-size: 1rem; }
