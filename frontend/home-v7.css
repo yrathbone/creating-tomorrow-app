@@ -150,10 +150,10 @@ body.home-v7 .h5-footer .h5-wrap { max-width: 920px; padding-left: 3rem; padding
 
 /* ---------- phone ---------- */
 @media (max-width: 620px) {
-  .h7-wrap { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .h7-wrap { padding-left: 1rem; padding-right: 1rem; }
   .h7-hero-photo { margin-right: 1rem; }
   .h7-cta { grid-template-columns: 1fr 1fr; }
-  body.home-v7 .h5-footer .h5-wrap { padding-left: 1.1rem; padding-right: 1.1rem; }
+  body.home-v7 .h5-footer .h5-wrap { padding-left: 1rem; padding-right: 1rem; }
   .h7-guides, .h7-tools { grid-template-columns: 1fr; }
   .h7-closing .h7-btn { display: flex; width: 100%; }
 }
@@ -207,5 +207,5 @@ body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy a { color: var(--roya
 }
 /* Phone: the Privacy line keeps the same side gutter as the hero. */
 @media (max-width: 620px) {
-  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy { padding: 0 1.1rem; }
+  body.home-v7.chrome-v6:not(.dashboard-v4) main .h7-privacy { padding: 0 1rem; }
 }
