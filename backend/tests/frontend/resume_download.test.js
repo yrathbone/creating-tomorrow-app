@@ -59,7 +59,7 @@ test("very long names and roles are cut to a sensible length and never end in a 
 
 // ---- the general resume button -------------------------------------------------------------------------------------------
 function generalWorld({ server } = {}) {
-  const ids = ["general-resume-empty", "general-resume-form", "general-resume-loading", "general-resume-done", "general-resume-card", "general-resume-hero-btn",
+  const ids = ["general-resume-empty", "general-resume-form", "general-resume-loading", "general-resume-done", "general-resume-card",
     "general-resume-hero-btn-2", "general-resume-start-btn", "general-resume-cancel-btn", "general-resume-build-btn", "general-resume-name", "general-resume-contact",
     "general-resume-error", "general-resume-download-btn", "general-resume-template", "general-resume-again-btn", "general-build-layout", "general-download-msg"];
   const els = Object.fromEntries(ids.map((id) => [id, element()]));

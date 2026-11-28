@@ -577,8 +577,23 @@ function openSnapshotPanel(key, toggle) {
   }
 }
 
+// Your tools: each link presses the existing control for that tool, so the tool runs its own flow.
+document.getElementById("tools-card").addEventListener("click", (e) => {
+  // A link whose control is not on screen (no saved comparison yet) is hidden.
+  document.querySelectorAll("#tools-card [data-tool-target]").forEach((l) => {
+    const t = document.getElementById(l.dataset.toolTarget);
+    l.closest(".tool-links").hidden = !t || t.hidden;
+  });
+  const openBtn = e.target.closest("[data-open-panel]");
+  if (openBtn) { openSnapshotPanel(openBtn.dataset.openPanel, false); return; }
+  const link = e.target.closest("[data-tool-target]");
+  if (!link) return;
+  const target = document.getElementById(link.dataset.toolTarget);
+  if (target && !target.hidden) target.click();
+});
+
 // Both tile rows (Your Career Profile and Your Activity) open their panels the same way.
-for (const rowId of ["career-stat-row", "activity-stat-row"]) {
+for (const rowId of ["career-stat-row", "activity-stat-row", "tools-stat-row"]) {
   document.getElementById(rowId).addEventListener("click", (e) => {
     const tile = e.target.closest("[data-panel]");
     if (tile) openSnapshotPanel(tile.dataset.panel, true);
