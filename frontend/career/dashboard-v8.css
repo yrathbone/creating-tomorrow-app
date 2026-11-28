@@ -230,3 +230,8 @@ body.chrome-v6.dashboard-v4 .next-step { border-top: 1.5px solid var(--c6-gold);
 
 /* ---------- the privacy link sits under the hero on the right, with the same space the home page gives its Privacy line ---------- */
 body.chrome-v6.dashboard-v4 .dash-panel > .privacy-mark { display: block; text-align: right; margin: 0.5rem 0 1.25rem; padding: 0 0.5rem; font-size: 1rem; }
+
+/* ---------- phones: the order matches desktop, so the Career Profile strip sits above "Your next step" and both sit below the hero ---------- */
+@media (max-width: 640px) {
+  body.chrome-v6.dashboard-v4 .dash-panel > .next-step { order: 0; }
+}
