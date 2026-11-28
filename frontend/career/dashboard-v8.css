@@ -235,3 +235,13 @@ body.chrome-v6.dashboard-v4 .dash-panel > .privacy-mark { display: block; text-a
 @media (max-width: 640px) {
   body.chrome-v6.dashboard-v4 .dash-panel > .next-step { order: 0; }
 }
+
+/* ---------- Discover Your Fit and Showcase your experience: their headings and empty-state buttons are centred, and the grey lines beside them are gold (the line above the Career Profile strip, and the divider between the two cards on laptops) ---------- */
+body.chrome-v6.dashboard-v4 .dashboard-grid > .job-card .dashboard-card-header,
+body.chrome-v6.dashboard-v4 .dashboard-grid > .resume-card .dashboard-card-header { justify-content: center; }
+body.chrome-v6.dashboard-v4 #job-target-empty,
+body.chrome-v6.dashboard-v4 #general-resume-empty { text-align: center; }
+body.chrome-v6.dashboard-v4 .dash-panel > .cp-status { border-top: 1.5px solid var(--c6-gold); }
+@media (min-width: 1000px) {
+  body.chrome-v6.dashboard-v4 .dash-panel > .dashboard-grid > .job-card { border-right: 1.5px solid var(--c6-gold); }
+}
