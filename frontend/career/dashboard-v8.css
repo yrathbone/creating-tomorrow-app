@@ -204,3 +204,12 @@ body.chrome-v6.dashboard-v4 .dashboard-hero-actions button,
 body.chrome-v6.dashboard-v4 .dashboard-grid > .card .btn-secondary,
 body.chrome-v6.dashboard-v4 .btn-danger,
 body.chrome-v6.dashboard-v4 .btn-danger-outline { border-radius: 10px; }
+
+/* ---------- type: the dashboard matches the public site: 36px page title (30px on phones), 24px section heading, 20px card title, 16px body text in near-black ---------- */
+body.chrome-v6.dashboard-v4 .dashboard-hero h1 { font-size: 36px; }
+body.chrome-v6.dashboard-v4 .dashboard-hero > p { font-size: 16px; font-weight: 400; color: var(--v4-ink); }
+body.chrome-v6.dashboard-v4 .next-step-copy h2 { font-size: 24px; }
+body.chrome-v6.dashboard-v4 .dashboard-grid > .card .dashboard-card-header h2 { font-size: 20px; }
+@media (max-width: 620px) {
+  body.chrome-v6.dashboard-v4 .dashboard-hero h1 { font-size: 30px; }
+}
