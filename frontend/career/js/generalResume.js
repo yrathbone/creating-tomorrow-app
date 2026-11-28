@@ -44,7 +44,6 @@ function startGeneralResumeFlow(event) {
   if (button && typeof button.matches === "function" && button.matches(":focus-visible")) focusGeneralResume(document.getElementById("general-resume-name"));
 }
 
-document.getElementById("general-resume-hero-btn").addEventListener("click", startGeneralResumeFlow);
 document.getElementById("general-resume-hero-btn-2").addEventListener("click", startGeneralResumeFlow);
 document.getElementById("general-resume-start-btn").addEventListener("click", startGeneralResumeFlow);
 

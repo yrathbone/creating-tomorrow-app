@@ -34,7 +34,7 @@ function pickNextStep(f) {
   if (!f.roles) {
     return { key: "add-role", title: "Add your most recent role",
       text: "Upload your resume, or add a role by hand.",
-      button: "Upload my resume", targets: ["#upload-resume-btn"] };
+      button: "Manage career profile", targets: ["#upload-resume-btn"] };
   }
   if (!f.skills) {
     return { key: "add-skills", title: "Add your skills",
@@ -58,7 +58,7 @@ function pickNextStep(f) {
   if (!resumes.length) {
     return { key: "first-resume", title: "Build your first resume",
       text: "Your profile is ready. Turn it into a polished resume.",
-      button: "Build a general resume", targets: ["#general-resume-hero-btn"] };
+      button: "Build a general resume", targets: ["#general-resume-start-btn"] };
   }
   if (!scans.length) {
     return { key: "compare-job", title: "Compare a job you’re interested in",

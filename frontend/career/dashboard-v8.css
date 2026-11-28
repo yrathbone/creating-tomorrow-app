@@ -237,8 +237,8 @@ body.chrome-v6.dashboard-v4 .dash-panel > .privacy-mark { display: block; text-a
 }
 
 /* ---------- Discover Your Fit and Showcase your experience: their headings and empty-state buttons are centred, and the grey lines beside them are gold (the line above the Career Profile strip, and the divider between the two cards on laptops) ---------- */
-body.chrome-v6.dashboard-v4 .dashboard-grid > .resume-card .dashboard-card-header { justify-content: center; }
-body.chrome-v6.dashboard-v4 #general-resume-empty { text-align: center; }
+body.chrome-v6.dashboard-v4 .dashboard-grid > .resume-card .dashboard-card-header { justify-content: flex-start; }
+body.chrome-v6.dashboard-v4 #general-resume-empty { text-align: left; }
 body.chrome-v6.dashboard-v4 .dash-panel > .cp-status { border-top: 1.5px solid var(--c6-gold); }
 @media (min-width: 1000px) {
   body.chrome-v6.dashboard-v4 .dash-panel > .dashboard-grid > .job-card { border-right: 1.5px solid var(--c6-gold); }
@@ -248,4 +248,17 @@ body.chrome-v6.dashboard-v4 .dash-panel > .cp-status { border-top: 1.5px solid v
 @media (min-width: 1000px) {
   body.chrome-v6.dashboard-v4 .dash-panel > .dashboard-grid > .job-card { grid-column: span 6; }
   body.chrome-v6.dashboard-v4 .dash-panel > .dashboard-grid > .resume-card { grid-column: span 6; }
+}
+
+/* Your tools card, under My Career: the tile row matches My Career and See your progress, and each tile opens its own links. */
+body.chrome-v6.dashboard-v4 .dashboard-grid > .tools-card { grid-column: 1 / -1; }
+body.chrome-v6.dashboard-v4 .dashboard-grid > .tools-card .stat-row.tools-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body.chrome-v6.dashboard-v4 .tools-card #tools-panels > .snapshot-panel { margin-top: 0.8rem; padding: 1.05rem 1.2rem; background: transparent; border: 1px solid var(--v4-line); border-radius: 12px; box-shadow: none; }
+body.chrome-v6.dashboard-v4 .tools-card .tool-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; padding: 0.75rem 0; border-top: 1px solid var(--v4-line-soft); }
+body.chrome-v6.dashboard-v4 .tools-card .tool-text { min-width: 0; flex: 1 1 220px; }
+body.chrome-v6.dashboard-v4 .tools-card .tool-text p { margin: 0; }
+body.chrome-v6.dashboard-v4 .tools-card .tool-name { font-weight: 500; color: var(--v4-ink); }
+body.chrome-v6.dashboard-v4 .tools-card .tool-text .hint { margin-top: 0.15rem; }
+@media (max-width: 620px) {
+  body.chrome-v6.dashboard-v4 .tools-card .tool-links > button { width: 100%; }
 }

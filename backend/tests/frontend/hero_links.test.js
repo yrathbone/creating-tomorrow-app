@@ -15,10 +15,10 @@ test("there is no separate Import from LinkedIn control, and no dangling handler
   assert.ok(!/>Import from LinkedIn</.test(html));
 });
 
-test("the hero is just Upload my resume and Build a general resume", () => {
+test("the hero is just one button: Manage career profile", () => {
   const hero = html.slice(html.indexOf('class="dashboard-hero"'), html.indexOf('class="dh-mascot"'));
-  for (const id of ["upload-resume-btn", "general-resume-hero-btn"]) assert.ok(hero.includes('id="' + id + '"'), id);
-  assert.strictEqual((hero.match(/<button/g) || []).length, 2, "two controls in the hero");
+  for (const id of ["upload-resume-btn"]) assert.ok(hero.includes('id="' + id + '"'), id);
+  assert.strictEqual((hero.match(/<button/g) || []).length, 1, "one control in the hero");
   assert.ok(!hero.includes("update-profile-btn") && !loginJs.includes("update-profile-btn"), "the Update my Career Profile link and its handler are gone");
   assert.ok(!hero.includes("&middot;"), "no separator left over for a missing link");
 });
@@ -38,8 +38,8 @@ test("the LinkedIn tip is always visible inside the upload form and says how to 
   assert.ok(html.indexOf('id="resume-file"') < html.indexOf('id="resume-linkedin-tip"') + 2000, "the tip sits in the upload form");
 });
 
-test("other pages that pointed at Import from LinkedIn now point at Upload my resume", () => {
+test("other pages that pointed at Import from LinkedIn now point at Manage career profile", () => {
   const spotlight = read("spotlight.html");
   assert.ok(!spotlight.includes("Import from LinkedIn"));
-  assert.match(spotlight, /<strong>Upload my resume<\/strong><\/a> on your dashboard and upload your LinkedIn PDF/);
+  assert.match(spotlight, /<strong>Manage career profile<\/strong><\/a> on your dashboard and upload your LinkedIn PDF/);
 });

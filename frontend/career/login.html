@@ -152,8 +152,7 @@
         <h1><span class="hero-h1-line1">Your Career,</span> <span class="hero-h1-line2">in One Place.</span></h1>
         <p>See Your Value. Build Your Tomorrow.</p>
         <div class="dashboard-hero-actions">
-          <button type="button" id="upload-resume-btn" class="btn-primary">Upload my resume</button>
-          <button type="button" id="general-resume-hero-btn" class="btn-secondary">Build a general resume</button>
+          <button type="button" id="upload-resume-btn" class="btn-primary">Manage career profile</button>
         </div>
         <img class="dh-mascot" src="../mascot-welcome.png" alt="" width="245" height="291" />
       </div>
@@ -206,21 +205,246 @@
           </div>
         </form>
       </section>
-      <section class="next-step" id="next-step" aria-labelledby="next-step-title" hidden>
-        <p class="next-step-eyebrow">Your next step</p>
-        <div class="next-step-body">
-          <div class="next-step-copy">
-            <h2 id="next-step-title"></h2>
-            <p id="next-step-text"></p>
-          </div>
-          <div class="next-step-actions">
-            <button type="button" id="next-step-btn" class="next-step-btn"></button>
-            <button type="button" id="next-step-secondary-btn" class="next-step-btn next-step-btn-secondary" hidden></button>
-          </div>
-        </div>
-      </section>
 
       <div class="dashboard-grid">
+        <div class="card span-2 snapshot-card profile-card">
+          <div class="dashboard-card-header">
+            <h2>My Career</h2>
+          </div>
+
+          <div class="stat-row" id="career-stat-row"></div>
+
+          <div id="snapshot-panels">
+            <section class="snapshot-panel" id="panel-roles" hidden>
+        <h3>Experience</h3>
+        <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
+          <button type="button" id="sort-newest-btn" class="btn-secondary">Newest first</button>
+          <button type="button" id="sort-oldest-btn" class="btn-secondary">Oldest first</button>
+        </div>
+        <div id="experience-detail-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-education" hidden>
+        <h3>Education</h3>
+        <div id="education-detail-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-certifications" hidden>
+        <h3>Certifications</h3>
+        <div id="certification-detail-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-skills" hidden>
+        <h3>Skills</h3>
+        <p class="hint">A skill’s name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
+        <h4 class="recent-heading">Recently confirmed</h4>
+        <ul id="recently-confirmed-list" class="recent-skills"></ul>
+        <form id="skill-quick-add-form">
+          <label class="field">
+            <span>Quick add a skill</span>
+            <input type="text" id="skill-quick-add-input" placeholder="e.g. Technical expertise" maxlength="60" autocomplete="off" />
+          </label>
+          <button type="submit" class="btn-secondary">Add to my skills</button>
+          <p class="hint" id="skill-quick-add-msg" hidden></p>
+        </form>
+        <button type="button" id="skill-tidy-btn" class="btn-secondary">Shorten long skill names</button>
+        <div id="skill-tidy-panel" hidden>
+          <p class="hint" id="skill-tidy-intro"></p>
+          <div id="skill-tidy-list"></div>
+          <div id="skill-tidy-error" class="error" role="alert" hidden></div>
+          <button type="button" id="skill-tidy-apply-btn">Save the ones I’ve ticked</button>
+          <button type="button" id="skill-tidy-cancel-btn" class="btn-secondary">Close</button>
+        </div>
+        <div id="skill-view-toggle" class="app-view-toggle" role="group" aria-label="How to show your skills" hidden>
+          <button type="button" id="skill-view-groups" class="btn-secondary" aria-pressed="true">Groups</button>
+          <button type="button" id="skill-view-list" class="btn-secondary" aria-pressed="false">List</button>
+        </div>
+        <div id="skill-detail-list"></div>
+<h3>Scan for missing skills</h3>
+        <div id="skill-scan-start">
+          <button type="button" id="skill-scan-btn" class="btn-secondary btn-green">Scan for missing skills</button>
+          <p class="hint">Reviews your whole profile against what’s typical for your kinds of roles, and asks about anything that looks like a real blind spot.</p>
+        </div>
+
+        <div id="skill-scan-loading" class="processing-card" hidden aria-live="polite">
+          <div class="processing-visual" aria-hidden="true">
+            <span class="processing-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="3" width="14" height="18" rx="2" stroke="#0847C7" stroke-width="1.6"/>
+                <path d="M8 8h8M8 12h8M8 16h5" stroke="#0847C7" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="processing-dots">
+              <span class="processing-dot"></span>
+              <span class="processing-dot"></span>
+              <span class="processing-dot"></span>
+            </span>
+            <span class="processing-icon processing-icon-done">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="3" width="14" height="18" rx="2" stroke="#0847C7" stroke-width="1.6"/>
+                <path d="M8 8h8M8 12h5" stroke="#0847C7" stroke-width="1.4" stroke-linecap="round"/>
+                <circle cx="17" cy="17" r="5" fill="#E2A126"/>
+                <path d="M14.8 17l1.4 1.4 2.6-2.8" stroke="#101318" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+          <p class="processing-status"></p>
+          <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
+        </div>
+
+        <div id="skill-scan-questions" hidden>
+          <p id="skill-scan-summary"></p>
+          <div id="skill-scan-questions-list"></div>
+          <div id="skill-scan-questions-error" class="error" role="alert" hidden></div>
+          <button type="button" id="skill-scan-questions-submit-btn">Continue</button>
+          <button type="button" id="skill-scan-questions-finish-btn" class="btn-secondary">I’m done answering questions</button>
+        </div>
+
+        <div id="skill-scan-complete" hidden>
+          <p class="success">Your Career Profile already looks well-rounded for the kinds of roles it shows — nothing new stood out this time.</p>
+          <p id="skill-scan-complete-summary" class="hint"></p>
+          <p class="hint">Add more experience or run the scan again later and it’ll pick up from there.</p>
+          <button type="button" id="skill-scan-complete-ok-btn" class="btn-secondary">OK</button>
+        </div>
+
+        <div id="skill-scan-review" hidden>
+          <h3>Add these to your profile?</h3>
+          <p class="hint">Choose which role each one belongs to, or remove it.</p>
+          <div id="skill-scan-facts-list"></div>
+          <button type="button" id="skill-scan-save-btn">Save to my Career Profile</button>
+          <button type="button" id="skill-scan-cancel-btn" class="btn-secondary">Cancel</button>
+          <div id="skill-scan-save-error" class="error" role="alert" hidden></div>
+        </div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-languages" hidden>
+              <h3>Languages</h3>
+              <p class="hint">Languages you speak, read, or write, and how well. Add only what is true for you.</p>
+              <form id="language-form">
+                <div class="field-row">
+                  <label class="field"><span>Language</span><input type="text" id="language-name" maxlength="60" placeholder="e.g. Spanish" autocomplete="off" required /></label>
+                  <label class="field"><span>Proficiency (optional)</span><input type="text" id="language-proficiency" maxlength="80" list="language-proficiency-options" placeholder="e.g. Professional working proficiency" autocomplete="off" /></label>
+                </div>
+                <datalist id="language-proficiency-options">
+                  <option value="Native or bilingual"></option>
+                  <option value="Full professional proficiency"></option>
+                  <option value="Professional working proficiency"></option>
+                  <option value="Limited working proficiency"></option>
+                  <option value="Elementary proficiency"></option>
+                </datalist>
+                <button type="submit" id="language-submit-btn">Add language</button>
+                <div id="language-error" class="error" role="alert" hidden></div>
+              </form>
+              <div id="language-detail-list"></div>
+            </section>
+          </div>
+
+        <div class="export-row export-menu-wrap">
+          <button type="button" id="export-menu-btn" class="btn-secondary" aria-expanded="false" aria-controls="export-menu">Download my information</button>
+          <div id="export-menu" class="export-menu" role="group" aria-label="Choose a download" hidden>
+            <button type="button" id="export-readable-btn" class="btn-secondary">Download a readable copy (Word)</button>
+            <button type="button" id="export-profile-btn" class="btn-secondary">Download data backup (.json)</button>
+          </div>
+        </div>
+        <p class="hint export-hint">Readable Copy: Read, print, or share.</p>
+        <div id="export-profile-error" class="error" role="alert" hidden></div>
+        </div>
+        <div class="card span-2 snapshot-card tools-card" id="tools-card">
+          <div class="dashboard-card-header"><h2>Your tools</h2></div>
+          <section class="next-step" id="next-step" aria-labelledby="next-step-title" hidden>
+            <p class="next-step-eyebrow">Your next step</p>
+            <div class="next-step-body">
+              <div class="next-step-copy">
+                <h2 id="next-step-title"></h2>
+                <p id="next-step-text"></p>
+              </div>
+              <div class="next-step-actions">
+                <button type="button" id="next-step-btn" class="next-step-btn"></button>
+                <button type="button" id="next-step-secondary-btn" class="next-step-btn next-step-btn-secondary" hidden></button>
+              </div>
+            </div>
+          </section>
+          <div class="stat-row tools-row" id="tools-stat-row">
+            <button type="button" class="stat-card stat-roles tool-tile" data-panel="tools-profile"><span class="stat-number">Profile</span><span class="stat-label">Upload or update</span></button>
+            <button type="button" class="stat-card stat-resumes tool-tile" data-panel="tools-resumes"><span class="stat-number">Resumes</span><span class="stat-label">Showcase and build</span></button>
+            <button type="button" class="stat-card stat-history tool-tile" data-panel="tools-jobs"><span class="stat-number">Jobs</span><span class="stat-label">Discover your fit</span></button>
+          </div>
+          <div id="tools-panels">
+            <section class="snapshot-panel" id="panel-tools-profile" hidden>
+              <h3>Your profile</h3>
+              <div class="tool-links">
+                <div class="tool-text"><p class="tool-name">Manage career profile</p><p class="hint">Upload a resume to update what we have on you.</p></div>
+                <button type="button" class="btn-primary" data-tool-target="upload-resume-btn">Manage career profile</button>
+              </div>
+              <div class="tool-links">
+                <div class="tool-text"><p class="tool-name">Edit profile</p><p class="hint">Name, contact line and resume layout.</p></div>
+                <button type="button" class="btn-secondary" data-tool-target="edit-profile-btn">Edit profile</button>
+              </div>
+            </section>
+            <section class="snapshot-panel" id="panel-tools-resumes" hidden>
+              <h3>Resumes</h3>
+              <div class="tool-links">
+                <div class="tool-text"><p class="tool-name">Showcase your experience</p><p class="hint">Build a general resume from your saved profile.</p></div>
+                <button type="button" class="btn-gold" data-tool-target="general-resume-start-btn">Build a general resume</button>
+              </div>
+              <div class="tool-links">
+                <div class="tool-text"><p class="tool-name">Your resumes</p><p class="hint">Resumes you have built, ready to download.</p></div>
+                <button type="button" class="btn-secondary" data-open-panel="resumes">View resumes</button>
+              </div>
+            </section>
+            <section class="snapshot-panel" id="panel-tools-jobs" hidden>
+              <h3>Discover Your Fit</h3>
+              <div class="tool-links">
+                <div class="tool-text"><p class="tool-name">Discover Your Fit</p><p class="hint">Paste a job description to see how it matches you.</p></div>
+                <button type="button" class="btn-primary" data-tool-target="job-target-add-btn">+ Add a job</button>
+              </div>
+              <div class="tool-links">
+                <div class="tool-text"><p class="tool-name">Continue comparison</p><p class="hint">Pick up a job comparison you saved.</p></div>
+                <button type="button" class="btn-secondary" data-tool-target="job-resume-last-btn">Continue comparison</button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="card span-2 snapshot-card activity-card">
+          <div class="dashboard-card-header"><h2>See your progress</h2></div>
+          <div class="stat-row" id="activity-stat-row"></div>
+
+          <div id="activity-panels">
+            <section class="snapshot-panel" id="panel-history" hidden>
+        <h3 id="panel-history-heading" tabindex="-1">Job &amp; Skill Scan History</h3>
+        <div id="scan-filter" class="vis-filter" role="group" aria-label="Filter scans" hidden></div>
+        <div id="scan-history-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-resumes" hidden>
+        <h3 id="panel-resumes-heading" tabindex="-1">Resumes Built</h3>
+        <p class="hint" id="resume-layout-status" role="status" hidden></p>
+        <p class="error resume-download-msg" id="resume-download-status" role="alert" hidden></p>
+        <div id="resume-version-list"></div>
+            </section>
+
+            <section class="snapshot-panel" id="panel-applications" hidden>
+              <h3>Applications</h3>
+              <p class="hint">Jobs you’ve applied for. Come back and update each one: no response, interview, rejection or offer.</p>
+              <p id="application-summary" class="application-summary"></p>
+              <button type="button" id="application-add-toggle-btn" class="btn-secondary">+ Add an application by hand</button>
+              <form id="application-form" hidden>
+                <label class="field"><span>Job title</span><input type="text" id="application-title" required /></label>
+                <label class="field"><span>Company</span><input type="text" id="application-company" /></label>
+                <label class="field"><span>Date applied</span><input type="date" id="application-date" /></label>
+                <button type="submit">Add to my tracker</button>
+                <div id="application-form-error" class="error" role="alert" hidden></div>
+              </form>
+              <div id="application-view-toggle" class="app-view-toggle" role="group" aria-label="How to show your applications" hidden>
+                <button type="button" id="application-view-list" class="btn-secondary" aria-pressed="true">List</button>
+                <button type="button" id="application-view-board" class="btn-secondary" aria-pressed="false">Board</button>
+              </div>
+              <div id="application-list"></div>
+            </section>
+          </div>
+        </div>
+
         <div class="card span-2 job-card">
           <div class="dashboard-card-header"><h2 id="job-card-heading" tabindex="-1">Discover Your Fit</h2></div>
           <p id="job-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -520,7 +744,7 @@
           <p id="general-resume-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
 
           <div id="general-resume-empty">
-            <button type="button" id="general-resume-start-btn" class="btn-secondary">Build a general resume</button>
+            <button type="button" id="general-resume-start-btn" class="btn-gold">Build a general resume</button>
           </div>
 
           <div id="general-resume-form" hidden>
@@ -585,188 +809,8 @@
           </div>
         </div>
 
-        <div class="card span-2 snapshot-card profile-card">
-          <div class="dashboard-card-header">
-            <h2>My Career</h2>
-          </div>
-
-          <div class="stat-row" id="career-stat-row"></div>
-
-          <div id="snapshot-panels">
-            <section class="snapshot-panel" id="panel-roles" hidden>
-        <h3>Experience</h3>
-        <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
-          <button type="button" id="sort-newest-btn" class="btn-secondary">Newest first</button>
-          <button type="button" id="sort-oldest-btn" class="btn-secondary">Oldest first</button>
-        </div>
-        <div id="experience-detail-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-education" hidden>
-        <h3>Education</h3>
-        <div id="education-detail-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-certifications" hidden>
-        <h3>Certifications</h3>
-        <div id="certification-detail-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-skills" hidden>
-        <h3>Skills</h3>
-        <p class="hint">A skill’s name should be a short keyword. The sentence under it is your reference and is never printed on a resume.</p>
-        <h4 class="recent-heading">Recently confirmed</h4>
-        <ul id="recently-confirmed-list" class="recent-skills"></ul>
-        <form id="skill-quick-add-form">
-          <label class="field">
-            <span>Quick add a skill</span>
-            <input type="text" id="skill-quick-add-input" placeholder="e.g. Technical expertise" maxlength="60" autocomplete="off" />
-          </label>
-          <button type="submit" class="btn-secondary">Add to my skills</button>
-          <p class="hint" id="skill-quick-add-msg" hidden></p>
-        </form>
-        <button type="button" id="skill-tidy-btn" class="btn-secondary">Shorten long skill names</button>
-        <div id="skill-tidy-panel" hidden>
-          <p class="hint" id="skill-tidy-intro"></p>
-          <div id="skill-tidy-list"></div>
-          <div id="skill-tidy-error" class="error" role="alert" hidden></div>
-          <button type="button" id="skill-tidy-apply-btn">Save the ones I’ve ticked</button>
-          <button type="button" id="skill-tidy-cancel-btn" class="btn-secondary">Close</button>
-        </div>
-        <div id="skill-view-toggle" class="app-view-toggle" role="group" aria-label="How to show your skills" hidden>
-          <button type="button" id="skill-view-groups" class="btn-secondary" aria-pressed="true">Groups</button>
-          <button type="button" id="skill-view-list" class="btn-secondary" aria-pressed="false">List</button>
-        </div>
-        <div id="skill-detail-list"></div>
-<h3>Scan for missing skills</h3>
-        <div id="skill-scan-start">
-          <button type="button" id="skill-scan-btn" class="btn-secondary btn-green">Scan for missing skills</button>
-          <p class="hint">Reviews your whole profile against what’s typical for your kinds of roles, and asks about anything that looks like a real blind spot.</p>
-        </div>
-
-        <div id="skill-scan-loading" class="processing-card" hidden aria-live="polite">
-          <div class="processing-visual" aria-hidden="true">
-            <span class="processing-icon">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="5" y="3" width="14" height="18" rx="2" stroke="#0847C7" stroke-width="1.6"/>
-                <path d="M8 8h8M8 12h8M8 16h5" stroke="#0847C7" stroke-width="1.4" stroke-linecap="round"/>
-              </svg>
-            </span>
-            <span class="processing-dots">
-              <span class="processing-dot"></span>
-              <span class="processing-dot"></span>
-              <span class="processing-dot"></span>
-            </span>
-            <span class="processing-icon processing-icon-done">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="5" y="3" width="14" height="18" rx="2" stroke="#0847C7" stroke-width="1.6"/>
-                <path d="M8 8h8M8 12h5" stroke="#0847C7" stroke-width="1.4" stroke-linecap="round"/>
-                <circle cx="17" cy="17" r="5" fill="#E2A126"/>
-                <path d="M14.8 17l1.4 1.4 2.6-2.8" stroke="#101318" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </div>
-          <p class="processing-status"></p>
-          <p class="hint processing-wait-copy">This usually takes about 30–60 seconds. Please keep this page open.</p>
-        </div>
-
-        <div id="skill-scan-questions" hidden>
-          <p id="skill-scan-summary"></p>
-          <div id="skill-scan-questions-list"></div>
-          <div id="skill-scan-questions-error" class="error" role="alert" hidden></div>
-          <button type="button" id="skill-scan-questions-submit-btn">Continue</button>
-          <button type="button" id="skill-scan-questions-finish-btn" class="btn-secondary">I’m done answering questions</button>
-        </div>
-
-        <div id="skill-scan-complete" hidden>
-          <p class="success">Your Career Profile already looks well-rounded for the kinds of roles it shows — nothing new stood out this time.</p>
-          <p id="skill-scan-complete-summary" class="hint"></p>
-          <p class="hint">Add more experience or run the scan again later and it’ll pick up from there.</p>
-          <button type="button" id="skill-scan-complete-ok-btn" class="btn-secondary">OK</button>
-        </div>
-
-        <div id="skill-scan-review" hidden>
-          <h3>Add these to your profile?</h3>
-          <p class="hint">Choose which role each one belongs to, or remove it.</p>
-          <div id="skill-scan-facts-list"></div>
-          <button type="button" id="skill-scan-save-btn">Save to my Career Profile</button>
-          <button type="button" id="skill-scan-cancel-btn" class="btn-secondary">Cancel</button>
-          <div id="skill-scan-save-error" class="error" role="alert" hidden></div>
-        </div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-languages" hidden>
-              <h3>Languages</h3>
-              <p class="hint">Languages you speak, read, or write, and how well. Add only what is true for you.</p>
-              <form id="language-form">
-                <div class="field-row">
-                  <label class="field"><span>Language</span><input type="text" id="language-name" maxlength="60" placeholder="e.g. Spanish" autocomplete="off" required /></label>
-                  <label class="field"><span>Proficiency (optional)</span><input type="text" id="language-proficiency" maxlength="80" list="language-proficiency-options" placeholder="e.g. Professional working proficiency" autocomplete="off" /></label>
-                </div>
-                <datalist id="language-proficiency-options">
-                  <option value="Native or bilingual"></option>
-                  <option value="Full professional proficiency"></option>
-                  <option value="Professional working proficiency"></option>
-                  <option value="Limited working proficiency"></option>
-                  <option value="Elementary proficiency"></option>
-                </datalist>
-                <button type="submit" id="language-submit-btn">Add language</button>
-                <div id="language-error" class="error" role="alert" hidden></div>
-              </form>
-              <div id="language-detail-list"></div>
-            </section>
-          </div>
-
-        <div class="export-row export-menu-wrap">
-          <button type="button" id="export-menu-btn" class="btn-secondary" aria-expanded="false" aria-controls="export-menu">Download my information</button>
-          <div id="export-menu" class="export-menu" role="group" aria-label="Choose a download" hidden>
-            <button type="button" id="export-readable-btn" class="btn-secondary">Download a readable copy (Word)</button>
-            <button type="button" id="export-profile-btn" class="btn-secondary">Download data backup (.json)</button>
-          </div>
-        </div>
-        <p class="hint export-hint">Readable Copy: Read, print, or share.</p>
-        <div id="export-profile-error" class="error" role="alert" hidden></div>
-        </div>
 
 
-        <div class="card span-2 snapshot-card activity-card">
-          <div class="dashboard-card-header"><h2>See your progress</h2></div>
-          <div class="stat-row" id="activity-stat-row"></div>
-
-          <div id="activity-panels">
-            <section class="snapshot-panel" id="panel-history" hidden>
-        <h3 id="panel-history-heading" tabindex="-1">Job &amp; Skill Scan History</h3>
-        <div id="scan-filter" class="vis-filter" role="group" aria-label="Filter scans" hidden></div>
-        <div id="scan-history-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-resumes" hidden>
-        <h3 id="panel-resumes-heading" tabindex="-1">Resumes Built</h3>
-        <p class="hint" id="resume-layout-status" role="status" hidden></p>
-        <p class="error resume-download-msg" id="resume-download-status" role="alert" hidden></p>
-        <div id="resume-version-list"></div>
-            </section>
-
-            <section class="snapshot-panel" id="panel-applications" hidden>
-              <h3>Applications</h3>
-              <p class="hint">Jobs you’ve applied for. Come back and update each one: no response, interview, rejection or offer.</p>
-              <p id="application-summary" class="application-summary"></p>
-              <button type="button" id="application-add-toggle-btn" class="btn-secondary">+ Add an application by hand</button>
-              <form id="application-form" hidden>
-                <label class="field"><span>Job title</span><input type="text" id="application-title" required /></label>
-                <label class="field"><span>Company</span><input type="text" id="application-company" /></label>
-                <label class="field"><span>Date applied</span><input type="date" id="application-date" /></label>
-                <button type="submit">Add to my tracker</button>
-                <div id="application-form-error" class="error" role="alert" hidden></div>
-              </form>
-              <div id="application-view-toggle" class="app-view-toggle" role="group" aria-label="How to show your applications" hidden>
-                <button type="button" id="application-view-list" class="btn-secondary" aria-pressed="true">List</button>
-                <button type="button" id="application-view-board" class="btn-secondary" aria-pressed="false">Board</button>
-              </div>
-              <div id="application-list"></div>
-            </section>
-          </div>
-        </div>
 
         <div class="card span-2 feedback-card" id="feedback-card">
           <div class="dashboard-card-header"><h2>Tell us how it went</h2></div>

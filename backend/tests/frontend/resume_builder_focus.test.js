@@ -11,7 +11,7 @@ const vm = require("node:vm");
 const CAREER = path.join(__dirname, "..", "..", "..", "frontend", "career");
 const read = (...p) => fs.readFileSync(path.join(CAREER, ...p), "utf8");
 
-const IDS = ["general-resume-empty", "general-resume-form", "general-resume-loading", "general-resume-done", "general-resume-card", "general-resume-hero-btn",
+const IDS = ["general-resume-empty", "general-resume-form", "general-resume-loading", "general-resume-done", "general-resume-card",
   "general-resume-hero-btn-2", "general-resume-start-btn", "general-resume-cancel-btn", "general-resume-build-btn", "general-resume-name", "general-resume-contact",
   "general-resume-error", "general-resume-download-btn", "general-resume-template", "general-resume-again-btn", "general-build-layout", "general-download-msg",
   "general-resume-status", "general-resume-heading"];
@@ -68,7 +68,7 @@ test("the ready message has a persistent polite status region, not an alert", ()
   assert.match(region[0], /aria-atomic="true"/);
   assert.doesNotMatch(region[0], /\bhidden\b/); // always on the page, so a later change is announced
   assert.doesNotMatch(region[0], /role="alert"|aria-live="assertive"/);
-  const card = html.slice(html.indexOf('id="general-resume-card"'), html.indexOf('class="card span-2 snapshot-card profile-card"'));
+  const card = html.slice(html.indexOf('id="general-resume-card"'), html.indexOf('class="card span-2 feedback-card"'));
   assert.ok(card.indexOf("general-resume-status") < card.indexOf('id="general-resume-done"'), "the region must sit outside the panel that is shown and hidden");
   assert.strictEqual((card.match(/role="alert"/g) || []).length, 2); // only the two error messages are alerts
 });
@@ -95,7 +95,7 @@ test("a keyboard press on Build a general resume puts focus in the name field; a
   assert.deepStrictEqual(focused(keyboard), ["general-resume-name"]);
   const other = world();
   await other.els["general-resume-start-btn"].fire("click", notFromKeyboard);
-  await other.els["general-resume-hero-btn"].fire("click", notFromKeyboard);
+  await other.els["general-resume-start-btn"].fire("click", notFromKeyboard);
   await other.els["general-resume-hero-btn-2"].fire("click", { detail: 0, currentTarget: { matches: () => false } }); // programmatic click
   assert.deepStrictEqual(focused(other), []); // no on-screen keyboard pops up on a phone
 });
