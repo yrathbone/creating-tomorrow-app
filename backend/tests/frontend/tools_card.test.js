@@ -41,6 +41,14 @@ test("the upload button and its next step share the name Manage career profile, 
   assert.ok(!html.includes('id="general-resume-hero-btn"'), "the hero no longer has a general resume button");
 });
 
-test("the tools row is three tiles across at every width", () => {
-  assert.match(css, /\.tools-card \.stat-row\.tools-row \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
+test("the tools row fits its tiles across at every width", () => {
+  assert.match(css, /\.tools-card \.stat-row\.tools-row \{ grid-template-columns: repeat\(auto-fit, minmax\(140px, 1fr\)\);/);
+});
+
+test("the LinkedIn tile is one of the tools, not part of See your progress", () => {
+  const tools = html.slice(html.indexOf('id="tools-stat-row"'), html.indexOf('id="tools-panels"'));
+  assert.match(tools, /<a class="stat-card stat-linkedin tool-tile" href="\.\.\/spotlight\.html">/);
+  assert.doesNotMatch(loginJs, /stat-linkedin/, "login.js no longer adds a LinkedIn tile to See your progress");
+  const activity = html.slice(html.indexOf('id="activity-stat-row"'), html.indexOf('id="activity-panels"'));
+  assert.doesNotMatch(activity, /stat-linkedin/);
 });

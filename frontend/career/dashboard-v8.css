@@ -252,7 +252,7 @@ body.chrome-v6.dashboard-v4 .dash-panel > .cp-status { border-top: 1.5px solid v
 
 /* Your tools card, under My Career: the tile row matches My Career and See your progress, and each tile opens its own links. */
 body.chrome-v6.dashboard-v4 .dashboard-grid > .tools-card { grid-column: 1 / -1; }
-body.chrome-v6.dashboard-v4 .dashboard-grid > .tools-card .stat-row.tools-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body.chrome-v6.dashboard-v4 .dashboard-grid > .tools-card .stat-row.tools-row { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 body.chrome-v6.dashboard-v4 .tools-card #tools-panels > .snapshot-panel { margin-top: 0.8rem; padding: 1.05rem 1.2rem; background: transparent; border: 1px solid var(--v4-line); border-radius: 12px; box-shadow: none; }
 body.chrome-v6.dashboard-v4 .tools-card .tool-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; padding: 0.75rem 0; border-top: 1px solid var(--v4-line-soft); }
 body.chrome-v6.dashboard-v4 .tools-card .tool-text { min-width: 0; flex: 1 1 220px; }
