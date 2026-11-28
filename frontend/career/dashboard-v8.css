@@ -222,3 +222,9 @@ body.chrome-v6.dashboard-v4 .dashboard-grid > .snapshot-card .stat-row .stat-lin
 body.chrome-v6.dashboard-v4 .mc-progress-bar span.done { background: linear-gradient(90deg, var(--c6-gold), var(--c6-gold-hover)); }
 body.chrome-v6.dashboard-v4 .mc-progress.complete .mc-progress-bar span.done { background: linear-gradient(90deg, var(--c6-gold), var(--c6-gold-hover)); }
 body.chrome-v6.dashboard-v4 .skill-tone-1 { --tone: var(--c6-gold-hover); }
+
+/* ---------- gold section lines on phones and iPads (1000px and below): the same gold lines the public pages use between sections, in place of the grey hairlines. Desktop keeps its grey hairlines. ---------- */
+@media (max-width: 1000px) {
+  body.chrome-v6.dashboard-v4 .dashboard-grid > .card { border-top: 1.5px solid var(--c6-gold); }
+  body.chrome-v6.dashboard-v4 .next-step { border-bottom: 1.5px solid var(--c6-gold); }
+}
