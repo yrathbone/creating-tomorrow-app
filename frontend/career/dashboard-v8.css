@@ -223,13 +223,7 @@ body.chrome-v6.dashboard-v4 .mc-progress-bar span.done { background: linear-grad
 body.chrome-v6.dashboard-v4 .mc-progress.complete .mc-progress-bar span.done { background: linear-gradient(90deg, var(--c6-gold), var(--c6-gold-hover)); }
 body.chrome-v6.dashboard-v4 .skill-tone-1 { --tone: var(--c6-gold-hover); }
 
-/* ---------- gold section lines on phones and iPads (1000px and below): the same gold lines the public pages use between sections, in place of the grey hairlines. Desktop keeps its grey hairlines. ---------- */
-@media (max-width: 1000px) {
-  body.chrome-v6.dashboard-v4 .dashboard-grid > .card { border-top: 1.5px solid var(--c6-gold); }
-  body.chrome-v6.dashboard-v4 .next-step { border-bottom: 1.5px solid var(--c6-gold); }
-}
-
-/* the General Resume card is coloured by its id in the main stylesheet; on phones and iPads it takes the same gold top line as the other sections */
-@media (max-width: 1000px) {
-  body.chrome-v6.dashboard-v4 .dashboard-grid > .card#general-resume-card { border-top-color: var(--c6-gold); }
-}
+/* ---------- gold section lines at every width (phones, iPads and laptops): the dashboard's section dividers and the next-step band use the site's gold. The General Resume card is coloured by its id in the main stylesheet, so it is targeted by id too. ---------- */
+body.chrome-v6.dashboard-v4 .dashboard-grid > .card { border-top: 1.5px solid var(--c6-gold); }
+body.chrome-v6.dashboard-v4 .dashboard-grid > .card#general-resume-card { border-top-color: var(--c6-gold); }
+body.chrome-v6.dashboard-v4 .next-step { border-top: 1.5px solid var(--c6-gold); border-bottom: 1.5px solid var(--c6-gold); }
