@@ -676,47 +676,67 @@ def build_profile_review_recap_bytes(review: dict) -> bytes:
         doc.save(buffer)
         return buffer.getvalue()
 
-    strengths = review.get("strengths") or []
+    # The AI output is not always exactly the shape we ask for (a section can come back as text, or a list item as a
+    # plain sentence). Every section is read through these helpers so an unexpected shape never stops the download.
+    def as_dict(value):
+        return value if isinstance(value, dict) else {}
+
+    def as_list(value):
+        if value is None or value == "":
+            return []
+        return list(value) if isinstance(value, (list, tuple)) else [value]
+
+    def as_text(value):
+        if value is None:
+            return ""
+        if isinstance(value, dict):
+            return " ".join(str(v) for v in value.values() if v)
+        return str(value)
+
+    strengths = as_list(review.get("strengths"))
     if strengths:
         add_heading_bar(doc, "SIGNATURE STRENGTHS")
         for item in strengths:
+            if not isinstance(item, dict):
+                item = {"title": as_text(item)}
             p = doc.add_paragraph()
-            title_run = p.add_run(item.get("title", ""))
+            title_run = p.add_run(as_text(item.get("title", "")))
             style_run(title_run, bold=True)
             if item.get("evidence"):
                 ev = doc.add_paragraph()
-                style_run(ev.add_run(item["evidence"]))
+                style_run(ev.add_run(as_text(item["evidence"])))
 
-    headline = review.get("headline") or {}
+    headline = as_dict(review.get("headline"))
     if headline.get("supplied") and headline.get("suggested"):
         add_heading_bar(doc, "SUGGESTED HEADLINE")
         p = doc.add_paragraph()
-        style_run(p.add_run(headline["suggested"]))
+        style_run(p.add_run(as_text(headline["suggested"])))
 
-    about = review.get("about") or {}
+    about = as_dict(review.get("about"))
     if about.get("supplied") and about.get("suggested_revision"):
         add_heading_bar(doc, "SUGGESTED ABOUT SECTION")
         p = doc.add_paragraph()
-        style_run(p.add_run(about["suggested_revision"]))
+        style_run(p.add_run(as_text(about["suggested_revision"])))
 
     ways_to_strengthen = []
     if headline.get("supplied"):
-        ways_to_strengthen.extend(headline.get("could_be_clearer") or [])
+        ways_to_strengthen.extend(as_list(headline.get("could_be_clearer")))
     if about.get("supplied"):
-        ways_to_strengthen.extend(about.get("could_be_clearer") or [])
-    experience = review.get("experience") or {}
+        ways_to_strengthen.extend(as_list(about.get("could_be_clearer")))
+    experience = as_dict(review.get("experience"))
     if experience.get("supplied"):
-        ways_to_strengthen.extend(experience.get("suggested_improvements") or [])
-    skills = review.get("skills") or {}
-    ways_to_strengthen.extend(skills.get("needs_more_information") or [])
+        ways_to_strengthen.extend(as_list(experience.get("suggested_improvements")))
+    skills = as_dict(review.get("skills"))
+    ways_to_strengthen.extend(as_list(skills.get("needs_more_information")))
 
     if ways_to_strengthen:
         add_heading_bar(doc, "WAYS TO STRENGTHEN THIS PROFILE")
         for item in ways_to_strengthen:
-            add_bullet(doc, item)
+            add_bullet(doc, as_text(item))
 
     sample = review.get("suggested_full_profile")
     if sample:
+        sample = as_dict(sample)
         add_heading_bar(doc, "SAMPLE UPDATED PROFILE")
         p = doc.add_paragraph()
         style_run(p.add_run(
@@ -725,19 +745,21 @@ def build_profile_review_recap_bytes(review: dict) -> bytes:
         if sample.get("headline"):
             p = doc.add_paragraph()
             style_run(p.add_run("Headline: "), bold=True)
-            style_run(p.add_run(sample["headline"]))
+            style_run(p.add_run(as_text(sample["headline"])))
         if sample.get("about"):
             hp = doc.add_paragraph()
             style_run(hp.add_run("About"), bold=True)
             p = doc.add_paragraph()
-            style_run(p.add_run(sample["about"]))
-        for role in sample.get("experience") or []:
-            title = role.get("title", "")
-            org = role.get("organization", "")
+            style_run(p.add_run(as_text(sample["about"])))
+        for role in as_list(sample.get("experience")):
+            if not isinstance(role, dict):
+                role = {"title": as_text(role)}
+            title = as_text(role.get("title", ""))
+            org = as_text(role.get("organization", ""))
             p = doc.add_paragraph()
             style_run(p.add_run(f"{title} — {org}" if org else title), bold=True)
-            for bullet in role.get("bullets") or []:
-                add_bullet(doc, bullet)
+            for bullet in as_list(role.get("bullets")):
+                add_bullet(doc, as_text(bullet))
 
     buffer = io.BytesIO()
     doc.save(buffer)
