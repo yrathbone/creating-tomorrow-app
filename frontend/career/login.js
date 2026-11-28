@@ -614,13 +614,13 @@ function updateDashboardSummary() {
       { key: "roles", number: allExperiences.length, label: allExperiences.length === 1 ? "Role" : "Roles" },
       { key: "education", number: allEducation.length, label: "Education" },
       { key: "certifications", number: allCertifications.length, label: allCertifications.length === 1 ? "Certification" : "Certifications" },
-      { key: "skills", number: allSkills.length, label: allSkills.length === 1 ? "Skill" : "Skills" },
       { key: "languages", number: typeof allLanguages !== "undefined" ? allLanguages.length : 0, label: typeof allLanguages !== "undefined" && allLanguages.length === 1 ? "Language" : "Languages" },
     ];
     const activityStats = [
-      { key: "history", number: scans, label: scans === 1 ? "Job & Skill Scan" : "Job & Skill Scans" },
+      { key: "history", number: scans, label: scans === 1 ? "Job scan" : "Job scans" },
       { key: "resumes", number: resumes, label: resumes === 1 ? "Resume Built" : "Resumes Built" },
       { key: "applications", number: applied, label: applied === 1 ? "Application" : "Applications" },
+      { key: "skills", number: allSkills.length, label: allSkills.length === 1 ? "Skill" : "Skills" },
     ];
     const addTiles = (row, stats) => {
       for (const s of stats) {
